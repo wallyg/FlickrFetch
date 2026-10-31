@@ -50,59 +50,61 @@ export default function AboutModal({ version, onClose }: AboutModalProps): React
           </button>
         </div>
 
-        {activeTab === 'about' && (
-          <div style={styles.tabContent}>
-            <div style={styles.section}>
-              <p style={styles.sectionText}>
-                <strong>Privacy</strong><br />
-                Your photos and credentials never leave your Mac. FlickrFetch communicates
-                directly with Flickr's API — no data passes through any third-party server.
-              </p>
-            </div>
-
-            <div style={styles.section}>
-              <p style={styles.sectionText}>
-                <strong>Flickr Attribution</strong><br />
-                FlickrFetch is an independent app and is not affiliated with, endorsed by,
-                or sponsored by Flickr or SmugMug Inc.
-              </p>
-            </div>
-
-            <div style={styles.section}>
-              <p style={styles.sectionText}>
-                Found a bug or have a suggestion?{' '}
-                <a
-                  href="#"
-                  style={styles.link}
-                  onClick={(e) => { e.preventDefault(); window.flickrAPI.openExternal('mailto:wallyg@gmail.com?subject=FlickrFetch Feedback') }}
-                >
-                  wallyg@gmail.com
-                </a>
-              </p>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'whats-new' && (
-          <div style={styles.changelogScroll}>
-            {changelog.map((release, i) => (
-              <div key={release.version} style={{ ...styles.release, ...(i === 0 ? styles.releaseFirst : {}) }}>
-                <div style={styles.releaseHeader}>
-                  <span style={styles.releaseVersion}>
-                    {release.version}
-                    {i === 0 && <span style={styles.latestBadge}>Latest</span>}
-                  </span>
-                  <span style={styles.releaseDate}>{release.date}</span>
-                </div>
-                <ul style={styles.bullets}>
-                  {release.highlights.map((item, j) => (
-                    <li key={j} style={styles.bullet}>{item}</li>
-                  ))}
-                </ul>
+        <div style={styles.contentArea}>
+          {activeTab === 'about' && (
+            <div style={styles.tabContent}>
+              <div style={styles.section}>
+                <p style={styles.sectionText}>
+                  <strong>Privacy</strong><br />
+                  Your photos and credentials never leave your Mac. FlickrFetch communicates
+                  directly with Flickr's API — no data passes through any third-party server.
+                </p>
               </div>
-            ))}
-          </div>
-        )}
+
+              <div style={styles.section}>
+                <p style={styles.sectionText}>
+                  <strong>Flickr Attribution</strong><br />
+                  FlickrFetch is an independent app and is not affiliated with, endorsed by,
+                  or sponsored by Flickr or SmugMug Inc.
+                </p>
+              </div>
+
+              <div style={styles.section}>
+                <p style={styles.sectionText}>
+                  Found a bug or have a suggestion?{' '}
+                  <a
+                    href="#"
+                    style={styles.link}
+                    onClick={(e) => { e.preventDefault(); window.flickrAPI.openExternal('mailto:wallyg@gmail.com?subject=FlickrFetch Feedback') }}
+                  >
+                    wallyg@gmail.com
+                  </a>
+                </p>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'whats-new' && (
+            <div style={styles.changelogScroll}>
+              {changelog.map((release, i) => (
+                <div key={release.version} style={{ ...styles.release, ...(i === 0 ? styles.releaseFirst : {}) }}>
+                  <div style={styles.releaseHeader}>
+                    <span style={styles.releaseVersion}>
+                      {release.version}
+                      {i === 0 && <span style={styles.latestBadge}>Latest</span>}
+                    </span>
+                    <span style={styles.releaseDate}>{release.date}</span>
+                  </div>
+                  <ul style={styles.bullets}>
+                    {release.highlights.map((item, j) => (
+                      <li key={j} style={styles.bullet}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         <div style={styles.footer}>
           <p style={styles.copyright}>© 2026 Wally Gobetz. All rights reserved.</p>
@@ -195,12 +197,16 @@ const styles: Record<string, React.CSSProperties> = {
   },
   tabActive: {
     color: '#FF0084',
-    borderBottomColor: '#FF0084'
+    borderBottom: '2px solid #FF0084'
+  },
+  contentArea: {
+    height: '240px',
+    overflowY: 'auto' as const,
+    minHeight: 0
   },
   tabContent: {
     padding: '18px 0 0',
-    textAlign: 'left',
-    flexShrink: 0
+    textAlign: 'left' as const,
   },
   section: {
     marginBottom: '14px',
@@ -217,11 +223,8 @@ const styles: Record<string, React.CSSProperties> = {
     textDecoration: 'none'
   },
   changelogScroll: {
-    overflowY: 'auto',
-    flex: 1,
     padding: '16px 0 0',
-    textAlign: 'left',
-    minHeight: 0
+    textAlign: 'left' as const,
   },
   release: {
     borderTop: '1px solid #e8e4de',
