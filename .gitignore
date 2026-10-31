@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+out/
+build/
+
+# Credentials — copy config.example.ts → config.ts and add your keys
+src/main/config.ts
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Electron builder artifacts
+*.blockmap
+
+# Logs
+npm-debug.log*

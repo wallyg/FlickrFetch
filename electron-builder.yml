@@ -1,0 +1,33 @@
+appId: com.flickrfetch.app
+productName: FlickrFetch
+copyright: Copyright 2026
+
+directories:
+  buildResources: resources
+  output: dist
+
+files:
+  - out/**/*
+  - package.json
+
+extraResources:
+  - from: resources/splash.png
+    to: splash.png
+
+mac:
+  icon: build/icon.icns
+  target:
+    - target: dmg
+      arch:
+        - arm64
+  category: public.app-category.photography
+
+dmg:
+  title: FlickrFetch
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications
