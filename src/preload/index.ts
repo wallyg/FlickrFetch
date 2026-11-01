@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { IpcRendererEvent } from 'electron'
-import type { FlickrUser, PhotoPage, PhotoSize, AppSettings, AlbumPage, FlickrCollection, BatchProgress } from '../shared/types'
+import type { FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, CameraExif, PhotoSearchParams } from '../shared/types'
 
 // Expose a safe, limited API surface to the renderer process.
 // The renderer cannot access Node.js or Electron directly — only these methods.
@@ -19,14 +19,18 @@ contextBridge.exposeInMainWorld('flickrAPI', {
   signOut: (): Promise<void> => ipcRenderer.invoke('auth:signout'),
 
   // Fetch a page of the user's photos from Flickr
-  getPhotos: (page: number, sort?: string): Promise<PhotoPage> => ipcRenderer.invoke('photos:getPage', page, sort),
+  getPhotos: (page: number, sort?: string, search?: PhotoSearchParams): Promise<PhotoPage> => ipcRenderer.invoke('photos:getPage', page, sort, search),
 
   // Get all available sizes for a single photo
   getSizes: (photoId: string): Promise<PhotoSize[]> => ipcRenderer.invoke('photos:getSizes', photoId),
 
+  // Get sizes + full info + EXIF for a photo in one call (used by photo detail view)
+  getPhotoDetail: (photoId: string): Promise<{ sizes: PhotoSize[]; info: PhotoInfo; exif: CameraExif }> =>
+    ipcRenderer.invoke('photos:getDetail', photoId),
+
   // Download a photo to disk — opens a save dialog, returns the saved path (or null if cancelled)
-  downloadPhoto: (photoId: string, title: string): Promise<{ filePath: string | null }> =>
-    ipcRenderer.invoke('photos:download', photoId, title),
+  downloadPhoto: (photoId: string, title: string, downloadSize?: string): Promise<{ filePath: string | null }> =>
+    ipcRenderer.invoke('photos:download', photoId, title, downloadSize),
 
   // Listen for download progress events (0–100). Returns a cleanup function.
   onDownloadProgress: (cb: (percent: number) => void): (() => void) => {
@@ -55,13 +59,15 @@ contextBridge.exposeInMainWorld('flickrAPI', {
   // App settings
   getSettings: (): Promise<AppSettings> => ipcRenderer.invoke('settings:get'),
   setSettings: (settings: AppSettings): Promise<void> => ipcRenderer.invoke('settings:set', settings),
+  resetSettings: (): Promise<AppSettings> => ipcRenderer.invoke('settings:reset'),
+  resolveVideoUrl: (sourceUrl: string): Promise<string> => ipcRenderer.invoke('video:resolveUrl', sourceUrl),
 
   // Folder picker
   pickFolder: (): Promise<string | null> => ipcRenderer.invoke('shell:pickFolder'),
 
   // Batch downloads
-  startBatch: (albumId: string, albumTitle: string, photoCount?: number, videoCount?: number, force?: boolean): Promise<{ alreadyQueued: boolean }> =>
-    ipcRenderer.invoke('batch:startAlbum', albumId, albumTitle, photoCount, videoCount, force),
+  startBatch: (albumId: string, albumTitle: string, photoCount?: number, videoCount?: number, force?: boolean, mediaType?: 'photo' | 'video', privacyFilter?: string): Promise<{ alreadyQueued: boolean }> =>
+    ipcRenderer.invoke('batch:startAlbum', albumId, albumTitle, photoCount, videoCount, force, mediaType, privacyFilter),
   confirm: (message: string, detail?: string): Promise<boolean> =>
     ipcRenderer.invoke('shell:confirm', message, detail),
   startSelectedBatch: (photos: { id: string; title: string }[], displayTitle: string): Promise<void> =>
@@ -79,5 +85,20 @@ contextBridge.exposeInMainWorld('flickrAPI', {
     const handler = (_evt: IpcRendererEvent, data: { version: string }) => cb(data)
     ipcRenderer.on('app:showAbout', handler)
     return () => ipcRenderer.removeListener('app:showAbout', handler)
-  }
+  },
+
+  checkExifTool: (): Promise<boolean> => ipcRenderer.invoke('exiftool:check'),
+
+  onOpenSettings: (cb: () => void): (() => void) => {
+    const handler = () => cb()
+    ipcRenderer.on('app:openSettings', handler)
+    return () => ipcRenderer.removeListener('app:openSettings', handler)
+  },
+
+  onMenuSignOut: (cb: () => void): (() => void) => {
+    const handler = () => cb()
+    ipcRenderer.on('app:signOut', handler)
+    return () => ipcRenderer.removeListener('app:signOut', handler)
+  },
+
 })

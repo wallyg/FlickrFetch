@@ -1,42 +1,8 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react'
-import type { FlickrPhoto, PhotoPage } from '../../shared/types'
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import type { FlickrPhoto, PhotoPage, SearchOperator, DateRangeField, TagMode } from '../../shared/types'
+import { MediaFilter, GridSize, PrivacyFilter, PrivacyLevel, PRIVACY_OPTIONS, PRIVACY_LABELS, GRID_COLUMNS, GridIcon, PrivacyIcon, Chip, Tooltip, getPrivacyLevel, sharedStyles, DateMode, getPresetDates, formatDateChip } from './PhotoGridShared'
 
-type MediaFilter = 'all' | 'photo' | 'video'
-type GridSize = 'small' | 'medium' | 'large'
-type SortOrder = 'album-order' | 'date-asc' | 'date-desc' | 'newest-posted' | 'oldest-posted'
-type PrivacyFilter = 'all' | 'public' | 'friends' | 'family' | 'private'
-
-const PRIVACY_OPTIONS: PrivacyFilter[] = ['all', 'public', 'friends', 'family', 'private']
-const PRIVACY_LABELS: Record<PrivacyFilter, string> = { all: 'All', public: 'Public', friends: 'Friends', family: 'Family', private: 'Private' }
-
-function getPrivacyLevel(photo: FlickrPhoto): PrivacyLevel {
-  if (photo.ispublic === undefined) return 'public'
-  if (photo.ispublic === 1) return 'public'
-  if (photo.isfriend === 1) return 'friends'
-  if (photo.isfamily === 1) return 'family'
-  return 'private'
-}
-
-function PrivacyIcon({ level }: { level: PrivacyLevel }): React.JSX.Element | null {
-  if (level === 'public') return null
-  if (level === 'private') return (
-    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-    </svg>
-  )
-  if (level === 'family') return (
-    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-    </svg>
-  )
-  return (
-    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-    </svg>
-  )
-}
+type SortOrder = 'album-order' | 'newest-posted' | 'oldest-posted' | 'date-desc' | 'date-asc'
 
 interface AlbumPhotoGridProps {
   albumId: string
@@ -45,15 +11,13 @@ interface AlbumPhotoGridProps {
   selectedIds?: Set<string>
   onToggleSelect?: (photo: FlickrPhoto, shiftKey: boolean) => void
   onPhotosLoaded?: (photos: FlickrPhoto[]) => void
+  onPageInfo?: (page: number, pages: number) => void
+  onFilteredPhotosChange?: (photos: FlickrPhoto[]) => void
+  onMediaFilterChange?: (filter: 'all' | 'photo' | 'video') => void
+  onPrivacyFilterChange?: (filter: PrivacyFilter) => void
 }
 
-const GRID_COLUMNS: Record<GridSize, string> = {
-  small:  'repeat(auto-fill, minmax(110px, 1fr))',
-  medium: 'repeat(auto-fill, minmax(160px, 1fr))',
-  large:  'repeat(auto-fill, minmax(220px, 1fr))'
-}
-
-export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, selectedIds, onToggleSelect, onPhotosLoaded }: AlbumPhotoGridProps): React.JSX.Element {
+export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, selectedIds, onToggleSelect, onPhotosLoaded, onPageInfo, onFilteredPhotosChange, onMediaFilterChange, onPrivacyFilterChange }: AlbumPhotoGridProps): React.JSX.Element {
   const [photos, setPhotos] = useState<FlickrPhoto[]>([])
   const [pageInfo, setPageInfo] = useState<Pick<PhotoPage, 'page' | 'pages' | 'total'> | null>(null)
   const [loading, setLoading] = useState(true)
@@ -65,6 +29,26 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>('all')
   const [gridSize, setGridSize] = useState<GridSize>('medium')
   const [privacyFilter, setPrivacyFilter] = useState<PrivacyFilter>('all')
+  const [drawerOpen, setDrawerOpen] = useState(false)
+
+  // All filters are client-side — album API doesn't support server-side search
+  const [titleQuery, setTitleQuery] = useState('')
+  const [titleOperator, setTitleOperator] = useState<SearchOperator>('contains')
+  const [activeTitleQuery, setActiveTitleQuery] = useState('')
+  const [activeTitleOperator, setActiveTitleOperator] = useState<SearchOperator>('contains')
+
+  const [tagQuery, setTagQuery] = useState('')
+  const [tagMode, setTagMode] = useState<TagMode>('any')
+  const [activeTagQuery, setActiveTagQuery] = useState('')
+  const [activeTagMode, setActiveTagMode] = useState<TagMode>('any')
+
+  const [dateField, setDateField] = useState<DateRangeField>('taken')
+  const [dateMode, setDateMode] = useState<DateMode>('all')
+  const [dateCustomMin, setDateCustomMin] = useState('')
+  const [dateCustomMax, setDateCustomMax] = useState('')
+  const [activeDateMin, setActiveDateMin] = useState('')
+  const [activeDateMax, setActiveDateMax] = useState('')
+  const [activeDateField, setActiveDateField] = useState<DateRangeField>('taken')
 
   const loadPage = useCallback(async (page: number) => {
     return window.flickrAPI.getAlbumPhotos(albumId, page)
@@ -78,23 +62,68 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
         setPhotos(data.photos)
         setPageInfo({ page: data.page, pages: data.pages, total: data.total })
         onPhotosLoaded?.(data.photos)
+        onPageInfo?.(data.page, data.pages)
       })
       .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load photos'))
       .finally(() => setLoading(false))
   }, [loadPage])
 
-  const handleLoadMore = async (): Promise<void> => {
+  const handleLoadMore = useCallback(async (): Promise<void> => {
     if (!pageInfo || pageInfo.page >= pageInfo.pages) return
     setLoadingMore(true)
     try {
       const data = await loadPage(pageInfo.page + 1)
-      const updated = [...photos, ...data.photos]
-      setPhotos(updated)
+      setPhotos(prev => {
+        const updated = [...prev, ...data.photos]
+        onPhotosLoaded?.(updated)
+        return updated
+      })
       setPageInfo({ page: data.page, pages: data.pages, total: data.total })
-      onPhotosLoaded?.(updated)
+      onPageInfo?.(data.page, data.pages)
     } finally {
       setLoadingMore(false)
     }
+  }, [pageInfo, loadPage, onPhotosLoaded, onPageInfo])
+
+  const applyTitleSearch = (): void => {
+    setActiveTitleQuery(titleQuery)
+    setActiveTitleOperator(titleOperator)
+  }
+  const dismissTitleSearch = (): void => { setTitleQuery(''); setActiveTitleQuery('') }
+
+  const applyTagSearch = (): void => {
+    setActiveTagQuery(tagQuery)
+    setActiveTagMode(tagMode)
+  }
+  const dismissTagSearch = (): void => { setTagQuery(''); setActiveTagQuery('') }
+
+  const handleDateModeChange = (mode: DateMode): void => {
+    setDateMode(mode)
+    if (mode === 'all') {
+      setDateCustomMin(''); setDateCustomMax('')
+      setActiveDateMin(''); setActiveDateMax('')
+    } else if (mode === 'since' || mode === 'between') {
+      setDateCustomMin(''); setDateCustomMax('')
+    } else {
+      const { min, max } = getPresetDates(mode)
+      setDateCustomMin(min); setDateCustomMax(max)
+      setActiveDateMin(min); setActiveDateMax(max); setActiveDateField(dateField)
+    }
+  }
+  const applyDateFilter = (): void => {
+    setActiveDateMin(dateCustomMin); setActiveDateMax(dateCustomMax); setActiveDateField(dateField)
+  }
+  const dismissDateFilter = (): void => {
+    setDateMode('all'); setDateCustomMin(''); setDateCustomMax('')
+    setActiveDateMin(''); setActiveDateMax('')
+  }
+
+  const clearAllFilters = (): void => {
+    setMediaFilter('all'); setPrivacyFilter('all')
+    setTitleQuery(''); setActiveTitleQuery('')
+    setTagQuery(''); setActiveTagQuery('')
+    setDateMode('all'); setDateCustomMin(''); setDateCustomMax('')
+    setActiveDateMin(''); setActiveDateMax('')
   }
 
   const sortedPhotos = useMemo(() => {
@@ -112,56 +141,265 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
   }, [photos, sort])
 
   const filteredPhotos = useMemo(() => {
+    const tagList = activeTagQuery ? activeTagQuery.split(',').map(t => t.trim().toLowerCase()).filter(Boolean) : []
     return sortedPhotos
+      .filter(p => {
+        if (!activeTitleQuery) return true
+        const t = p.title.toLowerCase()
+        const q = activeTitleQuery.toLowerCase()
+        if (activeTitleOperator === 'starts') return t.startsWith(q)
+        if (activeTitleOperator === 'ends') return t.endsWith(q)
+        if (activeTitleOperator === 'exact') return t === q
+        return t.includes(q)
+      })
+      .filter(p => {
+        if (!tagList.length) return true
+        const photoTags = (p.tags ?? []).map(t => t.toLowerCase())
+        return activeTagMode === 'all'
+          ? tagList.every(t => photoTags.includes(t))
+          : tagList.some(t => photoTags.includes(t))
+      })
+      .filter(p => {
+        if (!activeDateMin && !activeDateMax) return true
+        const photoDate = activeDateField === 'posted'
+          ? (p.datePosted ? new Date(parseInt(p.datePosted) * 1000).toISOString().slice(0, 10) : '')
+          : (p.dateTaken ? p.dateTaken.slice(0, 10) : '')
+        if (!photoDate) return true
+        if (activeDateMin && photoDate < activeDateMin) return false
+        if (activeDateMax && photoDate > activeDateMax) return false
+        return true
+      })
       .filter(p => mediaFilter === 'all' || p.media === mediaFilter)
       .filter(p => privacyFilter === 'all' || getPrivacyLevel(p) === privacyFilter)
-  }, [sortedPhotos, mediaFilter, privacyFilter])
+  }, [sortedPhotos, activeTitleQuery, activeTitleOperator, activeTagQuery, activeTagMode, activeDateMin, activeDateMax, activeDateField, mediaFilter, privacyFilter])
 
-  if (loading) return <div style={styles.center}><p style={styles.message}>Loading photos…</p></div>
-  if (error) return <div style={styles.center}><p style={styles.message}>{error}</p></div>
-  if (photos.length === 0) return <div style={styles.center}><p style={styles.message}>No photos in this album.</p></div>
+  useEffect(() => { onFilteredPhotosChange?.(filteredPhotos) }, [filteredPhotos, onFilteredPhotosChange])
+  useEffect(() => { onMediaFilterChange?.(mediaFilter) }, [mediaFilter, onMediaFilterChange])
+  useEffect(() => { onPrivacyFilterChange?.(privacyFilter) }, [privacyFilter, onPrivacyFilterChange])
 
+  // Auto-load remaining pages when any filter is active (albums are finite — no page cap)
+  useEffect(() => {
+    const filterActive = mediaFilter !== 'all' || privacyFilter !== 'all' || !!activeTitleQuery || !!activeTagQuery || !!activeDateMin || !!activeDateMax
+    if (filterActive && photos.length > 0 && pageInfo && pageInfo.page < pageInfo.pages && !loadingMore && !loading) {
+      handleLoadMore()
+    }
+  }, [mediaFilter, privacyFilter, activeTitleQuery, activeTagQuery, activeDateMin, activeDateMax, photos.length, pageInfo?.page, pageInfo?.pages, loadingMore, loading, handleLoadMore])
+
+  const hasAnyFilter = mediaFilter !== 'all' || privacyFilter !== 'all' || !!activeTitleQuery || !!activeTagQuery || !!activeDateMin || !!activeDateMax
+  const drawerBadgeCount = (privacyFilter !== 'all' ? 1 : 0) + (activeTagQuery ? 1 : 0) + ((activeDateMin || activeDateMax) ? 1 : 0)
+  const showDateInputs = dateMode === 'since' || dateMode === 'between'
   const hasMore = pageInfo ? pageInfo.page < pageInfo.pages : false
+
+  if (loading) return <div style={styles.centered}><p style={styles.mutedText}>Loading photos…</p></div>
+  if (error) return <div style={styles.centered}><p style={styles.mutedText}>{error}</p></div>
+  if (photos.length === 0) return <div style={styles.centered}><p style={styles.mutedText}>No photos in this album.</p></div>
 
   return (
     <div style={styles.container}>
-      {!selectMode && (
-        <div style={styles.toolbar}>
-          <div style={styles.segGroup}>
-            {(['all', 'photo', 'video'] as MediaFilter[]).map(v => (
-              <button key={v} style={{ ...styles.seg, ...(mediaFilter === v ? styles.segActive : {}) }} onClick={() => setMediaFilter(v)}>
-                {v === 'all' ? 'All' : v === 'photo' ? 'Photos' : 'Videos'}
-              </button>
-            ))}
-          </div>
-          <div style={styles.segGroup}>
-            {PRIVACY_OPTIONS.map(v => (
-              <button key={v} style={{ ...styles.seg, ...(privacyFilter === v ? styles.segActive : {}) }} onClick={() => setPrivacyFilter(v)}>
-                {PRIVACY_LABELS[v]}
-              </button>
-            ))}
-          </div>
-          <div style={styles.segGroup}>
-            {(['small', 'medium', 'large'] as GridSize[]).map(v => (
-              <button key={v} style={{ ...styles.seg, ...(gridSize === v ? styles.segActive : {}) }} onClick={() => setGridSize(v)}>
-                {v === 'small' ? 'S' : v === 'medium' ? 'M' : 'L'}
-              </button>
-            ))}
-          </div>
-          <select style={styles.sortSelect} value={sort} onChange={e => setSort(e.target.value as SortOrder)}>
-            <option value="album-order">Album order</option>
-            <option value="date-desc">Newest taken</option>
-            <option value="date-asc">Oldest taken</option>
-            <option value="newest-posted">Newest posted</option>
-            <option value="oldest-posted">Oldest posted</option>
-          </select>
+      {selectMode && hasAnyFilter && (
+        <div style={styles.selectModeCount}>
+          {filteredPhotos.length.toLocaleString()} matching · {photos.length.toLocaleString()} of {pageInfo?.total.toLocaleString() ?? '?'} loaded
         </div>
       )}
 
-      {filteredPhotos.length === 0 && photos.length > 0 && (
+      {!selectMode && (
+        <div style={styles.toolbarWrap}>
+
+          {/* ── Main row ── */}
+          <div style={styles.toolbar}>
+
+            <div style={styles.segGroup}>
+              {(['all', 'photo', 'video'] as MediaFilter[]).map(v => (
+                <button key={v} style={{ ...styles.seg, ...(mediaFilter === v ? styles.segActive : {}) }} onClick={() => setMediaFilter(v)}>
+                  {v === 'all' ? 'All' : v === 'photo' ? 'Photos' : 'Videos'}
+                </button>
+              ))}
+            </div>
+
+            <div style={styles.searchGroup}>
+              <span style={styles.searchIcon}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+              </span>
+              <select
+                style={styles.operatorSelect}
+                value={titleOperator}
+                onChange={e => setTitleOperator(e.target.value as SearchOperator)}
+              >
+                <option value="contains">Title contains</option>
+                <option value="starts">Starts with</option>
+                <option value="ends">Ends with</option>
+                <option value="exact">Exact match</option>
+              </select>
+              <input
+                style={styles.searchInput}
+                type="text"
+                placeholder="Search…"
+                value={titleQuery}
+                onChange={e => setTitleQuery(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && applyTitleSearch()}
+              />
+              {titleQuery && (
+                <button style={styles.searchClearBtn} onClick={() => { if (activeTitleQuery) dismissTitleSearch(); else setTitleQuery('') }}>✕</button>
+              )}
+            </div>
+
+            <button
+              style={{ ...styles.moreFiltersBtn, ...(drawerOpen ? styles.moreFiltersBtnActive : {}) }}
+              onClick={() => setDrawerOpen(o => !o)}
+            >
+              {drawerOpen ? 'Hide filters' : 'More filters'}
+              {drawerBadgeCount > 0 && !drawerOpen && (
+                <span style={styles.drawerBadge}>{drawerBadgeCount}</span>
+              )}
+            </button>
+
+            <div style={styles.segGroupDensity}>
+              {(['small', 'medium', 'large'] as GridSize[]).map(v => (
+                <button
+                  key={v}
+                  style={{ ...styles.densityBtn, ...(gridSize === v ? styles.densityBtnActive : {}) }}
+                  onClick={() => setGridSize(v)}
+                >
+                  <GridIcon size={v} />
+                </button>
+              ))}
+            </div>
+
+            <select style={styles.sortSelect} value={sort} onChange={e => setSort(e.target.value as SortOrder)}>
+              <option value="album-order">Default album order</option>
+              <option value="newest-posted">Newest posted</option>
+              <option value="oldest-posted">Oldest posted</option>
+              <option value="date-desc">Newest taken</option>
+              <option value="date-asc">Oldest taken</option>
+            </select>
+
+          </div>
+
+          {/* ── More filters drawer ── */}
+          {drawerOpen && (
+            <div style={styles.drawer}>
+
+              <div style={styles.drawerRow}>
+                <span style={styles.drawerLabel}>Privacy</span>
+                <div style={styles.segGroup}>
+                  {PRIVACY_OPTIONS.map(v => (
+                    <button key={v} style={{ ...styles.seg, ...(privacyFilter === v ? styles.segActive : {}) }} onClick={() => setPrivacyFilter(v)}>
+                      {PRIVACY_LABELS[v]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div style={styles.drawerRow}>
+                <span style={styles.drawerLabel}>Tags</span>
+                <div style={styles.searchGroup}>
+                  <input
+                    style={{ ...styles.searchInput, minWidth: '160px' }}
+                    type="text"
+                    placeholder="paris, travel…"
+                    value={tagQuery}
+                    onChange={e => setTagQuery(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && applyTagSearch()}
+                  />
+                  {tagQuery && (
+                    <button style={styles.searchClearBtn} onClick={() => { if (activeTagQuery) dismissTagSearch(); else setTagQuery('') }}>✕</button>
+                  )}
+                </div>
+                <div style={styles.segGroup}>
+                  {(['any', 'all'] as TagMode[]).map(v => (
+                    <button key={v} style={{ ...styles.seg, ...(tagMode === v ? styles.segActive : {}) }} onClick={() => setTagMode(v)}>
+                      {v}
+                    </button>
+                  ))}
+                </div>
+                <Tooltip text="Separate multiple tags with commas. 'Any' finds photos with at least one tag; 'All' requires every tag.">
+                  <span style={styles.tagHint}>?</span>
+                </Tooltip>
+                {tagQuery !== activeTagQuery && tagQuery && (
+                  <button style={styles.applyBtn} onClick={applyTagSearch}>Apply</button>
+                )}
+              </div>
+
+              <div style={styles.drawerRow}>
+                <span style={styles.drawerLabel}>Date</span>
+                <div style={styles.segGroup}>
+                  {(['taken', 'posted'] as DateRangeField[]).map(f => (
+                    <button key={f} style={{ ...styles.seg, ...(dateField === f ? styles.segActive : {}) }} onClick={() => setDateField(f)}>
+                      {f === 'taken' ? 'Taken' : 'Posted'}
+                    </button>
+                  ))}
+                </div>
+                <select style={styles.dateModeSelect} value={dateMode} onChange={e => handleDateModeChange(e.target.value as DateMode)}>
+                  <option value="all">All dates</option>
+                  <optgroup label="Quick ranges">
+                    <option value="last7">Last 7 days</option>
+                    <option value="last30">Last 30 days</option>
+                    <option value="thisYear">This year</option>
+                    <option value="lastYear">Last year</option>
+                  </optgroup>
+                  <optgroup label="Custom">
+                    <option value="since">Since a date…</option>
+                    <option value="between">Between two dates…</option>
+                  </optgroup>
+                </select>
+                {showDateInputs && (
+                  <div style={styles.dateInputsInline}>
+                    <input type="date" style={styles.dateInput} value={dateCustomMin} onChange={e => setDateCustomMin(e.target.value)} onKeyDown={e => e.key === 'Enter' && applyDateFilter()} />
+                    {dateMode === 'between' && (
+                      <><span style={styles.dateToLabel}>to</span>
+                      <input type="date" style={styles.dateInput} value={dateCustomMax} onChange={e => setDateCustomMax(e.target.value)} onKeyDown={e => e.key === 'Enter' && applyDateFilter()} /></>
+                    )}
+                    <button style={styles.applyBtn} onClick={applyDateFilter}>Apply</button>
+                  </div>
+                )}
+              </div>
+
+              <div style={{ ...styles.drawerRow, opacity: 0.35 }}>
+                <span style={styles.drawerLabel}>Camera</span>
+                <span style={styles.comingSoon}>Coming soon</span>
+              </div>
+
+            </div>
+          )}
+
+          {/* ── Active filter chips ── */}
+          {hasAnyFilter && (
+            <div style={styles.chipRow}>
+              {activeTitleQuery && (
+                <Chip label={`"${activeTitleQuery}"`} onDismiss={dismissTitleSearch} />
+              )}
+              {activeTagQuery && (
+                <Chip label={`Tags (${activeTagMode}): ${activeTagQuery}`} onDismiss={dismissTagSearch} />
+              )}
+              {(activeDateMin || activeDateMax) && (
+                <Chip label={formatDateChip(activeDateMin, activeDateMax, activeDateField)} onDismiss={dismissDateFilter} />
+              )}
+              {mediaFilter !== 'all' && (
+                <Chip label={mediaFilter === 'photo' ? 'Photos only' : 'Videos only'} onDismiss={() => setMediaFilter('all')} />
+              )}
+              {privacyFilter !== 'all' && (
+                <Chip label={`Privacy: ${PRIVACY_LABELS[privacyFilter]}`} onDismiss={() => setPrivacyFilter('all')} />
+              )}
+              <button style={styles.clearFiltersLink} onClick={clearAllFilters}>Clear all</button>
+            </div>
+          )}
+
+          <p style={styles.countLabel}>
+            {hasAnyFilter
+              ? `${filteredPhotos.length.toLocaleString()} matching · ${photos.length.toLocaleString()} of ${pageInfo?.total.toLocaleString() ?? '?'} loaded${hasMore ? (loadingMore ? ' · loading…' : ' · more below') : ''}`
+              : `${photos.length.toLocaleString()} of ${pageInfo?.total.toLocaleString() ?? '?'} loaded${hasMore ? ' · more below' : ''}`
+            }
+          </p>
+
+        </div>
+      )}
+
+      {filteredPhotos.length === 0 && photos.length > 0 && !loadingMore && !loading && (
         <div style={styles.emptyFilter}>
           <p style={styles.emptyFilterMsg}>No {mediaFilter !== 'all' ? mediaFilter + 's' : 'photos'} match the current filters.</p>
-          <button style={styles.clearFiltersBtn} onClick={() => { setMediaFilter('all'); setPrivacyFilter('all') }}>Clear filters</button>
+          <button style={styles.clearFiltersBtn} onClick={clearAllFilters}>Clear filters</button>
         </div>
       )}
 
@@ -191,7 +429,7 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
                 </div>
               )}
               {privacyLevel !== 'public' && (
-                <div style={styles.privacyBadge} title={privacyLevel === 'private' ? 'Private' : privacyLevel === 'friends' ? 'Friends only' : 'Family only'}>
+                <div style={styles.privacyBadge}>
                   <PrivacyIcon level={privacyLevel} />
                 </div>
               )}
@@ -217,6 +455,7 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
           )
         })}
       </div>
+
       {hasMore && (
         <div style={styles.loadMore}>
           <button style={styles.loadMoreBtn} onClick={handleLoadMore} disabled={loadingMore}>
@@ -229,33 +468,13 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
 }
 
 const styles: Record<string, React.CSSProperties> = {
+  ...sharedStyles,
+  // Album-specific
   container: { height: '100%', overflowY: 'auto', display: 'flex', flexDirection: 'column' },
-  center: { display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' },
-  message: { color: '#888', fontSize: '15px' },
-  toolbar: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '10px 12px 8px',
-    flexWrap: 'wrap' as const,
-    borderBottom: '1px solid #f0ede8'
-  },
-  segGroup: { display: 'flex', border: '1px solid #ddd', borderRadius: '6px', overflow: 'hidden' },
-  seg: { background: 'none', border: 'none', borderRight: '1px solid #ddd', padding: '5px 10px', fontSize: '12px', color: '#666', cursor: 'pointer', lineHeight: 1 },
-  segActive: { backgroundColor: '#f0ede8', color: '#111', fontWeight: '600' },
-  sortSelect: { fontSize: '12px', color: '#555', border: '1px solid #ddd', borderRadius: '6px', padding: '5px 8px', background: 'none', cursor: 'pointer', marginLeft: 'auto' },
   grid: { display: 'grid', gap: '4px', padding: '4px' },
-  tile: { position: 'relative', paddingBottom: '100%', overflow: 'hidden', cursor: 'pointer', backgroundColor: '#e8e4de' },
-  thumb: { position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' },
-  videoOverlay: { position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' },
-  privacyBadge: { position: 'absolute', top: '5px', left: '5px', width: '18px', height: '18px', borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.52)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2, cursor: 'default' },
-  overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0)', display: 'flex', alignItems: 'flex-end', padding: '8px', opacity: 0, transition: 'opacity 0.15s' },
-  overlayTitle: { color: '#fff', fontSize: '12px', fontWeight: '500', textShadow: '0 1px 3px rgba(0,0,0,0.8)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' },
+  // Album tile uses opacity transition for hover overlay; PhotoGrid conditionally renders its overlay instead
+  overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'flex-end', padding: '8px', opacity: 0, transition: 'opacity 0.15s' },
+  overlayTitle: { color: '#fff', fontSize: '12px', fontWeight: '500', textShadow: '0 1px 3px rgba(0,0,0,0.8)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', width: '100%' } as React.CSSProperties,
   loadMore: { padding: '16px', textAlign: 'center' },
   loadMoreBtn: { background: 'transparent', border: '1px solid #ccc', borderRadius: '6px', padding: '8px 20px', fontSize: '13px', color: '#555', cursor: 'pointer' },
-  selectBadge: { position: 'absolute' as const, top: '6px', right: '6px', width: '22px', height: '22px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 },
-  selectCheck: { color: '#fff', fontSize: '13px', fontWeight: 'bold', lineHeight: 1 },
-  emptyFilter: { display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', gap: '12px', padding: '48px 24px', textAlign: 'center' as const },
-  emptyFilterMsg: { color: '#888', fontSize: '14px', margin: 0 },
-  clearFiltersBtn: { background: 'none', border: '1px solid #ccc', borderRadius: '6px', padding: '6px 16px', fontSize: '13px', color: '#555', cursor: 'pointer' }
 }

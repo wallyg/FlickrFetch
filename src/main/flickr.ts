@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { FLICKR_API_KEY } from './config'
 import { getOAuthHeader } from './auth'
-import type { FlickrTokenData, FlickrUser, FlickrPhoto, PhotoPage, PhotoSize, PhotoInfo, FlickrAlbum, AlbumPage, FlickrCollection, FlickrSet } from '../shared/types'
+import type { FlickrTokenData, FlickrUser, FlickrPhoto, PhotoPage, PhotoSize, PhotoInfo, FlickrAlbum, AlbumPage, FlickrCollection, FlickrSet, CameraExif, PhotoSearchParams } from '../shared/types'
 
 const FLICKR_API_BASE = 'https://www.flickr.com/services/rest/'
 const USER_AGENT = 'FlickrFetch/0.1.0 (Electron desktop app; https://github.com/flickrfetch)'
@@ -12,6 +12,9 @@ interface FlickrPersonResponse {
   nsid: string
   iconfarm: number
   iconserver: string
+  ispro: number
+  datecreate?: string
+  photos?: { firstdate?: string | { _content: string }; firstdatetaken?: string; count?: number }
 }
 
 function buildAvatarUrl(person: FlickrPersonResponse): string {
@@ -22,13 +25,11 @@ function buildAvatarUrl(person: FlickrPersonResponse): string {
 }
 
 export async function getUserInfo(tokenData: FlickrTokenData): Promise<FlickrUser> {
-  // We already have name and NSID from the OAuth token exchange.
-  // Only call getInfo to get the avatar URL — fall back to default if it fails.
   let avatarUrl = DEFAULT_AVATAR
+  let isPro = false
+  let memberSince = new Date().getFullYear()
 
   try {
-    // Build the URL as a single string so the same URL is used for both
-    // the OAuth signature calculation and the actual HTTP request.
     const url =
       `${FLICKR_API_BASE}` +
       `?method=flickr.people.getInfo` +
@@ -37,29 +38,32 @@ export async function getUserInfo(tokenData: FlickrTokenData): Promise<FlickrUse
       `&format=json` +
       `&nojsoncallback=1`
 
-    // DEBUG
-    process.stderr.write(`[flickrfetch] getInfo url: ${url}\n`)
-
     const authHeader = getOAuthHeader(url, 'GET', tokenData)
     const response = await axios.get(url, {
       headers: { ...authHeader, 'User-Agent': USER_AGENT }
     })
 
-    process.stderr.write(`[flickrfetch] getInfo stat: ${response.data.stat}\n`)
-    process.stderr.write(`[flickrfetch] getInfo response: ${JSON.stringify(response.data).substring(0, 400)}\n`)
-
     if (response.data.stat === 'ok') {
-      avatarUrl = buildAvatarUrl(response.data.person)
+      const person: FlickrPersonResponse = response.data.person
+      avatarUrl = buildAvatarUrl(person)
+      isPro = person.ispro === 1
+      const rawDate = person.datecreate || person.photos?.firstdate
+      const dateTs = rawDate && typeof rawDate === 'object' ? rawDate._content : rawDate
+      if (dateTs && dateTs !== '0') {
+        memberSince = new Date(parseInt(dateTs, 10) * 1000).getFullYear()
+      }
     }
-  } catch (err) {
-    process.stderr.write(`[flickrfetch] getInfo failed, using default avatar: ${err}\n`)
+  } catch {
+    // fall through with defaults
   }
 
   return {
     nsid: tokenData.nsid,
     username: tokenData.username,
     realname: tokenData.realname,
-    avatarUrl
+    avatarUrl,
+    isPro,
+    memberSince
   }
 }
 
@@ -107,6 +111,22 @@ export async function getPhotoInfo(photoId: string, tokenData: FlickrTokenData):
     }
   }
 
+  const isPrivate =
+    photo.visibility?.ispublic === 0 &&
+    photo.visibility?.isfriend === 0 &&
+    photo.visibility?.isfamily === 0
+
+  let locationName: string | undefined
+  if (photo.location) {
+    const seen = new Set<string>()
+    const parts: string[] = []
+    for (const field of ['locality', 'region', 'country']) {
+      const val: string | undefined = photo.location[field]?._content
+      if (val && !seen.has(val)) { seen.add(val); parts.push(val) }
+    }
+    if (parts.length > 0) locationName = parts.join(', ')
+  }
+
   return {
     id: photo.id,
     title: photo.title?._content ?? '',
@@ -115,7 +135,32 @@ export async function getPhotoInfo(photoId: string, tokenData: FlickrTokenData):
     dateTaken,
     latitude,
     longitude,
-    ownerName: photo.owner?.realname || photo.owner?.username || ''
+    locationName,
+    ownerName: photo.owner?.realname || photo.owner?.username || '',
+    ownerPathAlias: photo.owner?.path_alias || photo.owner?.nsid || '',
+    license: photo.license ?? '0',
+    isPrivate,
+  }
+}
+
+// Follow Flickr's video redirect chain and return the final streamable CDN URL.
+// Flickr "play" URLs redirect to vp.flickr.com with the secret as implicit auth.
+// We fetch only bytes 0-0 so we don't download the video, just resolve the final URL.
+export async function resolveVideoUrl(sourceUrl: string): Promise<string> {
+  try {
+    const response = await axios.get(sourceUrl, {
+      maxRedirects: 10,
+      responseType: 'arraybuffer',
+      headers: {
+        'User-Agent': USER_AGENT,
+        'Range': 'bytes=0-0',
+      },
+      validateStatus: (s) => s < 400 || s === 416,
+    })
+    const finalUrl = (response.request as { res?: { responseUrl?: string } })?.res?.responseUrl
+    return finalUrl ?? sourceUrl
+  } catch {
+    return sourceUrl
   }
 }
 
@@ -195,16 +240,18 @@ export async function getAlbums(tokenData: FlickrTokenData, page: number = 1): P
   }
 }
 
-export async function getAlbumPhotos(albumId: string, tokenData: FlickrTokenData, page: number = 1): Promise<PhotoPage> {
+export async function getAlbumPhotos(albumId: string, tokenData: FlickrTokenData, page: number = 1, mediaType?: 'photo' | 'video'): Promise<PhotoPage> {
+  const mediaParam = mediaType ? `&media=${mediaType === 'photo' ? 'photos' : 'videos'}` : ''
   const url =
     `${FLICKR_API_BASE}` +
     `?method=flickr.photosets.getPhotos` +
     `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
     `&photoset_id=${encodeURIComponent(albumId)}` +
     `&user_id=${encodeURIComponent(tokenData.nsid)}` +
-    `&extras=${encodeURIComponent('url_q,date_taken,date_upload,media,ispublic,isfriend,isfamily')}` +
+    `&extras=${encodeURIComponent('url_q,date_taken,date_upload,media,ispublic,isfriend,isfamily,tags')}` +
     `&per_page=100` +
     `&page=${page}` +
+    `${mediaParam}` +
     `&format=json` +
     `&nojsoncallback=1`
 
@@ -227,7 +274,8 @@ export async function getAlbumPhotos(albumId: string, tokenData: FlickrTokenData
     datePosted: p.dateupload || undefined,
     ispublic: p.ispublic != null ? Number(p.ispublic) : undefined,
     isfriend: p.isfriend != null ? Number(p.isfriend) : undefined,
-    isfamily: p.isfamily != null ? Number(p.isfamily) : undefined
+    isfamily: p.isfamily != null ? Number(p.isfamily) : undefined,
+    tags: p.tags ? (p.tags as string).split(' ').filter(Boolean) : []
   }))
 
   return {
@@ -298,18 +346,55 @@ export async function getCollectionTree(tokenData: FlickrTokenData): Promise<Fli
   }
 }
 
-export async function getPhotos(tokenData: FlickrTokenData, page: number = 1, sort: string = 'date-posted-desc'): Promise<PhotoPage> {
-  const url =
-    `${FLICKR_API_BASE}` +
-    `?method=flickr.people.getPhotos` +
-    `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
-    `&user_id=${encodeURIComponent(tokenData.nsid)}` +
-    `&extras=${encodeURIComponent('url_q,date_taken,date_upload,media,ispublic,isfriend,isfamily')}` +
-    `&sort=${encodeURIComponent(sort)}` +
-    `&per_page=100` +
-    `&page=${page}` +
-    `&format=json` +
-    `&nojsoncallback=1`
+export async function getPhotos(tokenData: FlickrTokenData, page: number = 1, sort: string = 'date-posted-desc', search?: PhotoSearchParams): Promise<PhotoPage> {
+  const useSearch = !!(search?.query || search?.tagQuery || search?.dateMin || search?.dateMax)
+
+  let url: string
+  if (useSearch) {
+    url =
+      `${FLICKR_API_BASE}` +
+      `?method=flickr.photos.search` +
+      `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
+      `&user_id=${encodeURIComponent(tokenData.nsid)}` +
+      `&extras=${encodeURIComponent('url_q,date_taken,date_upload,media,ispublic,isfriend,isfamily')}` +
+      `&sort=${encodeURIComponent(sort)}` +
+      `&per_page=100` +
+      `&page=${page}` +
+      `&format=json` +
+      `&nojsoncallback=1`
+
+    if (search?.query) {
+      url += `&text=${encodeURIComponent(search.query)}`
+    }
+    if (search?.tagQuery) {
+      url += `&tags=${encodeURIComponent(search.tagQuery)}&tag_mode=${search.tagMode ?? 'any'}`
+    }
+    if (search?.dateField === 'taken') {
+      if (search?.dateMin) url += `&min_taken_date=${encodeURIComponent(search.dateMin)}`
+      if (search?.dateMax) url += `&max_taken_date=${encodeURIComponent(search.dateMax + ' 23:59:59')}`
+    } else if (search?.dateField === 'posted') {
+      if (search?.dateMin) {
+        const ts = Math.floor(new Date(search.dateMin).getTime() / 1000)
+        url += `&min_upload_date=${ts}`
+      }
+      if (search?.dateMax) {
+        const ts = Math.floor(new Date(search.dateMax + 'T23:59:59').getTime() / 1000)
+        url += `&max_upload_date=${ts}`
+      }
+    }
+  } else {
+    url =
+      `${FLICKR_API_BASE}` +
+      `?method=flickr.people.getPhotos` +
+      `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
+      `&user_id=${encodeURIComponent(tokenData.nsid)}` +
+      `&extras=${encodeURIComponent('url_q,date_taken,date_upload,media,ispublic,isfriend,isfamily')}` +
+      `&sort=${encodeURIComponent(sort)}` +
+      `&per_page=100` +
+      `&page=${page}` +
+      `&format=json` +
+      `&nojsoncallback=1`
+  }
 
   const authHeader = getOAuthHeader(url, 'GET', tokenData)
   const response = await axios.get(url, {
@@ -321,7 +406,7 @@ export async function getPhotos(tokenData: FlickrTokenData, page: number = 1, so
   }
 
   const data = response.data.photos
-  const photos: FlickrPhoto[] = (data.photo as Record<string, string>[]).map((p) => ({
+  let photos: FlickrPhoto[] = (data.photo as Record<string, string>[]).map((p) => ({
     id: p.id,
     title: p.title || 'Untitled',
     thumbnailUrl: p.url_q || '',
@@ -333,10 +418,66 @@ export async function getPhotos(tokenData: FlickrTokenData, page: number = 1, so
     isfamily: p.isfamily != null ? Number(p.isfamily) : undefined
   }))
 
+  // Client-side title operator filtering (starts/ends/exact send broader server query, then narrow by title)
+  if (search?.query && search.operator && search.operator !== 'contains') {
+    const q = search.query.toLowerCase()
+    photos = photos.filter(p => {
+      const t = p.title.toLowerCase()
+      if (search.operator === 'starts') return t.startsWith(q)
+      if (search.operator === 'ends') return t.endsWith(q)
+      if (search.operator === 'exact') return t === q
+      return true
+    })
+  }
+
   return {
     photos,
     page: Number(data.page),
     pages: Number(data.pages),
     total: Number(data.total)
   }
+}
+
+export async function getPhotoExif(photoId: string, tokenData: FlickrTokenData): Promise<CameraExif> {
+  const url =
+    `${FLICKR_API_BASE}` +
+    `?method=flickr.photos.getExif` +
+    `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
+    `&photo_id=${encodeURIComponent(photoId)}` +
+    `&format=json` +
+    `&nojsoncallback=1`
+
+  const authHeader = getOAuthHeader(url, 'GET', tokenData)
+  const response = await axios.get(url, {
+    headers: { ...authHeader, 'User-Agent': USER_AGENT }
+  })
+
+  if (response.data.stat !== 'ok') return {}
+
+  const photo = response.data.photo
+  const result: CameraExif = {}
+
+  if (photo.camera) result.camera = String(photo.camera)
+
+  const exifList: Array<{ tag: string; raw?: { _content: string }; clean?: { _content: string } }> =
+    Array.isArray(photo.exif) ? photo.exif : []
+
+  for (const entry of exifList) {
+    const val = entry.clean?._content || entry.raw?._content
+    if (!val) continue
+    const tag = entry.tag
+    if (!result.lens && (tag === 'LensModel' || tag === 'Lens' || tag === 'LensInfo')) {
+      result.lens = val
+    } else if (!result.aperture && (tag === 'FNumber' || tag === 'Aperture')) {
+      result.aperture = val.startsWith('f/') || val.startsWith('F/') ? val : `f/${val}`
+    } else if (!result.shutterSpeed && (tag === 'ExposureTime' || tag === 'ShutterSpeedValue')) {
+      result.shutterSpeed = val
+    } else if (!result.iso && (tag === 'ISO' || tag === 'ISOSpeedRatings')) {
+      result.iso = val
+    } else if (!result.focalLength && tag === 'FocalLength') {
+      result.focalLength = val
+    }
+  }
+
+  return result
 }

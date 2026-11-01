@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import splashImg from '../assets/splash.png'
 import type { FlickrUser } from '../../shared/types'
 
 interface LoginPageProps {
@@ -55,51 +56,55 @@ export default function LoginPage({ onAuthSuccess }: LoginPageProps): React.JSX.
   return (
     <div style={styles.container}>
       <div style={styles.card}>
-        <h1 style={styles.title}>FlickrFetch</h1>
-        <p style={styles.subtitle}>Download your Flickr photos with full metadata</p>
+        <div style={styles.header}>
+          <img src={splashImg} alt="FlickrFetch" style={styles.headerImg} />
+        </div>
+        <div style={styles.body}>
+          <p style={styles.subtitle}>Sign in to download your photos &amp; videos with full metadata</p>
 
-        {step === 'idle' && (
-          <button style={styles.button} onClick={handleConnect}>
-            Connect to Flickr
-          </button>
-        )}
-
-        {(step === 'waiting' || step === 'verifying') && (
-          <div style={styles.verifierSection}>
-            <p style={styles.instructions}>
-              Your browser opened Flickr's authorization page.<br />
-              After you click <strong>OK, I'LL AUTHORIZE IT</strong>, Flickr will show you a 9-digit code.<br />
-              Paste it below:
-            </p>
-            <input
-              style={styles.input}
-              type="text"
-              placeholder="e.g. 123-456-789"
-              value={verifierCode}
-              onChange={(e) => setVerifierCode(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleVerify() }}
-              disabled={step === 'verifying'}
-              autoFocus
-            />
-            <button
-              style={{
-                ...styles.button,
-                ...(step === 'verifying' ? styles.buttonDisabled : {})
-              }}
-              onClick={handleVerify}
-              disabled={step === 'verifying'}
-            >
-              {step === 'verifying' ? 'Connecting…' : 'Connect'}
+          {step === 'idle' && (
+            <button style={styles.button} onClick={handleConnect}>
+              Connect to Flickr
             </button>
-            <button style={styles.startOverButton} onClick={handleStartOver}>
-              Start over
-            </button>
-          </div>
-        )}
+          )}
 
-        {error && (
-          <p style={styles.errorText}>⚠️ {error}</p>
-        )}
+          {(step === 'waiting' || step === 'verifying') && (
+            <div style={styles.verifierSection}>
+              <p style={styles.instructions}>
+                Your browser opened Flickr's authorization page.<br />
+                After you click <strong>OK, I'LL AUTHORIZE IT</strong>, Flickr will show you a 9-digit code.<br />
+                Paste it below:
+              </p>
+              <input
+                style={styles.input}
+                type="text"
+                placeholder="e.g. 123-456-789"
+                value={verifierCode}
+                onChange={(e) => setVerifierCode(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleVerify() }}
+                disabled={step === 'verifying'}
+                autoFocus
+              />
+              <button
+                style={{
+                  ...styles.button,
+                  ...(step === 'verifying' ? styles.buttonDisabled : {})
+                }}
+                onClick={handleVerify}
+                disabled={step === 'verifying'}
+              >
+                {step === 'verifying' ? 'Connecting…' : 'Connect'}
+              </button>
+              <button style={styles.startOverButton} onClick={handleStartOver}>
+                Start over
+              </button>
+            </div>
+          )}
+
+          {error && (
+            <p style={styles.errorText}>⚠️ {error}</p>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -111,28 +116,36 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'center',
     height: '100vh',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#FEF4EA',
     fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif'
   },
   card: {
     backgroundColor: '#ffffff',
-    borderRadius: '12px',
-    padding: '48px 56px',
+    borderRadius: '16px',
+    padding: '0 0 36px 0',
     textAlign: 'center',
-    boxShadow: '0 2px 16px rgba(0,0,0,0.10)',
-    maxWidth: '420px',
-    width: '100%'
+    boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+    maxWidth: '400px',
+    width: '100%',
+    overflow: 'hidden'
   },
-  title: {
-    fontSize: '28px',
-    fontWeight: '700',
-    color: '#111',
-    margin: '0 0 8px 0'
+  header: {
+    width: '100%',
+    marginBottom: '0'
+  },
+  headerImg: {
+    width: '100%',
+    height: 'auto',
+    display: 'block',
+    borderRadius: '16px 16px 0 0'
+  },
+  body: {
+    padding: '0 32px 8px'
   },
   subtitle: {
-    fontSize: '15px',
-    color: '#666',
-    margin: '0 0 36px 0',
+    fontSize: '14px',
+    color: '#888',
+    margin: '20px 0 24px',
     lineHeight: '1.5'
   },
   button: {

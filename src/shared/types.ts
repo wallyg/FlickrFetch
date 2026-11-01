@@ -5,6 +5,8 @@ export interface FlickrUser {
   username: string
   realname: string
   avatarUrl: string
+  isPro: boolean
+  memberSince: number  // year extracted from datecreate Unix timestamp
 }
 
 export interface FlickrTokenData {
@@ -25,12 +27,16 @@ export interface FlickrPhoto {
   ispublic?: number
   isfriend?: number
   isfamily?: number
+  tags?: string[]        // populated when extras=tags is requested (album view)
 }
 
 export type FileNamingCore = 'title' | 'id' | 'id-title' | 'title-id'
 export type FileNamingSep = '.' | '-' | '_' | ' ' | '|'
 export type DateFormat = 'YYYY-MM-DD' | 'YYYY-MM-DD HH-MM-SS' | 'YYYY.MM.DD' | 'YYYY.MM.DD HH.MM.SS'
 export type PartPosition = 'off' | 'prefix' | 'suffix'
+export type CaseTransform = 'none' | 'lowercase' | 'uppercase'
+export type DownloadSize = 'original' | 'xlarge' | 'large' | 'medium' | 'small' | 'square'
+export type ConflictBehavior = 'skip' | 'rename' | 'overwrite'
 
 export interface FileNamingConfig {
   core: FileNamingCore
@@ -38,6 +44,9 @@ export interface FileNamingConfig {
   date: { position: PartPosition; format: DateFormat }
   sequence: { position: PartPosition }
   customText: { position: PartPosition; text: string }
+  caseTransform: CaseTransform
+  charSubstitution: boolean  // replace spaces in title with separator
+  sizeToken: { position: PartPosition }  // size indicator as prefix or suffix
 }
 
 export interface AppSettings {
@@ -45,6 +54,10 @@ export interface AppSettings {
   downloadFolder: string
   showDockProgress: boolean
   notifyOnComplete: boolean
+  conflictBehavior: ConflictBehavior
+  downloadSize: DownloadSize
+  openFinderOnComplete: boolean
+  metadata: MetadataSettings
 }
 
 export interface BatchProgress {
@@ -59,6 +72,20 @@ export interface BatchProgress {
   queuedCount?: number   // how many batches are waiting behind this one
   queuedAlbums?: { id: string; title: string; photoCount?: number; videoCount?: number }[]
   error?: string
+  skippedCount?: number
+}
+
+export interface MetadataSettings {
+  embedTitle: boolean
+  embedDescription: boolean
+  embedTags: boolean
+  embedDateTaken: boolean
+  embedCreator: boolean
+  embedGps: boolean
+  stripGpsFromPrivate: boolean
+  embedLicense: boolean
+  embedPhotoUrl: boolean
+  embedPhotoId: boolean
 }
 
 export interface PhotoInfo {
@@ -69,7 +96,11 @@ export interface PhotoInfo {
   dateTaken: string | null
   latitude: number | null
   longitude: number | null
+  locationName?: string
   ownerName: string
+  ownerPathAlias: string
+  license: string
+  isPrivate: boolean
 }
 
 export interface PhotoSize {
@@ -116,6 +147,29 @@ export interface FlickrCollection {
   iconUrl: string
   collections: FlickrCollection[]
   sets: FlickrSet[]
+}
+
+export interface CameraExif {
+  camera?: string       // make + model, e.g. "Canon EOS 5D Mark IV"
+  lens?: string
+  aperture?: string     // e.g. "f/2.8"
+  shutterSpeed?: string // e.g. "1/500 sec"
+  iso?: string          // e.g. "800"
+  focalLength?: string  // e.g. "85 mm"
+}
+
+export type SearchOperator = 'contains' | 'starts' | 'ends' | 'exact'
+export type DateRangeField = 'taken' | 'posted'
+export type TagMode = 'any' | 'all'
+
+export interface PhotoSearchParams {
+  query?: string
+  operator?: SearchOperator
+  tagQuery?: string
+  tagMode?: TagMode    // 'any' = OR across tags, 'all' = AND; defaults to 'any'
+  dateField?: DateRangeField
+  dateMin?: string   // YYYY-MM-DD
+  dateMax?: string   // YYYY-MM-DD
 }
 
 export type AuthStatus = 'loading' | 'unauthenticated' | 'authenticated' | 'error'

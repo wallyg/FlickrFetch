@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import type { FlickrUser, FlickrPhoto, FlickrAlbum, FlickrCollection, FlickrSet, BatchProgress } from '../../shared/types'
 import PhotoGrid from '../components/PhotoGrid'
 import PhotoDetail from '../components/PhotoDetail'
@@ -9,9 +9,9 @@ import CollectionList from '../components/CollectionList'
 import CollectionDetail from '../components/CollectionDetail'
 import DownloadQueueBar from '../components/DownloadQueueBar'
 import AboutModal from '../components/AboutModal'
-import wordmark from '../assets/wordmark.png'
 
-type MainView = 'photostream' | 'albums' | 'album-detail' | 'collections' | 'collection-detail'
+
+type MainView = 'photostream' | 'albums' | 'album-detail' | 'collections' | 'collection-detail' | 'photo-detail'
 
 interface MainPageProps {
   user: FlickrUser
@@ -22,13 +22,21 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
   const displayName = user.realname || user.username
   const [view, setView] = useState<MainView>('photostream')
   const [selectedAlbum, setSelectedAlbum] = useState<FlickrAlbum | null>(null)
-  const [selectedPhoto, setSelectedPhoto] = useState<FlickrPhoto | null>(null)
+  const [photoDetailIndex, setPhotoDetailIndex] = useState<number | null>(null)
+  const [photoDetailSource, setPhotoDetailSource] = useState<'photostream' | 'album'>('photostream')
+  const [photoDetailReturnView, setPhotoDetailReturnView] = useState<MainView>('photostream')
+  const [photostreamPageInfo, setPhotostreamPageInfo] = useState<{ page: number; pages: number } | null>(null)
+  const [albumPageInfo, setAlbumPageInfo] = useState<{ page: number; pages: number } | null>(null)
+  const [photostreamSort, setPhotostreamSort] = useState('date-posted-desc')
+  const [fetchingMoreDetail, setFetchingMoreDetail] = useState(false)
+  const waitingToAdvanceRef = useRef(false)
   const [showSettings, setShowSettings] = useState(false)
   const [albumsVisited, setAlbumsVisited] = useState(false)
   const [collectionsVisited, setCollectionsVisited] = useState(false)
   const [collectionPath, setCollectionPath] = useState<FlickrCollection[]>([])
   const [albumDetailOrigin, setAlbumDetailOrigin] = useState<'albums' | 'collections'>('albums')
   const [batchProgress, setBatchProgress] = useState<BatchProgress | null>(null)
+  const [completedBatches, setCompletedBatches] = useState<BatchProgress[]>([])
   const [aboutVersion, setAboutVersion] = useState<string | null>(null)
   // Album select state — independent from photostream so tab-switching preserves each
   const [albumSelectMode, setAlbumSelectMode] = useState(false)
@@ -40,17 +48,59 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
   const [photostreamLastClickedId, setPhotostreamLastClickedId] = useState<string | null>(null)
   const [loadedAlbumPhotos, setLoadedAlbumPhotos] = useState<FlickrPhoto[]>([])
   const [loadedPhotostreamPhotos, setLoadedPhotostreamPhotos] = useState<FlickrPhoto[]>([])
+  const [albumFilteredPhotos, setAlbumFilteredPhotos] = useState<FlickrPhoto[]>([])
+  const [photostreamFilteredPhotos, setPhotostreamFilteredPhotos] = useState<FlickrPhoto[]>([])
+  const [albumMediaFilter, setAlbumMediaFilter] = useState<'all' | 'photo' | 'video'>('all')
+  const [albumPrivacyFilter, setAlbumPrivacyFilter] = useState<'all' | 'public' | 'friends' | 'family' | 'private'>('all')
+  const handleBatchDismiss = useCallback(() => setBatchProgress(null), [])
+  const handleStackedDismiss = useCallback((idx: number) => setCompletedBatches(prev => prev.filter((_, i) => i !== idx)), [])
+  const handleDismissAll = useCallback(() => { setBatchProgress(null); setCompletedBatches([]) }, [])
   const [photostreamRefreshKey, setPhotostreamRefreshKey] = useState(0)
+  const [exifToolMissing, setExifToolMissing] = useState(false)
 
   useEffect(() => {
-    const unsubscribe = window.flickrAPI.onBatchProgress((p) => setBatchProgress(p))
+    window.flickrAPI.checkExifTool().then((available) => {
+      if (!available) setExifToolMissing(true)
+    })
+  }, [])
+
+  useEffect(() => {
+    const unsubscribe = window.flickrAPI.onBatchProgress((p) => {
+      setBatchProgress(prev => {
+        // When a new batch starts and the previous one was done, stack it
+        if (prev && prev.status === 'done' && p.status === 'running') {
+          setCompletedBatches(old => [prev, ...old])
+        }
+        return p
+      })
+    })
     return unsubscribe
   }, [])
+
+  // Auto-advance when new photos arrive after fetch-more was triggered at end of list
+  useEffect(() => {
+    if (!waitingToAdvanceRef.current || photoDetailIndex === null) return
+    const photos = photoDetailSource === 'photostream' ? loadedPhotostreamPhotos : loadedAlbumPhotos
+    if (photoDetailIndex < photos.length - 1) {
+      waitingToAdvanceRef.current = false
+      setPhotoDetailIndex(prev => (prev !== null ? prev + 1 : prev))
+    }
+  }, [loadedPhotostreamPhotos, loadedAlbumPhotos, photoDetailIndex, photoDetailSource])
 
   useEffect(() => {
     const unsubscribe = window.flickrAPI.onShowAbout((data) => setAboutVersion(data.version))
     return unsubscribe
   }, [])
+
+  useEffect(() => {
+    const unsubscribe = window.flickrAPI.onOpenSettings(() => setShowSettings(true))
+    return unsubscribe
+  }, [])
+
+  useEffect(() => {
+    const unsubscribe = window.flickrAPI.onMenuSignOut(() => onSignOut())
+    return unsubscribe
+  }, [onSignOut])
 
   const exitAlbumSelect = useCallback((): void => {
     setAlbumSelectMode(false); setAlbumSelectedIds(new Set()); setAlbumLastClickedId(null)
@@ -60,7 +110,10 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
     setPhotostreamSelectMode(false); setPhotostreamSelectedIds(new Set()); setPhotostreamLastClickedId(null)
   }, [])
 
-  const handleSelectAll = useCallback((): void => setAlbumSelectedIds(new Set(loadedAlbumPhotos.map((p) => p.id))), [loadedAlbumPhotos])
+  const handleSelectAll = useCallback((): void => {
+    const source = albumFilteredPhotos.length > 0 ? albumFilteredPhotos : loadedAlbumPhotos
+    setAlbumSelectedIds(new Set(source.map((p) => p.id)))
+  }, [albumFilteredPhotos, loadedAlbumPhotos])
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent): void => {
@@ -71,12 +124,16 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
       }
       if (e.metaKey && e.key === 'a') {
         if (albumSelectMode) { e.preventDefault(); handleSelectAll() }
-        else if (photostreamSelectMode) { e.preventDefault(); setPhotostreamSelectedIds(new Set(loadedPhotostreamPhotos.map(p => p.id))) }
+        else if (photostreamSelectMode) {
+          e.preventDefault()
+          const source = photostreamFilteredPhotos.length > 0 ? photostreamFilteredPhotos : loadedPhotostreamPhotos
+          setPhotostreamSelectedIds(new Set(source.map(p => p.id)))
+        }
       }
     }
     document.addEventListener('keydown', handleKey)
     return () => document.removeEventListener('keydown', handleKey)
-  }, [albumSelectMode, photostreamSelectMode, exitAlbumSelect, exitPhotostreamSelect, handleSelectAll, loadedPhotostreamPhotos])
+  }, [albumSelectMode, photostreamSelectMode, exitAlbumSelect, exitPhotostreamSelect, handleSelectAll, loadedPhotostreamPhotos, photostreamFilteredPhotos])
 
   const handleAlbumToggleSelect = (photo: FlickrPhoto, shiftKey: boolean): void => {
     if (shiftKey && albumLastClickedId) {
@@ -132,6 +189,71 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
     exitPhotostreamSelect()
   }
 
+  const handlePhotostreamPhotoSelect = useCallback((photo: FlickrPhoto): void => {
+    const idx = loadedPhotostreamPhotos.findIndex(p => p.id === photo.id)
+    if (idx === -1) return
+    setPhotoDetailIndex(idx)
+    setPhotoDetailSource('photostream')
+    setPhotoDetailReturnView(view)
+    setView('photo-detail')
+  }, [loadedPhotostreamPhotos, view])
+
+  const handleAlbumPhotoSelect = useCallback((photo: FlickrPhoto): void => {
+    const idx = loadedAlbumPhotos.findIndex(p => p.id === photo.id)
+    if (idx === -1) return
+    setPhotoDetailIndex(idx)
+    setPhotoDetailSource('album')
+    setPhotoDetailReturnView(view)
+    setView('photo-detail')
+  }, [loadedAlbumPhotos, view])
+
+  const handleClosePhotoDetail = useCallback((): void => {
+    setView(photoDetailReturnView)
+    setPhotoDetailIndex(null)
+  }, [photoDetailReturnView])
+
+  const handlePrevPhoto = useCallback((): void => {
+    if (photoDetailIndex === null || photoDetailIndex <= 0) return
+    setPhotoDetailIndex(photoDetailIndex - 1)
+  }, [photoDetailIndex])
+
+  const fetchMoreForDetail = useCallback(async (): Promise<void> => {
+    if (fetchingMoreDetail) return
+    if (photoDetailSource === 'photostream') {
+      if (!photostreamPageInfo || photostreamPageInfo.page >= photostreamPageInfo.pages) return
+      setFetchingMoreDetail(true)
+      try {
+        const result = await window.flickrAPI.getPhotos(photostreamPageInfo.page + 1, photostreamSort)
+        setLoadedPhotostreamPhotos(prev => [...prev, ...result.photos])
+        setPhotostreamPageInfo({ page: result.page, pages: result.pages })
+      } catch (_e) { /* silently ignore — nav buttons stay disabled */ } finally {
+        setFetchingMoreDetail(false)
+      }
+    } else {
+      if (!selectedAlbum || !albumPageInfo || albumPageInfo.page >= albumPageInfo.pages) return
+      setFetchingMoreDetail(true)
+      try {
+        const result = await window.flickrAPI.getAlbumPhotos(selectedAlbum.id, albumPageInfo.page + 1)
+        setLoadedAlbumPhotos(prev => [...prev, ...result.photos])
+        setAlbumPageInfo({ page: result.page, pages: result.pages })
+      } catch (_e) { /* silently ignore */ } finally {
+        setFetchingMoreDetail(false)
+      }
+    }
+  }, [fetchingMoreDetail, photoDetailSource, photostreamPageInfo, albumPageInfo, photostreamSort, selectedAlbum])
+
+  const handleNextPhoto = useCallback((): void => {
+    if (photoDetailIndex === null) return
+    const photos = photoDetailSource === 'photostream' ? loadedPhotostreamPhotos : loadedAlbumPhotos
+    if (photoDetailIndex < photos.length - 1) {
+      setPhotoDetailIndex(photoDetailIndex + 1)
+      if (photoDetailIndex >= photos.length - 4) fetchMoreForDetail()
+    } else {
+      waitingToAdvanceRef.current = true
+      fetchMoreForDetail()
+    }
+  }, [photoDetailIndex, photoDetailSource, loadedPhotostreamPhotos, loadedAlbumPhotos, fetchMoreForDetail])
+
   const handleAlbumSelect = (album: FlickrAlbum): void => {
     setSelectedAlbum(album)
     setAlbumDetailOrigin('albums')
@@ -171,10 +293,27 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
 
   const currentCollection = collectionPath[collectionPath.length - 1] ?? null
 
+  const detailPhotos = photoDetailSource === 'photostream' ? loadedPhotostreamPhotos : loadedAlbumPhotos
+  const detailPhoto = photoDetailIndex !== null ? (detailPhotos[photoDetailIndex] ?? null) : null
+  const detailPageInfo = photoDetailSource === 'photostream' ? photostreamPageInfo : albumPageInfo
+  const detailHasMore = detailPageInfo !== null && detailPageInfo.page < detailPageInfo.pages
+  const detailSourceName = photoDetailSource === 'photostream' ? 'Photostream' : (selectedAlbum?.title ?? 'Album')
+
   return (
     <div style={styles.container}>
+      {exifToolMissing && (
+        <div style={styles.exifBanner}>
+          <span style={styles.exifBannerText}>
+            <strong>ExifTool not found.</strong> Photos will download without embedded metadata.
+            Install it to enable metadata: <code style={styles.exifCode}>brew install exiftool</code>
+          </span>
+          <button style={styles.exifBannerDismiss} onClick={() => setExifToolMissing(false)}>✕</button>
+        </div>
+      )}
       <header style={styles.header}>
-        <img src={wordmark} alt="FlickrFetch" style={styles.wordmark} />
+        <span style={styles.wordmark}>
+          <span style={{ color: '#0063DC' }}>Flickr</span><span style={{ color: '#FF0084' }}>Fetch</span>
+        </span>
         <div style={styles.userInfo}>
           <img
             src={user.avatarUrl}
@@ -185,8 +324,11 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             }}
           />
           <div style={styles.userText}>
-            <span style={styles.userName}>{displayName}</span>
-            <span style={styles.userHandle}>@{user.username}</span>
+            <div style={styles.userNameRow}>
+              <span style={styles.userName}>{displayName}</span>
+              {user.isPro && <span style={styles.proBadge}>PRO</span>}
+            </div>
+            <span style={styles.userHandle}>@{user.username} · Flickring since {user.memberSince}</span>
           </div>
         </div>
         <div style={styles.headerActions}>
@@ -245,7 +387,12 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
                 <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
               </svg>
             </button>
-            <button style={styles.selectButton} onClick={() => setPhotostreamSelectMode(true)}>Select</button>
+            <button style={styles.selectButton} onClick={() => setPhotostreamSelectMode(true)}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <rect x="2" y="3" width="7" height="7" rx="1"/><rect x="13" y="3" width="7" height="7" rx="1"/><rect x="2" y="14" width="7" height="7" rx="1"/><path d="M14 17l2 2 4-4"/>
+              </svg>
+              Select Photos
+            </button>
           </div>
         )}
       </div>
@@ -268,20 +415,25 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
               <button
                 style={styles.downloadAllButton}
                 onClick={async () => {
-                  const result = await window.flickrAPI.startBatch(selectedAlbum.id, selectedAlbum.title, selectedAlbum.photoCount, selectedAlbum.videoCount)
+                  const mt = albumMediaFilter !== 'all' ? albumMediaFilter : undefined
+                  const pf = albumPrivacyFilter !== 'all' ? albumPrivacyFilter : undefined
+                  const result = await window.flickrAPI.startBatch(selectedAlbum.id, selectedAlbum.title, selectedAlbum.photoCount, selectedAlbum.videoCount, false, mt, pf)
                   if (result.alreadyQueued) {
                     const ok = await window.flickrAPI.confirm(
                       `"${selectedAlbum.title}" is already downloading or queued.`,
                       'Do you want to add it to the queue again?'
                     )
-                    if (ok) window.flickrAPI.startBatch(selectedAlbum.id, selectedAlbum.title, selectedAlbum.photoCount, selectedAlbum.videoCount, true)
+                    if (ok) window.flickrAPI.startBatch(selectedAlbum.id, selectedAlbum.title, selectedAlbum.photoCount, selectedAlbum.videoCount, true, mt, pf)
                   }
                 }}
               >
                 ↓ Download All
               </button>
               <button style={styles.selectButton} onClick={() => setAlbumSelectMode(true)}>
-                Select
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <rect x="2" y="3" width="7" height="7" rx="1"/><rect x="13" y="3" width="7" height="7" rx="1"/><rect x="2" y="14" width="7" height="7" rx="1"/><path d="M14 17l2 2 4-4"/>
+                </svg>
+                Select Photos
               </button>
             </>
           ) : (
@@ -337,11 +489,14 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
         <div style={view === 'photostream' ? styles.tabPane : styles.tabPaneHidden}>
           <PhotoGrid
             key={photostreamRefreshKey}
-            onPhotoSelect={setSelectedPhoto}
+            onPhotoSelect={handlePhotostreamPhotoSelect}
             selectMode={photostreamSelectMode}
             selectedIds={photostreamSelectedIds}
             onToggleSelect={handlePhotostreamToggleSelect}
             onPhotosLoaded={setLoadedPhotostreamPhotos}
+            onPageInfo={(page, pages) => setPhotostreamPageInfo({ page, pages })}
+            onSortChange={sort => setPhotostreamSort(sort)}
+            onFilteredPhotosChange={setPhotostreamFilteredPhotos}
           />
         </div>
         {albumsVisited && (
@@ -361,28 +516,50 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             onSetSelect={handleSetSelect}
           />
         )}
-        {view === 'album-detail' && selectedAlbum && (
-          <AlbumPhotoGrid
-            albumId={selectedAlbum.id}
-            onPhotoSelect={setSelectedPhoto}
-            selectMode={albumSelectMode}
-            selectedIds={albumSelectedIds}
-            onToggleSelect={handleAlbumToggleSelect}
-            onPhotosLoaded={setLoadedAlbumPhotos}
-          />
+        {selectedAlbum && (
+          <div style={view === 'album-detail' ? styles.tabPane : styles.tabPaneHidden}>
+            <AlbumPhotoGrid
+              albumId={selectedAlbum.id}
+              onPhotoSelect={handleAlbumPhotoSelect}
+              selectMode={albumSelectMode}
+              selectedIds={albumSelectedIds}
+              onToggleSelect={handleAlbumToggleSelect}
+              onPhotosLoaded={setLoadedAlbumPhotos}
+              onPageInfo={(page, pages) => setAlbumPageInfo({ page, pages })}
+              onFilteredPhotosChange={setAlbumFilteredPhotos}
+              onMediaFilterChange={setAlbumMediaFilter}
+              onPrivacyFilterChange={setAlbumPrivacyFilter}
+            />
+          </div>
         )}
-        {selectedPhoto && (
-          <PhotoDetail photo={selectedPhoto} onClose={() => setSelectedPhoto(null)} />
+        {detailPhoto && (
+          <div style={view === 'photo-detail' ? styles.tabPane : styles.tabPaneHidden}>
+            <PhotoDetail
+              photo={detailPhoto}
+              index={photoDetailIndex!}
+              total={detailPhotos.length}
+              hasMore={detailHasMore}
+              canGoPrev={photoDetailIndex! > 0}
+              canGoNext={photoDetailIndex! < detailPhotos.length - 1 || detailHasMore}
+              onPrev={handlePrevPhoto}
+              onNext={handleNextPhoto}
+              onClose={handleClosePhotoDetail}
+              sourceName={detailSourceName}
+            />
+          </div>
         )}
       </main>
 
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
       {aboutVersion && <AboutModal version={aboutVersion} onClose={() => setAboutVersion(null)} />}
 
-      {batchProgress && batchProgress.status !== 'error' && (
+      {(batchProgress && batchProgress.status !== 'error' || completedBatches.length > 0) && (
         <DownloadQueueBar
-          progress={batchProgress}
-          onDismiss={() => setBatchProgress(null)}
+          progress={batchProgress && batchProgress.status !== 'error' ? batchProgress : null}
+          completedBatches={completedBatches}
+          onDismiss={handleBatchDismiss}
+          onStackedDismiss={handleStackedDismiss}
+          onDismissAll={handleDismissAll}
         />
       )}
     </div>
@@ -397,6 +574,37 @@ const styles: Record<string, React.CSSProperties> = {
     fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
     backgroundColor: '#f5f5f5'
   },
+  exifBanner: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '12px',
+    padding: '10px 20px',
+    backgroundColor: '#FFF3CD',
+    borderBottom: '1px solid #F5C542',
+    flexShrink: 0
+  },
+  exifBannerText: {
+    fontSize: '13px',
+    color: '#5A4A00',
+    lineHeight: '1.5'
+  },
+  exifCode: {
+    backgroundColor: 'rgba(0,0,0,0.08)',
+    borderRadius: '4px',
+    padding: '1px 5px',
+    fontFamily: 'ui-monospace, Menlo, monospace',
+    fontSize: '12px'
+  },
+  exifBannerDismiss: {
+    background: 'none',
+    border: 'none',
+    color: '#888',
+    cursor: 'pointer',
+    fontSize: '14px',
+    padding: '2px 4px',
+    flexShrink: 0
+  },
   header: {
     display: 'flex',
     alignItems: 'center',
@@ -406,8 +614,11 @@ const styles: Record<string, React.CSSProperties> = {
     borderBottom: '1px solid #e8e4de'
   },
   wordmark: {
-    height: '28px',
-    width: 'auto'
+    fontSize: '22px',
+    fontWeight: '700',
+    letterSpacing: '-0.02em',
+    lineHeight: 1,
+    flexShrink: 0,
   },
   userInfo: {
     display: 'flex',
@@ -423,15 +634,32 @@ const styles: Record<string, React.CSSProperties> = {
   },
   userText: {
     display: 'flex',
-    flexDirection: 'column'
+    flexDirection: 'column',
+    gap: '1px'
+  },
+  userNameRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px'
   },
   userName: {
     fontSize: '15px',
     fontWeight: '600',
     color: '#111'
   },
+  proBadge: {
+    fontSize: '9px',
+    fontWeight: '700',
+    color: '#FF0084',
+    backgroundColor: 'rgba(255,0,132,0.1)',
+    border: '1px solid rgba(255,0,132,0.3)',
+    borderRadius: '4px',
+    padding: '1px 5px',
+    letterSpacing: '0.06em',
+    lineHeight: '1.4'
+  },
   userHandle: {
-    fontSize: '13px',
+    fontSize: '12px',
     color: '#888'
   },
   tabBar: {
@@ -552,7 +780,10 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '13px',
     color: '#555',
     cursor: 'pointer',
-    flexShrink: 0
+    flexShrink: 0,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px'
   },
   doneButton: {
     background: 'none',

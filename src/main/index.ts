@@ -2,10 +2,11 @@ import { app, BrowserWindow, ipcMain, shell, dialog, Menu, Notification } from '
 import { join } from 'path'
 import { readFileSync } from 'fs'
 import { startOAuthFlow, verifyOAuth, loadToken, clearToken } from './auth'
-import { getUserInfo, getPhotos, getPhotoSizes, getPhotoInfo, getAlbums, getAlbumPhotos, getCollectionTree } from './flickr'
+import { getUserInfo, getPhotos, getPhotoSizes, getPhotoInfo, getPhotoExif, getAlbums, getAlbumPhotos, getCollectionTree, resolveVideoUrl } from './flickr'
 import { downloadPhoto, downloadToFolder } from './downloader'
-import { loadSettings, saveSettings, ensureDownloadFolder } from './settings'
-import type { AppSettings, FileNamingConfig, PhotoInfo, BatchProgress } from '../shared/types'
+import { isExifToolAvailable } from './exiftool'
+import { loadSettings, saveSettings, resetSettings, ensureDownloadFolder } from './settings'
+import type { AppSettings, FileNamingConfig, PhotoInfo, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams } from '../shared/types'
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return Promise.race([
@@ -26,15 +27,28 @@ function formatDate(dateTaken: string, format: string): string {
   }
 }
 
+const SIZE_TOKEN_MAP: Record<string, string> = {
+  original: 'o',
+  xlarge: 'xl',
+  large: 'l',
+  medium: 'm',
+  small: 's',
+  square: 'sq'
+}
+
 function buildFilename(
   config: FileNamingConfig,
   photoId: string,
   title: string,
   info: PhotoInfo,
-  seqNum?: number
+  seqNum?: number,
+  downloadSize?: string
 ): string {
   const s = config.separator
-  const safeTitle = (title || photoId).replace(/[/\\:]/g, '_').trim()
+  const rawTitle = (title || photoId).replace(/[/\\:*?"<>|]/g, '_').trim()
+  const safeTitle = config.charSubstitution
+    ? rawTitle.replace(/\s+/g, s)
+    : rawTitle
 
   let core: string
   switch (config.core) {
@@ -59,16 +73,25 @@ function buildFilename(
   if (config.customText.position !== 'off' && ct) {
     config.customText.position === 'prefix' ? pre.push(ct) : suf.push(ct)
   }
+  if (config.sizeToken?.position && config.sizeToken.position !== 'off' && downloadSize) {
+    const token = SIZE_TOKEN_MAP[downloadSize] ?? downloadSize
+    config.sizeToken.position === 'prefix' ? pre.push(token) : suf.push(token)
+  }
 
-  return [...pre, core, ...suf].join(s)
+  const assembled = [...pre, core, ...suf].join(s)
+  switch (config.caseTransform) {
+    case 'lowercase': return assembled.toLowerCase()
+    case 'uppercase': return assembled.toUpperCase()
+    default: return assembled
+  }
 }
 
 let mainWindow: BrowserWindow | null = null
 
 function createSplash(): BrowserWindow {
   const splash = new BrowserWindow({
-    width: 480,
-    height: 360,
+    width: 600,
+    height: 400,
     frame: false,
     transparent: true,
     hasShadow: false,
@@ -92,41 +115,34 @@ function createSplash(): BrowserWindow {
 <meta charset="UTF-8">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { width: 480px; height: 360px; background: transparent; overflow: hidden; }
+  html, body { width: 600px; height: 400px; background: transparent; overflow: hidden; }
   .card {
-    width: 420px;
-    height: 300px;
+    width: 540px;
+    height: 340px;
     margin: 30px;
-    background: #FCFAF6;
+    background: #FEF4EA;
     border-radius: 20px;
     box-shadow: 0 16px 48px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.10);
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
-    padding: 28px 20px 20px;
+    justify-content: center;
+    padding: 24px 24px 18px;
     -webkit-app-region: drag;
     overflow: hidden;
   }
-  img.splash { width: 280px; height: auto; margin-bottom: 10px; }
-  .tagline {
-    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-    font-size: 13px;
-    color: #999;
-    letter-spacing: 0.02em;
-    margin-bottom: auto;
-  }
+  img.splash { width: 100%; height: auto; }
   .meta {
     font-family: -apple-system, BlinkMacSystemFont, sans-serif;
     font-size: 11px;
     color: #bbb;
+    margin-top: 12px;
   }
 </style>
 </head>
 <body>
   <div class="card">
     <img class="splash" src="data:image/png;base64,${splashB64}" />
-    <p class="tagline">Your Flickr, your files.</p>
     <p class="meta">v${version} &nbsp;·&nbsp; © 2026 Wally Gobetz</p>
   </div>
 </body>
@@ -160,6 +176,8 @@ function createWindow(): void {
 }
 
 // IPC Handlers
+
+ipcMain.handle('exiftool:check', () => isExifToolAvailable())
 
 // Step 1: Get a request token and open the Flickr authorize page in the browser
 ipcMain.handle('auth:start', async () => {
@@ -211,10 +229,10 @@ ipcMain.handle('auth:getState', async () => {
 })
 
 // Fetch a page of the authenticated user's photos
-ipcMain.handle('photos:getPage', async (_event, page: number, sort?: string) => {
+ipcMain.handle('photos:getPage', async (_event, page: number, sort?: string, search?: PhotoSearchParams) => {
   const tokenData = loadToken()
   if (!tokenData) throw new Error('Not authenticated')
-  return getPhotos(tokenData, page, sort)
+  return getPhotos(tokenData, page, sort, search)
 })
 
 // Get available sizes for a photo (used by the detail modal for preview + download)
@@ -224,10 +242,22 @@ ipcMain.handle('photos:getSizes', async (_event, photoId: string) => {
   return getPhotoSizes(photoId, tokenData)
 })
 
+// Get sizes + full info + EXIF for a photo in one parallel call (used by photo detail view)
+ipcMain.handle('photos:getDetail', async (_event, photoId: string) => {
+  const tokenData = loadToken()
+  if (!tokenData) throw new Error('Not authenticated')
+  const [sizes, info, exif] = await Promise.all([
+    getPhotoSizes(photoId, tokenData),
+    getPhotoInfo(photoId, tokenData),
+    getPhotoExif(photoId, tokenData).catch((): CameraExif => ({}))
+  ])
+  return { sizes, info, exif }
+})
+
 // Download a photo: opens a save dialog then streams the file to disk
 let activeDownloadController: AbortController | null = null
 
-ipcMain.handle('photos:download', async (_event, photoId: string, photoTitle: string) => {
+ipcMain.handle('photos:download', async (_event, photoId: string, photoTitle: string, downloadSize?: DownloadSize) => {
   const tokenData = loadToken()
   if (!tokenData) throw new Error('Not authenticated')
   if (!mainWindow) throw new Error('No window available')
@@ -237,9 +267,10 @@ ipcMain.handle('photos:download', async (_event, photoId: string, photoTitle: st
       getPhotoSizes(photoId, tokenData),
       getPhotoInfo(photoId, tokenData)
     ])
-    const { fileNaming } = loadSettings()
-    const filename = buildFilename(fileNaming, photoId, photoTitle, photoInfo)
-    const filePath = await downloadPhoto(sizes, filename, mainWindow, activeDownloadController.signal, photoInfo)
+    const { fileNaming, metadata, downloadSize: globalDownloadSize } = loadSettings()
+    const effectiveSize = downloadSize ?? globalDownloadSize
+    const filename = buildFilename(fileNaming, photoId, photoTitle, photoInfo, undefined, effectiveSize)
+    const filePath = await downloadPhoto(sizes, filename, mainWindow, activeDownloadController.signal, photoInfo, metadata, effectiveSize)
     return { filePath }
   } finally {
     activeDownloadController = null
@@ -274,6 +305,8 @@ ipcMain.handle('collections:getTree', async () => {
 // Settings
 ipcMain.handle('settings:get', () => loadSettings())
 ipcMain.handle('settings:set', (_event, settings: AppSettings) => saveSettings(settings))
+ipcMain.handle('settings:reset', () => resetSettings())
+ipcMain.handle('video:resolveUrl', (_event, sourceUrl: string) => resolveVideoUrl(sourceUrl))
 
 // Folder picker dialog
 ipcMain.handle('shell:pickFolder', async () => {
@@ -293,6 +326,8 @@ interface BatchJob {
   albumTitle: string
   photoCount?: number
   videoCount?: number
+  mediaType?: 'photo' | 'video'
+  privacyFilter?: string
 }
 
 let batchQueue: BatchJob[] = []
@@ -300,6 +335,7 @@ let activeBatchController: AbortController | null = null
 let activeBatchAlbumId: string | null = null
 let lastBatchProgress: BatchProgress | null = null
 let batchIdCounter = 0
+
 
 function enqueueBatch(job: Omit<BatchJob, 'id'>): void {
   const jobWithId: BatchJob = { ...job, id: String(++batchIdCounter) }
@@ -324,7 +360,7 @@ async function runNextBatch(): Promise<void> {
   activeBatchController = new AbortController()
   try {
     if (job.type === 'album') {
-      await runAlbumBatch(job.albumId!, job.albumTitle)
+      await runAlbumBatch(job.albumId!, job.albumTitle, job.mediaType, job.privacyFilter)
     } else {
       await runSelectedBatch(job.photos!, job.albumTitle)
     }
@@ -339,13 +375,13 @@ async function runNextBatch(): Promise<void> {
   runNextBatch()
 }
 
-async function runAlbumBatch(albumId: string, albumTitle: string): Promise<void> {
+async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'photo' | 'video', privacyFilter?: string): Promise<void> {
   if (!mainWindow) return
   const tokenData = loadToken()
   if (!tokenData) return
 
   activeBatchAlbumId = albumId
-  const { fileNaming, downloadFolder, showDockProgress, notifyOnComplete } = loadSettings()
+  const { fileNaming, downloadFolder, showDockProgress, notifyOnComplete, conflictBehavior, downloadSize, openFinderOnComplete, metadata } = loadSettings()
   const safeAlbumTitle = albumTitle.replace(/[/\\:*?"<>|]/g, '_').trim()
   const albumFolder = join(downloadFolder, safeAlbumTitle)
   ensureDownloadFolder(albumFolder)
@@ -356,7 +392,7 @@ async function runAlbumBatch(albumId: string, albumTitle: string): Promise<void>
     mainWindow?.webContents.send('batch:progress', full)
     if (showDockProgress) {
       if (p.status === 'running' && p.total > 0) {
-        mainWindow?.setProgressBar(2)
+        mainWindow?.setProgressBar(p.current / p.total)
       } else {
         mainWindow?.setProgressBar(-1)
       }
@@ -365,55 +401,80 @@ async function runAlbumBatch(albumId: string, albumTitle: string): Promise<void>
 
   let page = 1
   let pages = 1
-  const allPhotos: { id: string; title: string }[] = []
+  const allPhotos: { id: string; title: string; ispublic?: number; isfriend?: number; isfamily?: number }[] = []
 
   do {
-    const result = await getAlbumPhotos(albumId, tokenData, page)
-    allPhotos.push(...result.photos.map((p) => ({ id: p.id, title: p.title })))
+    const result = await getAlbumPhotos(albumId, tokenData, page, mediaType)
+    allPhotos.push(...result.photos.map((p) => ({ id: p.id, title: p.title, ispublic: p.ispublic, isfriend: p.isfriend, isfamily: p.isfamily })))
     pages = result.pages
     page++
   } while (page <= pages)
 
-  const total = allPhotos.length
+  const getPrivacyLevel = (p: { ispublic?: number; isfriend?: number; isfamily?: number }): string => {
+    if (p.ispublic === 1) return 'public'
+    if (p.isfriend === 1) return 'friends'
+    if (p.isfamily === 1) return 'family'
+    return 'private'
+  }
+  const filteredBatch = (!privacyFilter || privacyFilter === 'all')
+    ? allPhotos
+    : allPhotos.filter(p => getPrivacyLevel(p) === privacyFilter)
+
+  const total = filteredBatch.length
   sendProgress({
     current: 0, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null,
-    status: 'running', allTitles: allPhotos.map((p) => p.title)
+    status: 'running', allTitles: filteredBatch.map((p) => p.title)
   })
 
   let albumSeqNum = 1
-  for (let i = 0; i < allPhotos.length; i++) {
+  let lastFilePath: string | null = null
+  let skippedCount = 0
+  for (let i = 0; i < filteredBatch.length; i++) {
     if (activeBatchController?.signal.aborted) {
       activeBatchAlbumId = null
-      sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled' })
+      sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled', skippedCount })
       return
     }
 
-    const photo = allPhotos[i]
-    sendProgress({ current: i, total, albumTitle, activeTitle: photo.title, latestTitle: '', latestFilePath: null, status: 'running' })
+    const photo = filteredBatch[i]
+    sendProgress({ current: i, total, albumTitle, activeTitle: photo.title, latestTitle: '', latestFilePath: null, status: 'running', skippedCount })
 
     try {
       const [sizes, photoInfo] = await Promise.all([
         withTimeout(getPhotoSizes(photo.id, tokenData), 30000),
         withTimeout(getPhotoInfo(photo.id, tokenData), 30000)
       ])
-      const filename = buildFilename(fileNaming, photo.id, photo.title, photoInfo, albumSeqNum++)
-      const filePath = await downloadToFolder(sizes, filename, albumFolder, activeBatchController?.signal, photoInfo)
-      sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: filePath, status: 'running' })
+      const filename = buildFilename(fileNaming, photo.id, photo.title, photoInfo, albumSeqNum++, downloadSize)
+      const filePath = await downloadToFolder(sizes, filename, albumFolder, activeBatchController?.signal, photoInfo, conflictBehavior, downloadSize, metadata)
+      if (filePath) {
+        lastFilePath = filePath
+        sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: filePath, status: 'running', skippedCount })
+      } else {
+        skippedCount++
+        sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'running', skippedCount })
+      }
     } catch (err) {
       if ((err as { name?: string }).name === 'AbortError' || activeBatchController?.signal.aborted) {
         activeBatchAlbumId = null
-        sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled' })
+        sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled', skippedCount })
         return
       }
       process.stderr.write(`[flickrfetch] batch skip ${photo.id}: ${err}\n`)
-      sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: null, status: 'running' })
+      sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: null, status: 'running', skippedCount })
     }
   }
 
   activeBatchAlbumId = null
-  sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'done' })
+  const downloadedCount = total - skippedCount
+  sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'done', skippedCount })
   if (notifyOnComplete && Notification.isSupported()) {
-    new Notification({ title: 'FlickrFetch', body: `Downloaded ${total} photos from "${albumTitle}"` }).show()
+    const body = skippedCount > 0
+      ? `Downloaded ${downloadedCount}, skipped ${skippedCount} from "${albumTitle}"`
+      : `Downloaded ${total} photos from "${albumTitle}"`
+    new Notification({ title: 'FlickrFetch', body }).show()
+  }
+  if (openFinderOnComplete && lastFilePath) {
+    shell.showItemInFolder(lastFilePath)
   }
 }
 
@@ -422,7 +483,7 @@ async function runSelectedBatch(photos: { id: string; title: string }[], albumTi
   const tokenData = loadToken()
   if (!tokenData) return
 
-  const { fileNaming, downloadFolder, showDockProgress, notifyOnComplete } = loadSettings()
+  const { fileNaming, downloadFolder, showDockProgress, notifyOnComplete, conflictBehavior, downloadSize, openFinderOnComplete, metadata } = loadSettings()
   const baseTitle = albumTitle.replace(/ \(\d+ selected\)$/, '')
   const targetFolder = baseTitle === 'Photostream'
     ? downloadFolder
@@ -435,7 +496,7 @@ async function runSelectedBatch(photos: { id: string; title: string }[], albumTi
     mainWindow?.webContents.send('batch:progress', full)
     if (showDockProgress) {
       if (p.status === 'running' && p.total > 0) {
-        mainWindow?.setProgressBar(2)
+        mainWindow?.setProgressBar(p.current / p.total)
       } else {
         mainWindow?.setProgressBar(-1)
       }
@@ -449,45 +510,60 @@ async function runSelectedBatch(photos: { id: string; title: string }[], albumTi
   })
 
   let selSeqNum = 1
+  let lastFilePath: string | null = null
+  let skippedCount = 0
   for (let i = 0; i < photos.length; i++) {
     if (activeBatchController?.signal.aborted) {
-      sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled' })
+      sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled', skippedCount })
       return
     }
 
     const photo = photos[i]
-    sendProgress({ current: i, total, albumTitle, activeTitle: photo.title, latestTitle: '', latestFilePath: null, status: 'running' })
+    sendProgress({ current: i, total, albumTitle, activeTitle: photo.title, latestTitle: '', latestFilePath: null, status: 'running', skippedCount })
 
     try {
       const [sizes, photoInfo] = await Promise.all([
         withTimeout(getPhotoSizes(photo.id, tokenData), 30000),
         withTimeout(getPhotoInfo(photo.id, tokenData), 30000)
       ])
-      const filename = buildFilename(fileNaming, photo.id, photo.title, photoInfo, selSeqNum++)
-      const filePath = await downloadToFolder(sizes, filename, targetFolder, activeBatchController?.signal, photoInfo)
-      sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: filePath, status: 'running' })
+      const filename = buildFilename(fileNaming, photo.id, photo.title, photoInfo, selSeqNum++, downloadSize)
+      const filePath = await downloadToFolder(sizes, filename, targetFolder, activeBatchController?.signal, photoInfo, conflictBehavior, downloadSize, metadata)
+      if (filePath) {
+        lastFilePath = filePath
+        sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: filePath, status: 'running', skippedCount })
+      } else {
+        skippedCount++
+        sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'running', skippedCount })
+      }
     } catch (err) {
       if ((err as { name?: string }).name === 'AbortError' || activeBatchController?.signal.aborted) {
-        sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled' })
+        sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled', skippedCount })
         return
       }
       process.stderr.write(`[flickrfetch] batch skip ${photo.id}: ${err}\n`)
-      sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: null, status: 'running' })
+      sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: null, status: 'running', skippedCount })
     }
   }
 
-  sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'done' })
+  const downloadedCount = total - skippedCount
+  sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'done', skippedCount })
   if (notifyOnComplete && Notification.isSupported()) {
-    new Notification({ title: 'FlickrFetch', body: `Downloaded ${total} photos from "${baseTitle}"` }).show()
+    const body = skippedCount > 0
+      ? `Downloaded ${downloadedCount}, skipped ${skippedCount} from "${baseTitle}"`
+      : `Downloaded ${total} photos from "${baseTitle}"`
+    new Notification({ title: 'FlickrFetch', body }).show()
+  }
+  if (openFinderOnComplete && lastFilePath) {
+    shell.showItemInFolder(lastFilePath)
   }
 }
 
-ipcMain.handle('batch:startAlbum', (_event, albumId: string, albumTitle: string, photoCount?: number, videoCount?: number, force?: boolean) => {
+ipcMain.handle('batch:startAlbum', (_event, albumId: string, albumTitle: string, photoCount?: number, videoCount?: number, force?: boolean, mediaType?: 'photo' | 'video', privacyFilter?: string) => {
   if (!force) {
-    const isDuplicate = activeBatchAlbumId === albumId || batchQueue.some(j => j.type === 'album' && j.albumId === albumId)
+    const isDuplicate = activeBatchController !== null && activeBatchAlbumId === albumId
     if (isDuplicate) return { alreadyQueued: true }
   }
-  enqueueBatch({ type: 'album', albumId, albumTitle, photoCount, videoCount })
+  enqueueBatch({ type: 'album', albumId, albumTitle, photoCount, videoCount, mediaType, privacyFilter })
   return { alreadyQueued: false }
 })
 
@@ -551,10 +627,30 @@ app.whenReady().then(() => {
       label: appName,
       submenu: [
         {
-          label: `About ${appName}`,
+          label: 'About FlickrFetch',
           click: () => {
             mainWindow?.webContents.send('app:showAbout', { version: app.getVersion() })
           }
+        },
+        { type: 'separator' },
+        {
+          label: 'Settings…',
+          accelerator: 'Cmd+,',
+          click: () => mainWindow?.webContents.send('app:openSettings')
+        },
+        {
+          label: 'Open Downloads Folder',
+          accelerator: 'Cmd+Shift+O',
+          click: async () => {
+            const settings = loadSettings()
+            await ensureDownloadFolder(settings.downloadFolder)
+            shell.openPath(settings.downloadFolder)
+          }
+        },
+        { type: 'separator' },
+        {
+          label: 'Sign Out',
+          click: () => mainWindow?.webContents.send('app:signOut')
         },
         { type: 'separator' },
         { role: 'services' },
@@ -568,7 +664,16 @@ app.whenReady().then(() => {
     },
     { role: 'editMenu' },
     { role: 'viewMenu' },
-    { role: 'windowMenu' }
+    { role: 'windowMenu' },
+    {
+      role: 'help',
+      submenu: [
+        {
+          label: 'FlickrFetch on GitHub',
+          click: () => shell.openExternal('https://github.com/wallyg/FlickrFetch')
+        }
+      ]
+    }
   ]
   Menu.setApplicationMenu(Menu.buildFromTemplate(template))
 

@@ -1,43 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react'
-import type { FlickrPhoto } from '../../shared/types'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
+import type { FlickrPhoto, PhotoSearchParams, SearchOperator, DateRangeField, TagMode } from '../../shared/types'
+import { MediaFilter, GridSize, PrivacyFilter, PrivacyLevel, PRIVACY_OPTIONS, PRIVACY_LABELS, GRID_COLUMNS, GridIcon, PrivacyIcon, Tooltip, Chip, getPrivacyLevel, sharedStyles, DateMode, getPresetDates, formatDateChip } from './PhotoGridShared'
 
-type MediaFilter = 'all' | 'photo' | 'video'
-type GridSize = 'small' | 'medium' | 'large'
 type SortOrder = 'date-posted-desc' | 'date-posted-asc' | 'date-taken-desc' | 'date-taken-asc'
-type PrivacyFilter = 'all' | 'public' | 'friends' | 'family' | 'private'
 
-const PRIVACY_OPTIONS: PrivacyFilter[] = ['all', 'public', 'friends', 'family', 'private']
-const PRIVACY_LABELS: Record<PrivacyFilter, string> = { all: 'All', public: 'Public', friends: 'Friends', family: 'Family', private: 'Private' }
-
-function getPrivacyLevel(photo: FlickrPhoto): PrivacyLevel {
-  if (photo.ispublic === undefined) return 'public'
-  if (photo.ispublic === 1) return 'public'
-  if (photo.isfriend === 1) return 'friends'
-  if (photo.isfamily === 1) return 'family'
-  return 'private'
-}
-
-function PrivacyIcon({ level }: { level: PrivacyLevel }): React.JSX.Element | null {
-  if (level === 'public') return null
-  if (level === 'private') return (
-    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-    </svg>
-  )
-  if (level === 'family') return (
-    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-    </svg>
-  )
-  // friends
-  return (
-    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-    </svg>
-  )
-}
 
 interface PhotoGridProps {
   onPhotoSelect: (photo: FlickrPhoto) => void
@@ -45,15 +11,12 @@ interface PhotoGridProps {
   selectedIds?: Set<string>
   onToggleSelect?: (photo: FlickrPhoto, shiftKey: boolean) => void
   onPhotosLoaded?: (photos: FlickrPhoto[]) => void
+  onPageInfo?: (page: number, pages: number) => void
+  onSortChange?: (sort: string) => void
+  onFilteredPhotosChange?: (photos: FlickrPhoto[]) => void
 }
 
-const GRID_COLUMNS: Record<GridSize, string> = {
-  small:  'repeat(auto-fill, minmax(110px, 1fr))',
-  medium: 'repeat(auto-fill, minmax(160px, 1fr))',
-  large:  'repeat(auto-fill, minmax(220px, 1fr))'
-}
-
-export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onToggleSelect, onPhotosLoaded }: PhotoGridProps): React.JSX.Element {
+export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onToggleSelect, onPhotosLoaded, onPageInfo, onSortChange, onFilteredPhotosChange }: PhotoGridProps): React.JSX.Element {
   const [photos, setPhotos] = useState<FlickrPhoto[]>([])
   const [page, setPage] = useState(1)
   const [pages, setPages] = useState(1)
@@ -63,22 +26,41 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
   const [error, setError] = useState<string | null>(null)
   const [hoveredId, setHoveredId] = useState<string | null>(null)
 
+  // Display state
   const [sort, setSort] = useState<SortOrder>('date-posted-desc')
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>('all')
   const [gridSize, setGridSize] = useState<GridSize>('medium')
   const [privacyFilter, setPrivacyFilter] = useState<PrivacyFilter>('all')
+  const autoLoadCountRef = useRef(0)
+  const [autoLoadCapped, setAutoLoadCapped] = useState(false)
 
-  const loadPage = async (pageNum: number, currentSort: SortOrder = sort): Promise<void> => {
+  // Search input state (uncommitted until triggered)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchOperator, setSearchOperator] = useState<SearchOperator>('contains')
+  const [tagQuery, setTagQuery] = useState('')
+  const [tagMode, setTagMode] = useState<TagMode>('any')
+  const [dateField, setDateField] = useState<DateRangeField>('taken')
+  const [dateMode, setDateMode] = useState<DateMode>('all')
+  const [dateCustomMin, setDateCustomMin] = useState('')
+  const [dateCustomMax, setDateCustomMax] = useState('')
+  const [drawerOpen, setDrawerOpen] = useState(false)
+
+  // Committed search (what was actually sent to the API)
+  const [activeSearch, setActiveSearch] = useState<PhotoSearchParams>({})
+  const activeSearchRef = useRef<PhotoSearchParams>({})
+
+  const loadPage = async (pageNum: number, currentSort: SortOrder = sort, searchParams: PhotoSearchParams = activeSearchRef.current): Promise<void> => {
     if (pageNum === 1) { setLoading(true); setPhotos([]) }
     else setLoadingMore(true)
     setError(null)
     try {
-      const result = await window.flickrAPI.getPhotos(pageNum, currentSort)
+      const result = await window.flickrAPI.getPhotos(pageNum, currentSort, searchParams)
       setPhotos(prev => pageNum === 1 ? result.photos : [...prev, ...result.photos])
       setPage(result.page)
       setPages(result.pages)
       setTotal(result.total)
       onPhotosLoaded?.(pageNum === 1 ? result.photos : [...photos, ...result.photos])
+      onPageInfo?.(result.page, result.pages)
     } catch (err) {
       const raw = err instanceof Error ? err.message : 'Failed to load photos'
       setError(raw.replace(/^Error invoking remote method '[^']+': (Error: )?/, ''))
@@ -90,9 +72,81 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
 
   useEffect(() => { loadPage(1) }, [])
 
+  const applySearch = (params: PhotoSearchParams): void => {
+    activeSearchRef.current = params
+    setActiveSearch(params)
+    autoLoadCountRef.current = 0
+    setAutoLoadCapped(false)
+    loadPage(1, sort, params)
+  }
+
+  const buildSearchParams = (overrides: Partial<PhotoSearchParams & { dateMin: string; dateMax: string }> = {}): PhotoSearchParams => {
+    const params: PhotoSearchParams = {}
+    const q = overrides.query !== undefined ? overrides.query : searchQuery
+    const op = overrides.operator !== undefined ? overrides.operator : searchOperator
+    const tq = overrides.tagQuery !== undefined ? overrides.tagQuery : tagQuery
+    const tm = overrides.tagMode !== undefined ? overrides.tagMode : tagMode
+    const df = overrides.dateField !== undefined ? overrides.dateField : dateField
+    const dmin = overrides.dateMin !== undefined ? overrides.dateMin : dateCustomMin
+    const dmax = overrides.dateMax !== undefined ? overrides.dateMax : dateCustomMax
+    if (q) { params.query = q; params.operator = op }
+    if (tq) { params.tagQuery = tq; params.tagMode = tm }
+    if (dmin || dmax) { params.dateField = df; if (dmin) params.dateMin = dmin; if (dmax) params.dateMax = dmax }
+    return params
+  }
+
+  const triggerSearch = (): void => { applySearch(buildSearchParams()) }
+
   const handleSortChange = (newSort: SortOrder): void => {
     setSort(newSort)
-    loadPage(1, newSort)
+    onSortChange?.(newSort)
+    loadPage(1, newSort, activeSearchRef.current)
+  }
+
+  const handleDateModeChange = (mode: DateMode): void => {
+    setDateMode(mode)
+    if (mode === 'all') {
+      setDateCustomMin(''); setDateCustomMax('')
+      const params = { ...activeSearchRef.current }
+      delete params.dateMin; delete params.dateMax; delete params.dateField
+      applySearch(params)
+    } else if (mode === 'since' || mode === 'between') {
+      setDateCustomMin(''); setDateCustomMax('')
+    } else {
+      const { min, max } = getPresetDates(mode)
+      setDateCustomMin(min); setDateCustomMax(max)
+      applySearch(buildSearchParams({ dateMin: min, dateMax: max, dateField }))
+    }
+  }
+
+  const applyDateFilter = (): void => {
+    applySearch(buildSearchParams({ dateMin: dateCustomMin, dateMax: dateCustomMax, dateField }))
+  }
+
+  const dismissSearchQuery = (): void => {
+    setSearchQuery('')
+    const params = { ...activeSearchRef.current }; delete params.query; delete params.operator
+    applySearch(params)
+  }
+
+  const dismissTagQuery = (): void => {
+    setTagQuery('')
+    const params = { ...activeSearchRef.current }; delete params.tagQuery; delete params.tagMode
+    applySearch(params)
+  }
+
+  const dismissDateRange = (): void => {
+    setDateMode('all'); setDateCustomMin(''); setDateCustomMax('')
+    const params = { ...activeSearchRef.current }
+    delete params.dateMin; delete params.dateMax; delete params.dateField
+    applySearch(params)
+  }
+
+  const clearAllFilters = (): void => {
+    setMediaFilter('all'); setPrivacyFilter('all')
+    setSearchQuery(''); setTagQuery('')
+    setDateMode('all'); setDateCustomMin(''); setDateCustomMax('')
+    applySearch({})
   }
 
   const filteredPhotos = useMemo(() => {
@@ -101,65 +155,302 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
       .filter(p => privacyFilter === 'all' || getPrivacyLevel(p) === privacyFilter)
   }, [photos, mediaFilter, privacyFilter])
 
-  if (loading) {
-    return <div style={styles.centered}><p style={styles.mutedText}>Loading your photos…</p></div>
-  }
-  if (error) {
-    return (
-      <div style={styles.centered}>
-        <p style={styles.errorText}>⚠️ {error}</p>
-        <button style={styles.retryButton} onClick={() => loadPage(1)}>Try again</button>
-      </div>
-    )
-  }
-  if (photos.length === 0) {
-    return <div style={styles.centered}><p style={styles.mutedText}>No photos found in your photostream.</p></div>
-  }
+  useEffect(() => { onFilteredPhotosChange?.(filteredPhotos) }, [filteredPhotos, onFilteredPhotosChange])
+
+  useEffect(() => {
+    autoLoadCountRef.current = 0
+    setAutoLoadCapped(false)
+  }, [mediaFilter, privacyFilter])
+
+  useEffect(() => {
+    const filterActive = mediaFilter !== 'all' || privacyFilter !== 'all'
+    if (filterActive && photos.length > 0 && page < pages && !loadingMore && !loading) {
+      if (autoLoadCountRef.current < 10) {
+        autoLoadCountRef.current++
+        const nextPage = page + 1
+        setLoadingMore(true)
+        window.flickrAPI.getPhotos(nextPage, sort, activeSearchRef.current)
+          .then(result => {
+            const updated = [...photos, ...result.photos]
+            setPhotos(updated); setPage(result.page); setPages(result.pages); setTotal(result.total)
+            onPhotosLoaded?.(updated); onPageInfo?.(result.page, result.pages)
+          })
+          .catch(() => {})
+          .finally(() => setLoadingMore(false))
+      } else {
+        setAutoLoadCapped(true)
+      }
+    }
+  }, [mediaFilter, privacyFilter, photos.length, page, pages, loadingMore, loading, sort])
+
+  const hasServerSearch = !!(activeSearch.query || activeSearch.tagQuery || activeSearch.dateMin || activeSearch.dateMax)
+  const hasClientFilter = mediaFilter !== 'all' || privacyFilter !== 'all'
+  const hasAnyFilter = hasServerSearch || hasClientFilter
+  const drawerBadgeCount =
+    (privacyFilter !== 'all' ? 1 : 0) +
+    (activeSearch.tagQuery ? 1 : 0) +
+    ((activeSearch.dateMin || activeSearch.dateMax) ? 1 : 0)
+
+  const showDateInputs = dateMode === 'since' || dateMode === 'between'
+
+  if (loading) return <div style={styles.centered}><p style={styles.mutedText}>Loading your photos…</p></div>
+  if (error) return (
+    <div style={styles.centered}>
+      <p style={styles.errorText}>⚠️ {error}</p>
+      <button style={styles.retryButton} onClick={() => loadPage(1)}>Try again</button>
+    </div>
+  )
+  if (photos.length === 0 && !hasServerSearch) return <div style={styles.centered}><p style={styles.mutedText}>No photos found in your photostream.</p></div>
 
   return (
     <div style={styles.wrapper}>
-      {!selectMode && (
-        <div style={styles.toolbar}>
-          <div style={styles.segGroup}>
-            {(['all', 'photo', 'video'] as MediaFilter[]).map(v => (
-              <button key={v} style={{ ...styles.seg, ...(mediaFilter === v ? styles.segActive : {}) }} onClick={() => setMediaFilter(v)}>
-                {v === 'all' ? 'All' : v === 'photo' ? 'Photos' : 'Videos'}
-              </button>
-            ))}
-          </div>
-          <div style={styles.segGroup}>
-            {PRIVACY_OPTIONS.map(v => (
-              <button key={v} style={{ ...styles.seg, ...(privacyFilter === v ? styles.segActive : {}) }} onClick={() => setPrivacyFilter(v)}>
-                {PRIVACY_LABELS[v]}
-              </button>
-            ))}
-          </div>
-          <div style={styles.segGroup}>
-            {(['small', 'medium', 'large'] as GridSize[]).map(v => (
-              <button key={v} style={{ ...styles.seg, ...(gridSize === v ? styles.segActive : {}) }} onClick={() => setGridSize(v)}>
-                {v === 'small' ? 'S' : v === 'medium' ? 'M' : 'L'}
-              </button>
-            ))}
-          </div>
-          <select style={styles.sortSelect} value={sort} onChange={e => handleSortChange(e.target.value as SortOrder)}>
-            <option value="date-posted-desc">Newest posted</option>
-            <option value="date-posted-asc">Oldest posted</option>
-            <option value="date-taken-desc">Newest taken</option>
-            <option value="date-taken-asc">Oldest taken</option>
-          </select>
+      {selectMode && hasClientFilter && (
+        <div style={styles.selectModeCount}>
+          {filteredPhotos.length.toLocaleString()} matching · {total.toLocaleString()} loaded
         </div>
       )}
 
-      <p style={styles.countLabel}>
-        Showing {filteredPhotos.length.toLocaleString()} of {total.toLocaleString()}
-        {mediaFilter === 'photo' ? ' photos' : mediaFilter === 'video' ? ' videos' : ' photos & videos'}
-        {page < pages ? ' (more below)' : ''}
-      </p>
+      {!selectMode && (
+        <div style={styles.toolbarWrap}>
 
-      {filteredPhotos.length === 0 && photos.length > 0 && (
+          {/* ── Main row: Media + Title search + display controls ── */}
+          <div style={styles.toolbar}>
+
+            <div style={styles.segGroup}>
+              {(['all', 'photo', 'video'] as MediaFilter[]).map(v => (
+                <button key={v} style={{ ...styles.seg, ...(mediaFilter === v ? styles.segActive : {}) }} onClick={() => setMediaFilter(v)}>
+                  {v === 'all' ? 'All' : v === 'photo' ? 'Photos' : 'Videos'}
+                </button>
+              ))}
+            </div>
+
+            <div style={styles.searchGroup}>
+              <span style={styles.searchIcon}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+              </span>
+              <select
+                style={styles.operatorSelect}
+                value={searchOperator}
+                onChange={e => setSearchOperator(e.target.value as SearchOperator)}
+              >
+                <option value="contains">Title contains</option>
+                <option value="starts">Starts with</option>
+                <option value="ends">Ends with</option>
+                <option value="exact">Exact match</option>
+              </select>
+              <input
+                style={styles.searchInput}
+                type="text"
+                placeholder="Search…"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && triggerSearch()}
+              />
+              {searchQuery && (
+                <button style={styles.searchClearBtn} onClick={() => { if (activeSearch.query) dismissSearchQuery(); else setSearchQuery('') }}>✕</button>
+              )}
+            </div>
+
+            <button
+              style={{ ...styles.moreFiltersBtn, ...(drawerOpen ? styles.moreFiltersBtnActive : {}) }}
+              onClick={() => setDrawerOpen(o => !o)}
+            >
+              {drawerOpen ? 'Hide filters' : 'More filters'}
+              {drawerBadgeCount > 0 && !drawerOpen && (
+                <span style={styles.drawerBadge}>{drawerBadgeCount}</span>
+              )}
+            </button>
+
+            <div style={styles.segGroupDensity}>
+              {(['small', 'medium', 'large'] as GridSize[]).map(v => (
+                <button
+                  key={v}
+                  style={{ ...styles.densityBtn, ...(gridSize === v ? styles.densityBtnActive : {}) }}
+                  onClick={() => setGridSize(v)}
+                >
+                  <GridIcon size={v} />
+                </button>
+              ))}
+            </div>
+
+            <select style={styles.sortSelect} value={sort} onChange={e => handleSortChange(e.target.value as SortOrder)}>
+              <option value="date-posted-desc">Newest posted</option>
+              <option value="date-posted-asc">Oldest posted</option>
+              <option value="date-taken-desc">Newest taken</option>
+              <option value="date-taken-asc">Oldest taken</option>
+            </select>
+
+          </div>
+
+          {/* ── More filters drawer ── */}
+          {drawerOpen && (
+            <div style={styles.drawer}>
+
+              {/* Privacy */}
+              <div style={styles.drawerRow}>
+                <span style={styles.drawerLabel}>Privacy</span>
+                <div style={styles.segGroup}>
+                  {PRIVACY_OPTIONS.map(v => (
+                    <button key={v} style={{ ...styles.seg, ...(privacyFilter === v ? styles.segActive : {}) }} onClick={() => setPrivacyFilter(v)}>
+                      {PRIVACY_LABELS[v]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Tags */}
+              <div style={styles.drawerRow}>
+                <span style={styles.drawerLabel}>Tags</span>
+                <div style={styles.searchGroup}>
+                  <input
+                    style={{ ...styles.searchInput, minWidth: '160px' }}
+                    type="text"
+                    placeholder="paris, travel…"
+                    value={tagQuery}
+                    onChange={e => setTagQuery(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && triggerSearch()}
+                  />
+                  {tagQuery && (
+                    <button style={styles.searchClearBtn} onClick={() => { if (activeSearch.tagQuery) dismissTagQuery(); else setTagQuery('') }}>✕</button>
+                  )}
+                </div>
+                <div style={styles.segGroup}>
+                  {(['any', 'all'] as TagMode[]).map(v => (
+                    <button key={v} style={{ ...styles.seg, ...(tagMode === v ? styles.segActive : {}) }} onClick={() => setTagMode(v)}>
+                      {v}
+                    </button>
+                  ))}
+                </div>
+                <Tooltip text="Separate multiple tags with commas. 'Any' finds photos with at least one tag; 'All' requires every tag.">
+                  <span style={styles.tagHint}>?</span>
+                </Tooltip>
+                {tagQuery !== (activeSearch.tagQuery ?? '') && tagQuery && (
+                  <button style={styles.applyBtn} onClick={triggerSearch}>Apply</button>
+                )}
+              </div>
+
+              {/* Date */}
+              <div style={styles.drawerRow}>
+                <span style={styles.drawerLabel}>Date</span>
+                <div style={styles.segGroup}>
+                  {(['taken', 'posted'] as DateRangeField[]).map(f => (
+                    <button
+                      key={f}
+                      style={{ ...styles.seg, ...(dateField === f ? styles.segActive : {}) }}
+                      onClick={() => setDateField(f)}
+                    >
+                      {f === 'taken' ? 'Taken' : 'Posted'}
+                    </button>
+                  ))}
+                </div>
+                <select
+                  style={styles.dateModeSelect}
+                  value={dateMode}
+                  onChange={e => handleDateModeChange(e.target.value as DateMode)}
+                >
+                  <option value="all">All dates</option>
+                  <optgroup label="Quick ranges">
+                    <option value="last7">Last 7 days</option>
+                    <option value="last30">Last 30 days</option>
+                    <option value="thisYear">This year</option>
+                    <option value="lastYear">Last year</option>
+                  </optgroup>
+                  <optgroup label="Custom">
+                    <option value="since">Since a date…</option>
+                    <option value="between">Between two dates…</option>
+                  </optgroup>
+                </select>
+                {showDateInputs && (
+                  <div style={styles.dateInputsInline}>
+                    <input
+                      type="date"
+                      style={styles.dateInput}
+                      value={dateCustomMin}
+                      onChange={e => setDateCustomMin(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && applyDateFilter()}
+                    />
+                    {dateMode === 'between' && (
+                      <>
+                        <span style={styles.dateToLabel}>to</span>
+                        <input
+                          type="date"
+                          style={styles.dateInput}
+                          value={dateCustomMax}
+                          onChange={e => setDateCustomMax(e.target.value)}
+                          onKeyDown={e => e.key === 'Enter' && applyDateFilter()}
+                        />
+                      </>
+                    )}
+                    <button style={styles.applyBtn} onClick={applyDateFilter}>Apply</button>
+                  </div>
+                )}
+              </div>
+
+              {/* Camera placeholder */}
+              <div style={{ ...styles.drawerRow, opacity: 0.35 }}>
+                <span style={styles.drawerLabel}>Camera</span>
+                <span style={styles.comingSoon}>Coming soon</span>
+              </div>
+
+            </div>
+          )}
+
+          {/* ── Active filter chips ── */}
+          {hasAnyFilter && (
+            <div style={styles.chipRow}>
+              {activeSearch.query && (
+                <Chip label={`"${activeSearch.query}"`} onDismiss={dismissSearchQuery} />
+              )}
+              {activeSearch.tagQuery && (
+                <Chip
+                  label={`Tags (${activeSearch.tagMode ?? 'any'}): ${activeSearch.tagQuery}`}
+                  onDismiss={dismissTagQuery}
+                />
+              )}
+              {(activeSearch.dateMin || activeSearch.dateMax) && (
+                <Chip
+                  label={formatDateChip(activeSearch.dateMin ?? '', activeSearch.dateMax ?? '', activeSearch.dateField ?? 'taken')}
+                  onDismiss={dismissDateRange}
+                />
+              )}
+              {mediaFilter !== 'all' && (
+                <Chip label={mediaFilter === 'photo' ? 'Photos only' : 'Videos only'} onDismiss={() => setMediaFilter('all')} />
+              )}
+              {privacyFilter !== 'all' && (
+                <Chip label={`Privacy: ${PRIVACY_LABELS[privacyFilter]}`} onDismiss={() => setPrivacyFilter('all')} />
+              )}
+              <button style={styles.clearFiltersLink} onClick={clearAllFilters}>Clear all</button>
+            </div>
+          )}
+
+          <p style={styles.countLabel}>
+            {hasClientFilter
+              ? `${filteredPhotos.length.toLocaleString()} matching · ${photos.length.toLocaleString()} of ${total.toLocaleString()} loaded${page < pages ? ' · more below' : ''}`
+              : `${photos.length.toLocaleString()} of ${total.toLocaleString()} loaded${page < pages ? ' · more below' : ''}`
+            }
+          </p>
+
+        </div>
+      )}
+
+      {filteredPhotos.length === 0 && photos.length > 0 && !loadingMore && !loading && (
         <div style={styles.emptyFilter}>
           <p style={styles.emptyFilterMsg}>No {mediaFilter !== 'all' ? mediaFilter + 's' : 'photos'} match the current filters.</p>
-          <button style={styles.clearFiltersBtn} onClick={() => { setMediaFilter('all'); setPrivacyFilter('all') }}>Clear filters</button>
+          {autoLoadCapped && page < pages && (
+            <button style={styles.keepSearchingBtn} onClick={() => { autoLoadCountRef.current = 0; setAutoLoadCapped(false); loadPage(page + 1) }}>
+              Keep searching (page {page} of {pages})
+            </button>
+          )}
+          <button style={styles.clearFiltersBtn} onClick={clearAllFilters}>Clear filters</button>
+        </div>
+      )}
+
+      {photos.length === 0 && hasServerSearch && !loading && (
+        <div style={styles.emptyFilter}>
+          <p style={styles.emptyFilterMsg}>No photos match your search.</p>
+          <button style={styles.clearFiltersBtn} onClick={clearAllFilters}>Clear search</button>
         </div>
       )}
 
@@ -193,7 +484,7 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
                 </div>
               )}
               {privacyLevel !== 'public' && (
-                <div style={styles.privacyBadge} title={privacyLevel === 'private' ? 'Private' : privacyLevel === 'friends' ? 'Friends only' : 'Family only'}>
+                <div style={styles.privacyBadge}>
                   <PrivacyIcon level={privacyLevel} />
                 </div>
               )}
@@ -215,6 +506,7 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
           )
         })}
       </div>
+
       {page < pages && (
         <div style={styles.loadMoreRow}>
           <button
@@ -231,72 +523,17 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  wrapper: { padding: '16px', overflowY: 'auto', height: '100%', boxSizing: 'border-box' },
-  toolbar: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    marginBottom: '12px',
-    flexWrap: 'wrap' as const
-  },
-  segGroup: {
-    display: 'flex',
-    border: '1px solid #ddd',
-    borderRadius: '6px',
-    overflow: 'hidden'
-  },
-  seg: {
-    background: 'none',
-    border: 'none',
-    borderRight: '1px solid #ddd',
-    padding: '5px 10px',
-    fontSize: '12px',
-    color: '#666',
-    cursor: 'pointer',
-    lineHeight: 1
-  },
-  segActive: {
-    backgroundColor: '#f0ede8',
-    color: '#111',
-    fontWeight: '600'
-  },
-  sortSelect: {
-    fontSize: '12px',
-    color: '#555',
-    border: '1px solid #ddd',
-    borderRadius: '6px',
-    padding: '5px 8px',
-    background: 'none',
-    cursor: 'pointer',
-    marginLeft: 'auto'
-  },
-  countLabel: { fontSize: '12px', color: '#aaa', margin: '0 0 10px 0' },
-  grid: { display: 'grid', gap: '4px' },
-  tile: { position: 'relative', aspectRatio: '1', overflow: 'hidden', backgroundColor: '#e8e8e8', cursor: 'pointer' },
-  thumb: { width: '100%', height: '100%', objectFit: 'cover', display: 'block' },
+  ...sharedStyles,
+  // Photostream-specific
+  wrapper: { padding: '0', overflowY: 'auto', height: '100%', boxSizing: 'border-box' },
+  grid: { display: 'grid', gap: '4px', padding: '4px 16px 16px' },
   thumbPlaceholder: { width: '100%', height: '100%', backgroundColor: '#d0d0d0' },
-  videoOverlay: { position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' },
-  privacyBadge: { position: 'absolute', top: '5px', left: '5px', width: '18px', height: '18px', borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.52)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2, cursor: 'default' },
   overlay: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.65)', padding: '6px 8px' },
-  overlayTitle: {
-    color: '#fff',
-    fontSize: '12px',
-    lineHeight: '1.3',
-    display: '-webkit-box',
-    WebkitLineClamp: 2,
-    WebkitBoxOrient: 'vertical',
-    overflow: 'hidden'
-  } as React.CSSProperties,
-  centered: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '12px' },
-  mutedText: { color: '#888', fontSize: '15px', margin: 0 },
+  overlayTitle: { color: '#fff', fontSize: '12px', lineHeight: '1.3', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as React.CSSProperties,
   errorText: { color: '#cc0000', fontSize: '14px', margin: 0 },
   retryButton: { backgroundColor: '#FF0084', color: '#fff', border: 'none', borderRadius: '6px', padding: '10px 20px', fontSize: '14px', cursor: 'pointer' },
-  loadMoreRow: { display: 'flex', justifyContent: 'center', padding: '24px 0' },
+  loadMoreRow: { display: 'flex', justifyContent: 'center', padding: '24px 16px' },
   loadMoreButton: { backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '6px', padding: '10px 28px', fontSize: '14px', color: '#444', cursor: 'pointer' },
   disabled: { opacity: 0.6, cursor: 'not-allowed' },
-  selectBadge: { position: 'absolute' as const, top: '6px', right: '6px', width: '22px', height: '22px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 },
-  selectCheck: { color: '#fff', fontSize: '13px', fontWeight: 'bold', lineHeight: 1 },
-  emptyFilter: { display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', gap: '12px', padding: '48px 24px', textAlign: 'center' as const },
-  emptyFilterMsg: { color: '#888', fontSize: '14px', margin: 0 },
-  clearFiltersBtn: { background: 'none', border: '1px solid #ccc', borderRadius: '6px', padding: '6px 16px', fontSize: '13px', color: '#555', cursor: 'pointer' }
+  keepSearchingBtn: { background: '#111', border: 'none', borderRadius: '6px', padding: '6px 16px', fontSize: '13px', color: '#fff', cursor: 'pointer' },
 }

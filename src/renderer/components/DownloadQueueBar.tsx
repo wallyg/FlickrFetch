@@ -2,14 +2,17 @@ import React, { useState, useEffect, useRef } from 'react'
 import type { BatchProgress } from '../../shared/types'
 
 interface DownloadQueueBarProps {
-  progress: BatchProgress
+  progress: BatchProgress | null
+  completedBatches?: BatchProgress[]
   onDismiss: () => void
+  onStackedDismiss?: (idx: number) => void
+  onDismissAll?: () => void
 }
 
 const TOAST_MS = 2500
-const CANCEL_DISMISS_MS = 6000
+const CANCEL_DISMISS_MS = 10000
 
-export default function DownloadQueueBar({ progress, onDismiss }: DownloadQueueBarProps): React.JSX.Element {
+export default function DownloadQueueBar({ progress, completedBatches = [], onDismiss, onStackedDismiss, onDismissAll }: DownloadQueueBarProps): React.JSX.Element {
   const [expanded, setExpanded] = useState(false)
   const [cancelling, setCancelling] = useState(false)
   const [toastMsg, setToastMsg] = useState<string | null>(null)
@@ -19,47 +22,47 @@ export default function DownloadQueueBar({ progress, onDismiss }: DownloadQueueB
 
   // Auto-expand and reset folder when a new batch starts
   useEffect(() => {
-    if (progress.allTitles && progress.allTitles.length > 0) {
+    if (progress?.allTitles && progress.allTitles.length > 0) {
       setExpanded(true)
       setCancelling(false)
       setFolderPath(null)
     }
-  }, [progress.allTitles])
+  }, [progress?.allTitles])
 
   // Persist folder path — only update when non-null; never clear it
   useEffect(() => {
-    if (progress.latestFilePath) {
+    if (progress?.latestFilePath) {
       setFolderPath(progress.latestFilePath.substring(0, progress.latestFilePath.lastIndexOf('/')))
     }
-  }, [progress.latestFilePath])
+  }, [progress?.latestFilePath])
 
   // Toast (not expand) when another batch is queued
   const prevQueuedCount = useRef(0)
   useEffect(() => {
-    const count = progress.queuedCount ?? 0
+    const count = progress?.queuedCount ?? 0
     if (count > prevQueuedCount.current) {
-      const queued = progress.queuedAlbums ?? []
+      const queued = progress?.queuedAlbums ?? []
       const newest = queued[queued.length - 1]
       setToastMsg(newest ? `Queued: ${newest.title}` : 'Added to queue')
       if (toastTimer.current) clearTimeout(toastTimer.current)
       toastTimer.current = setTimeout(() => setToastMsg(null), TOAST_MS)
     }
     prevQueuedCount.current = count
-  }, [progress.queuedCount, progress.queuedAlbums])
+  }, [progress?.queuedCount, progress?.queuedAlbums])
 
   // Clear cancelling once cancelled status lands
   useEffect(() => {
-    if (progress.status === 'cancelled') setCancelling(false)
-  }, [progress.status])
+    if (progress?.status === 'cancelled') setCancelling(false)
+  }, [progress?.status])
 
-  // Auto-dismiss only after cancelled WITH no files downloaded (if files exist, user may want Finder)
+  // Auto-dismiss after cancelled — always, at 6s
   useEffect(() => {
-    if (progress.status === 'cancelled' && !folderPath) {
+    if (progress?.status === 'cancelled') {
       if (dismissTimer.current) clearTimeout(dismissTimer.current)
       dismissTimer.current = setTimeout(onDismiss, CANCEL_DISMISS_MS)
     }
     return () => { if (dismissTimer.current) clearTimeout(dismissTimer.current) }
-  }, [progress.status, folderPath, onDismiss])
+  }, [progress?.status, onDismiss])
 
   useEffect(() => {
     return () => {
@@ -68,11 +71,26 @@ export default function DownloadQueueBar({ progress, onDismiss }: DownloadQueueB
     }
   }, [])
 
-  const { status, current, total, albumTitle, activeTitle } = progress
+  const status = progress?.status ?? null
+  const current = progress?.current ?? 0
+  const total = progress?.total ?? 0
+  const albumTitle = progress?.albumTitle ?? ''
+  const activeTitle = progress?.activeTitle ?? ''
+  const skipped = progress?.skippedCount ?? 0
+  const downloaded = total - skipped
   const percent = total > 0 ? Math.round((current / total) * 100) : 0
   const isRunning = status === 'running'
   const isDone = status === 'done'
   const isCancelled = status === 'cancelled'
+  const doneWithSkips = isDone && skipped > 0
+
+  // Color-coded left border by status
+  const borderColor = isRunning ? '#FF0084'
+    : doneWithSkips ? '#ff8c00'
+    : isDone ? '#4caf50'
+    : isCancelled ? '#cc6600'
+    : completedBatches.length > 0 ? (completedBatches.some(b => (b.skippedCount ?? 0) > 0) ? '#ff8c00' : '#4caf50')
+    : 'transparent'
 
   const handleCancel = (): void => {
     setCancelling(true)
@@ -85,7 +103,7 @@ export default function DownloadQueueBar({ progress, onDismiss }: DownloadQueueB
   }
 
   return (
-    <div style={{ ...styles.wrapper, borderLeft: isRunning ? '4px solid #FF0084' : '4px solid transparent' }}>
+    <div style={{ ...styles.wrapper, borderLeft: `4px solid ${borderColor}` }}>
 
       {/* Toast: brief confirmation when a batch is queued */}
       {toastMsg && (
@@ -96,7 +114,7 @@ export default function DownloadQueueBar({ progress, onDismiss }: DownloadQueueB
       {expanded && (
         <div style={styles.panel}>
 
-          {/* Current batch */}
+          {/* Current / most recent batch */}
           <div style={styles.batchRow}>
             <span style={isRunning ? styles.dotActive : isDone ? styles.dotDone : styles.dotCancelled}>
               {isDone ? '✓' : isCancelled ? '✕' : '→'}
@@ -115,7 +133,7 @@ export default function DownloadQueueBar({ progress, onDismiss }: DownloadQueueB
               </div>
               <span style={styles.batchMeta}>
                 {isRunning && `${current.toLocaleString()} of ${total.toLocaleString()}`}
-                {isDone && `${total.toLocaleString()} downloaded`}
+                {isDone && (skipped > 0 ? `${downloaded.toLocaleString()} downloaded · ${skipped.toLocaleString()} skipped` : `${total.toLocaleString()} downloaded`)}
                 {isCancelled && `${current.toLocaleString()} of ${total.toLocaleString()} before cancel`}
               </span>
               {/* Live filename ticker */}
@@ -126,10 +144,10 @@ export default function DownloadQueueBar({ progress, onDismiss }: DownloadQueueB
           </div>
 
           {/* Queued batches */}
-          {(progress.queuedAlbums ?? []).length > 0 && (
+          {(progress?.queuedAlbums ?? []).length > 0 && (
             <>
               <div style={styles.divider} />
-              {(progress.queuedAlbums ?? []).map((album, i) => {
+              {(progress?.queuedAlbums ?? []).map((album, i) => {
                 const parts: string[] = []
                 if (album.photoCount) parts.push(`${album.photoCount.toLocaleString()} photo${album.photoCount !== 1 ? 's' : ''}`)
                 if (album.videoCount) parts.push(`${album.videoCount.toLocaleString()} video${album.videoCount !== 1 ? 's' : ''}`)
@@ -145,6 +163,38 @@ export default function DownloadQueueBar({ progress, onDismiss }: DownloadQueueB
                       title="Remove from queue"
                       onClick={() => window.flickrAPI.removeFromQueue(album.id)}
                     >✕</button>
+                  </div>
+                )
+              })}
+            </>
+          )}
+
+          {/* Stacked completed batches */}
+          {completedBatches.length > 0 && (
+            <>
+              <div style={styles.divider} />
+              {completedBatches.map((b, i) => {
+                const bSkipped = b.skippedCount ?? 0
+                const bDownloaded = (b.total ?? 0) - bSkipped
+                const bHasSkips = bSkipped > 0
+                const bFolder = b.latestFilePath ? b.latestFilePath.substring(0, b.latestFilePath.lastIndexOf('/')) : null
+                return (
+                  <div key={i} style={styles.batchRow}>
+                    <span style={bHasSkips ? styles.dotSkipped : styles.dotDone}>✓</span>
+                    <div style={styles.batchInfo}>
+                      <div style={styles.batchTitleRow}>
+                        <span style={styles.batchTitle}>{b.albumTitle}</span>
+                        {bFolder && (
+                          <button style={styles.finderLink} onClick={() => window.flickrAPI.showInFinder(bFolder)}>
+                            Open in Finder
+                          </button>
+                        )}
+                      </div>
+                      <span style={styles.batchMeta}>
+                        {bHasSkips ? `${bDownloaded.toLocaleString()} downloaded · ${bSkipped.toLocaleString()} skipped` : `${(b.total ?? 0).toLocaleString()} downloaded`}
+                      </span>
+                    </div>
+                    <button style={styles.removeQueueBtn} title="Dismiss" onClick={() => onStackedDismiss?.(i)}>✕</button>
                   </div>
                 )
               })}
@@ -166,20 +216,26 @@ export default function DownloadQueueBar({ progress, onDismiss }: DownloadQueueB
           )}
           <span style={{ ...styles.label, ...(isRunning ? styles.labelRunning : {}) }}>
             {cancelling && 'Cancelling…'}
-            {!cancelling && isRunning && `${current.toLocaleString()} of ${total.toLocaleString()} · ${albumTitle}${progress.queuedCount ? ` · +${progress.queuedCount} queued` : ''}`}
-            {!cancelling && isDone && `✓ ${total.toLocaleString()} downloaded · ${albumTitle}`}
+            {!cancelling && isRunning && `${current.toLocaleString()} of ${total.toLocaleString()} · ${albumTitle}${progress?.queuedCount ? ` · +${progress.queuedCount} queued` : ''}`}
+            {!cancelling && isDone && (skipped > 0 ? `✓ ${downloaded.toLocaleString()} downloaded · ${skipped.toLocaleString()} skipped · ${albumTitle}` : `✓ ${total.toLocaleString()} downloaded · ${albumTitle}`)}
             {!cancelling && isCancelled && `Cancelled · ${current.toLocaleString()} of ${total.toLocaleString()} · ${albumTitle}`}
+            {!progress && completedBatches.length > 0 && (() => {
+              const newest = completedBatches[0]
+              const ns = newest.skippedCount ?? 0
+              const nd = (newest.total ?? 0) - ns
+              return ns > 0 ? `✓ ${nd.toLocaleString()} downloaded · ${ns.toLocaleString()} skipped · ${newest.albumTitle}` : `✓ ${(newest.total ?? 0).toLocaleString()} downloaded · ${newest.albumTitle}`
+            })()}
           </span>
         </div>
         <div style={styles.right}>
-          {isRunning && !cancelling && (progress.queuedCount ?? 0) > 0 && (
+          {isRunning && !cancelling && (progress?.queuedCount ?? 0) > 0 && (
             <button style={styles.skipBtn} onClick={() => window.flickrAPI.skipBatch()}>
               Skip
             </button>
           )}
           {(isRunning || cancelling) && (
             <button style={styles.cancelBtn} onClick={handleCancel} disabled={cancelling}>
-              {cancelling ? 'Cancelling…' : (progress.queuedCount ?? 0) > 0 ? 'Cancel all' : 'Cancel'}
+              {cancelling ? 'Cancelling…' : (progress?.queuedCount ?? 0) > 0 ? 'Cancel all' : 'Cancel'}
             </button>
           )}
           {(isDone || isCancelled) && !cancelling && folderPath && (
@@ -187,8 +243,14 @@ export default function DownloadQueueBar({ progress, onDismiss }: DownloadQueueB
               Open in Finder
             </button>
           )}
+          {completedBatches.length >= 2 && (
+            <button style={styles.dismissAllBtn} onClick={onDismissAll}>Dismiss all</button>
+          )}
           {(isDone || isCancelled) && !cancelling && (
             <button style={styles.dismissBtn} onClick={handleDismiss} title="Dismiss">✕</button>
+          )}
+          {!progress && completedBatches.length > 0 && completedBatches.length < 2 && (
+            <button style={styles.dismissBtn} onClick={() => onStackedDismiss?.(0)} title="Dismiss">✕</button>
           )}
         </div>
       </div>
@@ -324,6 +386,12 @@ const styles: Record<string, React.CSSProperties> = {
     flexShrink: 0,
     marginTop: '2px'
   },
+  dotSkipped: {
+    fontSize: '13px',
+    color: '#ff8c00',
+    flexShrink: 0,
+    marginTop: '2px'
+  },
   dotQueued: {
     fontSize: '13px',
     color: '#ccc',
@@ -402,6 +470,15 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '2px 4px',
     flexShrink: 0,
     lineHeight: 1
+  },
+  dismissAllBtn: {
+    background: 'none',
+    border: '1px solid #ccc',
+    borderRadius: '6px',
+    fontSize: '12px',
+    color: '#666',
+    cursor: 'pointer',
+    padding: '4px 10px'
   },
   divider: {
     height: '1px',

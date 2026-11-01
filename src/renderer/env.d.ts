@@ -1,4 +1,4 @@
-import type { FlickrUser, PhotoPage, PhotoSize, AppSettings, AlbumPage, FlickrCollection, BatchProgress } from '../shared/types'
+import type { FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams } from '../shared/types'
 
 declare module '*.png' {
   const src: string
@@ -13,9 +13,10 @@ declare global {
       verifyAuth: (code: string) => Promise<{ user: FlickrUser }>
       getAuthState: () => Promise<{ user: FlickrUser | null }>
       signOut: () => Promise<void>
-      getPhotos: (page: number, sort?: string) => Promise<PhotoPage>
+      getPhotos: (page: number, sort?: string, search?: PhotoSearchParams) => Promise<PhotoPage>
       getSizes: (photoId: string) => Promise<PhotoSize[]>
-      downloadPhoto: (photoId: string, title: string) => Promise<{ filePath: string | null }>
+      getPhotoDetail: (photoId: string) => Promise<{ sizes: PhotoSize[]; info: PhotoInfo; exif: CameraExif }>
+      downloadPhoto: (photoId: string, title: string, downloadSize?: DownloadSize) => Promise<{ filePath: string | null }>
       onDownloadProgress: (callback: (percent: number) => void) => () => void
       showInFinder: (filePath: string) => void
       openExternal: (url: string) => void
@@ -25,8 +26,10 @@ declare global {
       getCollectionTree: () => Promise<FlickrCollection[]>
       getSettings: () => Promise<AppSettings>
       setSettings: (settings: AppSettings) => Promise<void>
+      resetSettings: () => Promise<AppSettings>
+      resolveVideoUrl: (sourceUrl: string) => Promise<string>
       pickFolder: () => Promise<string | null>
-      startBatch: (albumId: string, albumTitle: string, photoCount?: number, videoCount?: number, force?: boolean) => Promise<{ alreadyQueued: boolean }>
+      startBatch: (albumId: string, albumTitle: string, photoCount?: number, videoCount?: number, force?: boolean, mediaType?: 'photo' | 'video', privacyFilter?: string) => Promise<{ alreadyQueued: boolean }>
       startSelectedBatch: (photos: { id: string; title: string }[], displayTitle: string) => Promise<void>
       cancelBatch: () => void
       skipBatch: () => void
@@ -34,6 +37,9 @@ declare global {
       confirm: (message: string, detail?: string) => Promise<boolean>
       onBatchProgress: (cb: (progress: BatchProgress) => void) => () => void
       onShowAbout: (cb: (data: { version: string }) => void) => () => void
+      checkExifTool: () => Promise<boolean>
+      onOpenSettings: (cb: () => void) => () => void
+      onMenuSignOut: (cb: () => void) => () => void
     }
   }
 }
