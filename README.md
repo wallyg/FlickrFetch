@@ -61,6 +61,15 @@ npm run dev
 - `src/main/config.ts` is gitignored — never commit your API credentials
 - Code signing is not configured; macOS will show a Gatekeeper warning on first open (right-click → Open to bypass)
 
+## Roadmap
+
+Open issues track everything planned — bugs, upcoming features, and longer-term ideas:
+
+- [View all open issues](https://github.com/wallyg/FlickrFetch/issues)
+- [v2.0 milestone items](https://github.com/wallyg/FlickrFetch/issues?q=is%3Aopen+label%3Av2.0)
+- [v3.0 deferred](https://github.com/wallyg/FlickrFetch/issues?q=is%3Aopen+label%3Av3.0)
+- [v4.0 deferred](https://github.com/wallyg/FlickrFetch/issues?q=is%3Aopen+label%3Av4.0)
+
 ---
 
 © 2026 Wally Gobetz
