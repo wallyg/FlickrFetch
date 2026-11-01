@@ -1,10 +1,6 @@
-import { execFile } from 'child_process'
-import { existsSync } from 'fs'
+import { exiftool } from 'exiftool-vendored'
 import { extname } from 'path'
-import { promisify } from 'util'
 import type { PhotoInfo, MetadataSettings } from '../shared/types'
-
-const execFileAsync = promisify(execFile)
 
 const VIDEO_EXTS = new Set(['.mp4', '.mov', '.m4v'])
 
@@ -22,88 +18,76 @@ const LICENSE_MAP: Record<string, { name: string; url: string }> = {
   '10': { name: 'Public Domain Mark 1.0', url: 'https://creativecommons.org/publicdomain/mark/1.0/' },
 }
 
-function findExifTool(): string {
-  for (const p of ['/usr/local/bin/exiftool', '/opt/homebrew/bin/exiftool']) {
-    if (existsSync(p)) return p
-  }
-  throw new Error('ExifTool not found — please install it from exiftool.org')
-}
-
+// ExifTool is bundled — always available
 export function isExifToolAvailable(): boolean {
-  try { findExifTool(); return true } catch { return false }
+  return true
 }
 
-function buildArgs(info: PhotoInfo, filePath: string, settings: MetadataSettings): string[] {
-  const args: string[] = []
+// Called on app quit to clean up the long-running exiftool process
+export async function endExifTool(): Promise<void> {
+  await exiftool.end()
+}
+
+export async function embedMetadata(filePath: string, info: PhotoInfo, settings: MetadataSettings): Promise<void> {
   const isVideo = VIDEO_EXTS.has(extname(filePath).toLowerCase())
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const tags: Record<string, any> = {}
 
   if (settings.embedTitle && info.title) {
-    args.push(`-XMP:Title=${info.title}`)
-    args.push(`-IPTC:ObjectName=${info.title}`)
+    tags['XMP:Title'] = info.title
+    tags['IPTC:ObjectName'] = info.title
   }
 
   if (settings.embedDescription && info.description) {
-    args.push(`-ImageDescription=${info.description}`)
-    args.push(`-XMP:Description=${info.description}`)
-    args.push(`-IPTC:Caption-Abstract=${info.description}`)
+    tags['ImageDescription'] = info.description
+    tags['XMP:Description'] = info.description
+    tags['IPTC:Caption-Abstract'] = info.description
   }
 
   if (settings.embedTags && info.tags.length > 0) {
-    info.tags.forEach((tag, i) => {
-      const op = i === 0 ? '=' : '+='
-      args.push(`-XMP:Subject${op}${tag}`)
-      args.push(`-IPTC:Keywords${op}${tag}`)
-    })
+    tags['XMP:Subject'] = info.tags
+    tags['IPTC:Keywords'] = info.tags
   }
 
   if (settings.embedDateTaken && info.dateTaken) {
     const [datePart, timePart = '00:00:00'] = info.dateTaken.split(' ')
     const exifDate = `${datePart.replace(/-/g, ':')} ${timePart}`
-    args.push(`-DateTimeOriginal=${exifDate}`)
-    args.push(`-CreateDate=${exifDate}`)
+    tags['DateTimeOriginal'] = exifDate
+    tags['CreateDate'] = exifDate
   }
 
   if (settings.embedCreator && info.ownerName) {
-    args.push(`-XMP:Creator=${info.ownerName}`)
-    args.push(`-IPTC:By-line=${info.ownerName}`)
+    tags['XMP:Creator'] = info.ownerName
+    tags['IPTC:By-line'] = info.ownerName
   }
 
   const skipGps = !settings.embedGps || (settings.stripGpsFromPrivate && info.isPrivate)
   if (!skipGps && info.latitude !== null && info.longitude !== null) {
     if (isVideo) {
-      args.push(`-QuickTime:GPSCoordinates=${info.latitude} ${info.longitude}`)
+      tags['QuickTime:GPSCoordinates'] = `${info.latitude} ${info.longitude}`
     } else {
-      args.push(`-GPSLatitude=${Math.abs(info.latitude)}`)
-      args.push(`-GPSLatitudeRef=${info.latitude >= 0 ? 'N' : 'S'}`)
-      args.push(`-GPSLongitude=${Math.abs(info.longitude)}`)
-      args.push(`-GPSLongitudeRef=${info.longitude >= 0 ? 'E' : 'W'}`)
+      tags['GPSLatitude'] = Math.abs(info.latitude)
+      tags['GPSLatitudeRef'] = info.latitude >= 0 ? 'N' : 'S'
+      tags['GPSLongitude'] = Math.abs(info.longitude)
+      tags['GPSLongitudeRef'] = info.longitude >= 0 ? 'E' : 'W'
     }
   }
 
   if (settings.embedLicense) {
     const lic = LICENSE_MAP[info.license] ?? LICENSE_MAP['0']
-    args.push(`-XMP-xmpRights:UsageTerms=${lic.name}`)
-    if (lic.url) args.push(`-XMP-xmpRights:WebStatement=${lic.url}`)
+    tags['XMP-xmpRights:UsageTerms'] = lic.name
+    if (lic.url) tags['XMP-xmpRights:WebStatement'] = lic.url
   }
 
   if (settings.embedPhotoUrl && info.ownerPathAlias) {
-    const photoUrl = `https://www.flickr.com/photos/${info.ownerPathAlias}/${info.id}/`
-    args.push(`-XMP:Source=${photoUrl}`)
+    tags['XMP:Source'] = `https://www.flickr.com/photos/${info.ownerPathAlias}/${info.id}/`
   }
 
   if (settings.embedPhotoId) {
-    args.push(`-XMP:Identifier=${info.id}`)
+    tags['XMP:Identifier'] = info.id
   }
 
-  args.push('-overwrite_original')
-  args.push(filePath)
+  if (Object.keys(tags).length === 0) return
 
-  return args
-}
-
-export async function embedMetadata(filePath: string, info: PhotoInfo, settings: MetadataSettings): Promise<void> {
-  const exiftoolPath = findExifTool()
-  const args = buildArgs(info, filePath, settings)
-  if (args.length <= 2) return  // only -overwrite_original + path = nothing to embed
-  await execFileAsync(exiftoolPath, args)
+  await exiftool.write(filePath, tags, ['-overwrite_original'])
 }

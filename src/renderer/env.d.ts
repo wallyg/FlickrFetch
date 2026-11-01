@@ -37,7 +37,6 @@ declare global {
       confirm: (message: string, detail?: string) => Promise<boolean>
       onBatchProgress: (cb: (progress: BatchProgress) => void) => () => void
       onShowAbout: (cb: (data: { version: string }) => void) => () => void
-      checkExifTool: () => Promise<boolean>
       onOpenSettings: (cb: () => void) => () => void
       onMenuSignOut: (cb: () => void) => () => void
     }

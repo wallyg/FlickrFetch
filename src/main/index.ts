@@ -4,7 +4,7 @@ import { readFileSync } from 'fs'
 import { startOAuthFlow, verifyOAuth, loadToken, clearToken } from './auth'
 import { getUserInfo, getPhotos, getPhotoSizes, getPhotoInfo, getPhotoExif, getAlbums, getAlbumPhotos, getCollectionTree, resolveVideoUrl } from './flickr'
 import { downloadPhoto, downloadToFolder } from './downloader'
-import { isExifToolAvailable } from './exiftool'
+import { endExifTool } from './exiftool'
 import { loadSettings, saveSettings, resetSettings, ensureDownloadFolder } from './settings'
 import type { AppSettings, FileNamingConfig, PhotoInfo, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams } from '../shared/types'
 
@@ -176,8 +176,6 @@ function createWindow(): void {
 }
 
 // IPC Handlers
-
-ipcMain.handle('exiftool:check', () => isExifToolAvailable())
 
 // Step 1: Get a request token and open the Flickr authorize page in the browser
 ipcMain.handle('auth:start', async () => {
@@ -693,6 +691,12 @@ app.whenReady().then(() => {
       mainWindow!.once('ready-to-show', () => mainWindow!.show())
     }
   })
+})
+
+app.on('will-quit', async (event) => {
+  event.preventDefault()
+  await endExifTool()
+  app.exit()
 })
 
 app.on('window-all-closed', () => {

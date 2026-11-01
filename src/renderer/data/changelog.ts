@@ -10,6 +10,7 @@ const changelog: Release[] = [
     version: '1.7',
     date: 'November 2026',
     highlights: [
+      'ExifTool is now bundled — no Homebrew installation required for metadata embedding',
       'Search your photostream and albums by title — choose contains, starts with, ends with, or exact match',
       'Tag filter: search for photos by one or more tags, with any/all matching',
       'Date range filter: narrow by date taken or date posted, with one-click presets and custom date ranges',

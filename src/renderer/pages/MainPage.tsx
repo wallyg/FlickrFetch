@@ -56,14 +56,6 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
   const handleStackedDismiss = useCallback((idx: number) => setCompletedBatches(prev => prev.filter((_, i) => i !== idx)), [])
   const handleDismissAll = useCallback(() => { setBatchProgress(null); setCompletedBatches([]) }, [])
   const [photostreamRefreshKey, setPhotostreamRefreshKey] = useState(0)
-  const [exifToolMissing, setExifToolMissing] = useState(false)
-
-  useEffect(() => {
-    window.flickrAPI.checkExifTool().then((available) => {
-      if (!available) setExifToolMissing(true)
-    })
-  }, [])
-
   useEffect(() => {
     const unsubscribe = window.flickrAPI.onBatchProgress((p) => {
       setBatchProgress(prev => {
@@ -301,16 +293,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
 
   return (
     <div style={styles.container}>
-      {exifToolMissing && (
-        <div style={styles.exifBanner}>
-          <span style={styles.exifBannerText}>
-            <strong>ExifTool not found.</strong> Photos will download without embedded metadata.
-            Install it to enable metadata: <code style={styles.exifCode}>brew install exiftool</code>
-          </span>
-          <button style={styles.exifBannerDismiss} onClick={() => setExifToolMissing(false)}>✕</button>
-        </div>
-      )}
-      <header style={styles.header}>
+<header style={styles.header}>
         <span style={styles.wordmark}>
           <span style={{ color: '#0063DC' }}>Flickr</span><span style={{ color: '#FF0084' }}>Fetch</span>
         </span>
@@ -573,37 +556,6 @@ const styles: Record<string, React.CSSProperties> = {
     height: '100vh',
     fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
     backgroundColor: '#f5f5f5'
-  },
-  exifBanner: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: '12px',
-    padding: '10px 20px',
-    backgroundColor: '#FFF3CD',
-    borderBottom: '1px solid #F5C542',
-    flexShrink: 0
-  },
-  exifBannerText: {
-    fontSize: '13px',
-    color: '#5A4A00',
-    lineHeight: '1.5'
-  },
-  exifCode: {
-    backgroundColor: 'rgba(0,0,0,0.08)',
-    borderRadius: '4px',
-    padding: '1px 5px',
-    fontFamily: 'ui-monospace, Menlo, monospace',
-    fontSize: '12px'
-  },
-  exifBannerDismiss: {
-    background: 'none',
-    border: 'none',
-    color: '#888',
-    cursor: 'pointer',
-    fontSize: '14px',
-    padding: '2px 4px',
-    flexShrink: 0
   },
   header: {
     display: 'flex',

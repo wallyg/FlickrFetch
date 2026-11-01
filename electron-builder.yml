@@ -10,6 +10,9 @@ files:
   - out/**/*
   - package.json
 
+asarUnpack:
+  - node_modules/exiftool-vendored.pl/**
+
 extraResources:
   - from: resources/splash.png
     to: splash.png

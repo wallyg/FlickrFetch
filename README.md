@@ -18,7 +18,6 @@ Mac desktop app for downloading your personal Flickr library at original resolut
 ## Requirements
 
 - macOS (Apple Silicon)
-- [ExifTool](https://exiftool.org) — install via Homebrew: `brew install exiftool`
 - Node.js 18+
 
 ## Setup
@@ -53,7 +52,7 @@ npm run dev
 
 - Electron + React + TypeScript (electron-vite)
 - OAuth 1.0a via `oauth-1.0a`
-- ExifTool for metadata embedding
+- ExifTool (bundled via `exiftool-vendored`) for metadata embedding
 - electron-builder for DMG packaging
 
 ## Notes

@@ -87,8 +87,6 @@ contextBridge.exposeInMainWorld('flickrAPI', {
     return () => ipcRenderer.removeListener('app:showAbout', handler)
   },
 
-  checkExifTool: (): Promise<boolean> => ipcRenderer.invoke('exiftool:check'),
-
   onOpenSettings: (cb: () => void): (() => void) => {
     const handler = () => cb()
     ipcRenderer.on('app:openSettings', handler)
