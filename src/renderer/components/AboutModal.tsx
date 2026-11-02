@@ -142,7 +142,7 @@ const styles: Record<string, React.CSSProperties> = {
     textAlign: 'center'
   },
   logo: {
-    width: '200px',
+    width: '164px',
     marginBottom: '10px',
     objectFit: 'contain' as const
   },
