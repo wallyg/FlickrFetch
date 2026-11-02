@@ -29,54 +29,84 @@ export default function AboutModal({ version, onClose }: AboutModalProps): React
             {/* Left column — identity */}
             <div style={styles.leftCol}>
               <img src={logoTrayImg} alt="FlickrFetch" style={styles.logo} />
-              <p style={styles.slogan}>Your Flickr,{'\n'}Your Files.</p>
-              <p style={styles.version}>v{version}</p>
+              <span style={styles.versionBadge}>Version {version}</span>
             </div>
 
             {/* Right column — about content */}
             <div style={styles.rightCol}>
+              <h2 style={styles.heading}>A local backup for your Flickr photos.</h2>
+              <p style={styles.subtext}>
+                FlickrFetch helps you download and archive your Flickr photos and albums
+                to your Mac, with control over what to save and how to organize it.
+              </p>
+
               <div style={styles.section}>
-                <p style={styles.sectionLabel}>Privacy</p>
-                <p style={styles.sectionText}>
-                  Your photos and credentials never leave your Mac. FlickrFetch communicates
-                  directly with Flickr's API — no data passes through any third-party server.
-                </p>
+                <div style={styles.iconBadge}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0063DC" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                </div>
+                <div>
+                  <p style={styles.sectionLabel}>Privacy</p>
+                  <p style={styles.sectionText}>
+                    FlickrFetch connects directly to Flickr. No third-party servers or cloud storage are involved.
+                  </p>
+                </div>
               </div>
 
               <div style={styles.section}>
-                <p style={styles.sectionLabel}>Flickr Attribution</p>
-                <p style={styles.sectionText}>
-                  FlickrFetch is an independent app, not affiliated with, endorsed by, or
-                  sponsored by Flickr or SmugMug Inc.
-                </p>
+                <div style={{ ...styles.iconBadge, backgroundColor: '#FEE8F3' }}>
+                  <span style={{ fontSize: '14px', letterSpacing: '-1px', lineHeight: 1 }}>
+                    <span style={{ color: '#0063DC' }}>●</span><span style={{ color: '#FF0084' }}>●</span>
+                  </span>
+                </div>
+                <div>
+                  <p style={styles.sectionLabel}>Flickr</p>
+                  <p style={styles.sectionText}>
+                    FlickrFetch is independent — not affiliated with, endorsed by, or sponsored by Flickr or SmugMug Inc.
+                  </p>
+                </div>
               </div>
+
+              <button style={styles.whatsNewBtn} onClick={() => setShowChangelog(true)}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                </svg>
+                What's New in v{version} &nbsp;›
+              </button>
 
               <div style={styles.linkRow}>
-                <a href="#" style={styles.externalLink}
+                <a href="#" style={styles.linkItem}
                   onClick={(e) => { e.preventDefault(); window.flickrAPI.openExternal('mailto:wallyg@gmail.com?subject=FlickrFetch Feedback') }}>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0063DC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0063DC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                     <polyline points="22,6 12,13 2,6"/>
                   </svg>
-                  Email
+                  <span style={styles.linkLabel}>Email</span>
+                  <span style={styles.linkSub}>Questions & Feedback</span>
                 </a>
-                <a href="#" style={styles.externalLink}
+                <div style={styles.linkDivider} />
+                <a href="#" style={styles.linkItem}
+                  onClick={(e) => { e.preventDefault(); window.flickrAPI.openExternal('https://www.flickr.com/photos/wallyg/') }}>
+                  <span style={{ fontSize: '15px', letterSpacing: '-1px', lineHeight: 1 }}>
+                    <span style={{ color: '#0063DC' }}>●</span><span style={{ color: '#FF0084' }}>●</span>
+                  </span>
+                  <span style={styles.linkLabel}>My Flickr</span>
+                  <span style={styles.linkSub}>View My Photos</span>
+                </a>
+                <div style={styles.linkDivider} />
+                <a href="#" style={styles.linkItem}
                   onClick={(e) => { e.preventDefault(); window.flickrAPI.openExternal('https://github.com/wallyg/FlickrFetch') }}>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="#0063DC">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#0063DC">
                     <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222 0 1.606-.015 2.896-.015 3.286 0 .322.216.694.825.576C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12z"/>
                   </svg>
-                  GitHub
+                  <span style={styles.linkLabel}>GitHub Repo</span>
+                  <span style={styles.linkSub}>Source, Releases & Issues</span>
                 </a>
-                <a href="#" style={styles.externalLink}
-                  onClick={(e) => { e.preventDefault(); window.flickrAPI.openExternal('https://www.flickr.com/photos/wallyg/') }}>
-                  <span style={{ ...styles.linkIcon, color: '#FF0084', fontSize: '14px' }}>●</span> Flickr Profile
-                </a>
-              </div>
-
-              <div style={styles.whatsNewRow}>
-                <button style={styles.whatsNewLink} onClick={() => setShowChangelog(true)}>
-                  What's New in v{version} →
-                </button>
               </div>
             </div>
           </div>
@@ -105,8 +135,8 @@ const styles: Record<string, React.CSSProperties> = {
   card: {
     backgroundColor: '#FEF4EA',
     borderRadius: '16px',
-    width: '540px',
-    maxWidth: '90vw',
+    width: '720px',
+    maxWidth: '92vw',
     boxShadow: '0 12px 48px rgba(0,0,0,0.3)',
     position: 'relative',
     overflow: 'hidden',
@@ -128,99 +158,132 @@ const styles: Record<string, React.CSSProperties> = {
   body: {
     display: 'flex',
     flexDirection: 'row',
-    minHeight: '240px'
+    minHeight: '300px'
   },
   leftCol: {
-    width: '160px',
+    width: '240px',
     flexShrink: 0,
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: '32px 20px 24px',
+    padding: '32px 20px 28px',
     borderRight: '1px solid rgba(0,0,0,0.07)',
-    textAlign: 'center'
+    gap: '16px'
   },
   logo: {
-    width: '164px',
-    marginBottom: '10px',
+    width: '190px',
     objectFit: 'contain' as const
   },
-  slogan: {
-    fontSize: '11px',
-    fontWeight: '600',
-    color: '#888',
-    letterSpacing: '0.02em',
-    margin: '0 0 6px',
-    textAlign: 'center' as const,
-    whiteSpace: 'pre' as const,
-    lineHeight: 1.5,
-  },
-  version: {
+  versionBadge: {
+    display: 'inline-block',
+    backgroundColor: 'rgba(0,0,0,0.08)',
+    borderRadius: '20px',
+    padding: '5px 14px',
     fontSize: '12px',
-    color: '#777',
-    margin: 0,
-    fontWeight: '500'
+    fontWeight: '600',
+    color: '#444'
   },
   rightCol: {
     flex: 1,
     backgroundColor: '#ffffff',
     display: 'flex',
     flexDirection: 'column',
-    padding: '24px 24px 20px',
-    minWidth: 0
+    padding: '28px 28px 20px',
+    minWidth: 0,
+    gap: '14px'
+  },
+  heading: {
+    fontSize: '17px',
+    fontWeight: '700',
+    color: '#111',
+    margin: 0,
+    lineHeight: 1.3
+  },
+  subtext: {
+    fontSize: '12px',
+    color: '#666',
+    margin: 0,
+    lineHeight: 1.6
   },
   section: {
-    marginBottom: '16px'
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: '12px'
+  },
+  iconBadge: {
+    width: '36px',
+    height: '36px',
+    borderRadius: '10px',
+    backgroundColor: '#EBF3FF',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0
   },
   sectionLabel: {
-    fontSize: '11px',
+    fontSize: '12px',
     fontWeight: '700',
-    color: '#333',
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.06em',
-    margin: '0 0 4px 0'
+    color: '#222',
+    margin: '0 0 3px'
   },
   sectionText: {
     fontSize: '12px',
     color: '#666',
     margin: 0,
-    lineHeight: '1.6'
+    lineHeight: 1.55
+  },
+  whatsNewBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    backgroundColor: '#1a2744',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '10px',
+    padding: '11px 20px',
+    fontSize: '13px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    width: '100%',
+    fontFamily: 'inherit'
   },
   linkRow: {
     display: 'flex',
-    gap: '16px',
-    alignItems: 'center',
-    marginTop: '4px'
+    alignItems: 'stretch',
+    marginTop: 'auto',
+    borderTop: '1px solid #f0ede8',
+    paddingTop: '16px'
   },
-  externalLink: {
-    fontSize: '12px',
-    color: '#FF0084',
-    textDecoration: 'none',
+  linkDivider: {
+    width: '1px',
+    backgroundColor: '#f0ede8',
+    margin: '0 4px'
+  },
+  linkItem: {
+    flex: 1,
     display: 'flex',
+    flexDirection: 'column',
     alignItems: 'center',
-    gap: '4px'
-  },
-  linkIcon: {
-    fontSize: '11px',
+    gap: '4px',
+    textDecoration: 'none',
+    padding: '4px 8px',
+    borderRadius: '8px',
+    cursor: 'pointer'
+  } as React.CSSProperties,
+  linkLabel: {
+    fontSize: '12px',
+    fontWeight: '600',
     color: '#0063DC'
   },
-  whatsNewRow: {
-    marginTop: 'auto',
-    paddingTop: '20px'
-  },
-  whatsNewLink: {
-    background: 'none',
-    border: 'none',
-    color: '#FF0084',
-    fontSize: '12px',
-    cursor: 'pointer',
-    padding: 0,
-    fontFamily: 'inherit'
+  linkSub: {
+    fontSize: '10px',
+    color: '#999'
   },
   footer: {
     borderTop: '1px solid rgba(0,0,0,0.08)',
-    padding: '12px 24px',
+    padding: '11px 24px',
     backgroundColor: '#FEF4EA'
   },
   copyright: {
