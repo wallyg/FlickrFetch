@@ -410,7 +410,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
                   }
                 }}
               >
-                ↓ Download All
+                ↓ Download Album
               </button>
               <button style={styles.selectButton} onClick={() => setAlbumSelectMode(true)}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
@@ -423,7 +423,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             <>
               <button style={styles.selectButton} onClick={handleSelectAll}>Select All</button>
               {albumSelectedIds.size > 0 && (
-                <button style={styles.selectButton} onClick={() => setAlbumSelectedIds(new Set())}>Deselect All</button>
+                <button style={styles.selectButton} onClick={() => setAlbumSelectedIds(new Set())}>Clear Selection</button>
               )}
               <button
                 style={{
@@ -443,9 +443,9 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
 
       {view === 'photostream' && photostreamSelectMode && (
         <div style={styles.photostreamToolbar}>
-          <span style={styles.selectedCount}>{photostreamSelectedIds.size} selected</span>
+          <span style={styles.selectedCount}>{photostreamSelectedIds.size} photos selected</span>
           {photostreamSelectedIds.size > 0 && (
-            <button style={styles.selectButton} onClick={() => setPhotostreamSelectedIds(new Set())}>Deselect All</button>
+            <button style={styles.selectButton} onClick={() => setPhotostreamSelectedIds(new Set())}>Clear Selection</button>
           )}
           <div style={{ flex: 1 }} />
           <button
@@ -743,7 +743,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '5px 8px',
     fontSize: '13px',
     fontWeight: '600',
-    color: '#0063DC',
+    color: '#667085',
     cursor: 'pointer',
     flexShrink: 0
   },

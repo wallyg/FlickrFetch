@@ -331,7 +331,7 @@ export default function PhotoDetail({
         )}
 
         <div style={styles.counter}>
-          {index + 1} / {total}{hasMore ? '+' : ''}
+          Photo {index + 1} of {total}{hasMore ? '+' : ''}
         </div>
       </div>
 
@@ -358,7 +358,7 @@ export default function PhotoDetail({
 
           {!loadingDetail && originalSize && (
             <div style={{ marginBottom: '4px' }}>
-              <p style={{ ...styles.fieldLabel, marginBottom: '2px' }}>Dimensions</p>
+              <p style={{ ...styles.fieldLabel, marginBottom: '2px' }}>Photo Resolution</p>
               <p style={styles.metaDim}>{originalSize.width} × {originalSize.height}</p>
             </div>
           )}

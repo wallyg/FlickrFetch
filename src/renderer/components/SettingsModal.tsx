@@ -321,7 +321,7 @@ export default function SettingsModal({ onClose }: { onClose: () => void }): Rea
               {/* Download size */}
               <div style={{ ...s.section, borderTop: '1px solid #f0ede8' }}>
                 <div style={s.sectionRow}>
-                  <p style={s.sectionTitle}>Download Size</p>
+                  <p style={s.sectionTitle}>Photo Resolution</p>
                   <InfoTip text="Which image size to download. Original is always recommended for archiving. Videos always download at highest quality regardless." />
                 </div>
                 <div style={s.optionList}>

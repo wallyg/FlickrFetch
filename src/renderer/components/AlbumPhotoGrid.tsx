@@ -388,8 +388,8 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
 
           <p style={styles.countLabel}>
             {hasAnyFilter
-              ? `${filteredPhotos.length.toLocaleString()} matching · ${photos.length.toLocaleString()} of ${pageInfo?.total.toLocaleString() ?? '?'} loaded${hasMore ? (loadingMore ? ' · loading…' : ' · more below') : ''}`
-              : `${photos.length.toLocaleString()} of ${pageInfo?.total.toLocaleString() ?? '?'} loaded${hasMore ? ' · more below' : ''}`
+              ? `${filteredPhotos.length.toLocaleString()} matching · ${photos.length.toLocaleString()} of ${pageInfo?.total.toLocaleString() ?? '?'} photos loaded${hasMore ? (loadingMore ? ' · loading…' : ' · Scroll for more') : ''}`
+              : `${photos.length.toLocaleString()} of ${pageInfo?.total.toLocaleString() ?? '?'} photos loaded${hasMore ? ' · Scroll for more' : ''}`
             }
           </p>
 

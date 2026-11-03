@@ -427,8 +427,8 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
 
           <p style={styles.countLabel}>
             {hasClientFilter
-              ? `${filteredPhotos.length.toLocaleString()} matching · ${photos.length.toLocaleString()} of ${total.toLocaleString()} loaded${page < pages ? ' · more below' : ''}`
-              : `${photos.length.toLocaleString()} of ${total.toLocaleString()} loaded${page < pages ? ' · more below' : ''}`
+              ? `${filteredPhotos.length.toLocaleString()} matching · ${photos.length.toLocaleString()} of ${total.toLocaleString()} photos loaded${page < pages ? ' · Scroll for more' : ''}`
+              : `${photos.length.toLocaleString()} of ${total.toLocaleString()} photos loaded${page < pages ? ' · Scroll for more' : ''}`
             }
           </p>
 

@@ -167,12 +167,12 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: '32px 20px 28px',
+    padding: '24px 20px',
     borderRight: '1px solid rgba(0,0,0,0.07)',
-    gap: '16px'
+    gap: '14px'
   },
   logo: {
-    width: '190px',
+    width: '210px',
     objectFit: 'contain' as const
   },
   versionBadge: {
