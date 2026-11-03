@@ -1,5 +1,8 @@
 import React, { useState } from 'react'
-import splashImg from '../assets/splash.png'
+import logoTrayImg from '../assets/logo-tray.png'
+import '@fontsource/lato/400.css'
+import '@fontsource/lato/700.css'
+import '@fontsource/lato/400-italic.css'
 import type { FlickrUser } from '../../shared/types'
 
 interface LoginPageProps {
@@ -7,33 +10,43 @@ interface LoginPageProps {
 }
 
 export default function LoginPage({ onAuthSuccess }: LoginPageProps): React.JSX.Element {
-  // 'idle'       → showing Connect button
-  // 'waiting'    → browser is open, waiting for user to paste verifier code
-  // 'verifying'  → exchanging verifier code for access token
   const [step, setStep] = useState<'idle' | 'waiting' | 'verifying'>('idle')
   const [verifierCode, setVerifierCode] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [codeValid, setCodeValid] = useState(false)
+
+  const normalizeCode = (raw: string): string => raw.replace(/[\s-]/g, '')
+
+  const handleCodeChange = (val: string): void => {
+    setVerifierCode(val)
+    setError(null)
+    setCodeValid(normalizeCode(val).length >= 6)
+  }
 
   const handleConnect = async (): Promise<void> => {
     setError(null)
     try {
       await window.flickrAPI.startAuth()
-      // Browser is now open — show the verifier code input
       setStep('waiting')
     } catch (err) {
-      const raw = err instanceof Error ? err.message : 'Failed to connect to Flickr'
-      // Strip Electron's IPC error prefix if present
-      const message = raw.replace(/^Error invoking remote method '[^']+': (Error: )?/, '')
-      setError(message)
+      const raw = err instanceof Error ? err.message : 'Failed to open Flickr.'
+      setError(raw.replace(/^Error invoking remote method '[^']+': (Error: )?/, ''))
+    }
+  }
+
+  const handleReopenFlickr = async (): Promise<void> => {
+    setError(null)
+    try {
+      await window.flickrAPI.startAuth()
+    } catch (err) {
+      const raw = err instanceof Error ? err.message : 'Failed to open Flickr.'
+      setError(raw.replace(/^Error invoking remote method '[^']+': (Error: )?/, ''))
     }
   }
 
   const handleVerify = async (): Promise<void> => {
-    const code = verifierCode.trim()
-    if (!code) {
-      setError('Please enter the code from Flickr.')
-      return
-    }
+    const code = normalizeCode(verifierCode).trim()
+    if (!code) { setError('Please enter the authorization code from Flickr.'); return }
     setStep('verifying')
     setError(null)
     try {
@@ -41,70 +54,106 @@ export default function LoginPage({ onAuthSuccess }: LoginPageProps): React.JSX.
       onAuthSuccess(user)
     } catch (err) {
       const raw = err instanceof Error ? err.message : 'Could not verify code.'
-      const message = raw.replace(/^Error invoking remote method '[^']+': (Error: )?/, '')
-      setError(message)
+      setError(raw.replace(/^Error invoking remote method '[^']+': (Error: )?/, ''))
       setStep('waiting')
     }
   }
 
-  const handleStartOver = (): void => {
-    setStep('idle')
-    setVerifierCode('')
-    setError(null)
-  }
+  const isConnecting = step === 'verifying'
+  const connectDisabled = !codeValid || isConnecting
 
   return (
     <div style={styles.container}>
       <div style={styles.card}>
-        <div style={styles.header}>
-          <img src={splashImg} alt="FlickrFetch" style={styles.headerImg} />
+
+        {/* ── Left column: brand image ── */}
+        <div style={styles.leftCol}>
+          <img
+            src={logoTrayImg}
+            alt="FlickrFetch"
+            style={styles.brandImage}
+            draggable={false}
+          />
+          {/* Subtle wave at the bottom */}
+          <div style={styles.waveContainer} aria-hidden="true">
+            <svg viewBox="0 0 320 52" preserveAspectRatio="none" style={{ width: '100%', height: '52px', display: 'block' }}>
+              <path d="M0,36 Q80,8 160,28 Q240,48 320,18 L320,52 L0,52 Z" fill="rgba(0,99,220,0.07)" />
+              <path d="M0,46 Q80,28 160,42 Q240,56 320,32 L320,52 L0,52 Z" fill="rgba(255,0,132,0.05)" />
+            </svg>
+          </div>
         </div>
-        <div style={styles.body}>
-          <p style={styles.subtitle}>Sign in to download your photos &amp; videos with full metadata</p>
 
-          {step === 'idle' && (
-            <button style={styles.button} onClick={handleConnect}>
-              Connect to Flickr
-            </button>
-          )}
+        {/* ── Divider ── */}
+        <div style={styles.columnDivider} />
 
-          {(step === 'waiting' || step === 'verifying') && (
-            <div style={styles.verifierSection}>
-              <p style={styles.instructions}>
-                Your browser opened Flickr's authorization page.<br />
-                After you click <strong>OK, I'LL AUTHORIZE IT</strong>, Flickr will show you a 9-digit code.<br />
-                Paste it below:
+        {/* ── Right column: authorization ── */}
+        <div style={styles.rightCol}>
+          <div style={styles.formGroup}>
+
+            <h1 style={styles.heading}>Connect your Flickr account</h1>
+            <p style={styles.intro}>
+              Back up your Flickr photos to your Mac. Connect your account to get started.
+            </p>
+
+            <div style={styles.stepsArea}>
+
+              {/* Step 1 */}
+              <p style={styles.stepLabel}>1. Authorize in your browser</p>
+              <p style={styles.stepBody}>
+                Open Flickr and approve FlickrFetch's access. Flickr will give you an authorization code.
               </p>
+              {step === 'waiting' && (
+                <p style={styles.statusText}>
+                  Continue in your browser, then paste your code below.
+                </p>
+              )}
+              <button
+                style={styles.outlinedBtn}
+                onClick={step === 'idle' ? handleConnect : handleReopenFlickr}
+                disabled={isConnecting}
+              >
+                {step === 'idle' ? 'Open Flickr to authorize' : 'Reopen Flickr'}
+              </button>
+
+              {/* Step 2 */}
+              <p style={{ ...styles.stepLabel, marginTop: '20px' }}>2. Enter your authorization code</p>
               <input
+                id="verifier-input"
                 style={styles.input}
                 type="text"
-                placeholder="e.g. 123-456-789"
+                placeholder="Paste the code from Flickr"
                 value={verifierCode}
-                onChange={(e) => setVerifierCode(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') handleVerify() }}
-                disabled={step === 'verifying'}
-                autoFocus
+                onChange={(e) => handleCodeChange(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !connectDisabled) handleVerify() }}
+                disabled={isConnecting}
+                autoComplete="off"
+                aria-label="Authorization code"
               />
+              {error && (
+                <p style={styles.errorText} role="alert">⚠️ {error}</p>
+              )}
               <button
                 style={{
-                  ...styles.button,
-                  ...(step === 'verifying' ? styles.buttonDisabled : {})
+                  ...styles.primaryBtn,
+                  ...(connectDisabled ? styles.primaryBtnDisabled : {})
                 }}
                 onClick={handleVerify}
-                disabled={step === 'verifying'}
+                disabled={connectDisabled}
+                aria-busy={isConnecting}
               >
-                {step === 'verifying' ? 'Connecting…' : 'Connect'}
+                {isConnecting ? 'Connecting…' : 'Connect account'}
               </button>
-              <button style={styles.startOverButton} onClick={handleStartOver}>
-                Start over
-              </button>
-            </div>
-          )}
 
-          {error && (
-            <p style={styles.errorText}>⚠️ {error}</p>
-          )}
+            </div>
+
+            {/* Trust line */}
+            <p style={styles.trustText}>
+              Authorization takes place on Flickr in your browser.
+            </p>
+
+          </div>
         </div>
+
       </div>
     </div>
   )
@@ -116,88 +165,164 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'center',
     height: '100vh',
-    backgroundColor: '#FEF4EA',
-    fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif'
+    backgroundColor: '#FCFAF6',
+    fontFamily: "'Lato', -apple-system, BlinkMacSystemFont, sans-serif"
   },
   card: {
+    display: 'flex',
+    flexDirection: 'row',
     backgroundColor: '#ffffff',
-    borderRadius: '16px',
-    padding: '0 0 36px 0',
-    textAlign: 'center',
-    boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-    maxWidth: '400px',
-    width: '100%',
+    borderRadius: '20px',
+    boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
+    width: '880px',
+    maxWidth: 'calc(100vw - 48px)',
+    minHeight: '520px',
     overflow: 'hidden'
   },
-  header: {
-    width: '100%',
-    marginBottom: '0'
+
+  // ── Left column ──
+  leftCol: {
+    width: '320px',
+    flexShrink: 0,
+    backgroundColor: '#FCFAF6',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    overflow: 'hidden',
+    padding: '32px'
   },
-  headerImg: {
-    width: '100%',
-    height: 'auto',
-    display: 'block',
-    borderRadius: '16px 16px 0 0'
+  brandImage: {
+    width: '240px',
+    objectFit: 'contain',
+    position: 'relative',
+    zIndex: 1,
+    userSelect: 'none'
+  } as React.CSSProperties,
+  waveContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    zIndex: 0
   },
-  body: {
-    padding: '0 32px 8px'
+
+  // ── Divider ──
+  columnDivider: {
+    width: '1px',
+    backgroundColor: 'rgba(0,0,0,0.07)',
+    flexShrink: 0,
+    alignSelf: 'stretch'
   },
-  subtitle: {
+
+  // ── Right column ──
+  rightCol: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+    display: 'flex',
+    alignItems: 'center',
+    padding: '36px 36px'
+  },
+  formGroup: {
+    display: 'flex',
+    flexDirection: 'column',
+    width: '100%'
+  },
+  heading: {
+    fontSize: '24px',
+    fontWeight: '700',
+    lineHeight: '30px',
+    color: '#0E2A4D',
+    margin: '0 0 10px',
+    fontFamily: "'Lato', -apple-system, sans-serif"
+  },
+  intro: {
     fontSize: '14px',
-    color: '#888',
-    margin: '20px 0 24px',
-    lineHeight: '1.5'
+    lineHeight: '21px',
+    color: '#555',
+    margin: '0'
   },
-  button: {
-    backgroundColor: '#FF0084',
+  stepsArea: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+    marginTop: '24px'
+  },
+  stepLabel: {
+    fontSize: '14px',
+    fontWeight: '600',
+    color: '#0E2A4D',
+    margin: '0',
+    fontFamily: "'Lato', -apple-system, sans-serif"
+  },
+  stepBody: {
+    fontSize: '13px',
+    lineHeight: '19px',
+    color: '#666',
+    margin: '6px 0 0'
+  },
+  statusText: {
+    fontSize: '13px',
+    color: '#0063DC',
+    margin: '0',
+    fontStyle: 'italic'
+  },
+  outlinedBtn: {
+    alignSelf: 'flex-start' as const,
+    height: '38px',
+    backgroundColor: 'transparent',
+    color: '#0E2A4D',
+    border: '1.5px solid rgba(0,0,0,0.18)',
+    borderRadius: '8px',
+    fontSize: '14px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    fontFamily: "'Lato', -apple-system, sans-serif",
+    padding: '0 16px',
+    marginTop: '12px'
+  },
+  input: {
+    height: '38px',
+    border: '1.5px solid #ddd',
+    borderRadius: '8px',
+    padding: '0 12px',
+    fontSize: '15px',
+    letterSpacing: '0.04em',
+    color: '#0E2A4D',
+    outline: 'none',
+    fontFamily: "'Lato', -apple-system, sans-serif",
+    boxSizing: 'border-box' as const,
+    width: '100%',
+    marginTop: '8px',
+    backgroundColor: '#fff'
+  },
+  primaryBtn: {
+    height: '40px',
+    backgroundColor: '#0063DC',
     color: '#ffffff',
     border: 'none',
     borderRadius: '8px',
-    padding: '14px 28px',
-    fontSize: '15px',
+    fontSize: '14px',
     fontWeight: '600',
     cursor: 'pointer',
+    fontFamily: "'Lato', -apple-system, sans-serif",
     width: '100%',
     transition: 'opacity 0.15s'
   },
-  buttonDisabled: {
-    opacity: 0.6,
-    cursor: 'not-allowed'
-  },
-  verifierSection: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '12px'
-  },
-  instructions: {
-    fontSize: '14px',
-    color: '#444',
-    lineHeight: '1.6',
-    margin: '0',
-    textAlign: 'left'
-  },
-  input: {
-    border: '1px solid #ccc',
-    borderRadius: '8px',
-    padding: '12px 14px',
-    fontSize: '16px',
-    width: '100%',
-    boxSizing: 'border-box',
-    letterSpacing: '0.05em',
-    outline: 'none'
-  },
-  startOverButton: {
-    backgroundColor: 'transparent',
-    border: 'none',
-    color: '#888',
-    fontSize: '13px',
-    cursor: 'pointer',
-    textDecoration: 'underline',
-    padding: '4px'
+  primaryBtnDisabled: {
+    opacity: 0.35,
+    cursor: 'not-allowed' as const
   },
   errorText: {
-    marginTop: '12px',
     fontSize: '13px',
-    color: '#cc0000'
+    color: '#c0000a',
+    margin: '0',
+    lineHeight: 1.5
+  },
+  trustText: {
+    fontSize: '12px',
+    color: '#888',
+    margin: '16px 0 0',
+    lineHeight: 1.5
   }
 }

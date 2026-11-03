@@ -7,6 +7,22 @@ export interface Release {
 
 const changelog: Release[] = [
   {
+    version: '1.8',
+    date: 'November 2026',
+    highlights: [
+      'Login screen redesigned — cleaner two-column layout with both authorization steps visible upfront',
+      'Photo counter in the detail viewer now reads "Photo 8 of 100" instead of "8 / 100+"',
+      'Load count updated to "100 of 71,098 photos loaded · Scroll for more"',
+      'Album download button now reads "Download Album" for clarity',
+      '"Download Size" setting renamed to "Photo Resolution"; detail view label updated to match',
+      '"Dimensions" label in photo detail renamed to "Photo Resolution"',
+      'Selection toolbar: "Deselect All" renamed to "Clear Selection"; count reads "4 photos selected"',
+      'Cancel button in selection toolbar is now gray, distinguishing it from navigation links',
+      'About screen: What\'s New moved to the left column as a compact link below the version badge',
+      'About screen: updated product description and Flickr attribution copy',
+    ]
+  },
+  {
     version: '1.7',
     date: 'November 2026',
     highlights: [
