@@ -255,7 +255,8 @@ const styles: Record<string, React.CSSProperties> = {
   },
   linkSub: {
     fontSize: '10px',
-    color: '#999'
+    color: '#999',
+    textAlign: 'center' as const
   },
   footer: {
     borderTop: '1px solid rgba(0,0,0,0.08)',
