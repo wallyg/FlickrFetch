@@ -30,14 +30,16 @@ export default function AboutModal({ version, onClose }: AboutModalProps): React
             <div style={styles.leftCol}>
               <img src={logoTrayImg} alt="FlickrFetch" style={styles.logo} />
               <span style={styles.versionBadge}>Version {version}</span>
+              <a style={styles.whatsNewLink} onClick={() => setShowChangelog(true)}>
+                What's New in v{version} ›
+              </a>
             </div>
 
             {/* Right column — about content */}
             <div style={styles.rightCol}>
               <h2 style={styles.heading}>A local backup for your Flickr photos.</h2>
               <p style={styles.subtext}>
-                FlickrFetch helps you download and archive your Flickr photos and albums
-                to your Mac, with control over what to save and how to organize it.
+                Download and preserve your Flickr photos and videos in their original quality, with metadata intact and control over your local archive.
               </p>
 
               <div style={styles.section}>
@@ -62,22 +64,12 @@ export default function AboutModal({ version, onClose }: AboutModalProps): React
                   </span>
                 </div>
                 <div>
-                  <p style={styles.sectionLabel}>Flickr</p>
+                  <p style={styles.sectionLabel}>Flickr Attribution</p>
                   <p style={styles.sectionText}>
-                    FlickrFetch is independent — not affiliated with, endorsed by, or sponsored by Flickr or SmugMug Inc.
+                    This product uses the Flickr API but is not endorsed or certified by SmugMug, Inc.
                   </p>
                 </div>
               </div>
-
-              <button style={styles.whatsNewBtn} onClick={() => setShowChangelog(true)}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <polyline points="14 2 14 8 20 8"/>
-                  <line x1="16" y1="13" x2="8" y2="13"/>
-                  <line x1="16" y1="17" x2="8" y2="17"/>
-                </svg>
-                What's New in v{version} &nbsp;›
-              </button>
 
               <div style={styles.linkRow}>
                 <a href="#" style={styles.linkItem}
@@ -89,7 +81,6 @@ export default function AboutModal({ version, onClose }: AboutModalProps): React
                   <span style={styles.linkLabel}>Email</span>
                   <span style={styles.linkSub}>Questions & Feedback</span>
                 </a>
-                <div style={styles.linkDivider} />
                 <a href="#" style={styles.linkItem}
                   onClick={(e) => { e.preventDefault(); window.flickrAPI.openExternal('https://www.flickr.com/photos/wallyg/') }}>
                   <span style={{ fontSize: '15px', letterSpacing: '-1px', lineHeight: 1 }}>
@@ -98,7 +89,6 @@ export default function AboutModal({ version, onClose }: AboutModalProps): React
                   <span style={styles.linkLabel}>My Flickr</span>
                   <span style={styles.linkSub}>View My Photos</span>
                 </a>
-                <div style={styles.linkDivider} />
                 <a href="#" style={styles.linkItem}
                   onClick={(e) => { e.preventDefault(); window.flickrAPI.openExternal('https://github.com/wallyg/FlickrFetch') }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="#0063DC">
@@ -196,7 +186,7 @@ const styles: Record<string, React.CSSProperties> = {
   heading: {
     fontSize: '17px',
     fontWeight: '700',
-    color: '#111',
+    color: '#1B2946',
     margin: 0,
     lineHeight: 1.3
   },
@@ -233,33 +223,19 @@ const styles: Record<string, React.CSSProperties> = {
     margin: 0,
     lineHeight: 1.55
   },
-  whatsNewBtn: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '8px',
-    backgroundColor: '#1a2744',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '10px',
-    padding: '11px 20px',
-    fontSize: '13px',
+  whatsNewLink: {
+    fontSize: '12px',
     fontWeight: '600',
+    color: '#0063DC',
     cursor: 'pointer',
-    width: '100%',
-    fontFamily: 'inherit'
-  },
+    textDecoration: 'none'
+  } as React.CSSProperties,
   linkRow: {
     display: 'flex',
     alignItems: 'stretch',
     marginTop: 'auto',
     borderTop: '1px solid #f0ede8',
     paddingTop: '16px'
-  },
-  linkDivider: {
-    width: '1px',
-    backgroundColor: '#f0ede8',
-    margin: '0 4px'
   },
   linkItem: {
     flex: 1,
