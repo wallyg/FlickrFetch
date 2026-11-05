@@ -17,16 +17,36 @@ function loadPanelWidth(): number {
 type DownloadState = 'idle' | 'downloading' | 'done' | 'error'
 
 const LICENSE_NAMES: Record<string, string> = {
-  '1': 'CC BY-NC-SA 2.0',
-  '2': 'CC BY-NC 2.0',
-  '3': 'CC BY-NC-ND 2.0',
-  '4': 'CC BY 2.0',
-  '5': 'CC BY-SA 2.0',
-  '6': 'CC BY-ND 2.0',
-  '7': 'No known copyright restrictions',
+  '0': 'All Rights Reserved',
+  '1': 'CC BY-NC-SA 4.0',
+  '2': 'CC BY-NC 4.0',
+  '3': 'CC BY-NC-ND 4.0',
+  '4': 'CC BY 4.0',
+  '5': 'CC BY-SA 4.0',
+  '6': 'CC BY-ND 4.0',
+  '7': 'No Known Copyright Restrictions',
   '8': 'US Government Work',
-  '9': 'CC0 1.0',
+  '9': 'CC0 1.0 Universal',
   '10': 'Public Domain Mark 1.0',
+}
+
+const LICENSE_ICONS: Record<string, string[]> = {
+  '1': ['CC', 'BY', 'NC', 'SA'],
+  '2': ['CC', 'BY', 'NC'],
+  '3': ['CC', 'BY', 'NC', 'ND'],
+  '4': ['CC', 'BY'],
+  '5': ['CC', 'BY', 'SA'],
+  '6': ['CC', 'BY', 'ND'],
+  '9': ['CC', '0'],
+}
+
+function CcBadge({ label }: { label: string }): React.JSX.Element {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0 }}>
+      <circle cx="8" cy="8" r="7" stroke="#666" strokeWidth="1.2" fill="none" />
+      <text x="8" y="11" textAnchor="middle" fontSize={label.length > 2 ? '5' : '6.5'} fontFamily="sans-serif" fontWeight="bold" fill="#666">{label}</text>
+    </svg>
+  )
 }
 
 const DOWNLOAD_SIZE_OPTIONS: { value: DownloadSize; label: string; flickrLabels: string[] }[] = [
@@ -284,6 +304,7 @@ export default function PhotoDetail({
 
   return (
     <div style={styles.container}>
+      <style>{`@keyframes ff-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
       {/* Left: dark image panel */}
       <div style={styles.imagePanel}>
         <button style={styles.backBtnOverlay} onClick={onClose}>← {sourceName}</button>
@@ -308,7 +329,7 @@ export default function PhotoDetail({
               >
                 <div style={styles.videoPlayIcon}>
                   {videoResolving ? (
-                    <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.9)' }}>…</span>
+                    <div style={{ width: '20px', height: '20px', border: '2px solid rgba(255,255,255,0.25)', borderTopColor: 'rgba(255,255,255,0.9)', borderRadius: '50%', animation: 'ff-spin 0.75s linear infinite' }} />
                   ) : (
                     <svg width="18" height="18" viewBox="0 0 18 18" fill="white">
                       <polygon points="4,2 16,9 4,16" />
@@ -402,25 +423,29 @@ export default function PhotoDetail({
             </div>
           )}
 
-          {info?.description && (
+          {info && (
             <div style={styles.section}>
               <div style={{ display: 'flex', alignItems: 'center', marginBottom: '6px' }}>
                 <p style={{ ...styles.fieldLabel, margin: 0, flex: 1 }}>Description</p>
-                <CopyButton text={info.description} />
+                {info.description && <CopyButton text={info.description} />}
               </div>
-              <p style={{ ...styles.fieldValue, margin: 0 }}>{info.description}</p>
+              {info.description
+                ? <p style={{ ...styles.fieldValue, margin: 0 }}>{info.description}</p>
+                : <p style={{ ...styles.fieldValue, margin: 0, color: '#bbb', fontStyle: 'italic' as const }}>No description</p>
+              }
             </div>
           )}
 
-          {info && info.tags.length > 0 && (
+          {info && (
             <div style={styles.section}>
               <div style={{ display: 'flex', alignItems: 'center', marginBottom: '6px' }}>
                 <p style={{ ...styles.fieldLabel, margin: 0, flex: 1 }}>Tags</p>
-                <CopyButton text={info.tags.join(', ')} />
+                {info.tags.length > 0 && <CopyButton text={info.tags.join(', ')} />}
               </div>
-              <div style={styles.tagWrap}>
-                {info.tags.map(tag => <span key={tag} style={styles.tag}>{tag}</span>)}
-              </div>
+              {info.tags.length > 0
+                ? <div style={styles.tagWrap}>{info.tags.map(tag => <span key={tag} style={styles.tag}>{tag}</span>)}</div>
+                : <p style={{ ...styles.fieldValue, margin: 0, color: '#bbb', fontStyle: 'italic' as const }}>No tags</p>
+              }
             </div>
           )}
 
@@ -441,7 +466,12 @@ export default function PhotoDetail({
           {info && (
             <div style={styles.section}>
               <p style={styles.fieldLabel}>License</p>
-              <p style={styles.fieldValue}>{LICENSE_NAMES[info.license] ?? 'All Rights Reserved'}</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' as const }}>
+                {LICENSE_ICONS[info.license]?.map(label => <CcBadge key={label} label={label} />)}
+                <span style={{ ...styles.fieldValue, marginLeft: LICENSE_ICONS[info.license] ? '2px' : 0 }}>
+                  {LICENSE_NAMES[info.license] ?? LICENSE_NAMES['0']}
+                </span>
+              </div>
             </div>
           )}
 

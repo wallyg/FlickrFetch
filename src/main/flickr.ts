@@ -248,7 +248,7 @@ export async function getAlbumPhotos(albumId: string, tokenData: FlickrTokenData
     `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
     `&photoset_id=${encodeURIComponent(albumId)}` +
     `&user_id=${encodeURIComponent(tokenData.nsid)}` +
-    `&extras=${encodeURIComponent('url_q,date_taken,date_upload,media,ispublic,isfriend,isfamily,tags')}` +
+    `&extras=${encodeURIComponent('url_q,date_taken,date_upload,media,ispublic,isfriend,isfamily,tags,license')}` +
     `&per_page=100` +
     `&page=${page}` +
     `${mediaParam}` +
@@ -356,7 +356,7 @@ export async function getPhotos(tokenData: FlickrTokenData, page: number = 1, so
       `?method=flickr.photos.search` +
       `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
       `&user_id=${encodeURIComponent(tokenData.nsid)}` +
-      `&extras=${encodeURIComponent('url_q,date_taken,date_upload,media,ispublic,isfriend,isfamily')}` +
+      `&extras=${encodeURIComponent('url_q,date_taken,date_upload,media,ispublic,isfriend,isfamily,license')}` +
       `&sort=${encodeURIComponent(sort)}` +
       `&per_page=100` +
       `&page=${page}` +
@@ -388,7 +388,7 @@ export async function getPhotos(tokenData: FlickrTokenData, page: number = 1, so
       `?method=flickr.people.getPhotos` +
       `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
       `&user_id=${encodeURIComponent(tokenData.nsid)}` +
-      `&extras=${encodeURIComponent('url_q,date_taken,date_upload,media,ispublic,isfriend,isfamily')}` +
+      `&extras=${encodeURIComponent('url_q,date_taken,date_upload,media,ispublic,isfriend,isfamily,license')}` +
       `&sort=${encodeURIComponent(sort)}` +
       `&per_page=100` +
       `&page=${page}` +

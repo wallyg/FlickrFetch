@@ -33,6 +33,7 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
   const [privacyFilter, setPrivacyFilter] = useState<PrivacyFilter>('all')
   const autoLoadCountRef = useRef(0)
   const [autoLoadCapped, setAutoLoadCapped] = useState(false)
+  const [scanAllMode, setScanAllMode] = useState(false)
 
   // Search input state (uncommitted until triggered)
   const [searchQuery, setSearchQuery] = useState('')
@@ -160,12 +161,13 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
   useEffect(() => {
     autoLoadCountRef.current = 0
     setAutoLoadCapped(false)
+    setScanAllMode(false)
   }, [mediaFilter, privacyFilter])
 
   useEffect(() => {
     const filterActive = mediaFilter !== 'all' || privacyFilter !== 'all'
     if (filterActive && photos.length > 0 && page < pages && !loadingMore && !loading) {
-      if (autoLoadCountRef.current < 10) {
+      if (scanAllMode || autoLoadCountRef.current < 10) {
         autoLoadCountRef.current++
         const nextPage = page + 1
         setLoadingMore(true)
@@ -181,7 +183,7 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
         setAutoLoadCapped(true)
       }
     }
-  }, [mediaFilter, privacyFilter, photos.length, page, pages, loadingMore, loading, sort])
+  }, [mediaFilter, privacyFilter, photos.length, page, pages, loadingMore, loading, sort, scanAllMode])
 
   const hasServerSearch = !!(activeSearch.query || activeSearch.tagQuery || activeSearch.dateMin || activeSearch.dateMax)
   const hasClientFilter = mediaFilter !== 'all' || privacyFilter !== 'all'
@@ -193,7 +195,16 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
 
   const showDateInputs = dateMode === 'since' || dateMode === 'between'
 
-  if (loading) return <div style={styles.centered}><p style={styles.mutedText}>Loading your photos…</p></div>
+  if (loading) return (
+    <div style={styles.wrapper}>
+      <style>{`@keyframes ff-shimmer { 0%,100% { opacity: 0.55; } 50% { opacity: 1; } }`}</style>
+      <div style={{ ...styles.grid, gridTemplateColumns: GRID_COLUMNS['medium'], padding: '16px' }}>
+        {Array.from({ length: 24 }, (_, i) => (
+          <div key={i} style={{ ...styles.tile, background: '#e8e4de', animation: `ff-shimmer 1.4s ease-in-out infinite`, animationDelay: `${(i % 6) * 0.08}s` }} />
+        ))}
+      </div>
+    </div>
+  )
   if (error) return (
     <div style={styles.centered}>
       <p style={styles.errorText}>⚠️ {error}</p>
@@ -427,21 +438,31 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
 
           <p style={styles.countLabel}>
             {hasClientFilter
-              ? `${filteredPhotos.length.toLocaleString()} matching · ${photos.length.toLocaleString()} of ${total.toLocaleString()} photos loaded${page < pages ? ' · Scroll for more' : ''}`
+              ? `${filteredPhotos.length.toLocaleString()} matching · ${photos.length.toLocaleString()} of ${total.toLocaleString()} photos scanned${page < pages ? (loadingMore ? '' : ' · Scroll for more') : ''}`
               : `${photos.length.toLocaleString()} of ${total.toLocaleString()} photos loaded${page < pages ? ' · Scroll for more' : ''}`
             }
           </p>
+          {hasClientFilter && loadingMore && (
+            <div style={styles.scanProgressBar}>
+              <div style={{ ...styles.scanProgressFill, width: `${Math.min((page / pages) * 100, 99)}%` }} />
+            </div>
+          )}
 
         </div>
       )}
 
       {filteredPhotos.length === 0 && photos.length > 0 && !loadingMore && !loading && (
         <div style={styles.emptyFilter}>
-          <p style={styles.emptyFilterMsg}>No {mediaFilter !== 'all' ? mediaFilter + 's' : 'photos'} match the current filters.</p>
+          <p style={styles.emptyFilterMsg}>No {mediaFilter !== 'all' ? mediaFilter + 's' : 'photos'} match the current filters in the {photos.length.toLocaleString()} photos scanned.</p>
           {autoLoadCapped && page < pages && (
-            <button style={styles.keepSearchingBtn} onClick={() => { autoLoadCountRef.current = 0; setAutoLoadCapped(false); loadPage(page + 1) }}>
-              Keep searching (page {page} of {pages})
-            </button>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' as const, justifyContent: 'center' }}>
+              <button style={styles.keepSearchingBtn} onClick={() => { autoLoadCountRef.current = 0; setAutoLoadCapped(false) }}>
+                Scan next 1,000
+              </button>
+              <button style={styles.keepSearchingBtn} onClick={() => { autoLoadCountRef.current = 0; setAutoLoadCapped(false); setScanAllMode(true) }}>
+                {(() => { const mins = Math.ceil((pages - page) / 60); return `Scan all remaining (est. ~${mins < 1 ? '< 1' : mins} min)` })()}
+              </button>
+            </div>
           )}
           <button style={styles.clearFiltersBtn} onClick={clearAllFilters}>Clear filters</button>
         </div>
@@ -536,4 +557,6 @@ const styles: Record<string, React.CSSProperties> = {
   loadMoreButton: { backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '6px', padding: '10px 28px', fontSize: '14px', color: '#444', cursor: 'pointer' },
   disabled: { opacity: 0.6, cursor: 'not-allowed' },
   keepSearchingBtn: { background: '#111', border: 'none', borderRadius: '6px', padding: '6px 16px', fontSize: '13px', color: '#fff', cursor: 'pointer' },
+  scanProgressBar: { height: '3px', background: '#e0dcd6', borderRadius: '2px', overflow: 'hidden', margin: '4px 0 2px' },
+  scanProgressFill: { height: '100%', background: '#0063DC', borderRadius: '2px', transition: 'width 0.4s ease' },
 }

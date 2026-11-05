@@ -133,7 +133,7 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
               </div>
               <span style={styles.batchMeta}>
                 {isRunning && `${current.toLocaleString()} of ${total.toLocaleString()}`}
-                {isDone && (skipped > 0 ? `${downloaded.toLocaleString()} downloaded · ${skipped.toLocaleString()} skipped` : `${total.toLocaleString()} downloaded`)}
+                {isDone && (skipped > 0 ? `${downloaded.toLocaleString()} saved · ${skipped.toLocaleString()} skipped` : `${total.toLocaleString()} saved`)}
                 {isCancelled && `${current.toLocaleString()} of ${total.toLocaleString()} before cancel`}
               </span>
               {/* Live filename ticker */}
@@ -191,7 +191,7 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
                         )}
                       </div>
                       <span style={styles.batchMeta}>
-                        {bHasSkips ? `${bDownloaded.toLocaleString()} downloaded · ${bSkipped.toLocaleString()} skipped` : `${(b.total ?? 0).toLocaleString()} downloaded`}
+                        {bHasSkips ? `${bDownloaded.toLocaleString()} saved · ${bSkipped.toLocaleString()} skipped` : `${(b.total ?? 0).toLocaleString()} saved`}
                       </span>
                     </div>
                     <button style={styles.removeQueueBtn} title="Dismiss" onClick={() => onStackedDismiss?.(i)}>✕</button>
@@ -217,13 +217,13 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
           <span style={{ ...styles.label, ...(isRunning ? styles.labelRunning : {}) }}>
             {cancelling && 'Cancelling…'}
             {!cancelling && isRunning && `${current.toLocaleString()} of ${total.toLocaleString()} · ${albumTitle}${progress?.queuedCount ? ` · +${progress.queuedCount} queued` : ''}`}
-            {!cancelling && isDone && (skipped > 0 ? `✓ ${downloaded.toLocaleString()} downloaded · ${skipped.toLocaleString()} skipped · ${albumTitle}` : `✓ ${total.toLocaleString()} downloaded · ${albumTitle}`)}
+            {!cancelling && isDone && (skipped > 0 ? `✓ ${downloaded.toLocaleString()} saved · ${skipped.toLocaleString()} skipped · ${albumTitle}` : `✓ ${total.toLocaleString()} saved · ${albumTitle}`)}
             {!cancelling && isCancelled && `Cancelled · ${current.toLocaleString()} of ${total.toLocaleString()} · ${albumTitle}`}
             {!progress && completedBatches.length > 0 && (() => {
               const newest = completedBatches[0]
               const ns = newest.skippedCount ?? 0
               const nd = (newest.total ?? 0) - ns
-              return ns > 0 ? `✓ ${nd.toLocaleString()} downloaded · ${ns.toLocaleString()} skipped · ${newest.albumTitle}` : `✓ ${(newest.total ?? 0).toLocaleString()} downloaded · ${newest.albumTitle}`
+              return ns > 0 ? `✓ ${nd.toLocaleString()} saved · ${ns.toLocaleString()} skipped · ${newest.albumTitle}` : `✓ ${(newest.total ?? 0).toLocaleString()} saved · ${newest.albumTitle}`
             })()}
           </span>
         </div>

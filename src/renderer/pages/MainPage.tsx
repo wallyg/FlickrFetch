@@ -9,6 +9,7 @@ import CollectionList from '../components/CollectionList'
 import CollectionDetail from '../components/CollectionDetail'
 import DownloadQueueBar from '../components/DownloadQueueBar'
 import AboutModal from '../components/AboutModal'
+import DownloadConfirmModal, { type PendingDownload } from '../components/DownloadConfirmModal'
 
 
 type MainView = 'photostream' | 'albums' | 'album-detail' | 'collections' | 'collection-detail' | 'photo-detail'
@@ -48,6 +49,8 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
   const [photostreamLastClickedId, setPhotostreamLastClickedId] = useState<string | null>(null)
   const [loadedAlbumPhotos, setLoadedAlbumPhotos] = useState<FlickrPhoto[]>([])
   const [loadedPhotostreamPhotos, setLoadedPhotostreamPhotos] = useState<FlickrPhoto[]>([])
+  const [pendingDownload, setPendingDownload] = useState<PendingDownload | null>(null)
+  const [settingsKey, setSettingsKey] = useState(0)
   const [albumFilteredPhotos, setAlbumFilteredPhotos] = useState<FlickrPhoto[]>([])
   const [photostreamFilteredPhotos, setPhotostreamFilteredPhotos] = useState<FlickrPhoto[]>([])
   const [albumMediaFilter, setAlbumMediaFilter] = useState<'all' | 'photo' | 'video'>('all')
@@ -168,17 +171,38 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
   }
 
   const handleDownloadAlbumSelected = (): void => {
-    const photos = loadedAlbumPhotos.filter((p) => albumSelectedIds.has(p.id)).map((p) => ({ id: p.id, title: p.title }))
-    if (photos.length === 0) return
-    window.flickrAPI.startSelectedBatch(photos, `${selectedAlbum!.title} (${photos.length} selected)`)
-    exitAlbumSelect()
+    const selected = loadedAlbumPhotos.filter((p) => albumSelectedIds.has(p.id))
+    if (selected.length === 0) return
+    const albumTitle = selectedAlbum?.title ?? ''
+    const photoCount = selected.filter(p => p.media !== 'video').length
+    const videoCount = selected.filter(p => p.media === 'video').length
+    const photos = selected.map(p => ({ id: p.id, title: p.title }))
+    setPendingDownload({
+      title: `↓ Download Selected from "${albumTitle}"`,
+      photoCount,
+      videoCount,
+      onConfirm: () => {
+        window.flickrAPI.startSelectedBatch(photos, `${albumTitle} (${photos.length} selected)`)
+        exitAlbumSelect()
+      },
+    })
   }
 
   const handleDownloadPhotostreamSelected = (): void => {
-    const photos = loadedPhotostreamPhotos.filter((p) => photostreamSelectedIds.has(p.id)).map((p) => ({ id: p.id, title: p.title }))
-    if (photos.length === 0) return
-    window.flickrAPI.startSelectedBatch(photos, `Photostream (${photos.length} selected)`)
-    exitPhotostreamSelect()
+    const selected = loadedPhotostreamPhotos.filter((p) => photostreamSelectedIds.has(p.id))
+    if (selected.length === 0) return
+    const photoCount = selected.filter(p => p.media !== 'video').length
+    const videoCount = selected.filter(p => p.media === 'video').length
+    const photos = selected.map(p => ({ id: p.id, title: p.title }))
+    setPendingDownload({
+      title: `↓ Download Selected from Photostream`,
+      photoCount,
+      videoCount,
+      onConfirm: () => {
+        window.flickrAPI.startSelectedBatch(photos, `Photostream (${photos.length} selected)`)
+        exitPhotostreamSelect()
+      },
+    })
   }
 
   const handlePhotostreamPhotoSelect = useCallback((photo: FlickrPhoto): void => {
@@ -397,17 +421,26 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             <>
               <button
                 style={styles.downloadAllButton}
-                onClick={async () => {
+                onClick={() => {
                   const mt = albumMediaFilter !== 'all' ? albumMediaFilter : undefined
                   const pf = albumPrivacyFilter !== 'all' ? albumPrivacyFilter : undefined
-                  const result = await window.flickrAPI.startBatch(selectedAlbum.id, selectedAlbum.title, selectedAlbum.photoCount, selectedAlbum.videoCount, false, mt, pf)
-                  if (result.alreadyQueued) {
-                    const ok = await window.flickrAPI.confirm(
-                      `"${selectedAlbum.title}" is already downloading or queued.`,
-                      'Do you want to add it to the queue again?'
-                    )
-                    if (ok) window.flickrAPI.startBatch(selectedAlbum.id, selectedAlbum.title, selectedAlbum.photoCount, selectedAlbum.videoCount, true, mt, pf)
-                  }
+                  const photoCount = mt === 'video' ? 0 : selectedAlbum.photoCount
+                  const videoCount = mt === 'photo' ? 0 : selectedAlbum.videoCount
+                  setPendingDownload({
+                    title: `↓ Download Album: "${selectedAlbum.title}"`,
+                    photoCount,
+                    videoCount,
+                    onConfirm: async () => {
+                      const result = await window.flickrAPI.startBatch(selectedAlbum.id, selectedAlbum.title, selectedAlbum.photoCount, selectedAlbum.videoCount, false, mt, pf)
+                      if (result.alreadyQueued) {
+                        const ok = await window.flickrAPI.confirm(
+                          `"${selectedAlbum.title}" is already downloading or queued.`,
+                          'Do you want to add it to the queue again?'
+                        )
+                        if (ok) window.flickrAPI.startBatch(selectedAlbum.id, selectedAlbum.title, selectedAlbum.photoCount, selectedAlbum.videoCount, true, mt, pf)
+                      }
+                    },
+                  })
                 }}
               >
                 ↓ Download Album
@@ -533,8 +566,16 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
         )}
       </main>
 
-      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+      {showSettings && <SettingsModal onClose={() => { setShowSettings(false); setSettingsKey(k => k + 1) }} />}
       {aboutVersion && <AboutModal version={aboutVersion} onClose={() => setAboutVersion(null)} />}
+      {pendingDownload && (
+        <DownloadConfirmModal
+          pending={pendingDownload}
+          settingsKey={settingsKey}
+          onCancel={() => setPendingDownload(null)}
+          onOpenSettings={() => setShowSettings(true)}
+        />
+      )}
 
       {(batchProgress && batchProgress.status !== 'error' || completedBatches.length > 0) && (
         <DownloadQueueBar

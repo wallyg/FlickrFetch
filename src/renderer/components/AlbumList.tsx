@@ -140,7 +140,7 @@ export default function AlbumList({ onAlbumSelect }: AlbumListProps): React.JSX.
         </div>
         <span style={styles.countLabel}>
           {searchQuery
-            ? `${filteredAlbums.length.toLocaleString()} of ${pageInfo?.total.toLocaleString() ?? albums.length} album${albums.length !== 1 ? 's' : ''}`
+            ? `${filteredAlbums.length.toLocaleString()} of ${pageInfo?.total.toLocaleString() ?? albums.length} album${(pageInfo?.total ?? albums.length) !== 1 ? 's' : ''}${loadingAll ? ' · loading more…' : ''}`
             : loadingAll
               ? `${albums.length.toLocaleString()} of ${pageInfo?.total.toLocaleString() ?? '…'} loaded…`
               : `${pageInfo?.total.toLocaleString() ?? albums.length} album${(pageInfo?.total ?? albums.length) !== 1 ? 's' : ''}`
