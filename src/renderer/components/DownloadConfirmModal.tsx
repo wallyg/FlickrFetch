@@ -27,7 +27,7 @@ export interface PendingDownload {
   title: string
   photoCount: number
   videoCount: number
-  onConfirm: () => void
+  onConfirm: (track: boolean) => void
 }
 
 interface DownloadConfirmModalProps {
@@ -39,13 +39,14 @@ interface DownloadConfirmModalProps {
 
 export default function DownloadConfirmModal({ pending, settingsKey, onCancel, onOpenSettings }: DownloadConfirmModalProps): React.JSX.Element {
   const [settings, setSettings] = useState<AppSettings | null>(null)
+  const [track, setTrack] = useState(true)
 
   useEffect(() => {
     window.flickrAPI.getSettings().then(setSettings).catch(() => {})
   }, [settingsKey])
 
   const handleConfirm = (): void => {
-    pending.onConfirm()
+    pending.onConfirm(track)
     onCancel()
   }
 
@@ -103,6 +104,18 @@ export default function DownloadConfirmModal({ pending, settingsKey, onCancel, o
               <p style={{ fontSize: '13px', color: '#bbb', margin: 0 }}>Loading…</p>
             )}
           </div>
+        </div>
+
+        <div style={s.trackRow}>
+          <label style={s.trackLabel}>
+            <input
+              type="checkbox"
+              checked={track}
+              onChange={e => setTrack(e.target.checked)}
+              style={{ marginRight: 6, cursor: 'pointer' }}
+            />
+            Track this download in history
+          </label>
         </div>
 
         <div style={s.footer}>
@@ -176,6 +189,12 @@ const s: Record<string, React.CSSProperties> = {
   },
   metaLabel: {
     fontSize: '12px',
+  },
+  trackRow: {
+    padding: '10px 20px 0',
+  },
+  trackLabel: {
+    display: 'flex', alignItems: 'center', fontSize: 12, color: '#6b7280', cursor: 'pointer',
   },
   footer: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',

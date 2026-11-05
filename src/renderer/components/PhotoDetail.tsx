@@ -151,6 +151,8 @@ export default function PhotoDetail({
   const [downloadProgress, setDownloadProgress] = useState(0)
   const [savedPath, setSavedPath] = useState<string | null>(null)
   const [downloadError, setDownloadError] = useState<string | null>(null)
+  const [trackDownload, setTrackDownload] = useState(true)
+  const [lastDownloadedAt, setLastDownloadedAt] = useState<number | null>(null)
   const [showScrollFade, setShowScrollFade] = useState(false)
   const [panelWidth, setPanelWidth] = useState(loadPanelWidth)
   const [videoPlaying, setVideoPlaying] = useState(false)
@@ -210,6 +212,11 @@ export default function PhotoDetail({
     setDownloadState('idle')
     setSavedPath(null)
     setDownloadError(null)
+    setLastDownloadedAt(null)
+
+    window.flickrAPI.getPhotoRecord(photo.id)
+      .then(rec => setLastDownloadedAt(rec ? rec.lastDownloadedAt : null))
+      .catch(() => {})
 
     window.flickrAPI.getPhotoDetail(photo.id)
       .then(({ sizes: s, info: i, exif: e }) => {
@@ -261,10 +268,11 @@ export default function PhotoDetail({
     setDownloadError(null)
     setSavedPath(null)
     try {
-      const { filePath } = await window.flickrAPI.downloadPhoto(photo.id, photo.title, downloadSize)
+      const { filePath } = await window.flickrAPI.downloadPhoto(photo.id, photo.title, downloadSize, trackDownload)
       if (filePath) {
         setSavedPath(filePath)
         setDownloadState('done')
+        if (trackDownload) setLastDownloadedAt(Date.now())
       } else {
         setDownloadState('idle')
       }
@@ -535,8 +543,26 @@ export default function PhotoDetail({
             <p style={styles.videoQualityNote}>Downloads at best available quality</p>
           )}
 
+          {lastDownloadedAt != null && downloadState === 'idle' && (
+            <p style={styles.lastDownloaded}>
+              Last downloaded {new Date(lastDownloadedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+            </p>
+          )}
+
           {downloadState === 'idle' && (
             <button style={styles.downloadBtn} onClick={handleDownload}>Download</button>
+          )}
+
+          {downloadState === 'idle' && (
+            <label style={styles.trackLabel}>
+              <input
+                type="checkbox"
+                checked={trackDownload}
+                onChange={e => setTrackDownload(e.target.checked)}
+                style={{ marginRight: 5, cursor: 'pointer' }}
+              />
+              Track this download
+            </label>
           )}
 
           {downloadState === 'downloading' && (
@@ -917,6 +943,21 @@ const styles: Record<string, React.CSSProperties> = {
     color: '#777',
     margin: '0 0 8px',
     textAlign: 'center' as const,
+  },
+  lastDownloaded: {
+    fontSize: '11px',
+    color: '#94a3b8',
+    margin: '0 0 6px',
+    textAlign: 'center' as const,
+  },
+  trackLabel: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '11px',
+    color: '#9ca3af',
+    marginTop: '8px',
+    cursor: 'pointer',
   },
   noGeoText: {
     fontSize: '12px',

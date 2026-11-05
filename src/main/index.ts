@@ -2,10 +2,11 @@ import { app, BrowserWindow, ipcMain, shell, dialog, Menu, Notification } from '
 import { join } from 'path'
 import { readFileSync } from 'fs'
 import { startOAuthFlow, verifyOAuth, loadToken, clearToken } from './auth'
-import { getUserInfo, getPhotos, getPhotoSizes, getPhotoInfo, getPhotoExif, getAlbums, getAlbumPhotos, getCollectionTree, resolveVideoUrl } from './flickr'
+import { getUserInfo, getPhotos, getPhotoSizes, getPhotoInfo, getPhotoExif, getAlbums, getAlbumPhotos, getCollectionTree, resolveVideoUrl, getRecentlyUpdated } from './flickr'
 import { downloadPhoto, downloadToFolder } from './downloader'
 import { endExifTool } from './exiftool'
 import { loadSettings, saveSettings, resetSettings, ensureDownloadFolder } from './settings'
+import { openDatabase, closeDatabase, writeBatchLog, writePhotoRecord, getPhotoRecord, getPhotoRecordsBatch, getBatchLog, clearBatchLog, clearAllHistory } from './database'
 import type { AppSettings, FileNamingConfig, PhotoInfo, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams } from '../shared/types'
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
@@ -255,7 +256,7 @@ ipcMain.handle('photos:getDetail', async (_event, photoId: string) => {
 // Download a photo: opens a save dialog then streams the file to disk
 let activeDownloadController: AbortController | null = null
 
-ipcMain.handle('photos:download', async (_event, photoId: string, photoTitle: string, downloadSize?: DownloadSize) => {
+ipcMain.handle('photos:download', async (_event, photoId: string, photoTitle: string, downloadSize?: DownloadSize, track = true) => {
   const tokenData = loadToken()
   if (!tokenData) throw new Error('Not authenticated')
   if (!mainWindow) throw new Error('No window available')
@@ -269,6 +270,7 @@ ipcMain.handle('photos:download', async (_event, photoId: string, photoTitle: st
     const effectiveSize = downloadSize ?? globalDownloadSize
     const filename = buildFilename(fileNaming, photoId, photoTitle, photoInfo, undefined, effectiveSize)
     const filePath = await downloadPhoto(sizes, filename, mainWindow, activeDownloadController.signal, photoInfo, metadata, effectiveSize)
+    if (filePath && track) writePhotoRecord(photoId, 0)
     return { filePath }
   } finally {
     activeDownloadController = null
@@ -318,7 +320,7 @@ ipcMain.handle('shell:pickFolder', async () => {
 // Batch downloads
 interface BatchJob {
   id: string
-  type: 'album' | 'selected'
+  type: 'album' | 'selected' | 'album-smart'
   albumId?: string
   photos?: { id: string; title: string }[]
   albumTitle: string
@@ -326,6 +328,8 @@ interface BatchJob {
   videoCount?: number
   mediaType?: 'photo' | 'video'
   privacyFilter?: string
+  track?: boolean
+  smartMode?: 'updated' | 'never-downloaded'
 }
 
 let batchQueue: BatchJob[] = []
@@ -357,10 +361,12 @@ async function runNextBatch(): Promise<void> {
 
   activeBatchController = new AbortController()
   try {
-    if (job.type === 'album') {
-      await runAlbumBatch(job.albumId!, job.albumTitle, job.mediaType, job.privacyFilter)
+    if (job.type === 'selected') {
+      await runSelectedBatch(job.photos!, job.albumTitle, job.track ?? true)
+    } else if (job.albumId === '__photostream__') {
+      await runPhotostreamBatch(job.albumTitle, job.track ?? true, job.smartMode, job.privacyFilter)
     } else {
-      await runSelectedBatch(job.photos!, job.albumTitle)
+      await runAlbumBatch(job.albumId!, job.albumTitle, job.mediaType, job.privacyFilter, job.track ?? true, job.smartMode)
     }
   } catch (err) {
     process.stderr.write(`[flickrfetch] batch error: ${err}\n`)
@@ -373,7 +379,7 @@ async function runNextBatch(): Promise<void> {
   runNextBatch()
 }
 
-async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'photo' | 'video', privacyFilter?: string): Promise<void> {
+async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'photo' | 'video', privacyFilter?: string, track = true, smartMode?: 'updated' | 'never-downloaded'): Promise<void> {
   if (!mainWindow) return
   const tokenData = loadToken()
   if (!tokenData) return
@@ -399,11 +405,11 @@ async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'p
 
   let page = 1
   let pages = 1
-  const allPhotos: { id: string; title: string; ispublic?: number; isfriend?: number; isfamily?: number }[] = []
+  const allPhotos: { id: string; title: string; ispublic?: number; isfriend?: number; isfamily?: number; lastUpdate?: number }[] = []
 
   do {
     const result = await getAlbumPhotos(albumId, tokenData, page, mediaType)
-    allPhotos.push(...result.photos.map((p) => ({ id: p.id, title: p.title, ispublic: p.ispublic, isfriend: p.isfriend, isfamily: p.isfamily })))
+    allPhotos.push(...result.photos.map((p) => ({ id: p.id, title: p.title, ispublic: p.ispublic, isfriend: p.isfriend, isfamily: p.isfamily, lastUpdate: p.lastUpdate })))
     pages = result.pages
     page++
   } while (page <= pages)
@@ -414,10 +420,25 @@ async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'p
     if (p.isfamily === 1) return 'family'
     return 'private'
   }
-  const filteredBatch = (!privacyFilter || privacyFilter === 'all')
+
+  let privacyFiltered = (!privacyFilter || privacyFilter === 'all')
     ? allPhotos
     : allPhotos.filter(p => getPrivacyLevel(p) === privacyFilter)
 
+  // Smart mode filtering (requires DB records)
+  if (smartMode) {
+    const recordMap = getPhotoRecordsBatch(privacyFiltered.map(p => p.id))
+    if (smartMode === 'never-downloaded') {
+      privacyFiltered = privacyFiltered.filter(p => !recordMap.has(p.id))
+    } else if (smartMode === 'updated') {
+      privacyFiltered = privacyFiltered.filter(p => {
+        const rec = recordMap.get(p.id)
+        return rec != null && (p.lastUpdate ?? 0) > rec.flickrLastUpdate
+      })
+    }
+  }
+
+  const filteredBatch = privacyFiltered
   const total = filteredBatch.length
   sendProgress({
     current: 0, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null,
@@ -427,15 +448,19 @@ async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'p
   let albumSeqNum = 1
   let lastFilePath: string | null = null
   let skippedCount = 0
+  let failedCount = 0
+  let downloadedCount = 0
+
   for (let i = 0; i < filteredBatch.length; i++) {
     if (activeBatchController?.signal.aborted) {
       activeBatchAlbumId = null
-      sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled', skippedCount })
+      sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled', skippedCount, failedCount })
+      if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'album', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
       return
     }
 
     const photo = filteredBatch[i]
-    sendProgress({ current: i, total, albumTitle, activeTitle: photo.title, latestTitle: '', latestFilePath: null, status: 'running', skippedCount })
+    sendProgress({ current: i, total, albumTitle, activeTitle: photo.title, latestTitle: '', latestFilePath: null, status: 'running', skippedCount, failedCount })
 
     try {
       const [sizes, photoInfo] = await Promise.all([
@@ -443,32 +468,37 @@ async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'p
         withTimeout(getPhotoInfo(photo.id, tokenData), 30000)
       ])
       const filename = buildFilename(fileNaming, photo.id, photo.title, photoInfo, albumSeqNum++, downloadSize)
-      const filePath = await downloadToFolder(sizes, filename, albumFolder, activeBatchController?.signal, photoInfo, conflictBehavior, downloadSize, metadata)
-      if (filePath) {
-        lastFilePath = filePath
-        sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: filePath, status: 'running', skippedCount })
+      const outcome = await downloadToFolder(sizes, filename, albumFolder, activeBatchController?.signal, photoInfo, conflictBehavior, downloadSize, metadata)
+      if (outcome.status === 'downloaded') {
+        downloadedCount++
+        lastFilePath = outcome.filePath
+        if (track) writePhotoRecord(photo.id, photo.lastUpdate ?? 0)
+        sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: outcome.filePath, status: 'running', skippedCount, failedCount })
       } else {
         skippedCount++
-        sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'running', skippedCount })
+        sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'running', skippedCount, failedCount })
       }
     } catch (err) {
       if ((err as { name?: string }).name === 'AbortError' || activeBatchController?.signal.aborted) {
         activeBatchAlbumId = null
-        sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled', skippedCount })
+        sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled', skippedCount, failedCount })
+        if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'album', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
         return
       }
+      failedCount++
       process.stderr.write(`[flickrfetch] batch skip ${photo.id}: ${err}\n`)
-      sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: null, status: 'running', skippedCount })
+      sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: null, status: 'running', skippedCount, failedCount })
     }
   }
 
   activeBatchAlbumId = null
-  const downloadedCount = total - skippedCount
-  sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'done', skippedCount })
+  const finalStatus = failedCount > 0 || skippedCount > 0 ? 'partial' : 'complete'
+  sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'done', skippedCount, failedCount })
+  if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'album', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: finalStatus })
   if (notifyOnComplete && Notification.isSupported()) {
-    const body = skippedCount > 0
-      ? `Downloaded ${downloadedCount}, skipped ${skippedCount} from "${albumTitle}"`
-      : `Downloaded ${total} photos from "${albumTitle}"`
+    const body = (skippedCount + failedCount) > 0
+      ? `Saved ${downloadedCount}, skipped ${skippedCount + failedCount} from "${albumTitle}"`
+      : `Saved ${total} photos from "${albumTitle}"`
     new Notification({ title: 'FlickrFetch', body }).show()
   }
   if (openFinderOnComplete && lastFilePath) {
@@ -476,7 +506,7 @@ async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'p
   }
 }
 
-async function runSelectedBatch(photos: { id: string; title: string }[], albumTitle: string): Promise<void> {
+async function runSelectedBatch(photos: { id: string; title: string }[], albumTitle: string, track = true): Promise<void> {
   if (!mainWindow) return
   const tokenData = loadToken()
   if (!tokenData) return
@@ -510,14 +540,18 @@ async function runSelectedBatch(photos: { id: string; title: string }[], albumTi
   let selSeqNum = 1
   let lastFilePath: string | null = null
   let skippedCount = 0
+  let failedCount = 0
+  let downloadedCount = 0
+
   for (let i = 0; i < photos.length; i++) {
     if (activeBatchController?.signal.aborted) {
-      sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled', skippedCount })
+      sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled', skippedCount, failedCount })
+      if (track) writeBatchLog({ createdAt: Date.now(), source: baseTitle, sourceType: 'selected', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
       return
     }
 
     const photo = photos[i]
-    sendProgress({ current: i, total, albumTitle, activeTitle: photo.title, latestTitle: '', latestFilePath: null, status: 'running', skippedCount })
+    sendProgress({ current: i, total, albumTitle, activeTitle: photo.title, latestTitle: '', latestFilePath: null, status: 'running', skippedCount, failedCount })
 
     try {
       const [sizes, photoInfo] = await Promise.all([
@@ -525,30 +559,35 @@ async function runSelectedBatch(photos: { id: string; title: string }[], albumTi
         withTimeout(getPhotoInfo(photo.id, tokenData), 30000)
       ])
       const filename = buildFilename(fileNaming, photo.id, photo.title, photoInfo, selSeqNum++, downloadSize)
-      const filePath = await downloadToFolder(sizes, filename, targetFolder, activeBatchController?.signal, photoInfo, conflictBehavior, downloadSize, metadata)
-      if (filePath) {
-        lastFilePath = filePath
-        sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: filePath, status: 'running', skippedCount })
+      const outcome = await downloadToFolder(sizes, filename, targetFolder, activeBatchController?.signal, photoInfo, conflictBehavior, downloadSize, metadata)
+      if (outcome.status === 'downloaded') {
+        downloadedCount++
+        lastFilePath = outcome.filePath
+        if (track) writePhotoRecord(photo.id, 0)
+        sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: outcome.filePath, status: 'running', skippedCount, failedCount })
       } else {
         skippedCount++
-        sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'running', skippedCount })
+        sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'running', skippedCount, failedCount })
       }
     } catch (err) {
       if ((err as { name?: string }).name === 'AbortError' || activeBatchController?.signal.aborted) {
-        sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled', skippedCount })
+        sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled', skippedCount, failedCount })
+        if (track) writeBatchLog({ createdAt: Date.now(), source: baseTitle, sourceType: 'selected', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
         return
       }
+      failedCount++
       process.stderr.write(`[flickrfetch] batch skip ${photo.id}: ${err}\n`)
-      sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: null, status: 'running', skippedCount })
+      sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: null, status: 'running', skippedCount, failedCount })
     }
   }
 
-  const downloadedCount = total - skippedCount
-  sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'done', skippedCount })
+  const finalStatus = failedCount > 0 || skippedCount > 0 ? 'partial' : 'complete'
+  sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'done', skippedCount, failedCount })
+  if (track) writeBatchLog({ createdAt: Date.now(), source: baseTitle, sourceType: 'selected', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: finalStatus })
   if (notifyOnComplete && Notification.isSupported()) {
-    const body = skippedCount > 0
-      ? `Downloaded ${downloadedCount}, skipped ${skippedCount} from "${baseTitle}"`
-      : `Downloaded ${total} photos from "${baseTitle}"`
+    const body = (skippedCount + failedCount) > 0
+      ? `Saved ${downloadedCount}, skipped ${skippedCount + failedCount} from "${baseTitle}"`
+      : `Saved ${total} photos from "${baseTitle}"`
     new Notification({ title: 'FlickrFetch', body }).show()
   }
   if (openFinderOnComplete && lastFilePath) {
@@ -556,17 +595,146 @@ async function runSelectedBatch(photos: { id: string; title: string }[], albumTi
   }
 }
 
-ipcMain.handle('batch:startAlbum', (_event, albumId: string, albumTitle: string, photoCount?: number, videoCount?: number, force?: boolean, mediaType?: 'photo' | 'video', privacyFilter?: string) => {
+async function runPhotostreamBatch(albumTitle: string, track = true, smartMode?: 'updated' | 'never-downloaded', privacyFilter?: string, sort?: string): Promise<void> {
+  if (!mainWindow) return
+  const tokenData = loadToken()
+  if (!tokenData) return
+
+  const { fileNaming, downloadFolder, showDockProgress, notifyOnComplete, conflictBehavior, downloadSize, openFinderOnComplete, metadata } = loadSettings()
+  ensureDownloadFolder(downloadFolder)
+
+  const sendProgress = (p: Omit<BatchProgress, 'queuedCount' | 'queuedAlbums'>): void => {
+    const full = { ...p, queuedCount: batchQueue.length, queuedAlbums: batchQueue.map(j => ({ id: j.id, title: j.albumTitle, photoCount: j.photoCount, videoCount: j.videoCount })) }
+    lastBatchProgress = full
+    mainWindow?.webContents.send('batch:progress', full)
+    if (showDockProgress) {
+      if (p.status === 'running' && p.total > 0) {
+        mainWindow?.setProgressBar(p.current / p.total)
+      } else {
+        mainWindow?.setProgressBar(-1)
+      }
+    }
+  }
+
+  // Collect all photos from photostream
+  const allPhotos: { id: string; title: string; lastUpdate?: number }[] = []
+
+  if (smartMode === 'updated') {
+    // Use recentlyUpdated API — 90-day window
+    const minDate = Math.floor((Date.now() - 90 * 24 * 60 * 60 * 1000) / 1000)
+    let page = 1
+    let pages = 1
+    do {
+      const result = await getRecentlyUpdated(tokenData, minDate, page)
+      allPhotos.push(...result.photos.map(p => ({ id: p.id, title: p.title, lastUpdate: p.lastUpdate })))
+      pages = result.pages
+      page++
+    } while (page <= pages)
+  } else {
+    // Load all pages of photostream
+    let page = 1
+    let pages = 1
+    do {
+      const result = await getPhotos(tokenData, page, sort)
+      allPhotos.push(...result.photos.map(p => ({ id: p.id, title: p.title, lastUpdate: p.lastUpdate })))
+      pages = result.pages
+      page++
+    } while (page <= pages)
+  }
+
+  let filteredPhotos = allPhotos
+
+  // Apply privacy filter
+  if (privacyFilter && privacyFilter !== 'all') {
+    // Privacy info not available in photostream batch — skip filter
+  }
+
+  // Smart mode: never-downloaded
+  if (smartMode === 'never-downloaded') {
+    const recordMap = getPhotoRecordsBatch(filteredPhotos.map(p => p.id))
+    filteredPhotos = filteredPhotos.filter(p => !recordMap.has(p.id))
+  }
+
+  const total = filteredPhotos.length
+  sendProgress({
+    current: 0, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null,
+    status: 'running', allTitles: filteredPhotos.map(p => p.title)
+  })
+
+  let seqNum = 1
+  let lastFilePath: string | null = null
+  let skippedCount = 0
+  let failedCount = 0
+  let downloadedCount = 0
+
+  for (let i = 0; i < filteredPhotos.length; i++) {
+    if (activeBatchController?.signal.aborted) {
+      sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled', skippedCount, failedCount })
+      if (track) writeBatchLog({ createdAt: Date.now(), source: 'Photostream', sourceType: 'photostream', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
+      return
+    }
+
+    const photo = filteredPhotos[i]
+    sendProgress({ current: i, total, albumTitle, activeTitle: photo.title, latestTitle: '', latestFilePath: null, status: 'running', skippedCount, failedCount })
+
+    try {
+      const [sizes, photoInfo] = await Promise.all([
+        withTimeout(getPhotoSizes(photo.id, tokenData), 30000),
+        withTimeout(getPhotoInfo(photo.id, tokenData), 30000)
+      ])
+      const filename = buildFilename(fileNaming, photo.id, photo.title, photoInfo, seqNum++, downloadSize)
+      const outcome = await downloadToFolder(sizes, filename, downloadFolder, activeBatchController?.signal, photoInfo, conflictBehavior, downloadSize, metadata)
+      if (outcome.status === 'downloaded') {
+        downloadedCount++
+        lastFilePath = outcome.filePath
+        if (track) writePhotoRecord(photo.id, photo.lastUpdate ?? 0)
+        sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: outcome.filePath, status: 'running', skippedCount, failedCount })
+      } else {
+        skippedCount++
+        sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'running', skippedCount, failedCount })
+      }
+    } catch (err) {
+      if ((err as { name?: string }).name === 'AbortError' || activeBatchController?.signal.aborted) {
+        sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled', skippedCount, failedCount })
+        if (track) writeBatchLog({ createdAt: Date.now(), source: 'Photostream', sourceType: 'photostream', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
+        return
+      }
+      failedCount++
+      process.stderr.write(`[flickrfetch] batch skip ${photo.id}: ${err}\n`)
+      sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: null, status: 'running', skippedCount, failedCount })
+    }
+  }
+
+  const finalStatus = failedCount > 0 || skippedCount > 0 ? 'partial' : 'complete'
+  sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'done', skippedCount, failedCount })
+  if (track) writeBatchLog({ createdAt: Date.now(), source: 'Photostream', sourceType: 'photostream', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: finalStatus })
+  if (notifyOnComplete && Notification.isSupported()) {
+    const body = (skippedCount + failedCount) > 0
+      ? `Saved ${downloadedCount}, skipped ${skippedCount + failedCount} from Photostream`
+      : `Saved ${total} photos from Photostream`
+    new Notification({ title: 'FlickrFetch', body }).show()
+  }
+  if (openFinderOnComplete && lastFilePath) {
+    shell.showItemInFolder(lastFilePath)
+  }
+}
+
+ipcMain.handle('batch:startAlbum', (_event, albumId: string, albumTitle: string, photoCount?: number, videoCount?: number, force?: boolean, mediaType?: 'photo' | 'video', privacyFilter?: string, track = true, smartMode?: 'updated' | 'never-downloaded') => {
   if (!force) {
     const isDuplicate = activeBatchController !== null && activeBatchAlbumId === albumId
     if (isDuplicate) return { alreadyQueued: true }
   }
-  enqueueBatch({ type: 'album', albumId, albumTitle, photoCount, videoCount, mediaType, privacyFilter })
+  enqueueBatch({ type: 'album', albumId, albumTitle, photoCount, videoCount, mediaType, privacyFilter, track, smartMode })
   return { alreadyQueued: false }
 })
 
-ipcMain.handle('batch:startSelected', (_event, photos: { id: string; title: string }[], albumTitle: string) => {
-  enqueueBatch({ type: 'selected', photos, albumTitle })
+ipcMain.handle('batch:startSelected', (_event, photos: { id: string; title: string }[], albumTitle: string, track = true) => {
+  enqueueBatch({ type: 'selected', photos, albumTitle, track })
+})
+
+ipcMain.handle('batch:startPhotostream', (_event, albumTitle: string, track = true, smartMode?: 'updated' | 'never-downloaded', privacyFilter?: string, sort?: string) => {
+  enqueueBatch({ type: 'album', albumId: '__photostream__', albumTitle, track, smartMode, privacyFilter })
+  // Note: photostream jobs are run via runPhotostreamBatch — dispatched below
 })
 
 ipcMain.on('batch:cancel', () => {
@@ -617,7 +785,17 @@ ipcMain.handle('auth:signout', () => {
   clearToken()
 })
 
+// Download history DB
+ipcMain.handle('db:getBatchLog', () => getBatchLog())
+ipcMain.handle('db:getPhotoRecord', (_event, photoId: string) => getPhotoRecord(photoId))
+ipcMain.handle('db:getPhotoRecordsBatch', (_event, photoIds: string[]) => {
+  const map = getPhotoRecordsBatch(photoIds)
+  return Object.fromEntries(map)
+})
+ipcMain.handle('db:clearHistory', () => clearAllHistory())
+
 app.whenReady().then(() => {
+  openDatabase()
   // Build the macOS app menu with a proper About item
   const appName = app.getName()
   const template: Electron.MenuItemConstructorOptions[] = [
@@ -695,6 +873,7 @@ app.whenReady().then(() => {
 
 app.on('will-quit', async (event) => {
   event.preventDefault()
+  closeDatabase()
   await endExifTool()
   app.exit()
 })

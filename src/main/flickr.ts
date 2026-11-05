@@ -248,7 +248,7 @@ export async function getAlbumPhotos(albumId: string, tokenData: FlickrTokenData
     `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
     `&photoset_id=${encodeURIComponent(albumId)}` +
     `&user_id=${encodeURIComponent(tokenData.nsid)}` +
-    `&extras=${encodeURIComponent('url_q,date_taken,date_upload,media,ispublic,isfriend,isfamily,tags,license')}` +
+    `&extras=${encodeURIComponent('url_q,date_taken,date_upload,last_update,media,ispublic,isfriend,isfamily,tags,license')}` +
     `&per_page=100` +
     `&page=${page}` +
     `${mediaParam}` +
@@ -275,7 +275,8 @@ export async function getAlbumPhotos(albumId: string, tokenData: FlickrTokenData
     ispublic: p.ispublic != null ? Number(p.ispublic) : undefined,
     isfriend: p.isfriend != null ? Number(p.isfriend) : undefined,
     isfamily: p.isfamily != null ? Number(p.isfamily) : undefined,
-    tags: p.tags ? (p.tags as string).split(' ').filter(Boolean) : []
+    tags: p.tags ? (p.tags as string).split(' ').filter(Boolean) : [],
+    lastUpdate: p.lastupdate ? Number(p.lastupdate) : undefined,
   }))
 
   return {
@@ -480,4 +481,47 @@ export async function getPhotoExif(photoId: string, tokenData: FlickrTokenData):
   }
 
   return result
+}
+
+export async function getRecentlyUpdated(tokenData: FlickrTokenData, minDate: number, page: number = 1): Promise<PhotoPage> {
+  const url =
+    `${FLICKR_API_BASE}` +
+    `?method=flickr.photos.recentlyUpdated` +
+    `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
+    `&min_date=${minDate}` +
+    `&extras=${encodeURIComponent('url_q,date_taken,date_upload,last_update,media,ispublic,isfriend,isfamily')}` +
+    `&per_page=100` +
+    `&page=${page}` +
+    `&format=json` +
+    `&nojsoncallback=1`
+
+  const authHeader = getOAuthHeader(url, 'GET', tokenData)
+  const response = await axios.get(url, {
+    headers: { ...authHeader, 'User-Agent': USER_AGENT }
+  })
+
+  if (response.data.stat !== 'ok') {
+    throw new Error(`Flickr API error: ${response.data.message ?? 'unknown error'}`)
+  }
+
+  const data = response.data.photos
+  const photos: FlickrPhoto[] = (data.photo as Record<string, string>[]).map((p) => ({
+    id: p.id,
+    title: p.title || 'Untitled',
+    thumbnailUrl: p.url_q || '',
+    dateTaken: p.datetaken || '',
+    media: (p.media === 'video' ? 'video' : 'photo') as 'photo' | 'video',
+    datePosted: p.dateupload || undefined,
+    ispublic: p.ispublic != null ? Number(p.ispublic) : undefined,
+    isfriend: p.isfriend != null ? Number(p.isfriend) : undefined,
+    isfamily: p.isfamily != null ? Number(p.isfamily) : undefined,
+    lastUpdate: p.lastupdate ? Number(p.lastupdate) : undefined,
+  }))
+
+  return {
+    photos,
+    page: Number(data.page),
+    pages: Number(data.pages),
+    total: Number(data.total)
+  }
 }

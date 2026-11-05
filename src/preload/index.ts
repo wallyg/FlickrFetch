@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { IpcRendererEvent } from 'electron'
-import type { FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, CameraExif, PhotoSearchParams } from '../shared/types'
+import type { FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord } from '../shared/types'
 
 // Expose a safe, limited API surface to the renderer process.
 // The renderer cannot access Node.js or Electron directly — only these methods.
@@ -29,8 +29,8 @@ contextBridge.exposeInMainWorld('flickrAPI', {
     ipcRenderer.invoke('photos:getDetail', photoId),
 
   // Download a photo to disk — opens a save dialog, returns the saved path (or null if cancelled)
-  downloadPhoto: (photoId: string, title: string, downloadSize?: string): Promise<{ filePath: string | null }> =>
-    ipcRenderer.invoke('photos:download', photoId, title, downloadSize),
+  downloadPhoto: (photoId: string, title: string, downloadSize?: string, track = true): Promise<{ filePath: string | null }> =>
+    ipcRenderer.invoke('photos:download', photoId, title, downloadSize, track),
 
   // Listen for download progress events (0–100). Returns a cleanup function.
   onDownloadProgress: (cb: (percent: number) => void): (() => void) => {
@@ -66,12 +66,20 @@ contextBridge.exposeInMainWorld('flickrAPI', {
   pickFolder: (): Promise<string | null> => ipcRenderer.invoke('shell:pickFolder'),
 
   // Batch downloads
-  startBatch: (albumId: string, albumTitle: string, photoCount?: number, videoCount?: number, force?: boolean, mediaType?: 'photo' | 'video', privacyFilter?: string): Promise<{ alreadyQueued: boolean }> =>
-    ipcRenderer.invoke('batch:startAlbum', albumId, albumTitle, photoCount, videoCount, force, mediaType, privacyFilter),
+  startBatch: (albumId: string, albumTitle: string, photoCount?: number, videoCount?: number, force?: boolean, mediaType?: 'photo' | 'video', privacyFilter?: string, track?: boolean, smartMode?: 'updated' | 'never-downloaded'): Promise<{ alreadyQueued: boolean }> =>
+    ipcRenderer.invoke('batch:startAlbum', albumId, albumTitle, photoCount, videoCount, force, mediaType, privacyFilter, track, smartMode),
   confirm: (message: string, detail?: string): Promise<boolean> =>
     ipcRenderer.invoke('shell:confirm', message, detail),
-  startSelectedBatch: (photos: { id: string; title: string }[], displayTitle: string): Promise<void> =>
-    ipcRenderer.invoke('batch:startSelected', photos, displayTitle),
+  startSelectedBatch: (photos: { id: string; title: string }[], displayTitle: string, track?: boolean): Promise<void> =>
+    ipcRenderer.invoke('batch:startSelected', photos, displayTitle, track),
+  startPhotostreamBatch: (albumTitle: string, track?: boolean, smartMode?: 'updated' | 'never-downloaded', privacyFilter?: string, sort?: string): Promise<void> =>
+    ipcRenderer.invoke('batch:startPhotostream', albumTitle, track, smartMode, privacyFilter, sort),
+
+  // Download history DB
+  getBatchLog: (): Promise<BatchLogEntry[]> => ipcRenderer.invoke('db:getBatchLog'),
+  getPhotoRecord: (photoId: string): Promise<PhotoDownloadRecord | null> => ipcRenderer.invoke('db:getPhotoRecord', photoId),
+  getPhotoRecordsBatch: (photoIds: string[]): Promise<Record<string, PhotoDownloadRecord>> => ipcRenderer.invoke('db:getPhotoRecordsBatch', photoIds),
+  clearHistory: (): Promise<void> => ipcRenderer.invoke('db:clearHistory'),
   cancelBatch: (): void => ipcRenderer.send('batch:cancel'),
   skipBatch: (): void => ipcRenderer.send('batch:skipCurrent'),
   removeFromQueue: (id: string): Promise<void> => ipcRenderer.invoke('batch:removeFromQueue', id),

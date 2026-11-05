@@ -1,4 +1,4 @@
-import type { FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams } from '../shared/types'
+import type { FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord } from '../shared/types'
 
 declare module '*.png' {
   const src: string
@@ -16,7 +16,7 @@ declare global {
       getPhotos: (page: number, sort?: string, search?: PhotoSearchParams) => Promise<PhotoPage>
       getSizes: (photoId: string) => Promise<PhotoSize[]>
       getPhotoDetail: (photoId: string) => Promise<{ sizes: PhotoSize[]; info: PhotoInfo; exif: CameraExif }>
-      downloadPhoto: (photoId: string, title: string, downloadSize?: DownloadSize) => Promise<{ filePath: string | null }>
+      downloadPhoto: (photoId: string, title: string, downloadSize?: DownloadSize, track?: boolean) => Promise<{ filePath: string | null }>
       onDownloadProgress: (callback: (percent: number) => void) => () => void
       showInFinder: (filePath: string) => void
       openExternal: (url: string) => void
@@ -29,8 +29,9 @@ declare global {
       resetSettings: () => Promise<AppSettings>
       resolveVideoUrl: (sourceUrl: string) => Promise<string>
       pickFolder: () => Promise<string | null>
-      startBatch: (albumId: string, albumTitle: string, photoCount?: number, videoCount?: number, force?: boolean, mediaType?: 'photo' | 'video', privacyFilter?: string) => Promise<{ alreadyQueued: boolean }>
-      startSelectedBatch: (photos: { id: string; title: string }[], displayTitle: string) => Promise<void>
+      startBatch: (albumId: string, albumTitle: string, photoCount?: number, videoCount?: number, force?: boolean, mediaType?: 'photo' | 'video', privacyFilter?: string, track?: boolean, smartMode?: 'updated' | 'never-downloaded') => Promise<{ alreadyQueued: boolean }>
+      startSelectedBatch: (photos: { id: string; title: string }[], displayTitle: string, track?: boolean) => Promise<void>
+      startPhotostreamBatch: (albumTitle: string, track?: boolean, smartMode?: 'updated' | 'never-downloaded', privacyFilter?: string, sort?: string) => Promise<void>
       cancelBatch: () => void
       skipBatch: () => void
       removeFromQueue: (id: string) => Promise<void>
@@ -39,6 +40,10 @@ declare global {
       onShowAbout: (cb: (data: { version: string }) => void) => () => void
       onOpenSettings: (cb: () => void) => () => void
       onMenuSignOut: (cb: () => void) => () => void
+      getBatchLog: () => Promise<BatchLogEntry[]>
+      getPhotoRecord: (photoId: string) => Promise<PhotoDownloadRecord | null>
+      getPhotoRecordsBatch: (photoIds: string[]) => Promise<Record<string, PhotoDownloadRecord>>
+      clearHistory: () => Promise<void>
     }
   }
 }

@@ -77,19 +77,20 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
   const albumTitle = progress?.albumTitle ?? ''
   const activeTitle = progress?.activeTitle ?? ''
   const skipped = progress?.skippedCount ?? 0
-  const downloaded = total - skipped
+  const failed = progress?.failedCount ?? 0
+  const downloaded = total - skipped - failed
   const percent = total > 0 ? Math.round((current / total) * 100) : 0
   const isRunning = status === 'running'
   const isDone = status === 'done'
   const isCancelled = status === 'cancelled'
-  const doneWithSkips = isDone && skipped > 0
+  const doneWithIssues = isDone && (skipped > 0 || failed > 0)
 
   // Color-coded left border by status
   const borderColor = isRunning ? '#FF0084'
-    : doneWithSkips ? '#ff8c00'
+    : doneWithIssues ? '#ff8c00'
     : isDone ? '#4caf50'
     : isCancelled ? '#cc6600'
-    : completedBatches.length > 0 ? (completedBatches.some(b => (b.skippedCount ?? 0) > 0) ? '#ff8c00' : '#4caf50')
+    : completedBatches.length > 0 ? (completedBatches.some(b => ((b.skippedCount ?? 0) + (b.failedCount ?? 0)) > 0) ? '#ff8c00' : '#4caf50')
     : 'transparent'
 
   const handleCancel = (): void => {
@@ -133,7 +134,12 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
               </div>
               <span style={styles.batchMeta}>
                 {isRunning && `${current.toLocaleString()} of ${total.toLocaleString()}`}
-                {isDone && (skipped > 0 ? `${downloaded.toLocaleString()} saved · ${skipped.toLocaleString()} skipped` : `${total.toLocaleString()} saved`)}
+                {isDone && (() => {
+                  const parts: string[] = [`${downloaded.toLocaleString()} saved`]
+                  if (skipped > 0) parts.push(`${skipped.toLocaleString()} skipped`)
+                  if (failed > 0) parts.push(`${failed.toLocaleString()} failed`)
+                  return parts.join(' · ')
+                })()}
                 {isCancelled && `${current.toLocaleString()} of ${total.toLocaleString()} before cancel`}
               </span>
               {/* Live filename ticker */}
@@ -175,12 +181,16 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
               <div style={styles.divider} />
               {completedBatches.map((b, i) => {
                 const bSkipped = b.skippedCount ?? 0
-                const bDownloaded = (b.total ?? 0) - bSkipped
-                const bHasSkips = bSkipped > 0
+                const bFailed = b.failedCount ?? 0
+                const bDownloaded = (b.total ?? 0) - bSkipped - bFailed
+                const bHasIssues = bSkipped > 0 || bFailed > 0
                 const bFolder = b.latestFilePath ? b.latestFilePath.substring(0, b.latestFilePath.lastIndexOf('/')) : null
+                const bParts = [`${bDownloaded.toLocaleString()} saved`]
+                if (bSkipped > 0) bParts.push(`${bSkipped.toLocaleString()} skipped`)
+                if (bFailed > 0) bParts.push(`${bFailed.toLocaleString()} failed`)
                 return (
                   <div key={i} style={styles.batchRow}>
-                    <span style={bHasSkips ? styles.dotSkipped : styles.dotDone}>✓</span>
+                    <span style={bHasIssues ? styles.dotSkipped : styles.dotDone}>✓</span>
                     <div style={styles.batchInfo}>
                       <div style={styles.batchTitleRow}>
                         <span style={styles.batchTitle}>{b.albumTitle}</span>
@@ -190,9 +200,7 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
                           </button>
                         )}
                       </div>
-                      <span style={styles.batchMeta}>
-                        {bHasSkips ? `${bDownloaded.toLocaleString()} saved · ${bSkipped.toLocaleString()} skipped` : `${(b.total ?? 0).toLocaleString()} saved`}
-                      </span>
+                      <span style={styles.batchMeta}>{bParts.join(' · ')}</span>
                     </div>
                     <button style={styles.removeQueueBtn} title="Dismiss" onClick={() => onStackedDismiss?.(i)}>✕</button>
                   </div>
@@ -217,13 +225,24 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
           <span style={{ ...styles.label, ...(isRunning ? styles.labelRunning : {}) }}>
             {cancelling && 'Cancelling…'}
             {!cancelling && isRunning && `${current.toLocaleString()} of ${total.toLocaleString()} · ${albumTitle}${progress?.queuedCount ? ` · +${progress.queuedCount} queued` : ''}`}
-            {!cancelling && isDone && (skipped > 0 ? `✓ ${downloaded.toLocaleString()} saved · ${skipped.toLocaleString()} skipped · ${albumTitle}` : `✓ ${total.toLocaleString()} saved · ${albumTitle}`)}
+            {!cancelling && isDone && (() => {
+              const parts: string[] = [`✓ ${downloaded.toLocaleString()} saved`]
+              if (skipped > 0) parts.push(`${skipped.toLocaleString()} skipped`)
+              if (failed > 0) parts.push(`${failed.toLocaleString()} failed`)
+              parts.push(albumTitle)
+              return parts.join(' · ')
+            })()}
             {!cancelling && isCancelled && `Cancelled · ${current.toLocaleString()} of ${total.toLocaleString()} · ${albumTitle}`}
             {!progress && completedBatches.length > 0 && (() => {
               const newest = completedBatches[0]
               const ns = newest.skippedCount ?? 0
-              const nd = (newest.total ?? 0) - ns
-              return ns > 0 ? `✓ ${nd.toLocaleString()} saved · ${ns.toLocaleString()} skipped · ${newest.albumTitle}` : `✓ ${(newest.total ?? 0).toLocaleString()} saved · ${newest.albumTitle}`
+              const nf = newest.failedCount ?? 0
+              const nd = (newest.total ?? 0) - ns - nf
+              const parts = [`✓ ${nd.toLocaleString()} saved`]
+              if (ns > 0) parts.push(`${ns.toLocaleString()} skipped`)
+              if (nf > 0) parts.push(`${nf.toLocaleString()} failed`)
+              parts.push(newest.albumTitle)
+              return parts.join(' · ')
             })()}
           </span>
         </div>

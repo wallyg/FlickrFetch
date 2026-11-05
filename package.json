@@ -1,7 +1,7 @@
 {
   "name": "flickr-fetch",
   "productName": "FlickrFetch",
-  "version": "1.9.0",
+  "version": "2.0.0",
   "description": "Mac desktop app to download photos from Flickr",
   "main": "out/main/index.js",
   "scripts": {
@@ -12,6 +12,7 @@
     "clean": "rm -rf out dist"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
@@ -24,6 +25,7 @@
   "dependencies": {
     "@fontsource/lato": "^5.3.0",
     "axios": "^1.13.6",
+    "better-sqlite3": "^13.0.3",
     "exiftool-vendored": "^39.1.0",
     "oauth-1.0a": "^2.2.6",
     "react": "^19.0.0",

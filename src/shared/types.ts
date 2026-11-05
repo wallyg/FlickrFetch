@@ -28,6 +28,7 @@ export interface FlickrPhoto {
   isfriend?: number
   isfamily?: number
   tags?: string[]        // populated when extras=tags is requested (album view)
+  lastUpdate?: number    // Flickr last_update unix timestamp (seconds); used for Smart Download Updated
 }
 
 export type FileNamingCore = 'title' | 'id' | 'id-title' | 'title-id'
@@ -72,7 +73,26 @@ export interface BatchProgress {
   queuedCount?: number   // how many batches are waiting behind this one
   queuedAlbums?: { id: string; title: string; photoCount?: number; videoCount?: number }[]
   error?: string
-  skippedCount?: number
+  skippedCount?: number       // collision skips (file already exists, behavior = skip)
+  failedCount?: number        // photos that errored and were skipped
+}
+
+export interface BatchLogEntry {
+  id: number
+  createdAt: number            // ms since epoch
+  source: string               // album name / 'Photostream' / 'Selected Photos'
+  sourceType: 'album' | 'photostream' | 'selected'
+  total: number
+  downloaded: number
+  skippedCollision: number
+  failed: number
+  status: 'complete' | 'partial' | 'cancelled' | 'error'
+}
+
+export interface PhotoDownloadRecord {
+  photoId: string
+  lastDownloadedAt: number     // ms since epoch (when we downloaded it)
+  flickrLastUpdate: number     // Flickr's last_update timestamp (seconds) at download time
 }
 
 export interface MetadataSettings {

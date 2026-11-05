@@ -10,6 +10,7 @@ import CollectionDetail from '../components/CollectionDetail'
 import DownloadQueueBar from '../components/DownloadQueueBar'
 import AboutModal from '../components/AboutModal'
 import DownloadConfirmModal, { type PendingDownload } from '../components/DownloadConfirmModal'
+import HistoryPanel from '../components/HistoryPanel'
 
 
 type MainView = 'photostream' | 'albums' | 'album-detail' | 'collections' | 'collection-detail' | 'photo-detail'
@@ -32,6 +33,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
   const [fetchingMoreDetail, setFetchingMoreDetail] = useState(false)
   const waitingToAdvanceRef = useRef(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [showHistory, setShowHistory] = useState(false)
   const [albumsVisited, setAlbumsVisited] = useState(false)
   const [collectionsVisited, setCollectionsVisited] = useState(false)
   const [collectionPath, setCollectionPath] = useState<FlickrCollection[]>([])
@@ -181,8 +183,8 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
       title: `↓ Download Selected from "${albumTitle}"`,
       photoCount,
       videoCount,
-      onConfirm: () => {
-        window.flickrAPI.startSelectedBatch(photos, `${albumTitle} (${photos.length} selected)`)
+      onConfirm: (track) => {
+        window.flickrAPI.startSelectedBatch(photos, `${albumTitle} (${photos.length} selected)`, track)
         exitAlbumSelect()
       },
     })
@@ -198,8 +200,8 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
       title: `↓ Download Selected from Photostream`,
       photoCount,
       videoCount,
-      onConfirm: () => {
-        window.flickrAPI.startSelectedBatch(photos, `Photostream (${photos.length} selected)`)
+      onConfirm: (track) => {
+        window.flickrAPI.startSelectedBatch(photos, `Photostream (${photos.length} selected)`, track)
         exitPhotostreamSelect()
       },
     })
@@ -346,6 +348,13 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             </svg>
             Settings
           </button>
+          <button style={styles.settingsButton} onClick={() => setShowHistory(true)}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+            History
+          </button>
           <button style={styles.signOutButton} onClick={onSignOut}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
@@ -430,14 +439,14 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
                     title: `↓ Download Album: "${selectedAlbum.title}"`,
                     photoCount,
                     videoCount,
-                    onConfirm: async () => {
-                      const result = await window.flickrAPI.startBatch(selectedAlbum.id, selectedAlbum.title, selectedAlbum.photoCount, selectedAlbum.videoCount, false, mt, pf)
+                    onConfirm: async (track) => {
+                      const result = await window.flickrAPI.startBatch(selectedAlbum.id, selectedAlbum.title, selectedAlbum.photoCount, selectedAlbum.videoCount, false, mt, pf, track)
                       if (result.alreadyQueued) {
                         const ok = await window.flickrAPI.confirm(
                           `"${selectedAlbum.title}" is already downloading or queued.`,
                           'Do you want to add it to the queue again?'
                         )
-                        if (ok) window.flickrAPI.startBatch(selectedAlbum.id, selectedAlbum.title, selectedAlbum.photoCount, selectedAlbum.videoCount, true, mt, pf)
+                        if (ok) window.flickrAPI.startBatch(selectedAlbum.id, selectedAlbum.title, selectedAlbum.photoCount, selectedAlbum.videoCount, true, mt, pf, track)
                       }
                     },
                   })
@@ -567,6 +576,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
       </main>
 
       {showSettings && <SettingsModal onClose={() => { setShowSettings(false); setSettingsKey(k => k + 1) }} />}
+      {showHistory && <HistoryPanel onClose={() => setShowHistory(false)} />}
       {aboutVersion && <AboutModal version={aboutVersion} onClose={() => setAboutVersion(null)} />}
       {pendingDownload && (
         <DownloadConfirmModal

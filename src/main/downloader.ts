@@ -140,6 +140,10 @@ export async function downloadPhoto(
   return filePath
 }
 
+export type DownloadOutcome =
+  | { status: 'downloaded'; filePath: string }
+  | { status: 'skipped'; reason: 'collision' }
+
 export async function downloadToFolder(
   sizes: PhotoSize[],
   filename: string,
@@ -149,14 +153,14 @@ export async function downloadToFolder(
   conflictBehavior: ConflictBehavior = 'rename',
   downloadSize: DownloadSize = 'original',
   metadataSettings?: MetadataSettings
-): Promise<string | null> {
+): Promise<DownloadOutcome> {
   const chosen = pickSize(sizes, downloadSize)
   if (!chosen) throw new Error('No downloadable size found')
 
   const ext = resolveExtension(chosen.source)
   const rawPath = join(destFolder, `${filename}.${ext}`)
   const filePath = resolveConflict(rawPath, conflictBehavior)
-  if (filePath === null) return null  // skip
+  if (filePath === null) return { status: 'skipped', reason: 'collision' }
 
   const response = await axios<NodeJS.ReadableStream>({
     method: 'GET',
@@ -181,5 +185,5 @@ export async function downloadToFolder(
     }
   }
 
-  return filePath
+  return { status: 'downloaded', filePath }
 }
