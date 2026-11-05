@@ -7,6 +7,20 @@ export interface Release {
 
 const changelog: Release[] = [
   {
+    version: '1.9',
+    date: 'November 2026',
+    highlights: [
+      'CC license badges now appear inline in the metadata panel — Attribution, NonCommercial, NoDerivs, and ShareAlike icons next to the license name',
+      'Metadata fields with no value now show a clear "No description" / "No tags" message instead of blank space',
+      'Video loading shows a spinner overlay on the thumbnail while playback initializes — no more blank black area',
+      'Photo and album grids show a shimmer skeleton while loading instead of an empty canvas with centered text',
+      'Download confirmation modal summarizes photo/video count, quality setting, destination folder, and all active metadata fields before the queue starts',
+      'Photostream scan progress bar appears while auto-loading pages with an active filter; "Scan next 1,000" and "Scan all remaining" buttons offered after the 10-page auto-load cap',
+      'Album search covers all pages — when a search is active, remaining album pages are fetched automatically so no albums are missed',
+      'Download done message now reads "24 original photos saved successfully" for clarity',
+    ]
+  },
+  {
     version: '1.8',
     date: 'November 2026',
     highlights: [
