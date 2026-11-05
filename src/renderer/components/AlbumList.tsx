@@ -102,7 +102,22 @@ export default function AlbumList({ onAlbumSelect }: AlbumListProps): React.JSX.
   }, [albums, searchQuery, searchOperator])
 
   if (loading) {
-    return <div style={styles.center}><p style={styles.message}>Loading albums…</p></div>
+    return (
+      <div style={styles.scroll}>
+        <style>{`@keyframes ff-al-shimmer { 0%,100% { opacity: 0.55; } 50% { opacity: 1; } }`}</style>
+        <div style={{ ...styles.grid, gridTemplateColumns: GRID_COLUMNS['medium'], padding: '16px' }}>
+          {Array.from({ length: 18 }, (_, i) => (
+            <div key={i} style={{ borderRadius: '10px', overflow: 'hidden', animation: `ff-al-shimmer 1.4s ease-in-out infinite`, animationDelay: `${(i % 6) * 0.08}s` }}>
+              <div style={{ height: '180px', background: '#e8e4de' }} />
+              <div style={{ padding: '10px 12px', background: '#f0ede8' }}>
+                <div style={{ height: '12px', background: '#e0dcd6', borderRadius: '4px', marginBottom: '6px', width: '75%' }} />
+                <div style={{ height: '10px', background: '#e8e4de', borderRadius: '4px', width: '45%' }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
   }
 
   if (error) {

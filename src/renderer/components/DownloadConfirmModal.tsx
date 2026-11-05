@@ -165,17 +165,17 @@ const s: Record<string, React.CSSProperties> = {
     textTransform: 'uppercase' as const, letterSpacing: '0.5px',
   },
   metaGrid: {
-    display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px 12px',
-    paddingBottom: '4px',
+    display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gridAutoFlow: 'column',
+    gridTemplateRows: 'repeat(3, auto)', gap: '5px 8px', paddingBottom: '4px',
   },
   metaItem: {
-    display: 'flex', alignItems: 'center', gap: '5px',
+    display: 'flex', alignItems: 'center', gap: '4px',
   },
   metaCheck: {
-    fontSize: '13px', fontWeight: '700', flexShrink: 0, width: '12px',
+    fontSize: '12px', fontWeight: '700', flexShrink: 0,
   },
   metaLabel: {
-    fontSize: '13px',
+    fontSize: '12px',
   },
   footer: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',

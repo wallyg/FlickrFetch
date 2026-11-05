@@ -696,7 +696,7 @@ export default function SettingsModal({ onClose }: { onClose: () => void }): Rea
 }
 
 const s: Record<string, React.CSSProperties> = {
-  overlay: { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 },
+  overlay: { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 600 },
   card: { backgroundColor: '#fff', borderRadius: '12px', width: '480px', maxWidth: '90vw', height: '660px', maxHeight: '90vh', boxShadow: '0 8px 40px rgba(0,0,0,0.3)', display: 'flex', flexDirection: 'column' },
   header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px 0', flexShrink: 0 },
   title: { fontSize: '18px', fontWeight: '600', color: '#111', margin: 0 },
