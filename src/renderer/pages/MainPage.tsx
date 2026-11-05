@@ -11,6 +11,7 @@ import DownloadQueueBar from '../components/DownloadQueueBar'
 import AboutModal from '../components/AboutModal'
 import DownloadConfirmModal, { type PendingDownload } from '../components/DownloadConfirmModal'
 import HistoryPanel from '../components/HistoryPanel'
+import SmartDownloadButton from '../components/SmartDownloadButton'
 
 
 type MainView = 'photostream' | 'albums' | 'album-detail' | 'collections' | 'collection-detail' | 'photo-detail'
@@ -403,6 +404,23 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
                 <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
               </svg>
             </button>
+            <SmartDownloadButton
+              label="Download All"
+              onDownload={(mode) => {
+                const smartMode = mode === 'all' ? undefined : mode
+                const photoCount = loadedPhotostreamPhotos.filter(p => p.media !== 'video').length
+                const videoCount = loadedPhotostreamPhotos.filter(p => p.media === 'video').length
+                const modeTitle = mode === 'updated' ? '↓ Download Updated (Photostream)' : mode === 'never-downloaded' ? '↓ Download Never Downloaded (Photostream)' : '↓ Download Photostream'
+                setPendingDownload({
+                  title: modeTitle,
+                  photoCount,
+                  videoCount,
+                  onConfirm: (track) => {
+                    window.flickrAPI.startPhotostreamBatch('Photostream', track, smartMode, undefined, photostreamSort)
+                  },
+                })
+              }}
+            />
             <button style={styles.selectButton} onClick={() => setPhotostreamSelectMode(true)}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                 <rect x="2" y="3" width="7" height="7" rx="1"/><rect x="13" y="3" width="7" height="7" rx="1"/><rect x="2" y="14" width="7" height="7" rx="1"/><path d="M14 17l2 2 4-4"/>
@@ -428,32 +446,32 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
           <div style={{ flex: 1 }} />
           {!albumSelectMode ? (
             <>
-              <button
-                style={styles.downloadAllButton}
-                onClick={() => {
+              <SmartDownloadButton
+                label="Download Album"
+                onDownload={(mode) => {
                   const mt = albumMediaFilter !== 'all' ? albumMediaFilter : undefined
                   const pf = albumPrivacyFilter !== 'all' ? albumPrivacyFilter : undefined
                   const photoCount = mt === 'video' ? 0 : selectedAlbum.photoCount
                   const videoCount = mt === 'photo' ? 0 : selectedAlbum.videoCount
+                  const smartMode = mode === 'all' ? undefined : mode
+                  const modeTitle = mode === 'updated' ? `↓ Download Updated: "${selectedAlbum.title}"` : mode === 'never-downloaded' ? `↓ Download Never Downloaded: "${selectedAlbum.title}"` : `↓ Download Album: "${selectedAlbum.title}"`
                   setPendingDownload({
-                    title: `↓ Download Album: "${selectedAlbum.title}"`,
+                    title: modeTitle,
                     photoCount,
                     videoCount,
                     onConfirm: async (track) => {
-                      const result = await window.flickrAPI.startBatch(selectedAlbum.id, selectedAlbum.title, selectedAlbum.photoCount, selectedAlbum.videoCount, false, mt, pf, track)
+                      const result = await window.flickrAPI.startBatch(selectedAlbum.id, selectedAlbum.title, selectedAlbum.photoCount, selectedAlbum.videoCount, false, mt, pf, track, smartMode)
                       if (result.alreadyQueued) {
                         const ok = await window.flickrAPI.confirm(
                           `"${selectedAlbum.title}" is already downloading or queued.`,
                           'Do you want to add it to the queue again?'
                         )
-                        if (ok) window.flickrAPI.startBatch(selectedAlbum.id, selectedAlbum.title, selectedAlbum.photoCount, selectedAlbum.videoCount, true, mt, pf, track)
+                        if (ok) window.flickrAPI.startBatch(selectedAlbum.id, selectedAlbum.title, selectedAlbum.photoCount, selectedAlbum.videoCount, true, mt, pf, track, smartMode)
                       }
                     },
                   })
                 }}
-              >
-                ↓ Download Album
-              </button>
+              />
               <button style={styles.selectButton} onClick={() => setAlbumSelectMode(true)}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                   <rect x="2" y="3" width="7" height="7" rx="1"/><rect x="13" y="3" width="7" height="7" rx="1"/><rect x="2" y="14" width="7" height="7" rx="1"/><path d="M14 17l2 2 4-4"/>
