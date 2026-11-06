@@ -514,7 +514,6 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
                     allIds.push(...result.photos.map((p: { id: string }) => p.id))
                     hasMore = page < result.pages
                     page++
-                    if (page > 20) break
                   }
                   if (allIds.length > 0) await window.flickrAPI.deletePhotoRecords(allIds)
                 }}

@@ -219,6 +219,7 @@ export default function PhotoDetail({
 
   // Fetch sizes + info when photo changes
   useEffect(() => {
+    let cancelled = false
     setLoadingDetail(true)
     setSizes([])
     setInfo(null)
@@ -234,11 +235,12 @@ export default function PhotoDetail({
     setLastDownloadedAt(null)
 
     window.flickrAPI.getPhotoRecord(photo.id)
-      .then(rec => setLastDownloadedAt(rec ? rec.lastDownloadedAt : null))
+      .then(rec => { if (!cancelled) setLastDownloadedAt(rec ? rec.lastDownloadedAt : null) })
       .catch(() => {})
 
     window.flickrAPI.getPhotoDetail(photo.id)
       .then(({ sizes: s, info: i, exif: e }) => {
+        if (cancelled) return
         setSizes(s)
         setInfo(i)
         setExif(e)
@@ -251,8 +253,9 @@ export default function PhotoDetail({
       })
       .catch(() => {})
       .finally(() => {
-        setLoadingDetail(false)
+        if (!cancelled) setLoadingDetail(false)
       })
+    return () => { cancelled = true }
   }, [photo.id, checkScrollFade])
 
   // Subscribe to download progress
@@ -287,7 +290,7 @@ export default function PhotoDetail({
     setDownloadError(null)
     setSavedPath(null)
     try {
-      const { filePath } = await window.flickrAPI.downloadPhoto(photo.id, photo.title, downloadSize, trackDownload, photo.thumbnailUrl)
+      const { filePath } = await window.flickrAPI.downloadPhoto(photo.id, photo.title, downloadSize, trackDownload, photo.thumbnailUrl, photo.lastUpdate ?? 0)
       if (filePath) {
         setSavedPath(filePath)
         setDownloadState('done')

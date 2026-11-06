@@ -256,7 +256,7 @@ ipcMain.handle('photos:getDetail', async (_event, photoId: string) => {
 // Download a photo: opens a save dialog then streams the file to disk
 let activeDownloadController: AbortController | null = null
 
-ipcMain.handle('photos:download', async (_event, photoId: string, photoTitle: string, downloadSize?: DownloadSize, track = true, thumbnailUrl = '') => {
+ipcMain.handle('photos:download', async (_event, photoId: string, photoTitle: string, downloadSize?: DownloadSize, track = true, thumbnailUrl = '', lastUpdate = 0) => {
   const tokenData = loadToken()
   if (!tokenData) throw new Error('Not authenticated')
   if (!mainWindow) throw new Error('No window available')
@@ -270,7 +270,7 @@ ipcMain.handle('photos:download', async (_event, photoId: string, photoTitle: st
     const effectiveSize = downloadSize ?? globalDownloadSize
     const filename = buildFilename(fileNaming, photoId, photoTitle, photoInfo, undefined, effectiveSize)
     const filePath = await downloadPhoto(sizes, filename, mainWindow, activeDownloadController.signal, photoInfo, metadata, effectiveSize)
-    if (filePath && track) writePhotoRecord(photoId, 0, photoTitle, thumbnailUrl)
+    if (filePath && track) writePhotoRecord(photoId, lastUpdate, photoTitle, thumbnailUrl)
     return { filePath }
   } finally {
     activeDownloadController = null
@@ -661,10 +661,17 @@ async function runPhotostreamBatch(albumTitle: string, track = true, smartMode?:
 
   const preSmartTotal = filteredPhotos.length
 
-  // Smart mode: never-downloaded
-  if (smartMode === 'never-downloaded') {
+  // Smart mode filtering
+  if (smartMode === 'never-downloaded' || smartMode === 'updated') {
     const recordMap = getPhotoRecordsBatch(filteredPhotos.map(p => p.id))
-    filteredPhotos = filteredPhotos.filter(p => !recordMap.has(p.id))
+    if (smartMode === 'never-downloaded') {
+      filteredPhotos = filteredPhotos.filter(p => !recordMap.has(p.id))
+    } else {
+      filteredPhotos = filteredPhotos.filter(p => {
+        const rec = recordMap.get(p.id)
+        return rec != null && (p.lastUpdate ?? 0) > rec.flickrLastUpdate
+      })
+    }
   }
 
   const total = filteredPhotos.length
@@ -733,7 +740,9 @@ async function runPhotostreamBatch(albumTitle: string, track = true, smartMode?:
 
 ipcMain.handle('batch:startAlbum', (_event, albumId: string, albumTitle: string, photoCount?: number, videoCount?: number, force?: boolean, mediaType?: 'photo' | 'video', privacyFilter?: string, track = true, smartMode?: 'updated' | 'never-downloaded') => {
   if (!force) {
-    const isDuplicate = activeBatchController !== null && activeBatchAlbumId === albumId
+    const isDuplicate =
+      (activeBatchController !== null && activeBatchAlbumId === albumId) ||
+      batchQueue.some(j => j.type === 'album' && j.albumId === albumId)
     if (isDuplicate) return { alreadyQueued: true }
   }
   enqueueBatch({ type: 'album', albumId, albumTitle, photoCount, videoCount, mediaType, privacyFilter, track, smartMode })
@@ -810,8 +819,15 @@ ipcMain.handle('db:deletePhotoRecord', (_event, photoId: string) => deletePhotoR
 ipcMain.handle('db:deletePhotoRecords', (_event, photoIds: string[]) => deletePhotoRecords(photoIds))
 ipcMain.handle('db:clearPhotoRecords', (_event, beforeMs?: number, afterMs?: number) => clearPhotoRecords(beforeMs, afterMs))
 
+// Pin userData to the app name used at launch so upgrades don't change the path
+app.setPath('userData', join(app.getPath('appData'), 'flickr-fetch'))
+
 app.whenReady().then(() => {
-  openDatabase()
+  try {
+    openDatabase()
+  } catch (err) {
+    process.stderr.write(`[flickrfetch] DB open failed, continuing without history: ${err}\n`)
+  }
   // Build the macOS app menu with a proper About item
   const appName = app.getName()
   const template: Electron.MenuItemConstructorOptions[] = [

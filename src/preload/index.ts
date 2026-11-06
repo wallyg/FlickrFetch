@@ -29,8 +29,8 @@ contextBridge.exposeInMainWorld('flickrAPI', {
     ipcRenderer.invoke('photos:getDetail', photoId),
 
   // Download a photo to disk — opens a save dialog, returns the saved path (or null if cancelled)
-  downloadPhoto: (photoId: string, title: string, downloadSize?: string, track = true, thumbnailUrl = ''): Promise<{ filePath: string | null }> =>
-    ipcRenderer.invoke('photos:download', photoId, title, downloadSize, track, thumbnailUrl),
+  downloadPhoto: (photoId: string, title: string, downloadSize?: string, track = true, thumbnailUrl = '', lastUpdate = 0): Promise<{ filePath: string | null }> =>
+    ipcRenderer.invoke('photos:download', photoId, title, downloadSize, track, thumbnailUrl, lastUpdate),
 
   // Listen for download progress events (0–100). Returns a cleanup function.
   onDownloadProgress: (cb: (percent: number) => void): (() => void) => {

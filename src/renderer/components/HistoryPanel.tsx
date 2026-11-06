@@ -238,7 +238,7 @@ function PhotosTab() {
     page1.photos.forEach(p => photoIds.add(p.id))
 
     if (page1.pages > 1) {
-      const pageNums = Array.from({ length: Math.min(page1.pages - 1, 19) }, (_, i) => i + 2)
+      const pageNums = Array.from({ length: page1.pages - 1 }, (_, i) => i + 2)
       const pages = await Promise.all(pageNums.map(p => window.flickrAPI.getAlbumPhotos(album.id, p)))
       pages.forEach(pg => pg.photos.forEach(p => photoIds.add(p.id)))
     }

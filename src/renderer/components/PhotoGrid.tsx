@@ -34,6 +34,7 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
   const autoLoadCountRef = useRef(0)
   const [autoLoadCapped, setAutoLoadCapped] = useState(false)
   const [scanAllMode, setScanAllMode] = useState(false)
+  const [autoLoadError, setAutoLoadError] = useState(false)
 
   // Search input state (uncommitted until triggered)
   const [searchMode, setSearchMode] = useState<'title' | 'id'>('title')
@@ -194,11 +195,12 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
     autoLoadCountRef.current = 0
     setAutoLoadCapped(false)
     setScanAllMode(false)
+    setAutoLoadError(false)
   }, [mediaFilter, privacyFilter])
 
   useEffect(() => {
     const filterActive = mediaFilter !== 'all' || privacyFilter !== 'all'
-    if (filterActive && photos.length > 0 && page < pages && !loadingMore && !loading) {
+    if (filterActive && photos.length > 0 && page < pages && !loadingMore && !loading && !autoLoadError) {
       if (scanAllMode || autoLoadCountRef.current < 10) {
         autoLoadCountRef.current++
         const nextPage = page + 1
@@ -209,13 +211,13 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
             setPhotos(updated); setPage(result.page); setPages(result.pages); setTotal(result.total)
             onPhotosLoaded?.(updated); onPageInfo?.(result.page, result.pages)
           })
-          .catch(() => {})
+          .catch(() => { setAutoLoadError(true) })
           .finally(() => setLoadingMore(false))
       } else {
         setAutoLoadCapped(true)
       }
     }
-  }, [mediaFilter, privacyFilter, photos.length, page, pages, loadingMore, loading, sort, scanAllMode])
+  }, [mediaFilter, privacyFilter, photos.length, page, pages, loadingMore, loading, sort, scanAllMode, autoLoadError])
 
   const hasServerSearch = !!(activeSearch.query || activeSearch.tagQuery || activeSearch.dateMin || activeSearch.dateMax)
   const hasClientFilter = mediaFilter !== 'all' || privacyFilter !== 'all'

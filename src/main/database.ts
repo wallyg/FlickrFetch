@@ -112,7 +112,7 @@ export interface PhotoRecordQuery {
   dateMax?: number  // ms since epoch
 }
 
-export function searchPhotoRecords(query: PhotoRecordQuery, limit = 200): PhotoDownloadRecord[] {
+export function searchPhotoRecords(query: PhotoRecordQuery, limit?: number): PhotoDownloadRecord[] {
   if (!db) return []
   const conditions: string[] = []
   const params: Record<string, unknown> = {}
@@ -128,7 +128,8 @@ export function searchPhotoRecords(query: PhotoRecordQuery, limit = 200): PhotoD
   if (query.dateMax) { conditions.push('last_downloaded_at <= @dateMax'); params['dateMax'] = query.dateMax }
 
   const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
-  const rows = db.prepare(`SELECT * FROM photo_download_record ${where} ORDER BY last_downloaded_at DESC LIMIT ${limit}`).all(params) as Record<string, unknown>[]
+  const limitClause = limit !== undefined ? ` LIMIT ${limit}` : ''
+  const rows = db.prepare(`SELECT * FROM photo_download_record ${where} ORDER BY last_downloaded_at DESC${limitClause}`).all(params) as Record<string, unknown>[]
   return rows.map(rowToRecord)
 }
 

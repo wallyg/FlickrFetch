@@ -16,6 +16,12 @@ const LICENSE_MAP: Record<string, { name: string; url: string }> = {
   '8':  { name: 'United States Government Work',   url: 'http://www.usa.gov/copyright.shtml' },
   '9':  { name: 'CC0 1.0',         url: 'https://creativecommons.org/publicdomain/zero/1.0/' },
   '10': { name: 'Public Domain Mark 1.0', url: 'https://creativecommons.org/publicdomain/mark/1.0/' },
+  '11': { name: 'CC BY 4.0',       url: 'https://creativecommons.org/licenses/by/4.0/' },
+  '12': { name: 'CC BY-SA 4.0',    url: 'https://creativecommons.org/licenses/by-sa/4.0/' },
+  '13': { name: 'CC BY-ND 4.0',    url: 'https://creativecommons.org/licenses/by-nd/4.0/' },
+  '14': { name: 'CC BY-NC 4.0',    url: 'https://creativecommons.org/licenses/by-nc/4.0/' },
+  '15': { name: 'CC BY-NC-SA 4.0', url: 'https://creativecommons.org/licenses/by-nc-sa/4.0/' },
+  '16': { name: 'CC BY-NC-ND 4.0', url: 'https://creativecommons.org/licenses/by-nc-nd/4.0/' },
 }
 
 // ExifTool is bundled — always available
@@ -74,9 +80,11 @@ export async function embedMetadata(filePath: string, info: PhotoInfo, settings:
   }
 
   if (settings.embedLicense) {
-    const lic = LICENSE_MAP[info.license] ?? LICENSE_MAP['0']
-    tags['XMP-xmpRights:UsageTerms'] = lic.name
-    if (lic.url) tags['XMP-xmpRights:WebStatement'] = lic.url
+    const lic = LICENSE_MAP[info.license]
+    if (lic) {
+      tags['XMP-xmpRights:UsageTerms'] = lic.name
+      if (lic.url) tags['XMP-xmpRights:WebStatement'] = lic.url
+    }
   }
 
   if (settings.embedPhotoUrl && info.ownerPathAlias) {
