@@ -7,6 +7,17 @@ export interface Release {
 
 const changelog: Release[] = [
   {
+    version: '1.11',
+    date: 'November 2026',
+    highlights: [
+      'History panel has a new Photos tab — browse every photo you\'ve downloaded with thumbnail, title, date, and photo ID',
+      'Search photo download records by title or photo ID; filter by download date range (presets or custom) or by album',
+      'Remove individual photo download records inline, or clear records in bulk by time range, before/after a date, or all at once',
+      'Album "Reset records" button now resets all photos in the album — not just the ones currently loaded on screen',
+      'Photo ID search in the photostream toolbar now filters the grid live; an "Open →" button appears when the photo isn\'t in the loaded set',
+    ]
+  },
+  {
     version: '1.10',
     date: 'November 2026',
     highlights: [

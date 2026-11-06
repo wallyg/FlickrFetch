@@ -36,8 +36,11 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
   const [scanAllMode, setScanAllMode] = useState(false)
 
   // Search input state (uncommitted until triggered)
+  const [searchMode, setSearchMode] = useState<'title' | 'id'>('title')
   const [searchQuery, setSearchQuery] = useState('')
   const [searchOperator, setSearchOperator] = useState<SearchOperator>('contains')
+  const [photoIdQuery, setPhotoIdQuery] = useState('')
+  const [photoIdStatus, setPhotoIdStatus] = useState<'idle' | 'searching' | 'not-found'>('idle')
   const [tagQuery, setTagQuery] = useState('')
   const [tagMode, setTagMode] = useState<TagMode>('any')
   const [dateField, setDateField] = useState<DateRangeField>('taken')
@@ -150,11 +153,40 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
     applySearch({})
   }
 
+  const handlePhotoIdLookup = async (id: string): Promise<void> => {
+    const trimmed = id.trim()
+    if (!trimmed) return
+    setPhotoIdStatus('searching')
+    // Check loaded photos first
+    const existing = photos.find(p => p.id === trimmed)
+    if (existing) { onPhotoSelect(existing); setPhotoIdStatus('idle'); return }
+    // Fetch from Flickr
+    try {
+      const { sizes, info } = await window.flickrAPI.getPhotoDetail(trimmed)
+      const thumb = sizes.find(s => s.label === 'Square') ?? sizes[0]
+      const photo: FlickrPhoto = {
+        id: trimmed,
+        title: info.title,
+        thumbnailUrl: thumb?.source ?? '',
+        dateTaken: info.dateTaken ?? '',
+        media: 'photo',
+      }
+      onPhotoSelect(photo)
+      setPhotoIdStatus('idle')
+    } catch {
+      setPhotoIdStatus('not-found')
+    }
+  }
+
   const filteredPhotos = useMemo(() => {
-    return photos
+    let result = photos
       .filter(p => mediaFilter === 'all' || p.media === mediaFilter)
       .filter(p => privacyFilter === 'all' || getPrivacyLevel(p) === privacyFilter)
-  }, [photos, mediaFilter, privacyFilter])
+    if (searchMode === 'id' && photoIdQuery.trim()) {
+      result = result.filter(p => p.id === photoIdQuery.trim())
+    }
+    return result
+  }, [photos, mediaFilter, privacyFilter, searchMode, photoIdQuery])
 
   useEffect(() => { onFilteredPhotosChange?.(filteredPhotos) }, [filteredPhotos, onFilteredPhotosChange])
 
@@ -241,26 +273,64 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
                   <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
                 </svg>
               </span>
-              <select
-                style={styles.operatorSelect}
-                value={searchOperator}
-                onChange={e => setSearchOperator(e.target.value as SearchOperator)}
-              >
-                <option value="contains">Title contains</option>
-                <option value="starts">Starts with</option>
-                <option value="ends">Ends with</option>
-                <option value="exact">Exact match</option>
-              </select>
-              <input
-                style={styles.searchInput}
-                type="text"
-                placeholder="Search…"
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && triggerSearch()}
-              />
-              {searchQuery && (
-                <button style={styles.searchClearBtn} onClick={() => { if (activeSearch.query) dismissSearchQuery(); else setSearchQuery('') }}>✕</button>
+              {searchMode === 'title' ? (
+                <>
+                  <select
+                    style={styles.operatorSelect}
+                    value={searchOperator}
+                    onChange={e => {
+                      if (e.target.value === '__id__') { setSearchMode('id'); if (activeSearch.query) dismissSearchQuery() }
+                      else setSearchOperator(e.target.value as SearchOperator)
+                    }}
+                  >
+                    <option value="contains">Title contains</option>
+                    <option value="starts">Starts with</option>
+                    <option value="ends">Ends with</option>
+                    <option value="exact">Exact match</option>
+                    <option value="__id__">Photo ID…</option>
+                  </select>
+                  <input
+                    style={styles.searchInput}
+                    type="text"
+                    placeholder="Search…"
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && triggerSearch()}
+                  />
+                  {searchQuery && (
+                    <button style={styles.searchClearBtn} onClick={() => { if (activeSearch.query) dismissSearchQuery(); else setSearchQuery('') }}>✕</button>
+                  )}
+                </>
+              ) : (
+                <>
+                  <select
+                    style={styles.operatorSelect}
+                    value="__id__"
+                    onChange={e => { if (e.target.value !== '__id__') { setSearchMode('title'); setSearchOperator(e.target.value as SearchOperator); setPhotoIdQuery(''); setPhotoIdStatus('idle') } }}
+                  >
+                    <option value="contains">Title contains</option>
+                    <option value="starts">Starts with</option>
+                    <option value="ends">Ends with</option>
+                    <option value="exact">Exact match</option>
+                    <option value="__id__">Photo ID…</option>
+                  </select>
+                  <input
+                    style={styles.searchInput}
+                    type="text"
+                    placeholder="Enter photo ID…"
+                    value={photoIdQuery}
+                    onChange={e => { setPhotoIdQuery(e.target.value); setPhotoIdStatus('idle') }}
+                  />
+                  {photoIdQuery.trim() && filteredPhotos.length === 0 && photoIdStatus !== 'searching' && (
+                    photoIdStatus === 'not-found'
+                      ? <span style={styles.idStatusErr}>Not on Flickr</span>
+                      : <button style={styles.idOpenDetailBtn} onClick={() => handlePhotoIdLookup(photoIdQuery)}>Open →</button>
+                  )}
+                  {photoIdStatus === 'searching' && <span style={styles.idStatus}>…</span>}
+                  {photoIdQuery && (
+                    <button style={styles.searchClearBtn} onClick={() => { setPhotoIdQuery(''); setPhotoIdStatus('idle') }}>✕</button>
+                  )}
+                </>
               )}
             </div>
 

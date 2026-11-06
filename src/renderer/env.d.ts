@@ -1,4 +1,4 @@
-import type { FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord } from '../shared/types'
+import type { FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery } from '../shared/types'
 
 declare module '*.png' {
   const src: string
@@ -16,7 +16,7 @@ declare global {
       getPhotos: (page: number, sort?: string, search?: PhotoSearchParams) => Promise<PhotoPage>
       getSizes: (photoId: string) => Promise<PhotoSize[]>
       getPhotoDetail: (photoId: string) => Promise<{ sizes: PhotoSize[]; info: PhotoInfo; exif: CameraExif }>
-      downloadPhoto: (photoId: string, title: string, downloadSize?: DownloadSize, track?: boolean) => Promise<{ filePath: string | null }>
+      downloadPhoto: (photoId: string, title: string, downloadSize?: DownloadSize, track?: boolean, thumbnailUrl?: string) => Promise<{ filePath: string | null }>
       onDownloadProgress: (callback: (percent: number) => void) => () => void
       showInFinder: (filePath: string) => void
       openExternal: (url: string) => void
@@ -44,6 +44,10 @@ declare global {
       getPhotoRecord: (photoId: string) => Promise<PhotoDownloadRecord | null>
       getPhotoRecordsBatch: (photoIds: string[]) => Promise<Record<string, PhotoDownloadRecord>>
       clearHistory: () => Promise<void>
+      searchPhotoRecords: (query: PhotoRecordQuery) => Promise<PhotoDownloadRecord[]>
+      deletePhotoRecord: (photoId: string) => Promise<void>
+      deletePhotoRecords: (photoIds: string[]) => Promise<void>
+      clearPhotoRecords: (beforeMs?: number, afterMs?: number) => Promise<void>
     }
   }
 }

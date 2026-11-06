@@ -281,7 +281,7 @@ export default function PhotoDetail({
     setDownloadError(null)
     setSavedPath(null)
     try {
-      const { filePath } = await window.flickrAPI.downloadPhoto(photo.id, photo.title, downloadSize, trackDownload)
+      const { filePath } = await window.flickrAPI.downloadPhoto(photo.id, photo.title, downloadSize, trackDownload, photo.thumbnailUrl)
       if (filePath) {
         setSavedPath(filePath)
         setDownloadState('done')
@@ -300,6 +300,11 @@ export default function PhotoDetail({
         setDownloadState('error')
       }
     }
+  }
+
+  const handleResetRecord = async (): Promise<void> => {
+    await window.flickrAPI.deletePhotoRecord(photo.id)
+    setLastDownloadedAt(null)
   }
 
   const privacyBadge = getPrivacyBadge(photo)
@@ -564,12 +569,17 @@ export default function PhotoDetail({
 
           {lastDownloadedAt != null && downloadState === 'idle' && (
             <div>
-              <p style={styles.lastDownloaded}>
-                Last downloaded {formatDownloadDateTime(lastDownloadedAt)}
-              </p>
+              <div style={styles.lastDownloadedRow}>
+                <p style={styles.lastDownloaded}>
+                  Last downloaded {formatDownloadDateTime(lastDownloadedAt)}
+                </p>
+                <button style={styles.resetRecordBtn} onClick={handleResetRecord} title="Clear download record for this photo">
+                  Reset
+                </button>
+              </div>
               {photo.lastUpdate != null && photo.lastUpdate > 0 && photo.lastUpdate * 1000 > lastDownloadedAt && (
                 <p style={styles.stalenessWarning}>
-                  ⚠ Updated on Flickr since last download
+                  <span title="This photo was updated on Flickr after your last download">⚠</span> Updated since last download
                 </p>
               )}
             </div>
@@ -970,14 +980,31 @@ const styles: Record<string, React.CSSProperties> = {
     margin: '0 0 8px',
     textAlign: 'center' as const,
   },
+  lastDownloadedRow: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 2,
+  },
   lastDownloaded: {
     fontSize: '11px',
     color: '#94a3b8',
-    margin: '0 0 2px',
-    textAlign: 'center' as const,
+    margin: 0,
+  },
+  resetRecordBtn: {
+    background: 'none',
+    border: 'none',
+    padding: 0,
+    fontSize: '11px',
+    color: '#94a3b8',
+    cursor: 'pointer',
+    textDecoration: 'underline',
+    textDecorationStyle: 'dotted' as const,
   },
   stalenessWarning: {
-    fontSize: '11px',
+    fontSize: '12px',
+    fontWeight: 600,
     color: '#f59e0b',
     margin: '0 0 6px',
     textAlign: 'center' as const,

@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { IpcRendererEvent } from 'electron'
-import type { FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord } from '../shared/types'
+import type { FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery } from '../shared/types'
 
 // Expose a safe, limited API surface to the renderer process.
 // The renderer cannot access Node.js or Electron directly — only these methods.
@@ -29,8 +29,8 @@ contextBridge.exposeInMainWorld('flickrAPI', {
     ipcRenderer.invoke('photos:getDetail', photoId),
 
   // Download a photo to disk — opens a save dialog, returns the saved path (or null if cancelled)
-  downloadPhoto: (photoId: string, title: string, downloadSize?: string, track = true): Promise<{ filePath: string | null }> =>
-    ipcRenderer.invoke('photos:download', photoId, title, downloadSize, track),
+  downloadPhoto: (photoId: string, title: string, downloadSize?: string, track = true, thumbnailUrl = ''): Promise<{ filePath: string | null }> =>
+    ipcRenderer.invoke('photos:download', photoId, title, downloadSize, track, thumbnailUrl),
 
   // Listen for download progress events (0–100). Returns a cleanup function.
   onDownloadProgress: (cb: (percent: number) => void): (() => void) => {
@@ -80,6 +80,10 @@ contextBridge.exposeInMainWorld('flickrAPI', {
   getPhotoRecord: (photoId: string): Promise<PhotoDownloadRecord | null> => ipcRenderer.invoke('db:getPhotoRecord', photoId),
   getPhotoRecordsBatch: (photoIds: string[]): Promise<Record<string, PhotoDownloadRecord>> => ipcRenderer.invoke('db:getPhotoRecordsBatch', photoIds),
   clearHistory: (): Promise<void> => ipcRenderer.invoke('db:clearHistory'),
+  searchPhotoRecords: (query: PhotoRecordQuery): Promise<PhotoDownloadRecord[]> => ipcRenderer.invoke('db:searchPhotoRecords', query),
+  deletePhotoRecord: (photoId: string): Promise<void> => ipcRenderer.invoke('db:deletePhotoRecord', photoId),
+  deletePhotoRecords: (photoIds: string[]): Promise<void> => ipcRenderer.invoke('db:deletePhotoRecords', photoIds),
+  clearPhotoRecords: (beforeMs?: number, afterMs?: number): Promise<void> => ipcRenderer.invoke('db:clearPhotoRecords', beforeMs, afterMs),
   cancelBatch: (): void => ipcRenderer.send('batch:cancel'),
   skipBatch: (): void => ipcRenderer.send('batch:skipCurrent'),
   removeFromQueue: (id: string): Promise<void> => ipcRenderer.invoke('batch:removeFromQueue', id),

@@ -26,9 +26,16 @@ export function openDatabase(): void {
     CREATE TABLE IF NOT EXISTS photo_download_record (
       photo_id TEXT PRIMARY KEY,
       last_downloaded_at INTEGER NOT NULL,
-      flickr_last_update INTEGER NOT NULL DEFAULT 0
+      flickr_last_update INTEGER NOT NULL DEFAULT 0,
+      title TEXT NOT NULL DEFAULT '',
+      thumbnail_url TEXT NOT NULL DEFAULT ''
     );
   `)
+
+  // Migration: add title and thumbnail_url to existing installs that only have the original 3 columns
+  const cols = (db.prepare("PRAGMA table_info(photo_download_record)").all() as Array<{ name: string }>).map(r => r.name)
+  if (!cols.includes('title')) db.exec("ALTER TABLE photo_download_record ADD COLUMN title TEXT NOT NULL DEFAULT ''")
+  if (!cols.includes('thumbnail_url')) db.exec("ALTER TABLE photo_download_record ADD COLUMN thumbnail_url TEXT NOT NULL DEFAULT ''")
 }
 
 export function closeDatabase(): void {
@@ -56,26 +63,34 @@ export function writeBatchLog(entry: Omit<BatchLogEntry, 'id'>): number {
   return result.lastInsertRowid as number
 }
 
-export function writePhotoRecord(photoId: string, flickrLastUpdate: number): void {
+export function writePhotoRecord(photoId: string, flickrLastUpdate: number, title = '', thumbnailUrl = ''): void {
   if (!db) return
   db.prepare(`
-    INSERT INTO photo_download_record (photo_id, last_downloaded_at, flickr_last_update)
-    VALUES (@photoId, @now, @flickrLastUpdate)
+    INSERT INTO photo_download_record (photo_id, last_downloaded_at, flickr_last_update, title, thumbnail_url)
+    VALUES (@photoId, @now, @flickrLastUpdate, @title, @thumbnailUrl)
     ON CONFLICT(photo_id) DO UPDATE SET
       last_downloaded_at = excluded.last_downloaded_at,
-      flickr_last_update = excluded.flickr_last_update
-  `).run({ photoId, now: Date.now(), flickrLastUpdate })
+      flickr_last_update = excluded.flickr_last_update,
+      title = excluded.title,
+      thumbnail_url = excluded.thumbnail_url
+  `).run({ photoId, now: Date.now(), flickrLastUpdate, title, thumbnailUrl })
+}
+
+function rowToRecord(row: Record<string, unknown>): PhotoDownloadRecord {
+  return {
+    photoId: row['photo_id'] as string,
+    lastDownloadedAt: row['last_downloaded_at'] as number,
+    flickrLastUpdate: row['flickr_last_update'] as number,
+    title: (row['title'] as string) || '',
+    thumbnailUrl: (row['thumbnail_url'] as string) || '',
+  }
 }
 
 export function getPhotoRecord(photoId: string): PhotoDownloadRecord | null {
   if (!db) return null
   const row = db.prepare('SELECT * FROM photo_download_record WHERE photo_id = ?').get(photoId) as Record<string, unknown> | undefined
   if (!row) return null
-  return {
-    photoId: row['photo_id'] as string,
-    lastDownloadedAt: row['last_downloaded_at'] as number,
-    flickrLastUpdate: row['flickr_last_update'] as number,
-  }
+  return rowToRecord(row)
 }
 
 export function getPhotoRecordsBatch(photoIds: string[]): Map<string, PhotoDownloadRecord> {
@@ -84,14 +99,58 @@ export function getPhotoRecordsBatch(photoIds: string[]): Map<string, PhotoDownl
   const placeholders = photoIds.map(() => '?').join(',')
   const rows = (db.prepare(`SELECT * FROM photo_download_record WHERE photo_id IN (${placeholders})`).all(...photoIds)) as Record<string, unknown>[]
   for (const row of rows) {
-    const photoId = row['photo_id'] as string
-    map.set(photoId, {
-      photoId,
-      lastDownloadedAt: row['last_downloaded_at'] as number,
-      flickrLastUpdate: row['flickr_last_update'] as number,
-    })
+    const rec = rowToRecord(row)
+    map.set(rec.photoId, rec)
   }
   return map
+}
+
+export interface PhotoRecordQuery {
+  title?: string
+  photoId?: string
+  dateMin?: number  // ms since epoch
+  dateMax?: number  // ms since epoch
+}
+
+export function searchPhotoRecords(query: PhotoRecordQuery, limit = 200): PhotoDownloadRecord[] {
+  if (!db) return []
+  const conditions: string[] = []
+  const params: Record<string, unknown> = {}
+
+  if (query.photoId) {
+    conditions.push('photo_id = @photoId')
+    params['photoId'] = query.photoId
+  } else if (query.title) {
+    conditions.push("title LIKE @title")
+    params['title'] = `%${query.title}%`
+  }
+  if (query.dateMin) { conditions.push('last_downloaded_at >= @dateMin'); params['dateMin'] = query.dateMin }
+  if (query.dateMax) { conditions.push('last_downloaded_at <= @dateMax'); params['dateMax'] = query.dateMax }
+
+  const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
+  const rows = db.prepare(`SELECT * FROM photo_download_record ${where} ORDER BY last_downloaded_at DESC LIMIT ${limit}`).all(params) as Record<string, unknown>[]
+  return rows.map(rowToRecord)
+}
+
+export function deletePhotoRecord(photoId: string): void {
+  db?.prepare('DELETE FROM photo_download_record WHERE photo_id = ?').run(photoId)
+}
+
+export function deletePhotoRecords(photoIds: string[]): void {
+  if (!db || photoIds.length === 0) return
+  const placeholders = photoIds.map(() => '?').join(',')
+  db.prepare(`DELETE FROM photo_download_record WHERE photo_id IN (${placeholders})`).run(...photoIds)
+}
+
+export function clearPhotoRecords(beforeMs?: number, afterMs?: number): void {
+  if (!db) return
+  if (beforeMs !== undefined) {
+    db.prepare('DELETE FROM photo_download_record WHERE last_downloaded_at < ?').run(beforeMs)
+  } else if (afterMs !== undefined) {
+    db.prepare('DELETE FROM photo_download_record WHERE last_downloaded_at > ?').run(afterMs)
+  } else {
+    db.prepare('DELETE FROM photo_download_record').run()
+  }
 }
 
 export function getBatchLog(limit = 200): BatchLogEntry[] {

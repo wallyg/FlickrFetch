@@ -94,6 +94,15 @@ export interface PhotoDownloadRecord {
   photoId: string
   lastDownloadedAt: number     // ms since epoch (when we downloaded it)
   flickrLastUpdate: number     // Flickr's last_update timestamp (seconds) at download time
+  title: string
+  thumbnailUrl: string
+}
+
+export interface PhotoRecordQuery {
+  title?: string
+  photoId?: string
+  dateMin?: number  // ms since epoch
+  dateMax?: number  // ms since epoch
 }
 
 export interface MetadataSettings {

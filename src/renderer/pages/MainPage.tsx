@@ -473,6 +473,30 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
                   })
                 }}
               />
+              <button
+                style={styles.selectButton}
+                title="Reset download records for all photos in this album"
+                onClick={async () => {
+                  if (!selectedAlbum) return
+                  const total = (selectedAlbum.photoCount ?? 0) + (selectedAlbum.videoCount ?? 0)
+                  const ok = await window.flickrAPI.confirm(
+                    `Reset download records for "${selectedAlbum.title}"?`,
+                    `This will remove the download record for all ${total} photos in this album. Smart Download will treat them as never downloaded. Batch history is not affected.`
+                  )
+                  if (!ok) return
+                  const allIds: string[] = []
+                  let page = 1
+                  let hasMore = true
+                  while (hasMore) {
+                    const result = await window.flickrAPI.getAlbumPhotos(selectedAlbum.id, page)
+                    allIds.push(...result.photos.map((p: { id: string }) => p.id))
+                    hasMore = page < result.pages
+                    page++
+                    if (page > 20) break
+                  }
+                  if (allIds.length > 0) await window.flickrAPI.deletePhotoRecords(allIds)
+                }}
+              >Reset records</button>
               <button style={styles.selectButton} onClick={() => setAlbumSelectMode(true)}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                   <rect x="2" y="3" width="7" height="7" rx="1"/><rect x="13" y="3" width="7" height="7" rx="1"/><rect x="2" y="14" width="7" height="7" rx="1"/><path d="M14 17l2 2 4-4"/>

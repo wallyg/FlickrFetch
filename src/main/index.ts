@@ -6,7 +6,7 @@ import { getUserInfo, getPhotos, getPhotoSizes, getPhotoInfo, getPhotoExif, getA
 import { downloadPhoto, downloadToFolder } from './downloader'
 import { endExifTool } from './exiftool'
 import { loadSettings, saveSettings, resetSettings, ensureDownloadFolder } from './settings'
-import { openDatabase, closeDatabase, writeBatchLog, writePhotoRecord, getPhotoRecord, getPhotoRecordsBatch, getBatchLog, clearBatchLog, clearAllHistory } from './database'
+import { openDatabase, closeDatabase, writeBatchLog, writePhotoRecord, getPhotoRecord, getPhotoRecordsBatch, getBatchLog, clearBatchLog, clearAllHistory, searchPhotoRecords, deletePhotoRecord, deletePhotoRecords, clearPhotoRecords } from './database'
 import type { AppSettings, FileNamingConfig, PhotoInfo, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams } from '../shared/types'
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
@@ -256,7 +256,7 @@ ipcMain.handle('photos:getDetail', async (_event, photoId: string) => {
 // Download a photo: opens a save dialog then streams the file to disk
 let activeDownloadController: AbortController | null = null
 
-ipcMain.handle('photos:download', async (_event, photoId: string, photoTitle: string, downloadSize?: DownloadSize, track = true) => {
+ipcMain.handle('photos:download', async (_event, photoId: string, photoTitle: string, downloadSize?: DownloadSize, track = true, thumbnailUrl = '') => {
   const tokenData = loadToken()
   if (!tokenData) throw new Error('Not authenticated')
   if (!mainWindow) throw new Error('No window available')
@@ -270,7 +270,7 @@ ipcMain.handle('photos:download', async (_event, photoId: string, photoTitle: st
     const effectiveSize = downloadSize ?? globalDownloadSize
     const filename = buildFilename(fileNaming, photoId, photoTitle, photoInfo, undefined, effectiveSize)
     const filePath = await downloadPhoto(sizes, filename, mainWindow, activeDownloadController.signal, photoInfo, metadata, effectiveSize)
-    if (filePath && track) writePhotoRecord(photoId, 0)
+    if (filePath && track) writePhotoRecord(photoId, 0, photoTitle, thumbnailUrl)
     return { filePath }
   } finally {
     activeDownloadController = null
@@ -474,7 +474,7 @@ async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'p
       if (outcome.status === 'downloaded') {
         downloadedCount++
         lastFilePath = outcome.filePath
-        if (track) writePhotoRecord(photo.id, photo.lastUpdate ?? 0)
+        if (track) writePhotoRecord(photo.id, photo.lastUpdate ?? 0, photo.title, photo.thumbnailUrl)
         sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: outcome.filePath, status: 'running', skippedCount, failedCount })
       } else {
         skippedCount++
@@ -565,7 +565,7 @@ async function runSelectedBatch(photos: { id: string; title: string }[], albumTi
       if (outcome.status === 'downloaded') {
         downloadedCount++
         lastFilePath = outcome.filePath
-        if (track) writePhotoRecord(photo.id, 0)
+        if (track) writePhotoRecord(photo.id, 0, photo.title, photo.thumbnailUrl)
         sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: outcome.filePath, status: 'running', skippedCount, failedCount })
       } else {
         skippedCount++
@@ -691,7 +691,7 @@ async function runPhotostreamBatch(albumTitle: string, track = true, smartMode?:
       if (outcome.status === 'downloaded') {
         downloadedCount++
         lastFilePath = outcome.filePath
-        if (track) writePhotoRecord(photo.id, photo.lastUpdate ?? 0)
+        if (track) writePhotoRecord(photo.id, photo.lastUpdate ?? 0, photo.title, photo.thumbnailUrl)
         sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: outcome.filePath, status: 'running', skippedCount, failedCount })
       } else {
         skippedCount++
@@ -797,6 +797,10 @@ ipcMain.handle('db:getPhotoRecordsBatch', (_event, photoIds: string[]) => {
   return Object.fromEntries(map)
 })
 ipcMain.handle('db:clearHistory', () => clearAllHistory())
+ipcMain.handle('db:searchPhotoRecords', (_event, query: { title?: string; photoId?: string; dateMin?: number; dateMax?: number }) => searchPhotoRecords(query))
+ipcMain.handle('db:deletePhotoRecord', (_event, photoId: string) => deletePhotoRecord(photoId))
+ipcMain.handle('db:deletePhotoRecords', (_event, photoIds: string[]) => deletePhotoRecords(photoIds))
+ipcMain.handle('db:clearPhotoRecords', (_event, beforeMs?: number, afterMs?: number) => clearPhotoRecords(beforeMs, afterMs))
 
 app.whenReady().then(() => {
   openDatabase()
