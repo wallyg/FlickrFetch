@@ -486,7 +486,7 @@ export async function getPhotoExif(photoId: string, tokenData: FlickrTokenData):
 
 // ---- Discover ----
 
-function buildAvatarUrl(nsid: string, iconfarm: string | number, iconserver: string): string {
+function buildAvatarUrlFromParts(nsid: string, iconfarm: string | number, iconserver: string): string {
   if (iconfarm && iconserver && iconserver !== '0') {
     return `https://farm${iconfarm}.staticflickr.com/${iconserver}/buddyicons/${nsid}.jpg`
   }
@@ -545,7 +545,7 @@ export async function findDiscoverUser(query: string, tokenData: FlickrTokenData
     nsid: nsid!,
     username: person.username._content || '',
     realname: person.realname?._content || '',
-    avatarUrl: buildAvatarUrl(nsid!, person.iconfarm, person.iconserver),
+    avatarUrl: buildAvatarUrlFromParts(nsid!, person.iconfarm, person.iconserver),
     photoCount: person.photos?.count?._content ? Number(person.photos.count._content) : undefined,
   }
 }
@@ -595,7 +595,7 @@ export async function getContacts(tokenData: FlickrTokenData): Promise<DiscoverC
     nsid: c.nsid,
     username: c.username || '',
     realname: c.realname || '',
-    avatarUrl: buildAvatarUrl(c.nsid, c.iconfarm, c.iconserver),
+    avatarUrl: buildAvatarUrlFromParts(c.nsid, c.iconfarm, c.iconserver),
   }))
 }
 
@@ -614,7 +614,7 @@ export async function getUserGroups(tokenData: FlickrTokenData): Promise<Discove
     name: g.name as string,
     memberCount: g.members ? Number(g.members) : undefined,
     photoCount: g.pool_count ? Number(g.pool_count) : undefined,
-    iconUrl: buildAvatarUrl(g.nsid as string, g.iconfarm as number, g.iconserver as string),
+    iconUrl: buildAvatarUrlFromParts(g.nsid as string, g.iconfarm as number, g.iconserver as string),
   }))
 }
 
