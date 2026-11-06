@@ -7,13 +7,29 @@ Mac desktop app for downloading your personal Flickr library at original resolut
 - Sign in with your Flickr account via OAuth
 - Browse your photostream, albums, and collections
 - Download photos and videos at full original resolution
-- Metadata embedded automatically: title, description, tags, GPS, date taken, camera EXIF
-- Batch download entire albums with a live progress queue
+- Metadata embedded automatically: title, description, tags, GPS, date taken, creator, CC license
+- Per-field metadata controls — toggle each field on or off individually
+- Batch download entire albums or multi-select photos with a live progress queue
 - Queue multiple albums — they run in order automatically
-- Multi-select photos in any grid and download them together
-- Flexible file naming: core format, separator, optional date, sequence number, custom text
-- Privacy badges and filters (public / friends / family / private)
-- Configurable download folder, dock progress bar, and completion notifications
+- **Smart Sync** — skip photos you've already downloaded, or fetch only photos updated since your last download
+- **Download history** — track every batch and browse per-photo download records
+- Full-text search with operators (contains, starts with, ends with, exact)
+- Tag filter, date range filter, and privacy filter (public / friends / family / private)
+- Photo detail view with full metadata panel, navigation, and video playback
+- Flexible file naming: core format, separator, date, sequence number, custom text, case transforms
+- Configurable download folder, conflict behavior, dock progress, and completion notifications
+
+## Download
+
+[Latest release →](https://github.com/wallyg/FlickrFetch/releases/latest)
+
+**Recommended:** use the `.pkg` installer — macOS walks you through a standard install with no extra steps.
+
+If you use the `.dmg`, run this once after dragging to Applications:
+
+```
+xattr -cr /Applications/FlickrFetch.app
+```
 
 ## Requirements
 
@@ -34,40 +50,40 @@ Mac desktop app for downloading your personal Flickr library at original resolut
    npm install
    ```
 
-## Build
-
-```
-npm run build
-```
-
-The DMG is output to `dist/`.
-
 ## Development
 
 ```
 npm run dev
 ```
 
+## Build
+
+```
+npm run build
+```
+
+Outputs both a DMG and a PKG installer to `dist/`.
+
 ## Tech Stack
 
 - Electron + React + TypeScript (electron-vite)
 - OAuth 1.0a via `oauth-1.0a`
 - ExifTool (bundled via `exiftool-vendored`) for metadata embedding
-- electron-builder for DMG packaging
+- better-sqlite3 for download history storage
+- electron-builder for DMG and PKG packaging
 
 ## Notes
 
 - `src/main/config.ts` is gitignored — never commit your API credentials
-- Code signing is not configured; macOS will show a Gatekeeper warning on first open (right-click → Open to bypass)
+- App is not yet code-signed; the PKG installer handles Gatekeeper automatically
 
 ## Roadmap
 
-Open issues track everything planned — bugs, upcoming features, and longer-term ideas:
+Open issues track everything planned:
 
 - [View all open issues](https://github.com/wallyg/FlickrFetch/issues)
-- [v2.0 milestone items](https://github.com/wallyg/FlickrFetch/issues?q=is%3Aopen+label%3Av2.0)
-- [v3.0 deferred](https://github.com/wallyg/FlickrFetch/issues?q=is%3Aopen+label%3Av3.0)
-- [v4.0 deferred](https://github.com/wallyg/FlickrFetch/issues?q=is%3Aopen+label%3Av4.0)
+- [v3.0](https://github.com/wallyg/FlickrFetch/issues?q=is%3Aopen+label%3Av3.0)
+- [v4.0+](https://github.com/wallyg/FlickrFetch/issues?q=is%3Aopen+label%3Av4.0)
 
 ---
 
