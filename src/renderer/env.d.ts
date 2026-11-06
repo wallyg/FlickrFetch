@@ -1,4 +1,4 @@
-import type { FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery } from '../shared/types'
+import type { FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery, DiscoverUser, DiscoverContact, DiscoverGroup } from '../shared/types'
 
 declare module '*.png' {
   const src: string
@@ -49,6 +49,16 @@ declare global {
       deletePhotoRecord: (photoId: string) => Promise<void>
       deletePhotoRecords: (photoIds: string[]) => Promise<void>
       clearPhotoRecords: (beforeMs?: number, afterMs?: number) => Promise<void>
+      discoverFindUser: (query: string) => Promise<DiscoverUser>
+      discoverGetPublicPhotos: (nsid: string, page: number) => Promise<PhotoPage>
+      discoverGetUserAlbums: (nsid: string, page: number) => Promise<AlbumPage>
+      discoverGetContacts: () => Promise<DiscoverContact[]>
+      discoverGetMyGroups: () => Promise<DiscoverGroup[]>
+      discoverGetGroupPhotos: (groupId: string, page: number) => Promise<PhotoPage>
+      discoverGetInterestingness: (page: number) => Promise<PhotoPage>
+      discoverDownloadPhoto: (photoId: string, title: string, downloadSize?: string, thumbnailUrl?: string, lastUpdate?: number) => Promise<{ filePath: string | null }>
+      startDiscoverUserBatch: (nsid: string, username: string, displayTitle: string, track?: boolean, smartMode?: 'updated' | 'never-downloaded') => Promise<void>
+      startDiscoverGroupBatch: (groupId: string, groupName: string, displayTitle: string, track?: boolean, smartMode?: 'updated' | 'never-downloaded') => Promise<void>
     }
   }
 }

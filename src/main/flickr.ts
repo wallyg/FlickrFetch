@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { FLICKR_API_KEY } from './config'
 import { getOAuthHeader } from './auth'
-import type { FlickrTokenData, FlickrUser, FlickrPhoto, PhotoPage, PhotoSize, PhotoInfo, FlickrAlbum, AlbumPage, FlickrCollection, FlickrSet, CameraExif, PhotoSearchParams } from '../shared/types'
+import type { FlickrTokenData, FlickrUser, FlickrPhoto, PhotoPage, PhotoSize, PhotoInfo, FlickrAlbum, AlbumPage, FlickrCollection, FlickrSet, CameraExif, PhotoSearchParams, DiscoverUser, DiscoverContact, DiscoverGroup } from '../shared/types'
 
 const FLICKR_API_BASE = 'https://www.flickr.com/services/rest/'
 const USER_AGENT = 'FlickrFetch/0.1.0 (Electron desktop app; https://github.com/flickrfetch)'
@@ -482,6 +482,165 @@ export async function getPhotoExif(photoId: string, tokenData: FlickrTokenData):
   }
 
   return result
+}
+
+// ---- Discover ----
+
+function buildAvatarUrl(nsid: string, iconfarm: string | number, iconserver: string): string {
+  if (iconfarm && iconserver && iconserver !== '0') {
+    return `https://farm${iconfarm}.staticflickr.com/${iconserver}/buddyicons/${nsid}.jpg`
+  }
+  return DEFAULT_AVATAR
+}
+
+function mapPublicPhotos(photos: Record<string, string>[]): FlickrPhoto[] {
+  return photos.map(p => ({
+    id: p.id,
+    title: p.title || 'Untitled',
+    thumbnailUrl: p.url_q || '',
+    dateTaken: p.datetaken || '',
+    media: (p.media === 'video' ? 'video' : 'photo') as 'photo' | 'video',
+    datePosted: p.dateupload || undefined,
+    lastUpdate: p.lastupdate ? Number(p.lastupdate) : undefined,
+  }))
+}
+
+export async function findDiscoverUser(query: string, tokenData: FlickrTokenData): Promise<DiscoverUser> {
+  let nsid: string | null = null
+
+  // Try flickr.urls.lookupUser (handles path aliases and URL input)
+  try {
+    const cleanQuery = query.trim().replace(/^https?:\/\/www\.flickr\.com\/photos\//i, '').replace(/\/$/, '')
+    const lookupUrl = `${FLICKR_API_BASE}?method=flickr.urls.lookupUser` +
+      `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
+      `&url=${encodeURIComponent('https://www.flickr.com/photos/' + encodeURIComponent(cleanQuery) + '/')}` +
+      `&format=json&nojsoncallback=1`
+    const authHeader = getOAuthHeader(lookupUrl, 'GET', tokenData)
+    const r = await axios.get(lookupUrl, { headers: { ...authHeader, 'User-Agent': USER_AGENT } })
+    if (r.data.stat === 'ok') nsid = r.data.user.id
+  } catch { /* fall through */ }
+
+  // Fall back to flickr.people.findByUsername
+  if (!nsid) {
+    const findUrl = `${FLICKR_API_BASE}?method=flickr.people.findByUsername` +
+      `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
+      `&username=${encodeURIComponent(query.trim())}` +
+      `&format=json&nojsoncallback=1`
+    const authHeader = getOAuthHeader(findUrl, 'GET', tokenData)
+    const r = await axios.get(findUrl, { headers: { ...authHeader, 'User-Agent': USER_AGENT } })
+    if (r.data.stat !== 'ok') throw new Error(r.data.message ?? 'User not found')
+    nsid = r.data.user.nsid
+  }
+
+  const infoUrl = `${FLICKR_API_BASE}?method=flickr.people.getInfo` +
+    `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
+    `&user_id=${encodeURIComponent(nsid!)}` +
+    `&format=json&nojsoncallback=1`
+  const authHeader2 = getOAuthHeader(infoUrl, 'GET', tokenData)
+  const r2 = await axios.get(infoUrl, { headers: { ...authHeader2, 'User-Agent': USER_AGENT } })
+  if (r2.data.stat !== 'ok') throw new Error(r2.data.message ?? 'Could not get user info')
+
+  const person = r2.data.person
+  return {
+    nsid: nsid!,
+    username: person.username._content || '',
+    realname: person.realname?._content || '',
+    avatarUrl: buildAvatarUrl(nsid!, person.iconfarm, person.iconserver),
+    photoCount: person.photos?.count?._content ? Number(person.photos.count._content) : undefined,
+  }
+}
+
+export async function getPublicPhotos(nsid: string, tokenData: FlickrTokenData, page: number = 1): Promise<PhotoPage> {
+  const url = `${FLICKR_API_BASE}?method=flickr.people.getPublicPhotos` +
+    `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
+    `&user_id=${encodeURIComponent(nsid)}` +
+    `&extras=${encodeURIComponent('url_q,date_taken,date_upload,last_update,media')}` +
+    `&per_page=100&page=${page}&format=json&nojsoncallback=1`
+  const authHeader = getOAuthHeader(url, 'GET', tokenData)
+  const response = await axios.get(url, { headers: { ...authHeader, 'User-Agent': USER_AGENT } })
+  if (response.data.stat !== 'ok') throw new Error(response.data.message ?? 'unknown error')
+  const data = response.data.photos
+  return { photos: mapPublicPhotos(data.photo), page: Number(data.page), pages: Number(data.pages), total: Number(data.total) }
+}
+
+export async function getUserPublicAlbums(nsid: string, tokenData: FlickrTokenData, page: number = 1): Promise<AlbumPage> {
+  const url = `${FLICKR_API_BASE}?method=flickr.photosets.getList` +
+    `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
+    `&user_id=${encodeURIComponent(nsid)}` +
+    `&per_page=50&page=${page}&format=json&nojsoncallback=1`
+  const authHeader = getOAuthHeader(url, 'GET', tokenData)
+  const response = await axios.get(url, { headers: { ...authHeader, 'User-Agent': USER_AGENT } })
+  if (response.data.stat !== 'ok') throw new Error(response.data.message ?? 'unknown error')
+  const data = response.data.photosets
+  const albums: FlickrAlbum[] = (data.photoset as Record<string, unknown>[]).map(s => ({
+    id: s.id as string,
+    title: (s.title as { _content: string })._content || 'Untitled',
+    description: (s.description as { _content: string })._content || '',
+    photoCount: Number(s.count_photos) || 0,
+    videoCount: Number(s.count_videos) || 0,
+    coverPhotoUrl: `https://farm${s.farm}.staticflickr.com/${s.server}/${s.primary}_${s.secret}_q.jpg`,
+  }))
+  return { albums, page: Number(data.page), pages: Number(data.pages), total: Number(data.total) }
+}
+
+export async function getContacts(tokenData: FlickrTokenData): Promise<DiscoverContact[]> {
+  const url = `${FLICKR_API_BASE}?method=flickr.contacts.getList` +
+    `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
+    `&per_page=200&format=json&nojsoncallback=1`
+  const authHeader = getOAuthHeader(url, 'GET', tokenData)
+  const response = await axios.get(url, { headers: { ...authHeader, 'User-Agent': USER_AGENT } })
+  if (response.data.stat !== 'ok') throw new Error(response.data.message ?? 'unknown error')
+  const contacts = response.data.contacts.contact as Record<string, string>[]
+  return contacts.map(c => ({
+    nsid: c.nsid,
+    username: c.username || '',
+    realname: c.realname || '',
+    avatarUrl: buildAvatarUrl(c.nsid, c.iconfarm, c.iconserver),
+  }))
+}
+
+export async function getUserGroups(tokenData: FlickrTokenData): Promise<DiscoverGroup[]> {
+  const url = `${FLICKR_API_BASE}?method=flickr.people.getGroups` +
+    `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
+    `&user_id=${encodeURIComponent(tokenData.nsid)}` +
+    `&format=json&nojsoncallback=1`
+  const authHeader = getOAuthHeader(url, 'GET', tokenData)
+  const response = await axios.get(url, { headers: { ...authHeader, 'User-Agent': USER_AGENT } })
+  if (response.data.stat !== 'ok') throw new Error(response.data.message ?? 'unknown error')
+  const groups = response.data.groups.group as Record<string, unknown>[]
+  return groups.map(g => ({
+    id: g.id as string,
+    nsid: g.nsid as string,
+    name: g.name as string,
+    memberCount: g.members ? Number(g.members) : undefined,
+    photoCount: g.pool_count ? Number(g.pool_count) : undefined,
+    iconUrl: buildAvatarUrl(g.nsid as string, g.iconfarm as number, g.iconserver as string),
+  }))
+}
+
+export async function getGroupPhotos(groupId: string, tokenData: FlickrTokenData, page: number = 1): Promise<PhotoPage> {
+  const url = `${FLICKR_API_BASE}?method=flickr.groups.pools.getPhotos` +
+    `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
+    `&group_id=${encodeURIComponent(groupId)}` +
+    `&extras=${encodeURIComponent('url_q,date_taken,date_upload,last_update,media,ownername')}` +
+    `&per_page=100&page=${page}&format=json&nojsoncallback=1`
+  const authHeader = getOAuthHeader(url, 'GET', tokenData)
+  const response = await axios.get(url, { headers: { ...authHeader, 'User-Agent': USER_AGENT } })
+  if (response.data.stat !== 'ok') throw new Error(response.data.message ?? 'unknown error')
+  const data = response.data.photos
+  return { photos: mapPublicPhotos(data.photo), page: Number(data.page), pages: Number(data.pages), total: Number(data.total) }
+}
+
+export async function getInterestingness(tokenData: FlickrTokenData, page: number = 1): Promise<PhotoPage> {
+  const url = `${FLICKR_API_BASE}?method=flickr.interestingness.getList` +
+    `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
+    `&extras=${encodeURIComponent('url_q,date_taken,date_upload,last_update,media,ownername')}` +
+    `&per_page=100&page=${page}&format=json&nojsoncallback=1`
+  const authHeader = getOAuthHeader(url, 'GET', tokenData)
+  const response = await axios.get(url, { headers: { ...authHeader, 'User-Agent': USER_AGENT } })
+  if (response.data.stat !== 'ok') throw new Error(response.data.message ?? 'unknown error')
+  const data = response.data.photos
+  return { photos: mapPublicPhotos(data.photo), page: Number(data.page), pages: Number(data.pages), total: Number(data.total) }
 }
 
 export async function getRecentlyUpdated(tokenData: FlickrTokenData, minDate: number, page: number = 1): Promise<PhotoPage> {

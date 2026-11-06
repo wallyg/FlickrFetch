@@ -203,6 +203,30 @@ export interface PhotoSearchParams {
   dateMax?: string   // YYYY-MM-DD
 }
 
+export interface DiscoverUser {
+  nsid: string
+  username: string
+  realname: string
+  avatarUrl: string
+  photoCount?: number
+}
+
+export interface DiscoverContact {
+  nsid: string
+  username: string
+  realname: string
+  avatarUrl: string
+}
+
+export interface DiscoverGroup {
+  id: string
+  nsid: string
+  name: string
+  memberCount?: number
+  photoCount?: number
+  iconUrl?: string
+}
+
 export type AuthStatus = 'loading' | 'unauthenticated' | 'authenticated' | 'error'
 
 export interface AuthState {

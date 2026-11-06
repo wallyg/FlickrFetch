@@ -12,6 +12,7 @@ import AboutModal from '../components/AboutModal'
 import DownloadConfirmModal, { type PendingDownload } from '../components/DownloadConfirmModal'
 import HistoryPanel from '../components/HistoryPanel'
 import SmartDownloadButton from '../components/SmartDownloadButton'
+import DiscoverPage from './DiscoverPage'
 
 
 function IconBtn({ label, onClick, children }: { label: string; onClick: () => void; children: React.ReactNode }) {
@@ -42,6 +43,7 @@ interface MainPageProps {
 
 export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.Element {
   const displayName = user.realname || user.username
+  const [appMode, setAppMode] = useState<'you' | 'discover'>('you')
   const [view, setView] = useState<MainView>('photostream')
   const [selectedAlbum, setSelectedAlbum] = useState<FlickrAlbum | null>(null)
   const [photoDetailIndex, setPhotoDetailIndex] = useState<number | null>(null)
@@ -368,6 +370,16 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             </span>
           </div>
         </div>
+        <div style={styles.modePill}>
+          <button
+            style={{ ...styles.modePillBtn, ...(appMode === 'you' ? styles.modePillActive : {}) }}
+            onClick={() => setAppMode('you')}
+          >You</button>
+          <button
+            style={{ ...styles.modePillBtn, ...(appMode === 'discover' ? styles.modePillActive : {}) }}
+            onClick={() => setAppMode('discover')}
+          >Discover</button>
+        </div>
         <div style={styles.headerActions}>
           <IconBtn label="Download History" onClick={() => setShowHistory(true)}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
@@ -389,7 +401,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
         </div>
       </header>
 
-      <div style={styles.tabBar}>
+      {appMode === 'you' && <div style={styles.tabBar}>
         <div style={styles.tabGroup}>
           <button
             style={{ ...styles.tab, ...(view === 'photostream' ? styles.tabActive : {}) }}
@@ -452,9 +464,9 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             </button>
           </div>
         )}
-      </div>
+      </div>}
 
-      {view === 'album-detail' && selectedAlbum && (
+      {appMode === 'you' && view === 'album-detail' && selectedAlbum && (
         <div style={styles.albumHeader}>
           <button style={styles.backButton} onClick={handleBackFromAlbumDetail}>
             ← {albumDetailOrigin === 'collections' ? (currentCollection?.title ?? 'Collection') : 'Albums'}
@@ -547,7 +559,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
         </div>
       )}
 
-      {view === 'photostream' && photostreamSelectMode && (
+      {appMode === 'you' && view === 'photostream' && photostreamSelectMode && (
         <div style={styles.photostreamToolbar}>
           <span style={styles.selectedCount}>{photostreamSelectedIds.size} photos selected</span>
           {photostreamSelectedIds.size > 0 && (
@@ -565,7 +577,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
         </div>
       )}
 
-      {view === 'collection-detail' && currentCollection && (
+      {appMode === 'you' && view === 'collection-detail' && currentCollection && (
         <div style={styles.albumHeader}>
           <button style={styles.backButton} onClick={handleBackInCollections}>
             ← {collectionPath.length > 1 ? collectionPath[collectionPath.length - 2].title : 'Collections'}
@@ -574,7 +586,13 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
         </div>
       )}
 
-      <main style={styles.main}>
+      {appMode === 'discover' && (
+        <main style={styles.main}>
+          <DiscoverPage />
+        </main>
+      )}
+
+      <main style={{ ...styles.main, ...(appMode === 'discover' ? { display: 'none' } : {}) }}>
         <div style={view === 'photostream' ? styles.tabPane : styles.tabPaneHidden}>
           <PhotoGrid
             key={photostreamRefreshKey}
@@ -900,5 +918,18 @@ const styles: Record<string, React.CSSProperties> = {
     inset: 0,
     overflow: 'hidden',
     display: 'none'
+  },
+  modePill: {
+    display: 'flex', alignItems: 'center', gap: '1px',
+    background: '#f0ede8', borderRadius: '8px', padding: '3px',
+  },
+  modePillBtn: {
+    background: 'none', border: 'none', borderRadius: '6px',
+    padding: '5px 14px', cursor: 'pointer', fontSize: '13px',
+    fontWeight: 500, color: '#888',
+  },
+  modePillActive: {
+    background: '#fff', color: '#1a1a1a',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
   },
 }

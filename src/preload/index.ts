@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { IpcRendererEvent } from 'electron'
-import type { FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery } from '../shared/types'
+import type { FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery, DiscoverUser, DiscoverContact, DiscoverGroup } from '../shared/types'
 
 // Expose a safe, limited API surface to the renderer process.
 // The renderer cannot access Node.js or Electron directly — only these methods.
@@ -116,5 +116,27 @@ contextBridge.exposeInMainWorld('flickrAPI', {
     ipcRenderer.on('app:signOut', handler)
     return () => ipcRenderer.removeListener('app:signOut', handler)
   },
+
+  // Discover
+  discoverFindUser: (query: string): Promise<DiscoverUser> =>
+    ipcRenderer.invoke('discover:findUser', query),
+  discoverGetPublicPhotos: (nsid: string, page: number): Promise<PhotoPage> =>
+    ipcRenderer.invoke('discover:getPublicPhotos', nsid, page),
+  discoverGetUserAlbums: (nsid: string, page: number): Promise<AlbumPage> =>
+    ipcRenderer.invoke('discover:getUserAlbums', nsid, page),
+  discoverGetContacts: (): Promise<DiscoverContact[]> =>
+    ipcRenderer.invoke('discover:getContacts'),
+  discoverGetMyGroups: (): Promise<DiscoverGroup[]> =>
+    ipcRenderer.invoke('discover:getMyGroups'),
+  discoverGetGroupPhotos: (groupId: string, page: number): Promise<PhotoPage> =>
+    ipcRenderer.invoke('discover:getGroupPhotos', groupId, page),
+  discoverGetInterestingness: (page: number): Promise<PhotoPage> =>
+    ipcRenderer.invoke('discover:getInterestingness', page),
+  discoverDownloadPhoto: (photoId: string, title: string, downloadSize?: string, thumbnailUrl?: string, lastUpdate?: number): Promise<{ filePath: string | null }> =>
+    ipcRenderer.invoke('discover:downloadPhoto', photoId, title, downloadSize, thumbnailUrl ?? '', lastUpdate ?? 0),
+  startDiscoverUserBatch: (nsid: string, username: string, displayTitle: string, track?: boolean, smartMode?: 'updated' | 'never-downloaded'): Promise<void> =>
+    ipcRenderer.invoke('batch:startDiscoverUser', nsid, username, displayTitle, track, smartMode),
+  startDiscoverGroupBatch: (groupId: string, groupName: string, displayTitle: string, track?: boolean, smartMode?: 'updated' | 'never-downloaded'): Promise<void> =>
+    ipcRenderer.invoke('batch:startDiscoverGroup', groupId, groupName, displayTitle, track, smartMode),
 
 })

@@ -155,10 +155,11 @@ interface PhotoDetailProps {
   onNext: () => void
   onClose: () => void
   sourceName: string
+  discoverMode?: boolean
 }
 
 export default function PhotoDetail({
-  photo, index, total, hasMore, canGoPrev, canGoNext, onPrev, onNext, onClose, sourceName
+  photo, index, total, hasMore, canGoPrev, canGoNext, onPrev, onNext, onClose, sourceName, discoverMode = false
 }: PhotoDetailProps): React.JSX.Element {
   const [sizes, setSizes] = useState<PhotoSize[]>([])
   const [info, setInfo] = useState<PhotoInfo | null>(null)
@@ -290,7 +291,9 @@ export default function PhotoDetail({
     setDownloadError(null)
     setSavedPath(null)
     try {
-      const { filePath } = await window.flickrAPI.downloadPhoto(photo.id, photo.title, downloadSize, trackDownload, photo.thumbnailUrl, photo.lastUpdate ?? 0)
+      const { filePath } = discoverMode
+        ? await window.flickrAPI.discoverDownloadPhoto(photo.id, photo.title, downloadSize, photo.thumbnailUrl, photo.lastUpdate ?? 0)
+        : await window.flickrAPI.downloadPhoto(photo.id, photo.title, downloadSize, trackDownload, photo.thumbnailUrl, photo.lastUpdate ?? 0)
       if (filePath) {
         setSavedPath(filePath)
         setDownloadState('done')

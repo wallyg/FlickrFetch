@@ -2,12 +2,12 @@ import { app, BrowserWindow, ipcMain, shell, dialog, Menu, Notification } from '
 import { join } from 'path'
 import { readFileSync } from 'fs'
 import { startOAuthFlow, verifyOAuth, loadToken, clearToken } from './auth'
-import { getUserInfo, getPhotos, getPhotoSizes, getPhotoInfo, getPhotoExif, getAlbums, getAlbumPhotos, getCollectionTree, resolveVideoUrl, getRecentlyUpdated } from './flickr'
+import { getUserInfo, getPhotos, getPhotoSizes, getPhotoInfo, getPhotoExif, getAlbums, getAlbumPhotos, getCollectionTree, resolveVideoUrl, getRecentlyUpdated, findDiscoverUser, getPublicPhotos, getUserPublicAlbums, getContacts, getUserGroups, getGroupPhotos, getInterestingness } from './flickr'
 import { downloadPhoto, downloadToFolder } from './downloader'
 import { endExifTool } from './exiftool'
 import { loadSettings, saveSettings, resetSettings, ensureDownloadFolder } from './settings'
 import { openDatabase, closeDatabase, writeBatchLog, writePhotoRecord, getPhotoRecord, getPhotoRecordsBatch, getBatchLog, clearBatchLog, clearAllHistory, searchPhotoRecords, deletePhotoRecord, deletePhotoRecords, clearPhotoRecords } from './database'
-import type { AppSettings, FileNamingConfig, PhotoInfo, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams } from '../shared/types'
+import type { AppSettings, FileNamingConfig, PhotoInfo, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams, MetadataSettings, DiscoverUser, DiscoverContact, DiscoverGroup } from '../shared/types'
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return Promise.race([
@@ -320,7 +320,7 @@ ipcMain.handle('shell:pickFolder', async () => {
 // Batch downloads
 interface BatchJob {
   id: string
-  type: 'album' | 'selected' | 'album-smart'
+  type: 'album' | 'selected' | 'album-smart' | 'discover-user' | 'discover-group'
   albumId?: string
   photos?: { id: string; title: string }[]
   albumTitle: string
@@ -330,6 +330,10 @@ interface BatchJob {
   privacyFilter?: string
   track?: boolean
   smartMode?: 'updated' | 'never-downloaded'
+  // Discover-specific
+  discoverNsid?: string        // user NSID for discover-user batch
+  discoverGroupId?: string     // group ID for discover-group batch
+  discoverFolder?: string      // target subfolder override
 }
 
 let batchQueue: BatchJob[] = []
@@ -363,6 +367,10 @@ async function runNextBatch(): Promise<void> {
   try {
     if (job.type === 'selected') {
       await runSelectedBatch(job.photos!, job.albumTitle, job.track ?? true)
+    } else if (job.type === 'discover-user') {
+      await runDiscoverUserBatch(job.discoverNsid!, job.albumTitle, job.discoverFolder!, job.track ?? true, job.smartMode)
+    } else if (job.type === 'discover-group') {
+      await runDiscoverGroupBatch(job.discoverGroupId!, job.albumTitle, job.discoverFolder!, job.track ?? true, job.smartMode)
     } else if (job.albumId === '__photostream__') {
       await runPhotostreamBatch(job.albumTitle, job.track ?? true, job.smartMode, job.privacyFilter)
     } else {
@@ -605,6 +613,139 @@ async function runSelectedBatch(photos: { id: string; title: string }[], albumTi
   }
 }
 
+function discoverMetadata(metadata: MetadataSettings): MetadataSettings {
+  return { ...metadata, embedCreator: true, embedLicense: true, embedPhotoUrl: true, embedPhotoId: true }
+}
+
+async function runDiscoverPublicBatch(
+  fetchPage: (page: number) => Promise<{ photos: { id: string; title: string; lastUpdate?: number; thumbnailUrl: string }[]; pages: number }>,
+  albumTitle: string,
+  targetFolder: string,
+  track: boolean,
+  smartMode?: 'updated' | 'never-downloaded'
+): Promise<void> {
+  if (!mainWindow) return
+  const tokenData = loadToken()
+  if (!tokenData) return
+
+  const { fileNaming, showDockProgress, notifyOnComplete, conflictBehavior, downloadSize, openFinderOnComplete, metadata } = loadSettings()
+  const forcedMetadata = discoverMetadata(metadata)
+  ensureDownloadFolder(targetFolder)
+
+  const sendProgress = (p: Omit<BatchProgress, 'queuedCount' | 'queuedAlbums'>): void => {
+    const full = { ...p, queuedCount: batchQueue.length, queuedAlbums: batchQueue.map(j => ({ id: j.id, title: j.albumTitle, photoCount: j.photoCount, videoCount: j.videoCount })) }
+    lastBatchProgress = full
+    mainWindow?.webContents.send('batch:progress', full)
+    if (showDockProgress) {
+      if (p.status === 'running' && p.total > 0) mainWindow?.setProgressBar(p.current / p.total)
+      else mainWindow?.setProgressBar(-1)
+    }
+  }
+
+  const allPhotos: { id: string; title: string; lastUpdate?: number; thumbnailUrl: string }[] = []
+  let page = 1
+  let pages = 1
+  do {
+    const result = await fetchPage(page)
+    allPhotos.push(...result.photos)
+    pages = result.pages
+    page++
+  } while (page <= pages)
+
+  let filteredPhotos = allPhotos
+  const preSmartTotal = filteredPhotos.length
+
+  if (smartMode === 'never-downloaded' || smartMode === 'updated') {
+    const recordMap = getPhotoRecordsBatch(filteredPhotos.map(p => p.id))
+    if (smartMode === 'never-downloaded') {
+      filteredPhotos = filteredPhotos.filter(p => !recordMap.has(p.id))
+    } else {
+      filteredPhotos = filteredPhotos.filter(p => {
+        const rec = recordMap.get(p.id)
+        return rec != null && (p.lastUpdate ?? 0) > rec.flickrLastUpdate
+      })
+    }
+  }
+
+  const total = filteredPhotos.length
+  sendProgress({ current: 0, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'running', allTitles: filteredPhotos.map(p => p.title) })
+
+  let seqNum = 1
+  let lastFilePath: string | null = null
+  let skippedCount = 0
+  let skippedSizeUnavailableCount = 0
+  let failedCount = 0
+  let downloadedCount = 0
+
+  for (let i = 0; i < filteredPhotos.length; i++) {
+    if (activeBatchController?.signal.aborted) {
+      sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled', skippedCount, skippedSizeUnavailableCount, failedCount })
+      if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'album', total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
+      return
+    }
+    const photo = filteredPhotos[i]
+    sendProgress({ current: i, total, albumTitle, activeTitle: photo.title, latestTitle: '', latestFilePath: null, status: 'running', skippedCount, skippedSizeUnavailableCount, failedCount })
+    try {
+      const [sizes, photoInfo] = await Promise.all([
+        withTimeout(getPhotoSizes(photo.id, tokenData), 30000),
+        withTimeout(getPhotoInfo(photo.id, tokenData), 30000)
+      ])
+      const filename = buildFilename(fileNaming, photo.id, photo.title, photoInfo, seqNum++, downloadSize)
+      const outcome = await downloadToFolder(sizes, filename, targetFolder, activeBatchController?.signal, photoInfo, conflictBehavior, downloadSize, forcedMetadata)
+      if (outcome.status === 'downloaded') {
+        downloadedCount++
+        lastFilePath = outcome.filePath
+        if (track) writePhotoRecord(photo.id, photo.lastUpdate ?? 0, photo.title, photo.thumbnailUrl)
+        sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: outcome.filePath, status: 'running', skippedCount, skippedSizeUnavailableCount, failedCount })
+      } else if (outcome.reason === 'size-unavailable') {
+        skippedSizeUnavailableCount++
+        sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'running', skippedCount, skippedSizeUnavailableCount, failedCount })
+      } else {
+        skippedCount++
+        sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'running', skippedCount, skippedSizeUnavailableCount, failedCount })
+      }
+    } catch (err) {
+      if ((err as { name?: string }).name === 'AbortError' || activeBatchController?.signal.aborted) {
+        sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled', skippedCount, skippedSizeUnavailableCount, failedCount })
+        if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'album', total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
+        return
+      }
+      failedCount++
+      process.stderr.write(`[flickrfetch] discover batch skip ${photo.id}: ${err}\n`)
+      sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: null, status: 'running', skippedCount, skippedSizeUnavailableCount, failedCount })
+    }
+  }
+
+  const finalStatus = failedCount > 0 || skippedCount > 0 || skippedSizeUnavailableCount > 0 ? 'partial' : 'complete'
+  sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'done', skippedCount, skippedSizeUnavailableCount, failedCount, smartFilteredCount: preSmartTotal - total })
+  if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'album', total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: finalStatus })
+  if (notifyOnComplete && Notification.isSupported()) {
+    const body = (skippedCount + skippedSizeUnavailableCount + failedCount) > 0
+      ? `Saved ${downloadedCount}, skipped ${skippedCount + skippedSizeUnavailableCount + failedCount} from "${albumTitle}"`
+      : `Saved ${total} photos from "${albumTitle}"`
+    new Notification({ title: 'FlickrFetch', body }).show()
+  }
+  if (openFinderOnComplete && lastFilePath) shell.showItemInFolder(lastFilePath)
+}
+
+async function runDiscoverUserBatch(nsid: string, albumTitle: string, targetFolder: string, track: boolean, smartMode?: 'updated' | 'never-downloaded'): Promise<void> {
+  const tokenData = loadToken()
+  if (!tokenData) return
+  await runDiscoverPublicBatch(
+    page => getPublicPhotos(nsid, tokenData, page).then(r => ({ photos: r.photos.map(p => ({ id: p.id, title: p.title, lastUpdate: p.lastUpdate, thumbnailUrl: p.thumbnailUrl })), pages: r.pages })),
+    albumTitle, targetFolder, track, smartMode
+  )
+}
+
+async function runDiscoverGroupBatch(groupId: string, albumTitle: string, targetFolder: string, track: boolean, smartMode?: 'updated' | 'never-downloaded'): Promise<void> {
+  const tokenData = loadToken()
+  if (!tokenData) return
+  await runDiscoverPublicBatch(
+    page => getGroupPhotos(groupId, tokenData, page).then(r => ({ photos: r.photos.map(p => ({ id: p.id, title: p.title, lastUpdate: p.lastUpdate, thumbnailUrl: p.thumbnailUrl })), pages: r.pages })),
+    albumTitle, targetFolder, track, smartMode
+  )
+}
+
 async function runPhotostreamBatch(albumTitle: string, track = true, smartMode?: 'updated' | 'never-downloaded', privacyFilter?: string, sort?: string): Promise<void> {
   if (!mainWindow) return
   const tokenData = loadToken()
@@ -737,6 +878,78 @@ async function runPhotostreamBatch(albumTitle: string, track = true, smartMode?:
     shell.showItemInFolder(lastFilePath)
   }
 }
+
+// Discover IPC handlers
+ipcMain.handle('discover:findUser', async (_event, query: string): Promise<DiscoverUser> => {
+  const tokenData = loadToken()
+  if (!tokenData) throw new Error('Not authenticated')
+  return findDiscoverUser(query, tokenData)
+})
+
+ipcMain.handle('discover:getPublicPhotos', async (_event, nsid: string, page: number = 1) => {
+  const tokenData = loadToken()
+  if (!tokenData) throw new Error('Not authenticated')
+  return getPublicPhotos(nsid, tokenData, page)
+})
+
+ipcMain.handle('discover:getUserAlbums', async (_event, nsid: string, page: number = 1) => {
+  const tokenData = loadToken()
+  if (!tokenData) throw new Error('Not authenticated')
+  return getUserPublicAlbums(nsid, tokenData, page)
+})
+
+ipcMain.handle('discover:getContacts', async (): Promise<DiscoverContact[]> => {
+  const tokenData = loadToken()
+  if (!tokenData) throw new Error('Not authenticated')
+  return getContacts(tokenData)
+})
+
+ipcMain.handle('discover:getMyGroups', async (): Promise<DiscoverGroup[]> => {
+  const tokenData = loadToken()
+  if (!tokenData) throw new Error('Not authenticated')
+  return getUserGroups(tokenData)
+})
+
+ipcMain.handle('discover:getGroupPhotos', async (_event, groupId: string, page: number = 1) => {
+  const tokenData = loadToken()
+  if (!tokenData) throw new Error('Not authenticated')
+  return getGroupPhotos(groupId, tokenData, page)
+})
+
+ipcMain.handle('discover:getInterestingness', async (_event, page: number = 1) => {
+  const tokenData = loadToken()
+  if (!tokenData) throw new Error('Not authenticated')
+  return getInterestingness(tokenData, page)
+})
+
+ipcMain.handle('discover:downloadPhoto', async (_event, photoId: string, photoTitle: string, downloadSize?: DownloadSize, thumbnailUrl = '', lastUpdate = 0) => {
+  const tokenData = loadToken()
+  if (!tokenData) throw new Error('Not authenticated')
+  if (!mainWindow) throw new Error('No window')
+  const { metadata } = loadSettings()
+  const forcedMetadata = discoverMetadata(metadata)
+  const [sizes, photoInfo] = await Promise.all([
+    getPhotoSizes(photoId, tokenData),
+    getPhotoInfo(photoId, tokenData)
+  ])
+  const filePath = await downloadPhoto(sizes, photoTitle, mainWindow, activeDownloadController?.signal, photoInfo, forcedMetadata, downloadSize)
+  if (filePath && lastUpdate !== undefined) writePhotoRecord(photoId, lastUpdate, photoTitle, thumbnailUrl)
+  return { filePath }
+})
+
+ipcMain.handle('batch:startDiscoverUser', (_event, nsid: string, username: string, displayTitle: string, track = true, smartMode?: 'updated' | 'never-downloaded') => {
+  const { downloadFolder } = loadSettings()
+  const safeUsername = username.replace(/[/\\:*?"<>|]/g, '_').trim()
+  const discoverFolder = join(downloadFolder, 'Users', safeUsername)
+  enqueueBatch({ type: 'discover-user', albumTitle: displayTitle, discoverNsid: nsid, discoverFolder, track, smartMode })
+})
+
+ipcMain.handle('batch:startDiscoverGroup', (_event, groupId: string, groupName: string, displayTitle: string, track = true, smartMode?: 'updated' | 'never-downloaded') => {
+  const { downloadFolder } = loadSettings()
+  const safeGroupName = groupName.replace(/[/\\:*?"<>|]/g, '_').trim()
+  const discoverFolder = join(downloadFolder, 'Groups', safeGroupName)
+  enqueueBatch({ type: 'discover-group', albumTitle: displayTitle, discoverGroupId: groupId, discoverFolder, track, smartMode })
+})
 
 ipcMain.handle('batch:startAlbum', (_event, albumId: string, albumTitle: string, photoCount?: number, videoCount?: number, force?: boolean, mediaType?: 'photo' | 'video', privacyFilter?: string, track = true, smartMode?: 'updated' | 'never-downloaded') => {
   if (!force) {
