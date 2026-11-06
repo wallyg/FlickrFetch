@@ -24,6 +24,9 @@ mac:
     - target: dmg
       arch:
         - arm64
+    - target: pkg
+      arch:
+        - arm64
   category: public.app-category.photography
 
 dmg:
@@ -35,3 +38,6 @@ dmg:
       y: 220
       type: link
       path: /Applications
+
+pkg:
+  scripts: resources/pkg-scripts
