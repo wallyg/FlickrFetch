@@ -7,15 +7,14 @@ export interface Release {
 
 const changelog: Release[] = [
   {
-    version: '2.0',
+    version: '1.10',
     date: 'November 2026',
-    milestone: 'FlickrFetch 2.0 — download history and smart sync: track every download and get only what\'s new or updated on Flickr.',
     highlights: [
-      'Download History panel (clock icon) shows every batch — source, date, photos saved, skipped, and already downloaded',
-      'Smart Download: "Download Never Downloaded" skips photos you already have; "Download Updated" fetches only photos changed on Flickr since your last download',
-      'Photo detail now shows when a photo was last downloaded, with a warning if it\'s been updated on Flickr since',
+      'Download History panel (clock icon in toolbar) shows every batch — source, date, and a breakdown of saved, skipped, and already-downloaded photos',
+      'Smart Download on albums and photostream: "Download Never Downloaded" skips photos you already have; "Download Updated" fetches only photos changed on Flickr since your last download',
+      'Photo detail shows when a photo was last downloaded, with a warning if it\'s been updated on Flickr since',
       'Dates section in photo detail now includes the Flickr "Updated" date alongside Taken and Posted',
-      'Confirm modal shows a "Track this download" checkbox — uncheck to skip history tracking for a batch',
+      '"Track this download" checkbox on the confirm modal — uncheck to run a batch without recording it in history',
       'Queue bar done message now includes "already downloaded" count when smart filter excludes photos',
     ]
   },

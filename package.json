@@ -1,7 +1,7 @@
 {
   "name": "flickr-fetch",
   "productName": "FlickrFetch",
-  "version": "2.0.0",
+  "version": "1.10.0",
   "description": "Mac desktop app to download photos from Flickr",
   "main": "out/main/index.js",
   "scripts": {
