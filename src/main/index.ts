@@ -425,6 +425,8 @@ async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'p
     ? allPhotos
     : allPhotos.filter(p => getPrivacyLevel(p) === privacyFilter)
 
+  const preSmartTotal = privacyFiltered.length
+
   // Smart mode filtering (requires DB records)
   if (smartMode) {
     const recordMap = getPhotoRecordsBatch(privacyFiltered.map(p => p.id))
@@ -455,7 +457,7 @@ async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'p
     if (activeBatchController?.signal.aborted) {
       activeBatchAlbumId = null
       sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled', skippedCount, failedCount })
-      if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'album', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
+      if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'album', total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
       return
     }
 
@@ -482,7 +484,7 @@ async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'p
       if ((err as { name?: string }).name === 'AbortError' || activeBatchController?.signal.aborted) {
         activeBatchAlbumId = null
         sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled', skippedCount, failedCount })
-        if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'album', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
+        if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'album', total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
         return
       }
       failedCount++
@@ -493,8 +495,8 @@ async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'p
 
   activeBatchAlbumId = null
   const finalStatus = failedCount > 0 || skippedCount > 0 ? 'partial' : 'complete'
-  sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'done', skippedCount, failedCount })
-  if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'album', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: finalStatus })
+  sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'done', skippedCount, failedCount, smartFilteredCount: preSmartTotal - total })
+  if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'album', total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: finalStatus })
   if (notifyOnComplete && Notification.isSupported()) {
     const body = (skippedCount + failedCount) > 0
       ? `Saved ${downloadedCount}, skipped ${skippedCount + failedCount} from "${albumTitle}"`
@@ -649,6 +651,8 @@ async function runPhotostreamBatch(albumTitle: string, track = true, smartMode?:
     // Privacy info not available in photostream batch — skip filter
   }
 
+  const preSmartTotal = filteredPhotos.length
+
   // Smart mode: never-downloaded
   if (smartMode === 'never-downloaded') {
     const recordMap = getPhotoRecordsBatch(filteredPhotos.map(p => p.id))
@@ -670,7 +674,7 @@ async function runPhotostreamBatch(albumTitle: string, track = true, smartMode?:
   for (let i = 0; i < filteredPhotos.length; i++) {
     if (activeBatchController?.signal.aborted) {
       sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled', skippedCount, failedCount })
-      if (track) writeBatchLog({ createdAt: Date.now(), source: 'Photostream', sourceType: 'photostream', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
+      if (track) writeBatchLog({ createdAt: Date.now(), source: 'Photostream', sourceType: 'photostream', total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
       return
     }
 
@@ -696,7 +700,7 @@ async function runPhotostreamBatch(albumTitle: string, track = true, smartMode?:
     } catch (err) {
       if ((err as { name?: string }).name === 'AbortError' || activeBatchController?.signal.aborted) {
         sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled', skippedCount, failedCount })
-        if (track) writeBatchLog({ createdAt: Date.now(), source: 'Photostream', sourceType: 'photostream', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
+        if (track) writeBatchLog({ createdAt: Date.now(), source: 'Photostream', sourceType: 'photostream', total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
         return
       }
       failedCount++
@@ -706,8 +710,8 @@ async function runPhotostreamBatch(albumTitle: string, track = true, smartMode?:
   }
 
   const finalStatus = failedCount > 0 || skippedCount > 0 ? 'partial' : 'complete'
-  sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'done', skippedCount, failedCount })
-  if (track) writeBatchLog({ createdAt: Date.now(), source: 'Photostream', sourceType: 'photostream', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: finalStatus })
+  sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'done', skippedCount, failedCount, smartFilteredCount: preSmartTotal - total })
+  if (track) writeBatchLog({ createdAt: Date.now(), source: 'Photostream', sourceType: 'photostream', total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: finalStatus })
   if (notifyOnComplete && Notification.isSupported()) {
     const body = (skippedCount + failedCount) > 0
       ? `Saved ${downloadedCount}, skipped ${skippedCount + failedCount} from Photostream`

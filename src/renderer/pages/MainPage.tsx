@@ -41,6 +41,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
   const [albumDetailOrigin, setAlbumDetailOrigin] = useState<'albums' | 'collections'>('albums')
   const [batchProgress, setBatchProgress] = useState<BatchProgress | null>(null)
   const [completedBatches, setCompletedBatches] = useState<BatchProgress[]>([])
+  const prevProgressRef = useRef<BatchProgress | null>(null)
   const [aboutVersion, setAboutVersion] = useState<string | null>(null)
   // Album select state — independent from photostream so tab-switching preserves each
   const [albumSelectMode, setAlbumSelectMode] = useState(false)
@@ -64,13 +65,12 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
   const [photostreamRefreshKey, setPhotostreamRefreshKey] = useState(0)
   useEffect(() => {
     const unsubscribe = window.flickrAPI.onBatchProgress((p) => {
-      setBatchProgress(prev => {
-        // When a new batch starts and the previous one was done, stack it
-        if (prev && prev.status === 'done' && p.status === 'running') {
-          setCompletedBatches(old => [prev, ...old])
-        }
-        return p
-      })
+      const prev = prevProgressRef.current
+      if (prev && prev.status === 'done' && p.status === 'running') {
+        setCompletedBatches(old => [prev, ...old])
+      }
+      prevProgressRef.current = p
+      setBatchProgress(p)
     })
     return unsubscribe
   }, [])
@@ -342,19 +342,19 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
           </div>
         </div>
         <div style={styles.headerActions}>
-          <button style={styles.settingsButton} onClick={() => setShowSettings(true)}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-              <circle cx="12" cy="12" r="3"/>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-            </svg>
-            Settings
-          </button>
           <button style={styles.settingsButton} onClick={() => setShowHistory(true)}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
               <circle cx="12" cy="12" r="10"/>
               <polyline points="12 6 12 12 16 14"/>
             </svg>
             History
+          </button>
+          <button style={styles.settingsButton} onClick={() => setShowSettings(true)}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+            Settings
           </button>
           <button style={styles.signOutButton} onClick={onSignOut}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
@@ -415,6 +415,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
                   title: modeTitle,
                   photoCount,
                   videoCount,
+                  note: `${(photoCount + videoCount).toLocaleString()} loaded — batch downloads your full photostream`,
                   onConfirm: (track) => {
                     window.flickrAPI.startPhotostreamBatch('Photostream', track, smartMode, undefined, photostreamSort)
                   },

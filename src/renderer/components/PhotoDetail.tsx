@@ -93,6 +93,19 @@ function formatUnixDate(unixStr: string | undefined): string {
   return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
 }
 
+function formatUnixDateSec(unixSec: number): string {
+  const d = new Date(unixSec * 1000)
+  if (isNaN(d.getTime())) return ''
+  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+}
+
+function formatDownloadDateTime(ms: number): string {
+  const d = new Date(ms)
+  const date = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+  const time = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+  return `${date} at ${time}`
+}
+
 function getPrivacyBadge(photo: FlickrPhoto): { label: string; bg: string; color: string } {
   if (photo.ispublic === 1) return { label: 'Public', bg: '#e8f8ea', color: '#27ae60' }
   if (photo.ispublic === undefined) return { label: 'Unknown', bg: '#f5f5f5', color: '#999' }
@@ -404,7 +417,7 @@ export default function PhotoDetail({
             </div>
           )}
 
-          {(photo.dateTaken || photo.datePosted) && (
+          {(photo.dateTaken || photo.datePosted || photo.lastUpdate) && (
             <div style={styles.section}>
               <p style={styles.fieldLabel}>Dates</p>
               {photo.dateTaken && (
@@ -417,6 +430,12 @@ export default function PhotoDetail({
                 <div style={styles.dateRow}>
                   <span style={styles.dateLabel}>Posted</span>
                   <span style={styles.fieldValue}>{formatUnixDate(photo.datePosted)}</span>
+                </div>
+              )}
+              {photo.lastUpdate != null && photo.lastUpdate > 0 && (
+                <div style={styles.dateRow}>
+                  <span style={styles.dateLabel}>Updated</span>
+                  <span style={styles.fieldValue}>{formatUnixDateSec(photo.lastUpdate)}</span>
                 </div>
               )}
             </div>
@@ -544,9 +563,16 @@ export default function PhotoDetail({
           )}
 
           {lastDownloadedAt != null && downloadState === 'idle' && (
-            <p style={styles.lastDownloaded}>
-              Last downloaded {new Date(lastDownloadedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-            </p>
+            <div>
+              <p style={styles.lastDownloaded}>
+                Last downloaded {formatDownloadDateTime(lastDownloadedAt)}
+              </p>
+              {photo.lastUpdate != null && photo.lastUpdate > 0 && photo.lastUpdate * 1000 > lastDownloadedAt && (
+                <p style={styles.stalenessWarning}>
+                  ⚠ Updated on Flickr since last download
+                </p>
+              )}
+            </div>
           )}
 
           {downloadState === 'idle' && (
@@ -947,6 +973,12 @@ const styles: Record<string, React.CSSProperties> = {
   lastDownloaded: {
     fontSize: '11px',
     color: '#94a3b8',
+    margin: '0 0 2px',
+    textAlign: 'center' as const,
+  },
+  stalenessWarning: {
+    fontSize: '11px',
+    color: '#f59e0b',
     margin: '0 0 6px',
     textAlign: 'center' as const,
   },

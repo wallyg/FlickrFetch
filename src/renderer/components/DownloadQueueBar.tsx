@@ -78,6 +78,7 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
   const activeTitle = progress?.activeTitle ?? ''
   const skipped = progress?.skippedCount ?? 0
   const failed = progress?.failedCount ?? 0
+  const smartFiltered = progress?.smartFilteredCount ?? 0
   const downloaded = total - skipped - failed
   const percent = total > 0 ? Math.round((current / total) * 100) : 0
   const isRunning = status === 'running'
@@ -138,6 +139,7 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
                   const parts: string[] = [`${downloaded.toLocaleString()} saved`]
                   if (skipped > 0) parts.push(`${skipped.toLocaleString()} skipped`)
                   if (failed > 0) parts.push(`${failed.toLocaleString()} failed`)
+                  if (smartFiltered > 0) parts.push(`${smartFiltered.toLocaleString()} already downloaded`)
                   return parts.join(' · ')
                 })()}
                 {isCancelled && `${current.toLocaleString()} of ${total.toLocaleString()} before cancel`}
@@ -182,12 +184,14 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
               {completedBatches.map((b, i) => {
                 const bSkipped = b.skippedCount ?? 0
                 const bFailed = b.failedCount ?? 0
+                const bSmartFiltered = b.smartFilteredCount ?? 0
                 const bDownloaded = (b.total ?? 0) - bSkipped - bFailed
-                const bHasIssues = bSkipped > 0 || bFailed > 0
+                const bHasIssues = bSkipped > 0 || bFailed > 0 || bSmartFiltered > 0
                 const bFolder = b.latestFilePath ? b.latestFilePath.substring(0, b.latestFilePath.lastIndexOf('/')) : null
                 const bParts = [`${bDownloaded.toLocaleString()} saved`]
                 if (bSkipped > 0) bParts.push(`${bSkipped.toLocaleString()} skipped`)
                 if (bFailed > 0) bParts.push(`${bFailed.toLocaleString()} failed`)
+                if (bSmartFiltered > 0) bParts.push(`${bSmartFiltered.toLocaleString()} already downloaded`)
                 return (
                   <div key={i} style={styles.batchRow}>
                     <span style={bHasIssues ? styles.dotSkipped : styles.dotDone}>✓</span>
@@ -229,6 +233,7 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
               const parts: string[] = [`✓ ${downloaded.toLocaleString()} saved`]
               if (skipped > 0) parts.push(`${skipped.toLocaleString()} skipped`)
               if (failed > 0) parts.push(`${failed.toLocaleString()} failed`)
+              if (smartFiltered > 0) parts.push(`${smartFiltered.toLocaleString()} already downloaded`)
               parts.push(albumTitle)
               return parts.join(' · ')
             })()}
@@ -237,10 +242,12 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
               const newest = completedBatches[0]
               const ns = newest.skippedCount ?? 0
               const nf = newest.failedCount ?? 0
+              const nsf = newest.smartFilteredCount ?? 0
               const nd = (newest.total ?? 0) - ns - nf
               const parts = [`✓ ${nd.toLocaleString()} saved`]
               if (ns > 0) parts.push(`${ns.toLocaleString()} skipped`)
               if (nf > 0) parts.push(`${nf.toLocaleString()} failed`)
+              if (nsf > 0) parts.push(`${nsf.toLocaleString()} already downloaded`)
               parts.push(newest.albumTitle)
               return parts.join(' · ')
             })()}

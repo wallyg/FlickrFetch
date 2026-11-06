@@ -92,7 +92,13 @@ export default function HistoryPanel({ onClose }: HistoryPanelProps) {
                     {entry.failed > 0 && (
                       <span style={styles.countFail}>{entry.failed} failed</span>
                     )}
-                    <span style={styles.countTotal}>of {entry.total}</span>
+                    {(() => {
+                      const smartFiltered = entry.total - entry.downloaded - entry.skippedCollision - entry.failed
+                      return smartFiltered > 0 ? (
+                        <span style={styles.countSkip}>{smartFiltered} already downloaded</span>
+                      ) : null
+                    })()}
+                    {entry.total > 0 && <span style={styles.countTotal}>of {entry.total}</span>}
                   </div>
                 </div>
               ))}

@@ -357,7 +357,7 @@ export async function getPhotos(tokenData: FlickrTokenData, page: number = 1, so
       `?method=flickr.photos.search` +
       `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
       `&user_id=${encodeURIComponent(tokenData.nsid)}` +
-      `&extras=${encodeURIComponent('url_q,date_taken,date_upload,media,ispublic,isfriend,isfamily,license')}` +
+      `&extras=${encodeURIComponent('url_q,date_taken,date_upload,last_update,media,ispublic,isfriend,isfamily,license')}` +
       `&sort=${encodeURIComponent(sort)}` +
       `&per_page=100` +
       `&page=${page}` +
@@ -389,7 +389,7 @@ export async function getPhotos(tokenData: FlickrTokenData, page: number = 1, so
       `?method=flickr.people.getPhotos` +
       `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
       `&user_id=${encodeURIComponent(tokenData.nsid)}` +
-      `&extras=${encodeURIComponent('url_q,date_taken,date_upload,media,ispublic,isfriend,isfamily,license')}` +
+      `&extras=${encodeURIComponent('url_q,date_taken,date_upload,last_update,media,ispublic,isfriend,isfamily,license')}` +
       `&sort=${encodeURIComponent(sort)}` +
       `&per_page=100` +
       `&page=${page}` +
@@ -416,7 +416,8 @@ export async function getPhotos(tokenData: FlickrTokenData, page: number = 1, so
     datePosted: p.dateupload || undefined,
     ispublic: p.ispublic != null ? Number(p.ispublic) : undefined,
     isfriend: p.isfriend != null ? Number(p.isfriend) : undefined,
-    isfamily: p.isfamily != null ? Number(p.isfamily) : undefined
+    isfamily: p.isfamily != null ? Number(p.isfamily) : undefined,
+    lastUpdate: p.lastupdate ? Number(p.lastupdate) : undefined,
   }))
 
   // Client-side title operator filtering (starts/ends/exact send broader server query, then narrow by title)

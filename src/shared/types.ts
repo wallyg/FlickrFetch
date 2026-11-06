@@ -75,6 +75,7 @@ export interface BatchProgress {
   error?: string
   skippedCount?: number       // collision skips (file already exists, behavior = skip)
   failedCount?: number        // photos that errored and were skipped
+  smartFilteredCount?: number // photos excluded by smart filter (Never Downloaded / Download Updated)
 }
 
 export interface BatchLogEntry {

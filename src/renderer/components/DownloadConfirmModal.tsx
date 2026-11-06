@@ -27,6 +27,7 @@ export interface PendingDownload {
   title: string
   photoCount: number
   videoCount: number
+  note?: string
   onConfirm: (track: boolean) => void
 }
 
@@ -74,6 +75,7 @@ export default function DownloadConfirmModal({ pending, settingsKey, onCancel, o
             {pending.videoCount > 0 && `${pending.videoCount.toLocaleString()} video${pending.videoCount !== 1 ? 's' : ''}`}
             {totalCount === 0 && 'No items'}
           </p>
+          {pending.note && <p style={s.countNote}>{pending.note}</p>}
 
           <div style={s.settingsRow}>
             <span style={s.settingLabel}>Quality</span>
@@ -158,7 +160,10 @@ const s: Record<string, React.CSSProperties> = {
     margin: '0 0 6px', fontSize: '14px', fontWeight: '600', color: '#111',
   },
   countLine: {
-    margin: '0 0 10px', fontSize: '13px', color: '#666',
+    margin: '0 0 4px', fontSize: '13px', color: '#666',
+  },
+  countNote: {
+    margin: '0 0 10px', fontSize: '11px', color: '#999', fontStyle: 'italic' as const,
   },
   settingsRow: {
     display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '5px',
