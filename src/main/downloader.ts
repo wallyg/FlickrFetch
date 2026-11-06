@@ -143,6 +143,7 @@ export async function downloadPhoto(
 export type DownloadOutcome =
   | { status: 'downloaded'; filePath: string }
   | { status: 'skipped'; reason: 'collision' }
+  | { status: 'skipped'; reason: 'size-unavailable' }
 
 export async function downloadToFolder(
   sizes: PhotoSize[],
@@ -155,7 +156,7 @@ export async function downloadToFolder(
   metadataSettings?: MetadataSettings
 ): Promise<DownloadOutcome> {
   const chosen = pickSize(sizes, downloadSize)
-  if (!chosen) throw new Error('No downloadable size found')
+  if (!chosen) return { status: 'skipped', reason: 'size-unavailable' }
 
   const ext = resolveExtension(chosen.source)
   const rawPath = join(destFolder, `${filename}.${ext}`)

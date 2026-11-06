@@ -202,6 +202,13 @@ function PhotosTab() {
     setAppliedDateMax(undefined)
   }
 
+  function handleClearAllPhotoFilters() {
+    setTitleFilter('')
+    setPhotoIdQuery('')
+    handleClearDateFilter()
+    handleAlbumSelect('')
+  }
+
   // ── Album filter ──
 
   async function handleLoadAlbums() {
@@ -435,7 +442,10 @@ function PhotosTab() {
         ) : albumFilterLoading ? (
           <p style={styles.empty}>Loading album photos…</p>
         ) : filteredRecords.length === 0 ? (
-          <p style={styles.empty}>No records match your filters.</p>
+          <div style={styles.emptyFilter}>
+            <p style={styles.empty}>No records match your filters.</p>
+            <button style={styles.clearFiltersBtn} onClick={handleClearAllPhotoFilters}>Clear Filters</button>
+          </div>
         ) : (
           filteredRecords.map(r => (
             <div key={r.photoId} style={styles.photoRow}>
@@ -597,7 +607,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '20px 20px 0',
   },
   title: {
-    margin: 0, fontSize: 17, fontWeight: 600, color: '#0E2A4D',
+    margin: 0, fontSize: 17, fontWeight: 600, color: 'var(--ff-navy)',
   },
   closeBtn: {
     background: 'none', border: 'none', cursor: 'pointer',
@@ -614,8 +624,8 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: 'pointer', fontWeight: 500,
   },
   tabActive: {
-    background: 'none', border: 'none', borderBottom: '2px solid #0063DC',
-    padding: '6px 12px 10px', fontSize: 13, color: '#0063DC',
+    background: 'none', border: 'none', borderBottom: '2px solid var(--ff-pink)',
+    padding: '6px 12px 10px', fontSize: 13, color: 'var(--ff-pink)',
     cursor: 'pointer', fontWeight: 600,
   },
   tabBody: {
@@ -623,6 +633,14 @@ const styles: Record<string, React.CSSProperties> = {
   },
   empty: {
     padding: '24px 20px', color: '#9ca3af', fontSize: 13, lineHeight: 1.5, margin: 0,
+  },
+  emptyFilter: {
+    display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: '12px',
+    padding: '40px 24px', textAlign: 'center' as const,
+  },
+  clearFiltersBtn: {
+    background: 'none', border: '1px solid #d1d5db', borderRadius: '6px',
+    padding: '6px 16px', fontSize: 13, color: '#555', cursor: 'pointer',
   },
   // Batch tab rows
   row: {

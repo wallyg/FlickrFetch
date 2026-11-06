@@ -125,7 +125,7 @@ export default function AlbumList({ onAlbumSelect }: AlbumListProps): React.JSX.
   }
 
   if (albums.length === 0) {
-    return <div style={styles.center}><p style={styles.message}>No albums found.</p></div>
+    return <div style={styles.center}><p style={styles.message}>No albums found for your Flickr account.</p></div>
   }
 
   return (
@@ -178,7 +178,7 @@ export default function AlbumList({ onAlbumSelect }: AlbumListProps): React.JSX.
         <div style={{ padding: '48px 24px', textAlign: 'center' }}>
           <p style={{ color: '#888', fontSize: '14px', margin: '0 0 12px' }}>No albums match "{searchQuery}".</p>
           <button style={{ background: 'none', border: '1px solid #ccc', borderRadius: '6px', padding: '6px 16px', fontSize: '13px', color: '#555', cursor: 'pointer' }} onClick={() => setSearchQuery('')}>
-            Clear search
+            Clear Search
           </button>
         </div>
       )}

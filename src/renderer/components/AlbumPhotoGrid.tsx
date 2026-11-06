@@ -399,7 +399,7 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
       {filteredPhotos.length === 0 && photos.length > 0 && !loadingMore && !loading && (
         <div style={styles.emptyFilter}>
           <p style={styles.emptyFilterMsg}>No {mediaFilter !== 'all' ? mediaFilter + 's' : 'photos'} match the current filters.</p>
-          <button style={styles.clearFiltersBtn} onClick={clearAllFilters}>Clear filters</button>
+          <button style={styles.clearFiltersBtn} onClick={clearAllFilters}>Clear Filters</button>
         </div>
       )}
 
@@ -412,7 +412,7 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
               key={photo.id}
               style={{
                 ...styles.tile,
-                ...(isSelected ? { outline: '3px solid #FF0084', outlineOffset: '-3px', zIndex: 1 } : {}),
+                ...(isSelected ? { outline: '3px solid var(--ff-pink)', outlineOffset: '-3px', zIndex: 1 } : {}),
                 ...(selectMode && !isSelected ? { opacity: 0.75 } : {})
               }}
               onClick={(e) => selectMode ? onToggleSelect?.(photo, e.shiftKey) : onPhotoSelect(photo)}
@@ -445,8 +445,8 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
               {selectMode && (
                 <div style={{
                   ...styles.selectBadge,
-                  backgroundColor: isSelected ? '#FF0084' : 'rgba(255,255,255,0.75)',
-                  border: isSelected ? '2px solid #FF0084' : '2px solid rgba(255,255,255,0.9)'
+                  backgroundColor: isSelected ? 'var(--ff-pink)' : 'rgba(255,255,255,0.75)',
+                  border: isSelected ? '2px solid var(--ff-pink)' : '2px solid rgba(255,255,255,0.9)'
                 }}>
                   {isSelected && <span style={styles.selectCheck}>✓</span>}
                 </div>

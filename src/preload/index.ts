@@ -105,6 +105,12 @@ contextBridge.exposeInMainWorld('flickrAPI', {
     return () => ipcRenderer.removeListener('app:openSettings', handler)
   },
 
+  onOpenHistory: (cb: () => void): (() => void) => {
+    const handler = () => cb()
+    ipcRenderer.on('app:openHistory', handler)
+    return () => ipcRenderer.removeListener('app:openHistory', handler)
+  },
+
   onMenuSignOut: (cb: () => void): (() => void) => {
     const handler = () => cb()
     ipcRenderer.on('app:signOut', handler)

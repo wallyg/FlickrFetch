@@ -65,8 +65,7 @@ export default function SmartDownloadButton({ label, onDownload, disabled }: Sma
   )
 }
 
-const BTN_BG = '#0063DC'
-const BTN_BG_HOVER = '#0056c7'
+const BTN_BG = 'var(--ff-pink-action)'
 
 const styles: Record<string, React.CSSProperties> = {
   wrapper: {

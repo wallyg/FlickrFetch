@@ -534,7 +534,7 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
               </button>
             </div>
           )}
-          <button style={styles.clearFiltersBtn} onClick={clearAllFilters}>Clear filters</button>
+          <button style={styles.clearFiltersBtn} onClick={clearAllFilters}>Clear Filters</button>
         </div>
       )}
 
@@ -554,7 +554,7 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
               key={photo.id}
               style={{
                 ...styles.tile,
-                ...(isSelected ? { outline: '3px solid #FF0084', outlineOffset: '-3px', zIndex: 1 } : {}),
+                ...(isSelected ? { outline: '3px solid var(--ff-pink)', outlineOffset: '-3px', zIndex: 1 } : {}),
                 ...(selectMode && !isSelected ? { opacity: 0.75 } : {})
               }}
               onMouseEnter={() => setHoveredId(photo.id)}
@@ -587,8 +587,8 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
               {selectMode && (
                 <div style={{
                   ...styles.selectBadge,
-                  backgroundColor: isSelected ? '#FF0084' : 'rgba(255,255,255,0.75)',
-                  border: isSelected ? '2px solid #FF0084' : '2px solid rgba(255,255,255,0.9)'
+                  backgroundColor: isSelected ? 'var(--ff-pink)' : 'rgba(255,255,255,0.75)',
+                  border: isSelected ? '2px solid var(--ff-pink)' : '2px solid rgba(255,255,255,0.9)'
                 }}>
                   {isSelected && <span style={styles.selectCheck}>✓</span>}
                 </div>
@@ -622,11 +622,11 @@ const styles: Record<string, React.CSSProperties> = {
   overlay: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.65)', padding: '6px 8px' },
   overlayTitle: { color: '#fff', fontSize: '12px', lineHeight: '1.3', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as React.CSSProperties,
   errorText: { color: '#cc0000', fontSize: '14px', margin: 0 },
-  retryButton: { backgroundColor: '#FF0084', color: '#fff', border: 'none', borderRadius: '6px', padding: '10px 20px', fontSize: '14px', cursor: 'pointer' },
+  retryButton: { backgroundColor: 'var(--ff-pink-action)', color: '#fff', border: 'none', borderRadius: '6px', padding: '10px 20px', fontSize: '14px', cursor: 'pointer' },
   loadMoreRow: { display: 'flex', justifyContent: 'center', padding: '24px 16px' },
   loadMoreButton: { backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '6px', padding: '10px 28px', fontSize: '14px', color: '#444', cursor: 'pointer' },
   disabled: { opacity: 0.6, cursor: 'not-allowed' },
   keepSearchingBtn: { background: '#111', border: 'none', borderRadius: '6px', padding: '6px 16px', fontSize: '13px', color: '#fff', cursor: 'pointer' },
   scanProgressBar: { height: '3px', background: '#e0dcd6', borderRadius: '2px', overflow: 'hidden', margin: '4px 0 2px' },
-  scanProgressFill: { height: '100%', background: '#0063DC', borderRadius: '2px', transition: 'width 0.4s ease' },
+  scanProgressFill: { height: '100%', background: 'var(--ff-blue)', borderRadius: '2px', transition: 'width 0.4s ease' },
 }

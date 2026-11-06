@@ -7,6 +7,23 @@ export interface Release {
 
 const changelog: Release[] = [
   {
+    version: '2.0',
+    date: 'November 2026',
+    milestone: 'FlickrFetch 2.0 — a polished, cohesive app built on two years of features',
+    highlights: [
+      'Brand color system applied throughout — navy headers, consistent blue and pink accents, cream backgrounds',
+      'Header redesigned: History and Settings are now icon buttons with tooltips; Sign out moved inline with the account handle',
+      'Terminology standardized app-wide — "Show in Finder," "Clear Filters," "Download," and other labels are now consistent everywhere',
+      'Dates in photo detail now include time — Taken, Posted, and Updated all show date and time, not just date',
+      'Settings changes apply immediately — no Save button; every toggle and picker saves as you go',
+      '"Last downloaded" date in photo detail is more prominent; "Updated on Flickr since your last download" warning stands out as an amber box',
+      'Download confirm modal redesigned — Quality and Save to shown in a summary card; metadata fields split into what\'s embedding and what\'s not; Track checkbox reads as a clear decision',
+      'Queue bar now distinguishes "skipped" (file already exists) from "size unavailable" (requested resolution not on Flickr)',
+      'Empty states added throughout — albums, collections, and history filters all explain what\'s missing and offer a next action',
+      'Since v1.0: batch downloads with queue, Smart Sync and download history, full-text and tag search, date and privacy filters, video playback, photo detail view, metadata embedding with per-field controls, Creative Commons badges, file naming with tokens, and 70+ quality-of-life improvements across two years of active development',
+    ]
+  },
+  {
     version: '1.11',
     date: 'November 2026',
     highlights: [

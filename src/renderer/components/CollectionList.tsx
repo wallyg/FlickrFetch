@@ -26,7 +26,7 @@ export default function CollectionList({ onCollectionSelect }: CollectionListPro
   }
 
   if (collections.length === 0) {
-    return <div style={styles.center}><p style={styles.message}>No collections found.</p></div>
+    return <div style={styles.center}><p style={styles.message}>No collections found for your Flickr account.</p></div>
   }
 
   return (

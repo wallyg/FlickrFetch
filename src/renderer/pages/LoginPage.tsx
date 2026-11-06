@@ -165,7 +165,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'center',
     height: '100vh',
-    backgroundColor: '#FCFAF6',
+    backgroundColor: 'var(--ff-cream)',
     fontFamily: "'Lato', -apple-system, BlinkMacSystemFont, sans-serif"
   },
   card: {
@@ -184,7 +184,7 @@ const styles: Record<string, React.CSSProperties> = {
   leftCol: {
     width: '320px',
     flexShrink: 0,
-    backgroundColor: '#FCFAF6',
+    backgroundColor: 'var(--ff-cream)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -232,7 +232,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '24px',
     fontWeight: '700',
     lineHeight: '30px',
-    color: '#0E2A4D',
+    color: 'var(--ff-navy)',
     margin: '0 0 10px',
     fontFamily: "'Lato', -apple-system, sans-serif"
   },
@@ -251,7 +251,7 @@ const styles: Record<string, React.CSSProperties> = {
   stepLabel: {
     fontSize: '14px',
     fontWeight: '600',
-    color: '#0E2A4D',
+    color: 'var(--ff-navy)',
     margin: '0',
     fontFamily: "'Lato', -apple-system, sans-serif"
   },
@@ -263,7 +263,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   statusText: {
     fontSize: '13px',
-    color: '#0063DC',
+    color: 'var(--ff-blue)',
     margin: '0',
     fontStyle: 'italic'
   },
@@ -271,7 +271,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignSelf: 'flex-start' as const,
     height: '38px',
     backgroundColor: 'transparent',
-    color: '#0E2A4D',
+    color: 'var(--ff-navy)',
     border: '1.5px solid rgba(0,0,0,0.18)',
     borderRadius: '8px',
     fontSize: '14px',
@@ -288,7 +288,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '0 12px',
     fontSize: '15px',
     letterSpacing: '0.04em',
-    color: '#0E2A4D',
+    color: 'var(--ff-navy)',
     outline: 'none',
     fontFamily: "'Lato', -apple-system, sans-serif",
     boxSizing: 'border-box' as const,
@@ -298,7 +298,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   primaryBtn: {
     height: '40px',
-    backgroundColor: '#0063DC',
+    backgroundColor: 'var(--ff-pink-action)',
     color: '#ffffff',
     border: 'none',
     borderRadius: '8px',

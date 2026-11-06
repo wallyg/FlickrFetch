@@ -77,21 +77,22 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
   const albumTitle = progress?.albumTitle ?? ''
   const activeTitle = progress?.activeTitle ?? ''
   const skipped = progress?.skippedCount ?? 0
+  const sizeUnavailable = progress?.skippedSizeUnavailableCount ?? 0
   const failed = progress?.failedCount ?? 0
   const smartFiltered = progress?.smartFilteredCount ?? 0
-  const downloaded = total - skipped - failed
+  const downloaded = total - skipped - sizeUnavailable - failed
   const percent = total > 0 ? Math.round((current / total) * 100) : 0
   const isRunning = status === 'running'
   const isDone = status === 'done'
   const isCancelled = status === 'cancelled'
-  const doneWithIssues = isDone && (skipped > 0 || failed > 0)
+  const doneWithIssues = isDone && (skipped > 0 || sizeUnavailable > 0 || failed > 0)
 
   // Color-coded left border by status
-  const borderColor = isRunning ? '#FF0084'
+  const borderColor = isRunning ? 'var(--ff-pink)'
     : doneWithIssues ? '#ff8c00'
     : isDone ? '#4caf50'
     : isCancelled ? '#cc6600'
-    : completedBatches.length > 0 ? (completedBatches.some(b => ((b.skippedCount ?? 0) + (b.failedCount ?? 0)) > 0) ? '#ff8c00' : '#4caf50')
+    : completedBatches.length > 0 ? (completedBatches.some(b => ((b.skippedCount ?? 0) + (b.skippedSizeUnavailableCount ?? 0) + (b.failedCount ?? 0)) > 0) ? '#ff8c00' : '#4caf50')
     : 'transparent'
 
   const handleCancel = (): void => {
@@ -129,7 +130,7 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
                     style={styles.finderLink}
                     onClick={() => window.flickrAPI.showInFinder(folderPath)}
                   >
-                    Open in Finder
+                    Show in Finder
                   </button>
                 )}
               </div>
@@ -138,6 +139,7 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
                 {isDone && (() => {
                   const parts: string[] = [`${downloaded.toLocaleString()} saved`]
                   if (skipped > 0) parts.push(`${skipped.toLocaleString()} skipped`)
+                  if (sizeUnavailable > 0) parts.push(`${sizeUnavailable.toLocaleString()} size unavailable`)
                   if (failed > 0) parts.push(`${failed.toLocaleString()} failed`)
                   if (smartFiltered > 0) parts.push(`${smartFiltered.toLocaleString()} already downloaded`)
                   return parts.join(' · ')
@@ -183,13 +185,15 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
               <div style={styles.divider} />
               {completedBatches.map((b, i) => {
                 const bSkipped = b.skippedCount ?? 0
+                const bSizeUnavailable = b.skippedSizeUnavailableCount ?? 0
                 const bFailed = b.failedCount ?? 0
                 const bSmartFiltered = b.smartFilteredCount ?? 0
-                const bDownloaded = (b.total ?? 0) - bSkipped - bFailed
-                const bHasIssues = bSkipped > 0 || bFailed > 0 || bSmartFiltered > 0
+                const bDownloaded = (b.total ?? 0) - bSkipped - bSizeUnavailable - bFailed
+                const bHasIssues = bSkipped > 0 || bSizeUnavailable > 0 || bFailed > 0 || bSmartFiltered > 0
                 const bFolder = b.latestFilePath ? b.latestFilePath.substring(0, b.latestFilePath.lastIndexOf('/')) : null
                 const bParts = [`${bDownloaded.toLocaleString()} saved`]
                 if (bSkipped > 0) bParts.push(`${bSkipped.toLocaleString()} skipped`)
+                if (bSizeUnavailable > 0) bParts.push(`${bSizeUnavailable.toLocaleString()} size unavailable`)
                 if (bFailed > 0) bParts.push(`${bFailed.toLocaleString()} failed`)
                 if (bSmartFiltered > 0) bParts.push(`${bSmartFiltered.toLocaleString()} already downloaded`)
                 return (
@@ -200,7 +204,7 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
                         <span style={styles.batchTitle}>{b.albumTitle}</span>
                         {bFolder && (
                           <button style={styles.finderLink} onClick={() => window.flickrAPI.showInFinder(bFolder)}>
-                            Open in Finder
+                            Show in Finder
                           </button>
                         )}
                       </div>
@@ -232,6 +236,7 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
             {!cancelling && isDone && (() => {
               const parts: string[] = [`✓ ${downloaded.toLocaleString()} saved`]
               if (skipped > 0) parts.push(`${skipped.toLocaleString()} skipped`)
+              if (sizeUnavailable > 0) parts.push(`${sizeUnavailable.toLocaleString()} size unavailable`)
               if (failed > 0) parts.push(`${failed.toLocaleString()} failed`)
               if (smartFiltered > 0) parts.push(`${smartFiltered.toLocaleString()} already downloaded`)
               parts.push(albumTitle)
@@ -241,11 +246,13 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
             {!progress && completedBatches.length > 0 && (() => {
               const newest = completedBatches[0]
               const ns = newest.skippedCount ?? 0
+              const nsu = newest.skippedSizeUnavailableCount ?? 0
               const nf = newest.failedCount ?? 0
               const nsf = newest.smartFilteredCount ?? 0
-              const nd = (newest.total ?? 0) - ns - nf
+              const nd = (newest.total ?? 0) - ns - nsu - nf
               const parts = [`✓ ${nd.toLocaleString()} saved`]
               if (ns > 0) parts.push(`${ns.toLocaleString()} skipped`)
+              if (nsu > 0) parts.push(`${nsu.toLocaleString()} size unavailable`)
               if (nf > 0) parts.push(`${nf.toLocaleString()} failed`)
               if (nsf > 0) parts.push(`${nsf.toLocaleString()} already downloaded`)
               parts.push(newest.albumTitle)
@@ -266,7 +273,7 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
           )}
           {(isDone || isCancelled) && !cancelling && folderPath && (
             <button style={styles.finderLinkBar} onClick={() => window.flickrAPI.showInFinder(folderPath)}>
-              Open in Finder
+              Show in Finder
             </button>
           )}
           {completedBatches.length >= 2 && (
@@ -288,7 +295,7 @@ const styles: Record<string, React.CSSProperties> = {
   wrapper: {
     flexShrink: 0,
     borderTop: '1px solid #e0dbd4',
-    backgroundColor: '#FCFAF6'
+    backgroundColor: 'var(--ff-cream)'
   },
   toast: {
     padding: '7px 20px',
@@ -333,7 +340,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#FF0084',
+    backgroundColor: 'var(--ff-pink)',
     borderRadius: '3px',
     transition: 'width 0.3s ease'
   },
@@ -395,7 +402,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   dotActive: {
     fontSize: '14px',
-    color: '#FF0084',
+    color: 'var(--ff-pink)',
     flexShrink: 0,
     marginTop: '2px',
     fontWeight: '700'
@@ -470,7 +477,7 @@ const styles: Record<string, React.CSSProperties> = {
     background: 'none',
     border: 'none',
     fontSize: '11px',
-    color: '#0063DC',
+    color: 'var(--ff-blue)',
     cursor: 'pointer',
     padding: '0',
     flexShrink: 0,
@@ -481,7 +488,7 @@ const styles: Record<string, React.CSSProperties> = {
     border: '1px solid #ccc',
     borderRadius: '6px',
     fontSize: '12px',
-    color: '#0063DC',
+    color: 'var(--ff-blue)',
     cursor: 'pointer',
     padding: '4px 10px',
     flexShrink: 0,

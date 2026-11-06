@@ -83,20 +83,26 @@ function formatDate(dateTaken: string | null): string {
   if (!dateTaken) return ''
   const d = new Date(dateTaken.replace(' ', 'T'))
   if (isNaN(d.getTime())) return ''
-  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+  const date = d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+  const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  return `${date} at ${time}`
 }
 
 function formatUnixDate(unixStr: string | undefined): string {
   if (!unixStr) return ''
   const d = new Date(parseInt(unixStr, 10) * 1000)
   if (isNaN(d.getTime())) return ''
-  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+  const date = d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+  const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  return `${date} at ${time}`
 }
 
 function formatUnixDateSec(unixSec: number): string {
   const d = new Date(unixSec * 1000)
   if (isNaN(d.getTime())) return ''
-  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+  const date = d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+  const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  return `${date} at ${time}`
 }
 
 function formatDownloadDateTime(ms: number): string {
@@ -578,9 +584,10 @@ export default function PhotoDetail({
                 </button>
               </div>
               {photo.lastUpdate != null && photo.lastUpdate > 0 && photo.lastUpdate * 1000 > lastDownloadedAt && (
-                <p style={styles.stalenessWarning}>
-                  <span title="This photo was updated on Flickr after your last download">⚠</span> Updated since last download
-                </p>
+                <div style={styles.stalenessWarning}>
+                  <span style={styles.stalenessIcon}>⚠</span>
+                  <span>Updated on Flickr since your last download</span>
+                </div>
               )}
             </div>
           )}
@@ -869,7 +876,7 @@ const styles: Record<string, React.CSSProperties> = {
   downloadBtn: {
     width: '100%',
     padding: '9px',
-    backgroundColor: '#FF0084',
+    backgroundColor: 'var(--ff-pink-action)',
     color: '#fff',
     border: 'none',
     borderRadius: '7px',
@@ -886,7 +893,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#FF0084',
+    backgroundColor: 'var(--ff-pink)',
     borderRadius: '3px',
     transition: 'width 0.2s ease',
   },
@@ -921,7 +928,7 @@ const styles: Record<string, React.CSSProperties> = {
   finderBtn: {
     flex: 1,
     padding: '8px',
-    backgroundColor: '#FF0084',
+    backgroundColor: 'var(--ff-pink-action)',
     color: '#fff',
     border: 'none',
     borderRadius: '6px',
@@ -988,8 +995,8 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: 2,
   },
   lastDownloaded: {
-    fontSize: '11px',
-    color: '#94a3b8',
+    fontSize: '12px',
+    color: 'var(--ff-text-secondary)',
     margin: 0,
   },
   resetRecordBtn: {
@@ -1003,11 +1010,22 @@ const styles: Record<string, React.CSSProperties> = {
     textDecorationStyle: 'dotted' as const,
   },
   stalenessWarning: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    backgroundColor: '#fffbeb',
+    border: '1px solid #fcd34d',
+    borderRadius: '6px',
+    padding: '6px 10px',
     fontSize: '12px',
     fontWeight: 600,
-    color: '#f59e0b',
+    color: '#b45309',
     margin: '0 0 6px',
     textAlign: 'center' as const,
+  },
+  stalenessIcon: {
+    fontSize: '14px',
+    flexShrink: 0,
   },
   trackLabel: {
     display: 'flex',

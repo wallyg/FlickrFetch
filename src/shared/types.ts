@@ -73,8 +73,9 @@ export interface BatchProgress {
   queuedCount?: number   // how many batches are waiting behind this one
   queuedAlbums?: { id: string; title: string; photoCount?: number; videoCount?: number }[]
   error?: string
-  skippedCount?: number       // collision skips (file already exists, behavior = skip)
-  failedCount?: number        // photos that errored and were skipped
+  skippedCount?: number                   // collision skips (file already exists, behavior = skip)
+  skippedSizeUnavailableCount?: number    // photos where the requested size doesn't exist on Flickr
+  failedCount?: number                    // photos that errored and were skipped
   smartFilteredCount?: number // photos excluded by smart filter (Never Downloaded / Download Updated)
 }
 

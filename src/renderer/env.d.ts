@@ -39,6 +39,7 @@ declare global {
       onBatchProgress: (cb: (progress: BatchProgress) => void) => () => void
       onShowAbout: (cb: (data: { version: string }) => void) => () => void
       onOpenSettings: (cb: () => void) => () => void
+      onOpenHistory: (cb: () => void) => () => void
       onMenuSignOut: (cb: () => void) => () => void
       getBatchLog: () => Promise<BatchLogEntry[]>
       getPhotoRecord: (photoId: string) => Promise<PhotoDownloadRecord | null>

@@ -10,17 +10,17 @@ const SIZE_LABELS: Record<string, string> = {
   square: 'Square',
 }
 
-// Fields in photo detail panel order (matches the right-panel metadata order)
+// Fields in Settings → Metadata tab order
 const META_FIELDS: { key: keyof MetadataSettings; label: string }[] = [
   { key: 'embedTitle',       label: 'Title' },
+  { key: 'embedDescription', label: 'Description' },
+  { key: 'embedTags',        label: 'Tags' },
   { key: 'embedDateTaken',   label: 'Date Taken' },
   { key: 'embedCreator',     label: 'Creator' },
   { key: 'embedGps',         label: 'GPS Location' },
-  { key: 'embedDescription', label: 'Description' },
-  { key: 'embedTags',        label: 'Tags' },
   { key: 'embedLicense',     label: 'CC License' },
-  { key: 'embedPhotoUrl',    label: 'Photo URL' },
-  { key: 'embedPhotoId',     label: 'Photo ID' },
+  { key: 'embedPhotoUrl',    label: 'Photo Page URL' },
+  { key: 'embedPhotoId',     label: 'Flickr Photo ID' },
 ]
 
 export interface PendingDownload {
@@ -77,32 +77,46 @@ export default function DownloadConfirmModal({ pending, settingsKey, onCancel, o
           </p>
           {pending.note && <p style={s.countNote}>{pending.note}</p>}
 
-          <div style={s.settingsRow}>
-            <span style={s.settingLabel}>Quality</span>
-            <span style={s.settingValue}>{quality}</span>
-          </div>
-          {folderDisplay && (
+          <div style={s.summaryCard}>
             <div style={s.settingsRow}>
-              <span style={s.settingLabel}>Save to</span>
-              <span style={s.settingValue} title={folder}>{folderDisplay}</span>
+              <span style={s.settingLabel}>Quality</span>
+              <span style={s.settingValue}>{quality}</span>
             </div>
-          )}
+            {folderDisplay && (
+              <div style={{ ...s.settingsRow, marginBottom: 0 }}>
+                <span style={s.settingLabel}>Save to</span>
+                <span style={s.settingValue} title={folder}>{folderDisplay}</span>
+              </div>
+            )}
+          </div>
 
           <div style={s.metaSection}>
             <p style={s.metaHeading}>Metadata embedding</p>
-            {meta ? (
-              <div style={s.metaGrid}>
-                {META_FIELDS.map(({ key, label }) => {
-                  const on = meta[key] as boolean
-                  return (
-                    <div key={key} style={s.metaItem}>
-                      <span style={{ ...s.metaCheck, color: on ? '#27ae60' : '#ccc' }}>{on ? '✓' : '✗'}</span>
-                      <span style={{ ...s.metaLabel, color: on ? '#333' : '#bbb' }}>{label}</span>
+            {meta ? (() => {
+              const onFields = META_FIELDS.filter(f => meta[f.key] as boolean)
+              const offFields = META_FIELDS.filter(f => !(meta[f.key] as boolean))
+              return (
+                <>
+                  {onFields.length > 0 ? (
+                    <div style={s.metaGrid}>
+                      {onFields.map(({ key, label }) => (
+                        <div key={key} style={s.metaItem}>
+                          <span style={{ ...s.metaCheck, color: '#27ae60' }}>✓</span>
+                          <span style={{ ...s.metaLabel, color: '#222' }}>{label}</span>
+                        </div>
+                      ))}
                     </div>
-                  )
-                })}
-              </div>
-            ) : (
+                  ) : (
+                    <p style={{ fontSize: '12px', color: '#bbb', margin: '0 0 4px' }}>None</p>
+                  )}
+                  {offFields.length > 0 && (
+                    <p style={s.offFields}>
+                      Not embedding: {offFields.map(f => f.label).join(', ')}
+                    </p>
+                  )}
+                </>
+              )
+            })() : (
               <p style={{ fontSize: '13px', color: '#bbb', margin: 0 }}>Loading…</p>
             )}
           </div>
@@ -114,7 +128,7 @@ export default function DownloadConfirmModal({ pending, settingsKey, onCancel, o
               type="checkbox"
               checked={track}
               onChange={e => setTrack(e.target.checked)}
-              style={{ marginRight: 6, cursor: 'pointer' }}
+              style={{ marginRight: 8, cursor: 'pointer', width: 15, height: 15 }}
             />
             Track this download in history
           </label>
@@ -147,47 +161,51 @@ const s: Record<string, React.CSSProperties> = {
     padding: '20px 20px 0',
   },
   title: {
-    margin: 0, fontSize: '16px', fontWeight: '700', color: '#1B2946',
+    margin: 0, fontSize: '16px', fontWeight: '700', color: 'var(--ff-navy)',
   },
   closeBtn: {
     background: 'none', border: 'none', fontSize: '15px', color: '#aaa',
     cursor: 'pointer', padding: '0 4px', lineHeight: 1,
   },
   body: {
-    padding: '14px 20px 0',
+    padding: '16px 20px 0',
   },
   batchTitle: {
-    margin: '0 0 6px', fontSize: '14px', fontWeight: '600', color: '#111',
+    margin: '0 0 4px', fontSize: '14px', fontWeight: '600', color: '#111',
   },
   countLine: {
     margin: '0 0 4px', fontSize: '13px', color: '#666',
   },
   countNote: {
-    margin: '0 0 10px', fontSize: '11px', color: '#999', fontStyle: 'italic' as const,
+    margin: '0 0 0', fontSize: '11px', color: '#999', fontStyle: 'italic' as const,
+  },
+  summaryCard: {
+    backgroundColor: '#f8f7f5', borderRadius: '8px', padding: '10px 12px',
+    marginTop: '12px',
   },
   settingsRow: {
-    display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '5px',
+    display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '6px',
   },
   settingLabel: {
     fontSize: '12px', color: '#999', width: '52px', flexShrink: 0,
   },
   settingValue: {
-    fontSize: '13px', color: '#444', overflow: 'hidden',
+    fontSize: '14px', color: '#111', fontWeight: '500', overflow: 'hidden',
     textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const, flex: 1,
   },
   metaSection: {
-    marginTop: '14px', borderTop: '1px solid #f0ede8', paddingTop: '12px',
+    marginTop: '16px', borderTop: '1px solid #f0ede8', paddingTop: '12px',
   },
   metaHeading: {
-    margin: '0 0 8px', fontSize: '11px', fontWeight: '600', color: '#999',
+    margin: '0 0 10px', fontSize: '11px', fontWeight: '600', color: '#999',
     textTransform: 'uppercase' as const, letterSpacing: '0.5px',
   },
   metaGrid: {
-    display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gridAutoFlow: 'column',
-    gridTemplateRows: 'repeat(3, auto)', gap: '5px 8px', paddingBottom: '4px',
+    display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
+    gap: '6px 8px', marginBottom: '8px',
   },
   metaItem: {
-    display: 'flex', alignItems: 'center', gap: '4px',
+    display: 'flex', alignItems: 'center', gap: '5px',
   },
   metaCheck: {
     fontSize: '12px', fontWeight: '700', flexShrink: 0,
@@ -195,11 +213,15 @@ const s: Record<string, React.CSSProperties> = {
   metaLabel: {
     fontSize: '12px',
   },
+  offFields: {
+    margin: '0', fontSize: '11px', color: '#bbb', lineHeight: '1.4',
+  },
   trackRow: {
-    padding: '10px 20px 0',
+    padding: '14px 20px 0',
   },
   trackLabel: {
-    display: 'flex', alignItems: 'center', fontSize: 12, color: '#6b7280', cursor: 'pointer',
+    display: 'flex', alignItems: 'center', fontSize: 13, color: '#374151',
+    cursor: 'pointer', fontWeight: '500',
   },
   footer: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -209,7 +231,7 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex', gap: '8px',
   },
   settingsLink: {
-    background: 'none', border: 'none', fontSize: '13px', color: '#0063DC',
+    background: 'none', border: 'none', fontSize: '13px', color: 'var(--ff-blue)',
     cursor: 'pointer', padding: 0,
   },
   cancelBtn: {
@@ -217,7 +239,7 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: '13px', color: '#555', cursor: 'pointer', padding: '7px 16px',
   },
   confirmBtn: {
-    background: '#0063DC', border: 'none', borderRadius: '7px',
+    background: 'var(--ff-pink-action)', border: 'none', borderRadius: '7px',
     fontSize: '13px', color: '#fff', fontWeight: '600', cursor: 'pointer',
     padding: '7px 20px',
   },

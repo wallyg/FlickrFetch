@@ -186,7 +186,7 @@ const styles: Record<string, React.CSSProperties> = {
   heading: {
     fontSize: '17px',
     fontWeight: '700',
-    color: '#1B2946',
+    color: 'var(--ff-navy)',
     margin: 0,
     lineHeight: 1.3
   },
@@ -226,7 +226,7 @@ const styles: Record<string, React.CSSProperties> = {
   whatsNewLink: {
     fontSize: '12px',
     fontWeight: '600',
-    color: '#0063DC',
+    color: 'var(--ff-blue)',
     cursor: 'pointer',
     textDecoration: 'none'
   } as React.CSSProperties,
@@ -251,7 +251,7 @@ const styles: Record<string, React.CSSProperties> = {
   linkLabel: {
     fontSize: '12px',
     fontWeight: '600',
-    color: '#0063DC'
+    color: 'var(--ff-blue)'
   },
   linkSub: {
     fontSize: '10px',

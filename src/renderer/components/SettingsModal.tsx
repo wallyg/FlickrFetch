@@ -21,8 +21,8 @@ function RadioDot({ active, size = 16 }: { active: boolean; size?: number }): Re
   const r = size / 2 - 1.25
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ flexShrink: 0, marginTop: size === 16 ? '1px' : '0' }}>
-      <circle cx={size / 2} cy={size / 2} r={r} fill="white" stroke={active ? '#FF0084' : '#ccc'} strokeWidth="1.5" />
-      {active && <circle cx={size / 2} cy={size / 2} r={r - 3.5} fill="#FF0084" />}
+      <circle cx={size / 2} cy={size / 2} r={r} fill="white" stroke={active ? 'var(--ff-pink)' : '#ccc'} strokeWidth="1.5" />
+      {active && <circle cx={size / 2} cy={size / 2} r={r - 3.5} fill="var(--ff-pink)" />}
     </svg>
   )
 }
@@ -47,7 +47,7 @@ function Toggle({ value, onChange, label, desc }: { value: boolean; onChange: (v
         <span style={s.toggleLabel}>{label}</span>
         {desc && <span style={s.toggleDesc}>{desc}</span>}
       </div>
-      <div style={{ ...s.toggle, backgroundColor: value ? '#FF0084' : '#ccc' }}>
+      <div style={{ ...s.toggle, backgroundColor: value ? 'var(--ff-pink)' : '#ccc' }}>
         <div style={{ ...s.toggleKnob, transform: value ? 'translateX(20px)' : 'none' }} />
       </div>
     </div>
@@ -111,9 +111,8 @@ export default function SettingsModal({ onClose }: { onClose: () => void }): Rea
   const [charSubstitution, setCharSubstitution] = useState(false)
   const [sizeTokenPos, setSizeTokenPos] = useState<PartPosition>('off')
 
-  const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
   const [showFade, setShowFade] = useState(false)
+  const hasLoadedRef = useRef(false)
   const [confirmReset, setConfirmReset] = useState(false)
   const [resetDone, setResetDone] = useState(false)
   const contentRef = useRef<HTMLDivElement>(null)
@@ -172,7 +171,6 @@ export default function SettingsModal({ onClose }: { onClose: () => void }): Rea
     const defaults = await window.flickrAPI.resetSettings()
     applySettings(defaults)
     setConfirmReset(false)
-    setSaved(false)
     setResetDone(true)
     setTimeout(() => setResetDone(false), 2000)
   }, [applySettings])
@@ -180,8 +178,41 @@ export default function SettingsModal({ onClose }: { onClose: () => void }): Rea
   useEffect(() => {
     window.flickrAPI.getSettings().then((settings: AppSettings) => {
       applySettings(settings)
+      hasLoadedRef.current = true
     })
   }, [])
+
+  // Auto-save with 300ms debounce whenever any setting changes after initial load
+  useEffect(() => {
+    if (!hasLoadedRef.current) return
+    const timer = setTimeout(() => {
+      const fileNaming: FileNamingConfig = {
+        core, separator: sep,
+        date: { position: datePos, format: dateFmt },
+        sequence: { position: seqPos },
+        customText: { position: customPos, text: customText.trim() },
+        caseTransform,
+        charSubstitution,
+        sizeToken: { position: sizeTokenPos }
+      }
+      const metadata: MetadataSettings = {
+        embedTitle, embedDescription, embedTags, embedDateTaken, embedCreator,
+        embedGps, stripGpsFromPrivate, embedLicense, embedPhotoUrl, embedPhotoId
+      }
+      window.flickrAPI.setSettings({
+        fileNaming, downloadFolder, showDockProgress, notifyOnComplete,
+        conflictBehavior, downloadSize, openFinderOnComplete, metadata
+      })
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [
+    core, sep, datePos, dateFmt, seqPos, customPos, customText,
+    caseTransform, charSubstitution, sizeTokenPos, downloadFolder,
+    showDockProgress, notifyOnComplete, conflictBehavior, downloadSize,
+    openFinderOnComplete, embedTitle, embedDescription, embedTags,
+    embedDateTaken, embedCreator, embedGps, stripGpsFromPrivate,
+    embedLicense, embedPhotoUrl, embedPhotoId
+  ])
 
   const previewTitle = 'NYC - Highline'
   const previewId = '12345678'
@@ -220,36 +251,7 @@ export default function SettingsModal({ onClose }: { onClose: () => void }): Rea
 
   const handlePickFolder = async (): Promise<void> => {
     const folder = await window.flickrAPI.pickFolder()
-    if (folder) { setDownloadFolder(folder); setSaved(false) }
-  }
-
-  const handleSave = async (): Promise<void> => {
-    setSaving(true)
-    const fileNaming: FileNamingConfig = {
-      core, separator: sep,
-      date: { position: datePos, format: dateFmt },
-      sequence: { position: seqPos },
-      customText: { position: customPos, text: customText.trim() },
-      caseTransform,
-      charSubstitution,
-      sizeToken: { position: sizeTokenPos }
-    }
-    const metadata: MetadataSettings = {
-      embedTitle, embedDescription, embedTags, embedDateTaken, embedCreator,
-      embedGps, stripGpsFromPrivate, embedLicense, embedPhotoUrl, embedPhotoId
-    }
-    await window.flickrAPI.setSettings({
-      fileNaming,
-      downloadFolder,
-      showDockProgress,
-      notifyOnComplete,
-      conflictBehavior,
-      downloadSize,
-      openFinderOnComplete,
-      metadata
-    })
-    setSaving(false)
-    setSaved(true)
+    if (folder) { setDownloadFolder(folder) }
   }
 
   return (
@@ -288,13 +290,13 @@ export default function SettingsModal({ onClose }: { onClose: () => void }): Rea
                 <div style={s.toggleList}>
                   <Toggle
                     value={showDockProgress}
-                    onChange={v => { setShowDockProgress(v); setSaved(false) }}
+                    onChange={v => { setShowDockProgress(v) }}
                     label="Show dock progress"
                     desc="Animate the dock icon during downloads"
                   />
                   <Toggle
                     value={notifyOnComplete}
-                    onChange={v => { setNotifyOnComplete(v); setSaved(false) }}
+                    onChange={v => { setNotifyOnComplete(v) }}
                     label="Notify when complete"
                     desc="macOS notification when a batch finishes"
                   />
@@ -336,7 +338,7 @@ export default function SettingsModal({ onClose }: { onClose: () => void }): Rea
                     <div
                       key={val}
                       style={{ ...s.radioRow, ...(downloadSize === val ? s.radioRowActive : {}) }}
-                      onClick={() => { setDownloadSize(val); setSaved(false) }}
+                      onClick={() => { setDownloadSize(val) }}
                       role="radio" aria-checked={downloadSize === val}
                     >
                       <RadioDot active={downloadSize === val} />
@@ -364,7 +366,7 @@ export default function SettingsModal({ onClose }: { onClose: () => void }): Rea
                     <div
                       key={val}
                       style={{ ...s.radioRow, ...(conflictBehavior === val ? s.radioRowActive : {}) }}
-                      onClick={() => { setConflictBehavior(val); setSaved(false) }}
+                      onClick={() => { setConflictBehavior(val) }}
                       role="radio" aria-checked={conflictBehavior === val}
                     >
                       <RadioDot active={conflictBehavior === val} />
@@ -382,8 +384,8 @@ export default function SettingsModal({ onClose }: { onClose: () => void }): Rea
                 <div style={s.toggleList}>
                   <Toggle
                     value={openFinderOnComplete}
-                    onChange={v => { setOpenFinderOnComplete(v); setSaved(false) }}
-                    label="Open Finder when done"
+                    onChange={v => { setOpenFinderOnComplete(v) }}
+                    label="Show in Finder when done"
                     desc="Reveal the downloaded files in Finder after a batch completes"
                   />
                 </div>
@@ -410,7 +412,7 @@ export default function SettingsModal({ onClose }: { onClose: () => void }): Rea
                     <div
                       key={val}
                       style={{ ...s.coreOption, ...(core === val ? s.coreOptionActive : {}) }}
-                      onClick={() => { setCore(val); setSaved(false) }}
+                      onClick={() => { setCore(val) }}
                       role="radio" aria-checked={core === val}
                     >
                       <RadioDot active={core === val} />
@@ -434,7 +436,7 @@ export default function SettingsModal({ onClose }: { onClose: () => void }): Rea
                     <button
                       key={v}
                       style={{ ...s.sepPill, ...(sep === v ? s.sepPillActive : {}) }}
-                      onClick={() => { setSep(v); setSaved(false) }}
+                      onClick={() => { setSep(v) }}
                     >
                       {v === ' ' ? 'Space' : v}
                     </button>
@@ -454,12 +456,12 @@ export default function SettingsModal({ onClose }: { onClose: () => void }): Rea
                   <div style={s.optLabelGroup}>
                     <span style={s.optName}>Date stamp</span>
                   </div>
-                  <PosToggle value={datePos} onChange={v => { setDatePos(v); setSaved(false) }} />
+                  <PosToggle value={datePos} onChange={v => { setDatePos(v) }} />
                 </div>
                 {datePos !== 'off' && (
                   <div style={s.subOpts}>
                     {(['YYYY-MM-DD', 'YYYY-MM-DD HH-MM-SS', 'YYYY.MM.DD', 'YYYY.MM.DD HH.MM.SS'] as DateFormat[]).map(f => (
-                      <div key={f} style={s.subOptRow} onClick={() => { setDateFmt(f); setSaved(false) }} role="radio" aria-checked={dateFmt === f}>
+                      <div key={f} style={s.subOptRow} onClick={() => { setDateFmt(f) }} role="radio" aria-checked={dateFmt === f}>
                         <RadioDot active={dateFmt === f} size={14} />
                         <span style={s.fmtLabel}>{f}</span>
                         <span style={s.fmtExample}>{DATE_EXAMPLES[f]}</span>
@@ -474,7 +476,7 @@ export default function SettingsModal({ onClose }: { onClose: () => void }): Rea
                     <span style={s.optName}>Auto-number</span>
                     <InfoTip text="001, 002, 003… counter that resets at the start of each batch." />
                   </div>
-                  <PosToggle value={seqPos} onChange={v => { setSeqPos(v); setSaved(false) }} />
+                  <PosToggle value={seqPos} onChange={v => { setSeqPos(v) }} />
                 </div>
 
                 {/* Custom label */}
@@ -482,14 +484,14 @@ export default function SettingsModal({ onClose }: { onClose: () => void }): Rea
                   <div style={s.optLabelGroup}>
                     <span style={s.optName}>Custom label</span>
                   </div>
-                  <PosToggle value={customPos} onChange={v => { setCustomPos(v); setSaved(false) }} />
+                  <PosToggle value={customPos} onChange={v => { setCustomPos(v) }} />
                 </div>
                 {customPos !== 'off' && (
                   <div style={s.subOpts}>
                     <input
                       type="text"
                       value={customText}
-                      onChange={e => { setCustomText(e.target.value); setSaved(false) }}
+                      onChange={e => { setCustomText(e.target.value) }}
                       placeholder="e.g. Vacation, Japan 2024…"
                       style={s.textInput}
                     />
@@ -502,7 +504,7 @@ export default function SettingsModal({ onClose }: { onClose: () => void }): Rea
                     <span style={s.optName}>Size indicator</span>
                     <InfoTip direction="up" text="Adds the download size to the filename: orig, xl, lg, med, sm, sq. Useful when downloading different sizes of the same photo." />
                   </div>
-                  <PosToggle value={sizeTokenPos} onChange={v => { setSizeTokenPos(v); setSaved(false) }} />
+                  <PosToggle value={sizeTokenPos} onChange={v => { setSizeTokenPos(v) }} />
                 </div>
               </div>
 
@@ -527,7 +529,7 @@ export default function SettingsModal({ onClose }: { onClose: () => void }): Rea
                           ...(caseTransform === v ? s.posBtnActive : {}),
                           ...(idx === arr.length - 1 ? { borderRight: 'none' } : {})
                         }}
-                        onClick={() => { setCaseTransform(v); setSaved(false) }}
+                        onClick={() => { setCaseTransform(v) }}
                       >
                         {v === 'none' ? 'None' : v === 'lowercase' ? 'lower' : 'UPPER'}
                       </button>
@@ -544,11 +546,11 @@ export default function SettingsModal({ onClose }: { onClose: () => void }): Rea
                   <div style={s.posGroup}>
                     <button
                       style={{ ...s.posBtn, ...(charSubstitution ? {} : s.posBtnActive) }}
-                      onClick={() => { setCharSubstitution(false); setSaved(false) }}
+                      onClick={() => { setCharSubstitution(false) }}
                     >Off</button>
                     <button
                       style={{ ...s.posBtn, borderRight: 'none', ...(charSubstitution ? s.posBtnActive : {}) }}
-                      onClick={() => { setCharSubstitution(true); setSaved(false) }}
+                      onClick={() => { setCharSubstitution(true) }}
                     >On</button>
                   </div>
                 </div>
@@ -582,8 +584,8 @@ export default function SettingsModal({ onClose }: { onClose: () => void }): Rea
                         <InfoTip text={tip} />
                       </div>
                       <div style={s.posGroup}>
-                        <button style={{ ...s.posBtn, ...(!val ? s.posBtnActive : {}) }} onClick={() => { setter(false); setSaved(false) }}>Off</button>
-                        <button style={{ ...s.posBtn, borderRight: 'none', ...(val ? s.posBtnActive : {}) }} onClick={() => { setter(true); setSaved(false) }}>On</button>
+                        <button style={{ ...s.posBtn, ...(!val ? s.posBtnActive : {}) }} onClick={() => { setter(false) }}>Off</button>
+                        <button style={{ ...s.posBtn, borderRight: 'none', ...(val ? s.posBtnActive : {}) }} onClick={() => { setter(true) }}>On</button>
                       </div>
                     </div>
                   )
@@ -598,8 +600,8 @@ export default function SettingsModal({ onClose }: { onClose: () => void }): Rea
                     <InfoTip text="Embeds GPS latitude and longitude from Flickr's location data, if available." />
                   </div>
                   <div style={s.posGroup}>
-                    <button style={{ ...s.posBtn, ...(!embedGps ? s.posBtnActive : {}) }} onClick={() => { setEmbedGps(false); setSaved(false) }}>Off</button>
-                    <button style={{ ...s.posBtn, borderRight: 'none', ...(embedGps ? s.posBtnActive : {}) }} onClick={() => { setEmbedGps(true); setSaved(false) }}>On</button>
+                    <button style={{ ...s.posBtn, ...(!embedGps ? s.posBtnActive : {}) }} onClick={() => { setEmbedGps(false) }}>Off</button>
+                    <button style={{ ...s.posBtn, borderRight: 'none', ...(embedGps ? s.posBtnActive : {}) }} onClick={() => { setEmbedGps(true) }}>On</button>
                   </div>
                 </div>
                 {embedGps && (
@@ -609,8 +611,8 @@ export default function SettingsModal({ onClose }: { onClose: () => void }): Rea
                       <InfoTip text="When a photo is private, skip GPS even if GPS embedding is on. Useful for location privacy." />
                     </div>
                     <div style={s.posGroup}>
-                      <button style={{ ...s.posBtn, ...(!stripGpsFromPrivate ? s.posBtnActive : {}) }} onClick={() => { setStripGpsFromPrivate(false); setSaved(false) }}>Off</button>
-                      <button style={{ ...s.posBtn, borderRight: 'none', ...(stripGpsFromPrivate ? s.posBtnActive : {}) }} onClick={() => { setStripGpsFromPrivate(true); setSaved(false) }}>On</button>
+                      <button style={{ ...s.posBtn, ...(!stripGpsFromPrivate ? s.posBtnActive : {}) }} onClick={() => { setStripGpsFromPrivate(false) }}>Off</button>
+                      <button style={{ ...s.posBtn, borderRight: 'none', ...(stripGpsFromPrivate ? s.posBtnActive : {}) }} onClick={() => { setStripGpsFromPrivate(true) }}>On</button>
                     </div>
                   </div>
                 )}
@@ -636,8 +638,8 @@ export default function SettingsModal({ onClose }: { onClose: () => void }): Rea
                         <InfoTip text={tip} />
                       </div>
                       <div style={s.posGroup}>
-                        <button style={{ ...s.posBtn, ...(!val ? s.posBtnActive : {}) }} onClick={() => { setter(false); setSaved(false) }}>Off</button>
-                        <button style={{ ...s.posBtn, borderRight: 'none', ...(val ? s.posBtnActive : {}) }} onClick={() => { setter(true); setSaved(false) }}>On</button>
+                        <button style={{ ...s.posBtn, ...(!val ? s.posBtnActive : {}) }} onClick={() => { setter(false) }}>Off</button>
+                        <button style={{ ...s.posBtn, borderRight: 'none', ...(val ? s.posBtnActive : {}) }} onClick={() => { setter(true) }}>On</button>
                       </div>
                     </div>
                   )
@@ -680,14 +682,7 @@ export default function SettingsModal({ onClose }: { onClose: () => void }): Rea
             )}
           </div>
           <div style={s.footerRight}>
-            <button style={s.cancelBtn} onClick={onClose}>Cancel</button>
-            <button
-              style={{ ...s.saveBtn, ...(saving ? s.saveBtnDisabled : {}) }}
-              onClick={handleSave}
-              disabled={saving}
-            >
-              {saved ? '✓ Saved' : saving ? 'Saving…' : 'Save'}
-            </button>
+            <button style={s.cancelBtn} onClick={onClose}>Done</button>
           </div>
         </div>
       </div>
@@ -703,7 +698,7 @@ const s: Record<string, React.CSSProperties> = {
   closeBtn: { background: 'none', border: 'none', fontSize: '16px', color: '#888', cursor: 'pointer', padding: '4px' },
   tabBar: { display: 'flex', padding: '0 24px', marginTop: '16px', borderBottom: '1px solid #e8e4de', flexShrink: 0 },
   tabBtn: { background: 'none', border: 'none', borderBottom: '2px solid transparent', padding: '8px 14px', fontSize: '13px', fontWeight: '500', color: '#888', cursor: 'pointer', marginBottom: '-1px', transition: 'color 0.15s' },
-  tabBtnActive: { color: '#FF0084', borderBottom: '2px solid #FF0084' },
+  tabBtnActive: { color: 'var(--ff-pink)', borderBottom: '2px solid var(--ff-pink)' },
   content: { overflowY: 'auto', flex: 1 },
   section: { padding: '18px 24px' },
   sectionRow: { display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' },
@@ -722,7 +717,7 @@ const s: Record<string, React.CSSProperties> = {
   // Radio option list
   optionList: { display: 'flex', flexDirection: 'column' as const, gap: '6px' },
   radioRow: { display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '9px 12px', borderRadius: '8px', boxShadow: 'inset 0 0 0 1.5px #dedad4', background: '#fafaf8', cursor: 'pointer', outline: 'none' },
-  radioRowActive: { boxShadow: 'inset 0 0 0 2px #FF0084', background: 'rgba(255,0,132,0.04)' },
+  radioRowActive: { boxShadow: 'inset 0 0 0 2px var(--ff-pink)', background: 'rgba(255,0,132,0.04)' },
   radioLabel: { fontSize: '13px', fontWeight: '500', color: '#222' },
   radioDesc: { fontSize: '11px', color: '#999', marginTop: '1px' },
 
@@ -738,18 +733,18 @@ const s: Record<string, React.CSSProperties> = {
   // Core grid
   coreGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' },
   coreOption: { display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 11px', borderRadius: '8px', boxShadow: 'inset 0 0 0 1.5px #dedad4', background: '#fafaf8', cursor: 'pointer', outline: 'none' },
-  coreOptionActive: { boxShadow: 'inset 0 0 0 2px #FF0084', background: 'rgba(255,0,132,0.05)' },
+  coreOptionActive: { boxShadow: 'inset 0 0 0 2px var(--ff-pink)', background: 'rgba(255,0,132,0.05)' },
   radioHidden: { display: 'none' as const },
   radioCircle: { width: '16px', height: '16px', borderRadius: '50%', border: '1.5px solid #ccc', flexShrink: 0, backgroundColor: '#fff', transition: 'border-color 0.1s, box-shadow 0.1s', marginTop: '1px' },
   radioCircleSm: { width: '14px', height: '14px', borderRadius: '50%', border: '1.5px solid #ccc', flexShrink: 0, backgroundColor: '#fff', transition: 'border-color 0.1s, box-shadow 0.1s' },
-  radioCircleActive: { borderColor: '#FF0084', boxShadow: 'inset 0 0 0 4px #FF0084' },
+  radioCircleActive: { borderColor: 'var(--ff-pink)', boxShadow: 'inset 0 0 0 4px var(--ff-pink)' },
   coreLabel: { fontSize: '13px', fontWeight: '500', color: '#333' },
   coreExample: { fontSize: '11px', color: '#888', fontFamily: 'monospace', marginTop: '1px' },
 
   // Separator
   sepRow: { display: 'flex', gap: '6px', flexWrap: 'wrap' as const },
   sepPill: { padding: '5px 16px', borderRadius: '20px', border: '1.5px solid #ddd', background: '#fafaf8', fontSize: '13px', fontFamily: 'monospace', color: '#555', cursor: 'pointer' },
-  sepPillActive: { borderColor: '#FF0084', background: 'rgba(255,0,132,0.06)', color: '#FF0084', fontWeight: '600' },
+  sepPillActive: { borderColor: 'var(--ff-pink)', background: 'rgba(255,0,132,0.06)', color: 'var(--ff-pink)', fontWeight: '600' },
 
   // Optional parts
   optRow: { display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 11px', borderRadius: '8px', border: '1px solid #eeebe6', background: '#fafaf8' },
@@ -757,7 +752,7 @@ const s: Record<string, React.CSSProperties> = {
   optName: { fontSize: '13px', fontWeight: '500', color: '#333' },
   posGroup: { display: 'flex', border: '1px solid #d8d4ce', borderRadius: '6px', overflow: 'hidden', flexShrink: 0 },
   posBtn: { background: 'none', border: 'none', borderRight: '1px solid #d8d4ce', padding: '4px 10px', fontSize: '12px', color: '#777', cursor: 'pointer', whiteSpace: 'nowrap' as const },
-  posBtnActive: { background: '#FF0084', color: '#fff', fontWeight: '600' },
+  posBtnActive: { background: 'var(--ff-pink)', color: '#fff', fontWeight: '600' },
   subOpts: { margin: '1px 0 0', padding: '10px 12px', background: 'rgba(255,0,132,0.04)', border: '1px solid rgba(255,0,132,0.12)', borderTop: 'none', borderRadius: '0 0 8px 8px', display: 'flex', flexDirection: 'column' as const, gap: '7px' },
   subOptRow: { display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' },
   fmtLabel: { flex: 1, fontSize: '12px', color: '#333' },
@@ -785,6 +780,6 @@ const s: Record<string, React.CSSProperties> = {
   resetConfirmBtn: { background: '#d44', border: 'none', borderRadius: '6px', padding: '4px 10px', fontSize: '12px', fontWeight: '600', color: '#fff', cursor: 'pointer' },
   resetDoneText: { fontSize: '12px', color: '#888' },
   cancelBtn: { background: 'none', border: '1px solid #ccc', borderRadius: '8px', padding: '10px 20px', fontSize: '14px', color: '#555', cursor: 'pointer' },
-  saveBtn: { backgroundColor: '#FF0084', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px 28px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' },
+  saveBtn: { backgroundColor: 'var(--ff-pink-action)', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px 28px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' },
   saveBtnDisabled: { opacity: 0.6, cursor: 'not-allowed' },
 }

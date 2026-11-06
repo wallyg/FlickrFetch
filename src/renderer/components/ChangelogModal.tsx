@@ -149,7 +149,7 @@ const styles: Record<string, React.CSSProperties> = {
   latestBadge: {
     fontSize: '10px',
     fontWeight: '600',
-    color: '#FF0084',
+    color: 'var(--ff-pink)',
     backgroundColor: 'rgba(255,0,132,0.1)',
     borderRadius: '4px',
     padding: '1px 6px',
