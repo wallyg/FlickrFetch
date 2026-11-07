@@ -114,6 +114,7 @@ export default function DiscoverExplore({ onDownload }: Props): React.JSX.Elemen
           count={selectedIds.size}
           total={photos.length}
           onDownload={handleDownloadSelected}
+          onClearSelection={() => setSelectedIds(new Set())}
           onCancel={() => { setSelectMode(false); setSelectedIds(new Set()) }}
           downloading={downloading}
         />
@@ -217,34 +218,51 @@ interface SelectBarProps {
   total: number
   onDownload: () => void
   onCancel: () => void
+  onClearSelection: () => void
   downloading?: boolean
 }
 
-export function DiscoverSelectBar({ count, total, onDownload, onCancel, downloading }: SelectBarProps): React.JSX.Element {
+export function DiscoverSelectBar({ count, onDownload, onCancel, onClearSelection, downloading }: SelectBarProps): React.JSX.Element {
   return (
     <div style={sb.bar}>
-      <span style={sb.label}>{count} of {total} selected</span>
-      <div style={sb.actions}>
-        <button style={sb.cancelBtn} onClick={onCancel}>Cancel</button>
-        <button style={{ ...sb.downloadBtn, ...(count === 0 || downloading ? sb.downloadBtnDisabled : {}) }} disabled={count === 0 || downloading} onClick={onDownload}>
-          {downloading ? 'Queueing…' : `Download ${count}`}
-        </button>
-      </div>
+      <span style={sb.label}>{count} photos selected</span>
+      {count > 0 && (
+        <button style={sb.clearBtn} onClick={onClearSelection}>Clear Selection</button>
+      )}
+      <div style={{ flex: 1 }} />
+      <button
+        style={{ ...sb.downloadBtn, ...(count === 0 || downloading ? sb.downloadBtnDisabled : {}) }}
+        disabled={count === 0 || downloading}
+        onClick={onDownload}
+      >
+        {downloading ? 'Queueing…' : `↓ Download Selected (${count})`}
+      </button>
+      <button style={sb.cancelBtn} onClick={onCancel}>Cancel</button>
     </div>
   )
 }
 
 const sb: Record<string, React.CSSProperties> = {
   bar: {
-    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    display: 'flex', alignItems: 'center',
     gap: '10px', padding: '8px 0',
     borderBottom: '1px solid #e8e4de', marginBottom: '4px',
   },
-  label: { fontSize: '14px', color: '#444', fontWeight: 500 },
-  actions: { display: 'flex', gap: '8px' },
-  cancelBtn: { padding: '7px 16px', borderRadius: '8px', border: '1px solid #ddd', background: '#fff', cursor: 'pointer', fontSize: '13px', color: '#444' },
-  downloadBtn: { padding: '7px 16px', borderRadius: '8px', border: 'none', background: '#FF0084', color: '#fff', cursor: 'pointer', fontSize: '13px', fontWeight: 500 },
-  downloadBtnDisabled: { opacity: 0.4, cursor: 'not-allowed' },
+  label: { fontSize: '13px', color: '#555' },
+  clearBtn: {
+    background: 'none', border: '1px solid #ccc', borderRadius: '6px',
+    padding: '5px 12px', fontSize: '13px', color: '#555', cursor: 'pointer', flexShrink: 0,
+  },
+  downloadBtn: {
+    backgroundColor: 'var(--ff-pink-action)', color: '#fff', border: 'none',
+    borderRadius: '6px', padding: '6px 14px', fontSize: '13px', fontWeight: 600,
+    cursor: 'pointer', flexShrink: 0,
+  },
+  downloadBtnDisabled: { opacity: 0.5, cursor: 'not-allowed' },
+  cancelBtn: {
+    background: 'none', border: 'none', padding: '5px 8px',
+    fontSize: '13px', fontWeight: 600, color: 'var(--ff-text-secondary)', cursor: 'pointer',
+  },
 }
 
 const TILE_SIZE = `calc((100% - ${(GRID_COLS - 1) * 4}px) / ${GRID_COLS})`

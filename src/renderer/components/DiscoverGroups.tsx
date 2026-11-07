@@ -160,6 +160,7 @@ export default function DiscoverGroups(): React.JSX.Element {
             count={selectedIds.size}
             total={poolPhotos.length}
             onDownload={handleDownloadSelected}
+            onClearSelection={() => setSelectedIds(new Set())}
             onCancel={() => { setSelectMode(false); setSelectedIds(new Set()) }}
             downloading={downloading}
           />

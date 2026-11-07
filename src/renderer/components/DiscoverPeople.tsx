@@ -291,6 +291,7 @@ export default function DiscoverPeople(): React.JSX.Element {
             count={albumSelectedIds.size}
             total={albumPhotos.length}
             onDownload={handleAlbumDownloadSelected}
+            onClearSelection={() => setAlbumSelectedIds(new Set())}
             onCancel={() => { setAlbumSelectMode(false); setAlbumSelectedIds(new Set()) }}
             downloading={albumDownloading}
           />
@@ -383,6 +384,7 @@ export default function DiscoverPeople(): React.JSX.Element {
             count={userSelectedIds.size}
             total={userPhotos.length}
             onDownload={handleUserDownloadSelected}
+            onClearSelection={() => setUserSelectedIds(new Set())}
             onCancel={() => { setUserSelectMode(false); setUserSelectedIds(new Set()) }}
             downloading={userDownloading}
           />

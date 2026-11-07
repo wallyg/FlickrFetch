@@ -587,8 +587,7 @@ export async function findDiscoverUser(query: string, tokenData: FlickrTokenData
 }
 
 export async function getPublicPhotos(nsid: string, tokenData: FlickrTokenData, page: number = 1): Promise<PhotoPage> {
-  // flickr.photos.search with user_id is auth-aware: returns public photos plus any
-  // friends/family photos the authenticated user is permitted to see.
+  console.log('[flickrfetch] getPublicPhotos using flickr.photos.search for', nsid)
   const url = `${FLICKR_API_BASE}?method=flickr.photos.search` +
     `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
     `&user_id=${encodeURIComponent(nsid)}` +
