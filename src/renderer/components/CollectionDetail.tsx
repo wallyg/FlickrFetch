@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import type { FlickrCollection, FlickrSet } from '../../shared/types'
+import { GridIcon, ListIcon, loadAlbumViewMode, saveAlbumViewMode, type AlbumViewMode, type GridSize } from './PhotoGridShared'
 
 interface CollectionDetailProps {
   collection: FlickrCollection
@@ -10,6 +11,12 @@ interface CollectionDetailProps {
 export default function CollectionDetail({ collection, onCollectionSelect, onSetSelect }: CollectionDetailProps): React.JSX.Element {
   const hasSubCollections = collection.collections.length > 0
   const hasSets = collection.sets.length > 0
+  const [viewMode, setViewMode] = useState<AlbumViewMode>(loadAlbumViewMode)
+
+  const setAndSaveViewMode = (mode: AlbumViewMode): void => {
+    setViewMode(mode)
+    saveAlbumViewMode(mode)
+  }
 
   if (!hasSubCollections && !hasSets) {
     return <div style={styles.center}><p style={styles.message}>This collection is empty.</p></div>
@@ -30,12 +37,41 @@ export default function CollectionDetail({ collection, onCollectionSelect, onSet
 
       {hasSets && (
         <section>
-          {hasSubCollections && <p style={styles.sectionLabel}>Albums</p>}
-          <div style={styles.albumList}>
-            {collection.sets.map((set) => (
-              <AlbumRow key={set.id} set={set} onClick={() => onSetSelect(set)} />
-            ))}
+          <div style={styles.albumsHeader}>
+            {hasSubCollections && <p style={{ ...styles.sectionLabel, margin: 0 }}>Albums</p>}
+            <div style={styles.sizerGroup}>
+              {(['small', 'medium', 'large'] as GridSize[]).map(v => (
+                <button
+                  key={v}
+                  style={{ ...styles.densityBtn, ...(viewMode === v ? styles.densityBtnActive : {}) }}
+                  onClick={() => setAndSaveViewMode(v)}
+                  title={v === 'small' ? 'Small grid' : v === 'medium' ? 'Medium grid' : 'Large grid'}
+                >
+                  <GridIcon size={v} />
+                </button>
+              ))}
+              <button
+                style={{ ...styles.densityBtn, ...(viewMode === 'list' ? styles.densityBtnActive : {}) }}
+                onClick={() => setAndSaveViewMode('list')}
+                title="List view"
+              >
+                <ListIcon />
+              </button>
+            </div>
           </div>
+          {viewMode === 'list' ? (
+            <div style={styles.albumList}>
+              {collection.sets.map((set) => (
+                <AlbumRow key={set.id} set={set} onClick={() => onSetSelect(set)} />
+              ))}
+            </div>
+          ) : (
+            <div style={{ ...styles.albumGrid, gridTemplateColumns: viewMode === 'small' ? 'repeat(auto-fill, minmax(130px, 1fr))' : viewMode === 'large' ? 'repeat(auto-fill, minmax(240px, 1fr))' : 'repeat(auto-fill, minmax(180px, 1fr))' }}>
+              {collection.sets.map((set) => (
+                <AlbumGridCard key={set.id} set={set} gridSize={viewMode as GridSize} onClick={() => onSetSelect(set)} />
+              ))}
+            </div>
+          )}
         </section>
       )}
     </div>
@@ -45,10 +81,19 @@ export default function CollectionDetail({ collection, onCollectionSelect, onSet
 function SubCollectionCard({ collection, onClick }: { collection: FlickrCollection; onClick: () => void }): React.JSX.Element {
   const albumCount = collection.sets.length
   const subCount = collection.collections.length
+  const hasCover = collection.coverUrls && collection.coverUrls.length > 0
   return (
     <button style={styles.card} onClick={onClick}>
       <div style={styles.iconArea}>
-        <StackIcon />
+        {hasCover ? (
+          <div style={styles.collage}>
+            {[0, 1, 2, 3].map(i => collection.coverUrls[i % collection.coverUrls.length]).map((url, i) => (
+              <img key={i} src={url} alt="" style={styles.collageCell} />
+            ))}
+          </div>
+        ) : (
+          <StackIcon />
+        )}
       </div>
       <div style={styles.cardInfo}>
         <span style={styles.cardTitle}>{collection.title}</span>
@@ -68,6 +113,26 @@ function StackIcon(): React.JSX.Element {
       <rect x="8"  y="8"  width="38" height="28" rx="5" fill="#c2bdb6" stroke="rgba(0,0,0,0.10)" strokeWidth="1.5"/>
       <rect x="2"  y="2"  width="38" height="28" rx="5" fill="#ffffff" stroke="rgba(0,0,0,0.12)" strokeWidth="1.5"/>
     </svg>
+  )
+}
+
+function AlbumGridCard({ set, gridSize, onClick }: { set: FlickrSet; gridSize: GridSize; onClick: () => void }): React.JSX.Element {
+  const [hovered, setHovered] = useState(false)
+  const height = gridSize === 'small' ? '130px' : gridSize === 'large' ? '240px' : '180px'
+  return (
+    <button
+      style={{ ...styles.albumCard, ...(hovered ? styles.albumCardHover : {}) }}
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <div style={{ ...styles.albumCardIcon, height }}>
+        <StackIcon />
+      </div>
+      <div style={styles.albumCardInfo}>
+        <span style={styles.albumCardTitle}>{set.title}</span>
+      </div>
+    </button>
   )
 }
 
@@ -136,11 +201,26 @@ const styles: Record<string, React.CSSProperties> = {
   },
   iconArea: {
     width: '100%',
-    height: '110px',
+    aspectRatio: '1',
     background: '#f0ede8',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    overflow: 'hidden',
+    position: 'relative'
+  },
+  collage: {
+    position: 'absolute',
+    inset: 0,
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gridTemplateRows: '1fr 1fr',
+  },
+  collageCell: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover' as const,
+    display: 'block'
   },
   cardInfo: {
     padding: '10px 12px',
@@ -167,6 +247,68 @@ const styles: Record<string, React.CSSProperties> = {
     background: '#f5f2ee',
     borderRadius: '4px',
     padding: '2px 6px'
+  },
+  albumsHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: '12px',
+  },
+  sizerGroup: {
+    display: 'flex',
+    gap: '2px',
+    marginLeft: 'auto',
+  },
+  densityBtn: {
+    background: 'none',
+    border: 'none',
+    padding: '4px 5px',
+    cursor: 'pointer',
+    borderRadius: '5px',
+    display: 'flex',
+    alignItems: 'center',
+    color: '#bbb',
+  },
+  densityBtnActive: {
+    backgroundColor: '#ece8e2',
+    color: '#333',
+  },
+  albumGrid: {
+    display: 'grid',
+    gap: '12px',
+  },
+  albumCard: {
+    display: 'block',
+    width: '100%',
+    background: '#fff',
+    border: '1px solid #e8e4de',
+    borderRadius: '10px',
+    overflow: 'hidden',
+    cursor: 'pointer',
+    textAlign: 'left' as const,
+    padding: 0,
+  },
+  albumCardHover: {
+    background: '#faf8f5',
+  },
+  albumCardIcon: {
+    width: '100%',
+    background: '#f0ede8',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  albumCardInfo: {
+    padding: '8px 10px',
+  },
+  albumCardTitle: {
+    fontSize: '12px',
+    fontWeight: '600' as const,
+    color: '#111',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap' as const,
+    display: 'block',
   },
   albumList: {
     display: 'flex',

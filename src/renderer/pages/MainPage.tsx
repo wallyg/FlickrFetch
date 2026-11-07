@@ -308,6 +308,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
   }
 
   const handleSetSelect = (set: FlickrSet): void => {
+    setLoadedAlbumPhotos([])
     setSelectedAlbum({ id: set.id, title: set.title, description: set.description, photoCount: 0, videoCount: 0, coverPhotoUrl: '' })
     setAlbumDetailOrigin('collections')
     setView('album-detail')
@@ -595,6 +596,13 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             ← {collectionPath.length > 1 ? collectionPath[collectionPath.length - 2].title : 'Collections'}
           </button>
           <span style={styles.albumTitle}>{currentCollection.title}</span>
+          <div style={{ flex: 1 }} />
+          <button
+            style={styles.downloadAllBtn}
+            onClick={() => void window.flickrAPI.startCollectionBatch(currentCollection)}
+          >
+            ↓ Download All Albums
+          </button>
         </div>
       )}
 
@@ -626,12 +634,14 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             <CollectionList onCollectionSelect={handleCollectionSelect} />
           </div>
         )}
-        {view === 'collection-detail' && currentCollection && (
-          <CollectionDetail
-            collection={currentCollection}
-            onCollectionSelect={handleCollectionSelect}
-            onSetSelect={handleSetSelect}
-          />
+        {currentCollection && (
+          <div style={view === 'collection-detail' ? styles.tabPane : styles.tabPaneHidden}>
+            <CollectionDetail
+              collection={currentCollection}
+              onCollectionSelect={handleCollectionSelect}
+              onSetSelect={handleSetSelect}
+            />
+          </div>
         )}
         {selectedAlbum && (
           <div style={view === 'album-detail' ? styles.tabPane : styles.tabPaneHidden}>
@@ -820,6 +830,17 @@ const styles: Record<string, React.CSSProperties> = {
   albumCount: {
     fontSize: '13px',
     color: '#999'
+  },
+  downloadAllBtn: {
+    fontSize: '12px',
+    fontWeight: '600',
+    color: '#fff',
+    background: 'var(--ff-blue)',
+    border: 'none',
+    borderRadius: '7px',
+    padding: '6px 12px',
+    cursor: 'pointer',
+    flexShrink: 0
   },
   headerActions: {
     display: 'flex',

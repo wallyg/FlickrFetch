@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import type { FlickrCollection } from '../../shared/types'
+
+type SearchOperator = 'contains' | 'starts' | 'ends' | 'exact'
 
 interface CollectionListProps {
   onCollectionSelect: (collection: FlickrCollection) => void
@@ -9,6 +11,8 @@ export default function CollectionList({ onCollectionSelect }: CollectionListPro
   const [collections, setCollections] = useState<FlickrCollection[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchOperator, setSearchOperator] = useState<SearchOperator>('contains')
 
   useEffect(() => {
     window.flickrAPI.getCollectionTree()
@@ -16,6 +20,18 @@ export default function CollectionList({ onCollectionSelect }: CollectionListPro
       .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load collections'))
       .finally(() => setLoading(false))
   }, [])
+
+  const filteredCollections = useMemo(() => {
+    if (!searchQuery.trim()) return collections
+    const q = searchQuery.trim().toLowerCase()
+    return collections.filter(col => {
+      const t = col.title.toLowerCase()
+      if (searchOperator === 'starts') return t.startsWith(q)
+      if (searchOperator === 'ends') return t.endsWith(q)
+      if (searchOperator === 'exact') return t === q
+      return t.includes(q)
+    })
+  }, [collections, searchQuery, searchOperator])
 
   if (loading) {
     return <div style={styles.center}><p style={styles.message}>Loading collections…</p></div>
@@ -30,11 +46,49 @@ export default function CollectionList({ onCollectionSelect }: CollectionListPro
   }
 
   return (
-    <div style={styles.scroll}>
-      <div style={styles.grid}>
-        {collections.map((col) => (
-          <CollectionCard key={col.id} collection={col} onClick={() => onCollectionSelect(col)} />
-        ))}
+    <div style={styles.wrap}>
+      <div style={styles.toolbar}>
+        <div style={styles.searchGroup}>
+          <select
+            style={styles.operatorSelect}
+            value={searchOperator}
+            onChange={e => setSearchOperator(e.target.value as SearchOperator)}
+          >
+            <option value="contains">Contains</option>
+            <option value="starts">Starts with</option>
+            <option value="ends">Ends with</option>
+            <option value="exact">Exact</option>
+          </select>
+          <input
+            style={styles.searchInput}
+            type="text"
+            placeholder="Search collections…"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <button style={styles.clearBtn} onClick={() => setSearchQuery('')}>✕</button>
+          )}
+        </div>
+        <span style={styles.countLabel}>
+          {searchQuery
+            ? `${filteredCollections.length} of ${collections.length} collection${collections.length !== 1 ? 's' : ''}`
+            : `${collections.length} collection${collections.length !== 1 ? 's' : ''}`}
+        </span>
+      </div>
+
+      <div style={styles.scroll}>
+        {filteredCollections.length === 0 && searchQuery ? (
+          <div style={styles.center}>
+            <p style={styles.message}>No collections match "{searchQuery}".</p>
+          </div>
+        ) : (
+          <div style={styles.grid}>
+            {filteredCollections.map((col) => (
+              <CollectionCard key={col.id} collection={col} onClick={() => onCollectionSelect(col)} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -46,7 +100,9 @@ function CollectionCard({ collection, onClick }: { collection: FlickrCollection;
   return (
     <button style={styles.card} onClick={onClick}>
       <div style={styles.iconArea}>
-        <StackIcon />
+        {collection.coverUrls.length > 0
+          ? <CollageThumbnail urls={collection.coverUrls} />
+          : <StackIcon />}
       </div>
       <div style={styles.info}>
         <span style={styles.title}>{collection.title}</span>
@@ -56,6 +112,17 @@ function CollectionCard({ collection, onClick }: { collection: FlickrCollection;
         </div>
       </div>
     </button>
+  )
+}
+
+function CollageThumbnail({ urls }: { urls: string[] }): React.JSX.Element {
+  const filled = [0, 1, 2, 3].map(i => urls[i % urls.length])
+  return (
+    <div style={styles.collage}>
+      {filled.map((url, i) => (
+        <img key={i} src={url} alt="" style={styles.collageCell} />
+      ))}
+    </div>
   )
 }
 
@@ -70,6 +137,61 @@ function StackIcon(): React.JSX.Element {
 }
 
 const styles: Record<string, React.CSSProperties> = {
+  wrap: {
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100%',
+    overflow: 'hidden'
+  },
+  toolbar: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '12px 24px',
+    borderBottom: '1px solid #ede9e3',
+    flexShrink: 0
+  },
+  searchGroup: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    flex: 1
+  },
+  operatorSelect: {
+    fontSize: '12px',
+    color: '#555',
+    background: '#f5f2ee',
+    border: '1px solid #ddd8d1',
+    borderRadius: '6px',
+    padding: '5px 8px',
+    cursor: 'pointer',
+    flexShrink: 0
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: '13px',
+    padding: '5px 10px',
+    border: '1px solid #ddd8d1',
+    borderRadius: '6px',
+    background: '#fff',
+    color: '#111',
+    outline: 'none'
+  },
+  clearBtn: {
+    fontSize: '11px',
+    color: '#999',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    padding: '4px 6px',
+    flexShrink: 0
+  },
+  countLabel: {
+    fontSize: '12px',
+    color: '#aaa',
+    whiteSpace: 'nowrap' as const,
+    flexShrink: 0
+  },
   center: {
     display: 'flex',
     alignItems: 'center',
@@ -81,7 +203,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '15px'
   },
   scroll: {
-    height: '100%',
+    flex: 1,
     overflowY: 'auto'
   },
   grid: {
@@ -89,7 +211,7 @@ const styles: Record<string, React.CSSProperties> = {
     gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
     gap: '16px',
     padding: '24px',
-    boxSizing: 'border-box'
+    boxSizing: 'border-box' as const
   },
   card: {
     display: 'block',
@@ -104,11 +226,26 @@ const styles: Record<string, React.CSSProperties> = {
   },
   iconArea: {
     width: '100%',
-    height: '110px',
+    aspectRatio: '1',
     background: '#f0ede8',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    overflow: 'hidden',
+    position: 'relative'
+  },
+  collage: {
+    position: 'absolute',
+    inset: 0,
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gridTemplateRows: '1fr 1fr',
+  },
+  collageCell: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover' as const,
+    display: 'block'
   },
   info: {
     padding: '10px 12px',

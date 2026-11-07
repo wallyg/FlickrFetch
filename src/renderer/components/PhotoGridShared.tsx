@@ -4,6 +4,7 @@ import type { FlickrPhoto } from '../../shared/types'
 // ── Shared types ──────────────────────────────────────────────────────────────
 export type MediaFilter = 'all' | 'photo' | 'video'
 export type GridSize = 'small' | 'medium' | 'large'
+export type AlbumViewMode = GridSize | 'list'
 export type PrivacyFilter = 'all' | 'public' | 'friends' | 'family' | 'friendsFamily' | 'private'
 export type PrivacyLevel = 'public' | 'friends' | 'family' | 'friendsFamily' | 'private'
 
@@ -25,7 +26,27 @@ export function getPrivacyLevel(photo: FlickrPhoto): PrivacyLevel {
   return 'private'
 }
 
+// ── Album view mode persistence ───────────────────────────────────────────────
+const ALBUM_VIEW_KEY = 'ff-album-view-mode'
+export function loadAlbumViewMode(): AlbumViewMode {
+  try { const v = localStorage.getItem(ALBUM_VIEW_KEY); if (v === 'list' || v === 'small' || v === 'medium' || v === 'large') return v } catch { /* ignore */ }
+  return 'medium'
+}
+export function saveAlbumViewMode(mode: AlbumViewMode): void {
+  try { localStorage.setItem(ALBUM_VIEW_KEY, mode) } catch { /* ignore */ }
+}
+
 // ── Shared components ─────────────────────────────────────────────────────────
+export function ListIcon(): React.JSX.Element {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+      <rect x="0" y="1.5" width="14" height="2" rx="0.8"/>
+      <rect x="0" y="6" width="14" height="2" rx="0.8"/>
+      <rect x="0" y="10.5" width="14" height="2" rx="0.8"/>
+    </svg>
+  )
+}
+
 export function GridIcon({ size }: { size: GridSize }): React.JSX.Element {
   if (size === 'small') return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">

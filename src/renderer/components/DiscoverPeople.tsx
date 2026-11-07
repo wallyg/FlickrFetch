@@ -3,7 +3,7 @@ import type { FlickrPhoto, FlickrAlbum, DiscoverUser, DiscoverContact, PhotoSear
 import PhotoDetail from './PhotoDetail'
 import { AttributionNotice, DiscoverTile, DiscoverSelectBar } from './DiscoverExplore'
 import SmartDownloadButton from './SmartDownloadButton'
-import { GridIcon, GRID_COLUMNS, sharedStyles as ss, type MediaFilter, type GridSize, type DateMode, getPresetDates, formatDateChip, Chip } from './PhotoGridShared'
+import { GridIcon, ListIcon, GRID_COLUMNS, sharedStyles as ss, type MediaFilter, type GridSize, type AlbumViewMode, type DateMode, getPresetDates, formatDateChip, Chip, loadAlbumViewMode, saveAlbumViewMode } from './PhotoGridShared'
 
 const ALBUM_COLUMNS: Record<GridSize, string> = {
   small: 'repeat(auto-fill, minmax(130px, 1fr))',
@@ -75,7 +75,7 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
   const [activeSearch, setActiveSearch] = useState<PhotoSearchParams>({})
 
   // Toolbar state (albums tab)
-  const [albumsGridSize, setAlbumsGridSize] = useState<GridSize>('medium')
+  const [albumsViewMode, setAlbumsViewMode] = useState<AlbumViewMode>(loadAlbumViewMode)
 
   // Toolbar state (album photos view)
   const [albumPhotosGridSize, setAlbumPhotosGridSize] = useState<GridSize>('medium')
@@ -929,19 +929,27 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
 
         {userTab === 'albums' && (
           <>
-            {/* Albums toolbar — grid density only */}
+            {/* Albums toolbar — grid/list density */}
             <div style={s.toolbarArea}>
               <div style={{ flex: 1 }} />
               <div style={ss.segGroupDensity}>
                 {(['small', 'medium', 'large'] as GridSize[]).map(g => (
                   <button
                     key={g}
-                    style={{ ...ss.densityBtn, ...(albumsGridSize === g ? ss.densityBtnActive : {}) }}
-                    onClick={() => setAlbumsGridSize(g)}
+                    style={{ ...ss.densityBtn, ...(albumsViewMode === g ? ss.densityBtnActive : {}) }}
+                    onClick={() => { setAlbumsViewMode(g); saveAlbumViewMode(g) }}
+                    title={g === 'small' ? 'Small grid' : g === 'medium' ? 'Medium grid' : 'Large grid'}
                   >
                     <GridIcon size={g} />
                   </button>
                 ))}
+                <button
+                  style={{ ...ss.densityBtn, ...(albumsViewMode === 'list' ? ss.densityBtnActive : {}) }}
+                  onClick={() => { setAlbumsViewMode('list'); saveAlbumViewMode('list') }}
+                  title="List view"
+                >
+                  <ListIcon />
+                </button>
               </div>
             </div>
 
@@ -951,22 +959,42 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
               <div style={s.emptyState}>No public albums.</div>
             )}
             {userAlbums.length > 0 && (
-              <div style={{ ...s.albumGrid, gridTemplateColumns: ALBUM_COLUMNS[albumsGridSize] }}>
-                {userAlbums.map(album => (
-                  <div key={album.id} style={s.albumCard} onClick={() => openAlbum(album)}>
-                    <div style={s.albumCover}>
-                      {album.coverPhotoUrl
-                        ? <img src={album.coverPhotoUrl} alt="" style={s.albumCoverImg} loading="lazy" />
-                        : <div style={s.albumCoverPlaceholder} />
-                      }
+              albumsViewMode === 'list' ? (
+                <div style={s.albumListContainer}>
+                  {userAlbums.map(album => (
+                    <button key={album.id} style={s.albumListRow} onClick={() => openAlbum(album)}>
+                      <div style={s.albumListThumb}>
+                        {album.coverPhotoUrl
+                          ? <img src={album.coverPhotoUrl} alt="" style={s.albumListThumbImg} loading="lazy" />
+                          : <div style={s.albumCoverPlaceholder} />
+                        }
+                      </div>
+                      <div style={s.albumListInfo}>
+                        <span style={s.albumTitle}>{album.title}</span>
+                        <span style={s.albumMeta}>{album.photoCount.toLocaleString()} photos</span>
+                      </div>
+                      <span style={s.albumListChevron}>›</span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ ...s.albumGrid, gridTemplateColumns: ALBUM_COLUMNS[albumsViewMode as GridSize] }}>
+                  {userAlbums.map(album => (
+                    <div key={album.id} style={s.albumCard} onClick={() => openAlbum(album)}>
+                      <div style={s.albumCover}>
+                        {album.coverPhotoUrl
+                          ? <img src={album.coverPhotoUrl} alt="" style={s.albumCoverImg} loading="lazy" />
+                          : <div style={s.albumCoverPlaceholder} />
+                        }
+                      </div>
+                      <div style={s.albumInfo}>
+                        <span style={s.albumTitle}>{album.title}</span>
+                        <span style={s.albumMeta}>{album.photoCount.toLocaleString()} photos</span>
+                      </div>
                     </div>
-                    <div style={s.albumInfo}>
-                      <span style={s.albumTitle}>{album.title}</span>
-                      <span style={s.albumMeta}>{album.photoCount.toLocaleString()} photos</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )
             )}
           </>
         )}
@@ -1123,6 +1151,12 @@ const s: Record<string, React.CSSProperties> = {
   albumInfo: { padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: '2px' },
   albumTitle: { fontSize: '13px', fontWeight: 500, color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
   albumMeta: { fontSize: '11px', color: '#888' },
+  albumListContainer: { display: 'flex', flexDirection: 'column' },
+  albumListRow: { display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 16px', background: '#fff', border: 'none', borderBottom: '1px solid #f5f2ee', cursor: 'pointer', textAlign: 'left', width: '100%' },
+  albumListThumb: { width: '44px', height: '44px', borderRadius: '6px', overflow: 'hidden', background: '#f0ede8', flexShrink: 0 },
+  albumListThumbImg: { width: '100%', height: '100%', objectFit: 'cover', display: 'block' },
+  albumListInfo: { flex: 1, display: 'flex', flexDirection: 'column', gap: '2px', overflow: 'hidden', minWidth: 0 },
+  albumListChevron: { fontSize: '18px', color: '#ccc', flexShrink: 0, lineHeight: 1 },
   loadMoreRow: { display: 'flex', justifyContent: 'center', paddingTop: '8px' },
   loadMoreBtn: { padding: '8px 24px', borderRadius: '8px', border: '1px solid #ddd', background: '#fff', cursor: 'pointer', fontSize: '13px', color: '#444' },
   loadingState: { textAlign: 'center', color: '#888', fontSize: '14px', paddingTop: '48px' },

@@ -24,6 +24,7 @@ declare global {
       getAlbums: (page: number) => Promise<AlbumPage>
       getAlbumPhotos: (albumId: string, page: number) => Promise<PhotoPage>
       getCollectionTree: () => Promise<FlickrCollection[]>
+      startCollectionBatch: (collection: FlickrCollection) => Promise<{ queued: number }>
       getSettings: () => Promise<AppSettings>
       setSettings: (settings: AppSettings) => Promise<void>
       resetSettings: () => Promise<AppSettings>

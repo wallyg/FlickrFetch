@@ -7,6 +7,16 @@ export interface Release {
 
 const changelog: Release[] = [
   {
+    version: '2.3',
+    date: 'November 2026',
+    highlights: [
+      'Collections now show a 2×2 photo collage thumbnail on each card — at a glance you can see what\'s in each collection',
+      'Search and filter your collections by name, just like Albums',
+      'Download All Albums — queue every album in a collection with one tap; each album downloads into its own subfolder under the collection\'s folder',
+      'Batch history now shows exactly which photos failed in past downloads — tap "failed" on any batch row to expand the list',
+    ]
+  },
+  {
     version: '2.2',
     date: 'November 2026',
     highlights: [

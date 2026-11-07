@@ -54,6 +54,25 @@ function statusColor(status: BatchLogEntry['status']): string {
   }
 }
 
+function FailureList({ entry }: { entry: BatchLogEntry }): React.JSX.Element | null {
+  const [expanded, setExpanded] = useState(false)
+  if (!entry.failedPhotos?.length) return null
+  return (
+    <div style={styles.failureWrap}>
+      <button style={styles.failureToggle} onClick={() => setExpanded(e => !e)}>
+        {expanded ? '▾' : '▸'} {entry.failed} failed — show {expanded ? 'less' : 'details'}
+      </button>
+      {expanded && (
+        <ul style={styles.failureList}>
+          {entry.failedPhotos.map(p => (
+            <li key={p.id} style={styles.failureItem}>{p.title || p.id}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
 function BatchesTab({ onClear }: { onClear: () => void }) {
   const [entries, setEntries] = useState<BatchLogEntry[]>([])
   const [loading, setLoading] = useState(true)
@@ -98,7 +117,7 @@ function BatchesTab({ onClear }: { onClear: () => void }) {
               {entry.skippedCollision > 0 && (
                 <span style={styles.countSkip}>{entry.skippedCollision} skipped</span>
               )}
-              {entry.failed > 0 && (
+              {entry.failed > 0 && !entry.failedPhotos?.length && (
                 <span style={styles.countFail}>{entry.failed} failed</span>
               )}
               {(() => {
@@ -109,6 +128,7 @@ function BatchesTab({ onClear }: { onClear: () => void }) {
               })()}
               {entry.total > 0 && <span style={styles.countTotal}>of {entry.total}</span>}
             </div>
+            <FailureList entry={entry} />
           </div>
         ))}
       </div>
@@ -737,6 +757,16 @@ const styles: Record<string, React.CSSProperties> = {
   countSkip:  { color: '#f59e0b' },
   countFail:  { color: '#ef4444' },
   countTotal: { color: '#9ca3af' },
+  failureWrap: { marginTop: '6px' },
+  failureToggle: {
+    background: 'none', border: 'none', cursor: 'pointer',
+    fontSize: '12px', color: '#ef4444', padding: '0'
+  },
+  failureList: {
+    margin: '4px 0 0 12px', padding: 0,
+    listStyle: 'disc', listStylePosition: 'inside' as const
+  },
+  failureItem: { fontSize: '12px', color: '#666', padding: '1px 0' },
   // Photos tab search bar
   photoSearchBar: {
     padding: '12px 16px 10px',

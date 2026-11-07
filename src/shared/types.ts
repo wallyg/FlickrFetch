@@ -92,6 +92,7 @@ export interface BatchLogEntry {
   skippedCollision: number
   failed: number
   status: 'complete' | 'partial' | 'cancelled' | 'error'
+  failedPhotos?: { id: string; title: string }[]
 }
 
 export interface PhotoDownloadRecord {
@@ -185,6 +186,7 @@ export interface FlickrCollection {
   title: string
   description: string
   iconUrl: string
+  coverUrls: string[]   // up to 4 album cover URLs for 2×2 collage thumbnail
   collections: FlickrCollection[]
   sets: FlickrSet[]
 }

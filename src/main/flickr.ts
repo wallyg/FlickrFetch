@@ -331,6 +331,7 @@ function parseCollection(raw: Record<string, unknown>): FlickrCollection {
     title: String(raw.title ?? ''),
     description: String(raw.description ?? ''),
     iconUrl: String(raw.iconlarge ?? raw.iconsmall ?? ''),
+    coverUrls: [],
     collections: subCollections.map(parseCollection),
     sets: sets.map((s): FlickrSet => ({
       id: String(s.id),
@@ -340,13 +341,29 @@ function parseCollection(raw: Record<string, unknown>): FlickrCollection {
   }
 }
 
-// Walk a collection tree and fill in iconUrl from the cover map (first set in each collection)
+// Walk a collection tree and fill in iconUrl + coverUrls from the cover map
+function collectCovers(col: FlickrCollection, coverMap: Map<string, string>, limit: number): string[] {
+  const urls: string[] = []
+  for (const s of col.sets) {
+    if (urls.length >= limit) break
+    const url = coverMap.get(s.id)
+    if (url) urls.push(url)
+  }
+  for (const sub of col.collections) {
+    if (urls.length >= limit) break
+    urls.push(...collectCovers(sub, coverMap, limit - urls.length))
+  }
+  return urls
+}
+
 function enrichCollectionCovers(collections: FlickrCollection[], coverMap: Map<string, string>): FlickrCollection[] {
   return collections.map((col) => {
-    const firstSetCover = col.sets.length > 0 ? coverMap.get(col.sets[0].id) ?? '' : ''
+    const coverUrls = collectCovers(col, coverMap, 4)
+    const firstCover = coverUrls[0] ?? ''
     return {
       ...col,
-      iconUrl: firstSetCover || col.iconUrl,
+      iconUrl: firstCover || col.iconUrl,
+      coverUrls,
       collections: enrichCollectionCovers(col.collections, coverMap)
     }
   })

@@ -39,6 +39,13 @@ export function openDatabase(): void {
       thumbnail_url TEXT NOT NULL DEFAULT '',
       source TEXT NOT NULL DEFAULT ''
     );
+
+    CREATE TABLE IF NOT EXISTS batch_log_failures (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      batch_log_id INTEGER NOT NULL,
+      photo_id TEXT NOT NULL,
+      title TEXT NOT NULL DEFAULT ''
+    );
   `)
 
   // Migration: add columns to existing installs
@@ -56,22 +63,33 @@ export function closeDatabase(): void {
 
 export function writeBatchLog(entry: Omit<BatchLogEntry, 'id'>): number {
   if (!db) return -1
-  const result = db.prepare(`
+  const insertLog = db.prepare(`
     INSERT INTO batch_log
       (created_at, source, source_type, total, downloaded, skipped_collision, failed, status)
     VALUES
       (@createdAt, @source, @sourceType, @total, @downloaded, @skippedCollision, @failed, @status)
-  `).run({
-    createdAt: entry.createdAt,
-    source: entry.source,
-    sourceType: entry.sourceType,
-    total: entry.total,
-    downloaded: entry.downloaded,
-    skippedCollision: entry.skippedCollision,
-    failed: entry.failed,
-    status: entry.status,
+  `)
+  const insertFailure = db.prepare(
+    'INSERT INTO batch_log_failures (batch_log_id, photo_id, title) VALUES (?, ?, ?)'
+  )
+  const transaction = db.transaction(() => {
+    const result = insertLog.run({
+      createdAt: entry.createdAt,
+      source: entry.source,
+      sourceType: entry.sourceType,
+      total: entry.total,
+      downloaded: entry.downloaded,
+      skippedCollision: entry.skippedCollision,
+      failed: entry.failed,
+      status: entry.status,
+    })
+    const batchId = result.lastInsertRowid as number
+    for (const f of entry.failedPhotos ?? []) {
+      insertFailure.run(batchId, f.id, f.title)
+    }
+    return batchId
   })
-  return result.lastInsertRowid as number
+  return transaction() as number
 }
 
 export function writePhotoRecord(photoId: string, flickrLastUpdate: number, title = '', thumbnailUrl = ''): void {
@@ -170,6 +188,15 @@ export function getBatchLog(limit = 200): BatchLogEntry[] {
   const cutoff = Date.now() - 90 * 24 * 60 * 60 * 1000
   db.prepare('DELETE FROM batch_log WHERE created_at < ?').run(cutoff)
   const rows = db.prepare('SELECT * FROM batch_log ORDER BY created_at DESC LIMIT ?').all(limit) as Record<string, unknown>[]
+  const failureRows = db.prepare(
+    'SELECT batch_log_id, photo_id, title FROM batch_log_failures WHERE batch_log_id IN (SELECT id FROM batch_log ORDER BY created_at DESC LIMIT ?)'
+  ).all(limit) as { batch_log_id: number; photo_id: string; title: string }[]
+  const failuresByBatch = new Map<number, { id: string; title: string }[]>()
+  for (const f of failureRows) {
+    const arr = failuresByBatch.get(f.batch_log_id) ?? []
+    arr.push({ id: f.photo_id, title: f.title })
+    failuresByBatch.set(f.batch_log_id, arr)
+  }
   return rows.map(row => ({
     id: row['id'] as number,
     createdAt: row['created_at'] as number,
@@ -180,6 +207,7 @@ export function getBatchLog(limit = 200): BatchLogEntry[] {
     skippedCollision: row['skipped_collision'] as number,
     failed: row['failed'] as number,
     status: row['status'] as BatchLogEntry['status'],
+    failedPhotos: failuresByBatch.get(row['id'] as number),
   }))
 }
 

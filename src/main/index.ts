@@ -334,6 +334,8 @@ interface BatchJob {
   discoverNsid?: string        // user NSID for discover-user batch
   discoverGroupId?: string     // group ID for discover-group batch
   discoverFolder?: string      // target subfolder override
+  // Collections
+  collectionTitle?: string     // parent collection folder for collection batch downloads
 }
 
 let batchQueue: BatchJob[] = []
@@ -382,7 +384,7 @@ async function runNextBatch(): Promise<void> {
     } else if (job.albumId === '__photostream__') {
       await runPhotostreamBatch(job.albumTitle, job.track ?? true, job.smartMode, job.privacyFilter)
     } else {
-      await runAlbumBatch(job.albumId!, job.albumTitle, job.mediaType, job.privacyFilter, job.track ?? true, job.smartMode)
+      await runAlbumBatch(job.albumId!, job.albumTitle, job.mediaType, job.privacyFilter, job.track ?? true, job.smartMode, job.collectionTitle)
     }
   } catch (err) {
     process.stderr.write(`[flickrfetch] batch error: ${err}\n`)
@@ -395,7 +397,7 @@ async function runNextBatch(): Promise<void> {
   runNextBatch()
 }
 
-async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'photo' | 'video', privacyFilter?: string, track = true, smartMode?: 'updated' | 'never-downloaded'): Promise<void> {
+async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'photo' | 'video', privacyFilter?: string, track = true, smartMode?: 'updated' | 'never-downloaded', collectionTitle?: string): Promise<void> {
   if (!mainWindow) return
   const tokenData = loadToken()
   if (!tokenData) return
@@ -403,7 +405,9 @@ async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'p
   activeBatchAlbumId = albumId
   const { fileNaming, downloadFolder, showDockProgress, notifyOnComplete, conflictBehavior, downloadSize, openFinderOnComplete, metadata } = loadSettings()
   const safeAlbumTitle = albumTitle.replace(/[/\\:*?"<>|]/g, '_').trim()
-  const albumFolder = join(downloadFolder, safeAlbumTitle)
+  const albumFolder = collectionTitle
+    ? join(downloadFolder, collectionTitle.replace(/[/\\:*?"<>|]/g, '_').trim(), safeAlbumTitle)
+    : join(downloadFolder, safeAlbumTitle)
   ensureDownloadFolder(albumFolder)
 
   const sendProgress = (p: Omit<BatchProgress, 'queuedCount' | 'queuedAlbums'>): void => {
@@ -475,7 +479,7 @@ async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'p
     if (activeBatchController?.signal.aborted) {
       activeBatchAlbumId = null
       sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled', skippedCount, skippedSizeUnavailableCount, failedCount })
-      if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'album', total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
+      if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'album', total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled', failedPhotos })
       return
     }
     await waitIfPaused()
@@ -506,7 +510,7 @@ async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'p
       if ((err as { name?: string }).name === 'AbortError' || activeBatchController?.signal.aborted) {
         activeBatchAlbumId = null
         sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled', skippedCount, skippedSizeUnavailableCount, failedCount })
-        if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'album', total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
+        if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'album', total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled', failedPhotos })
         return
       }
       failedCount++
@@ -519,7 +523,7 @@ async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'p
   activeBatchAlbumId = null
   const finalStatus = failedCount > 0 || skippedCount > 0 || skippedSizeUnavailableCount > 0 ? 'partial' : 'complete'
   sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'done', skippedCount, skippedSizeUnavailableCount, failedCount, failedPhotos, smartFilteredCount: preSmartTotal - total })
-  if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'album', total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: finalStatus })
+  if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'album', total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: finalStatus, failedPhotos })
   if (notifyOnComplete && Notification.isSupported()) {
     const body = (skippedCount + skippedSizeUnavailableCount + failedCount) > 0
       ? `Saved ${downloadedCount}, skipped ${skippedCount + skippedSizeUnavailableCount + failedCount} from "${albumTitle}"`
@@ -1070,6 +1074,21 @@ ipcMain.handle('batch:startDiscoverSelected', (_event, photos: { id: string; tit
 ipcMain.handle('batch:retryDiscoverSelected', (_event, photos: { id: string; title: string }[], albumTitle: string, targetFolder: string) => {
   ensureDownloadFolder(targetFolder)
   enqueueBatch({ type: 'discover-selected', photos, albumTitle, discoverFolder: targetFolder, track: true })
+})
+
+function collectCollectionAlbums(col: import('../shared/types').FlickrCollection): { id: string; title: string }[] {
+  const result: { id: string; title: string }[] = []
+  for (const set of col.sets) result.push({ id: set.id, title: set.title })
+  for (const sub of col.collections) result.push(...collectCollectionAlbums(sub))
+  return result
+}
+
+ipcMain.handle('batch:startCollection', (_event, collection: import('../shared/types').FlickrCollection) => {
+  const albums = collectCollectionAlbums(collection)
+  for (const { id, title } of albums) {
+    enqueueBatch({ type: 'album', albumId: id, albumTitle: title, collectionTitle: collection.title, track: true })
+  }
+  return { queued: albums.length }
 })
 
 ipcMain.handle('batch:startAlbum', (_event, albumId: string, albumTitle: string, photoCount?: number, videoCount?: number, force?: boolean, mediaType?: 'photo' | 'video', privacyFilter?: string, track = true, smartMode?: 'updated' | 'never-downloaded') => {

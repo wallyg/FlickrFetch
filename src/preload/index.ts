@@ -55,6 +55,8 @@ contextBridge.exposeInMainWorld('flickrAPI', {
 
   // Collections
   getCollectionTree: (): Promise<FlickrCollection[]> => ipcRenderer.invoke('collections:getTree'),
+  startCollectionBatch: (collection: FlickrCollection): Promise<{ queued: number }> =>
+    ipcRenderer.invoke('batch:startCollection', collection),
 
   // App settings
   getSettings: (): Promise<AppSettings> => ipcRenderer.invoke('settings:get'),
