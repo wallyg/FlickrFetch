@@ -1077,8 +1077,8 @@ const s: Record<string, React.CSSProperties> = {
   },
   contactCardHover: { background: '#f8f8f8', border: '1px solid #eee' },
   contactAvatar: { width: '52px', height: '52px', borderRadius: '50%', objectFit: 'cover' },
-  contactName: { fontSize: '12px', fontWeight: 500, color: '#1a1a1a', textAlign: 'center', lineHeight: 1.3 },
-  contactHandle: { fontSize: '11px', color: '#aaa', textAlign: 'center' },
+  contactName: { fontSize: '12px', fontWeight: 500, color: '#1a1a1a', textAlign: 'center', lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' },
+  contactHandle: { fontSize: '11px', color: '#aaa', textAlign: 'center', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' },
   userTabBar: { display: 'flex', gap: '0', borderBottom: '1px solid #e8e8e8', marginBottom: '0' },
   userTabBtn: {
     background: 'none', border: 'none', borderBottom: '2px solid transparent',
