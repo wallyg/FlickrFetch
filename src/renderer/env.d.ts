@@ -50,7 +50,7 @@ declare global {
       deletePhotoRecords: (photoIds: string[]) => Promise<void>
       clearPhotoRecords: (beforeMs?: number, afterMs?: number) => Promise<void>
       discoverFindUser: (query: string) => Promise<DiscoverUser>
-      discoverGetPublicPhotos: (nsid: string, page: number) => Promise<PhotoPage>
+      discoverGetPublicPhotos: (nsid: string, page: number, sort?: string, search?: PhotoSearchParams) => Promise<PhotoPage>
       discoverGetUserAlbums: (nsid: string, page: number) => Promise<AlbumPage>
       discoverGetContacts: () => Promise<DiscoverContact[]>
       discoverGetMyGroups: () => Promise<DiscoverGroup[]>

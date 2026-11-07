@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import logoTrayImg from '../assets/logo-tray.png'
 import ChangelogModal from './ChangelogModal'
+import ProblemModal from './ProblemModal'
 
 interface AboutModalProps {
   version: string
@@ -9,6 +10,7 @@ interface AboutModalProps {
 
 export default function AboutModal({ version, onClose }: AboutModalProps): React.JSX.Element {
   const [showChangelog, setShowChangelog] = useState(false)
+  const [showProblem, setShowProblem] = useState(false)
 
   const handleKey = React.useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape') onClose()
@@ -32,6 +34,9 @@ export default function AboutModal({ version, onClose }: AboutModalProps): React
               <span style={styles.versionBadge}>Version {version}</span>
               <a style={styles.whatsNewLink} onClick={() => setShowChangelog(true)}>
                 What's New in v{version} ›
+              </a>
+              <a style={styles.problemLink} onClick={() => setShowProblem(true)}>
+                The Problem FlickrFetch Solves ›
               </a>
             </div>
 
@@ -108,6 +113,7 @@ export default function AboutModal({ version, onClose }: AboutModalProps): React
       </div>
 
       {showChangelog && <ChangelogModal onClose={() => setShowChangelog(false)} />}
+      {showProblem && <ProblemModal onClose={() => setShowProblem(false)} />}
     </>
   )
 }
@@ -229,6 +235,17 @@ const styles: Record<string, React.CSSProperties> = {
     color: 'var(--ff-blue)',
     cursor: 'pointer',
     textDecoration: 'none'
+  } as React.CSSProperties,
+  problemLink: {
+    fontSize: '11px',
+    fontWeight: '600',
+    color: 'var(--ff-navy)',
+    cursor: 'pointer',
+    textDecoration: 'underline',
+    textDecorationStyle: 'dotted',
+    textUnderlineOffset: '3px',
+    opacity: 0.75,
+    textAlign: 'center'
   } as React.CSSProperties,
   linkRow: {
     display: 'flex',

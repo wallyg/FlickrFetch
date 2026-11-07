@@ -7,6 +7,19 @@ export interface Release {
 
 const changelog: Release[] = [
   {
+    version: '2.15',
+    date: 'November 2026',
+    highlights: [
+      'Discover now remembers your place — switching to You and back keeps your scroll position and open album',
+      'People tab: friends and family photos now appear alongside public contacts\' photostreams',
+      'People tab: full search, media filter, sort, grid size, and date-range filter on both photostreams and album photo views',
+      'Discover download history tracked separately — Discover downloads appear in their own section in History',
+      'Lazy image loading across all photo grids — large libraries scroll and filter faster',
+      'You and Discover pills now show tooltips on hover',
+      '"The Problem FlickrFetch Solves" — new link on the sign-in screen and in About for the full backstory',
+    ]
+  },
+  {
     version: '2.1',
     date: 'November 2026',
     highlights: [

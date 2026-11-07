@@ -1,8 +1,15 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'
-import type { FlickrPhoto, FlickrAlbum, DiscoverUser, DiscoverContact } from '../../shared/types'
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import type { FlickrPhoto, FlickrAlbum, DiscoverUser, DiscoverContact, PhotoSearchParams, SearchOperator, DateRangeField, TagMode } from '../../shared/types'
 import PhotoDetail from './PhotoDetail'
 import { AttributionNotice, DiscoverTile, DiscoverSelectBar } from './DiscoverExplore'
 import SmartDownloadButton from './SmartDownloadButton'
+import { GridIcon, GRID_COLUMNS, sharedStyles as ss, type MediaFilter, type GridSize, type DateMode, getPresetDates, formatDateChip, Chip } from './PhotoGridShared'
+
+const ALBUM_COLUMNS: Record<GridSize, string> = {
+  small: 'repeat(auto-fill, minmax(130px, 1fr))',
+  medium: 'repeat(auto-fill, minmax(180px, 1fr))',
+  large: 'repeat(auto-fill, minmax(240px, 1fr))',
+}
 
 type PeopleView = 'home' | 'user-photos' | 'user-albums' | 'album-photos' | 'photo-detail'
 type UserTab = 'photos' | 'albums'
@@ -52,6 +59,37 @@ export default function DiscoverPeople(): React.JSX.Element {
   const [albumSelectedIds, setAlbumSelectedIds] = useState<Set<string>>(new Set())
   const [albumDownloading, setAlbumDownloading] = useState(false)
 
+  // Toolbar state (user photos view)
+  const [gridSize, setGridSize] = useState<GridSize>('medium')
+  const [sort, setSort] = useState('date-posted-desc')
+  const [mediaFilter, setMediaFilter] = useState<MediaFilter>('all')
+  const [searchOperator, setSearchOperator] = useState<string>('contains')
+  const [photoSearchInput, setPhotoSearchInput] = useState('')
+  const [tagInput, setTagInput] = useState('')
+  const [tagMode, setTagMode] = useState<TagMode>('any')
+  const [dateField, setDateField] = useState<DateRangeField>('taken')
+  const [dateMode, setDateMode] = useState<DateMode>('all')
+  const [dateCustomMin, setDateCustomMin] = useState('')
+  const [dateCustomMax, setDateCustomMax] = useState('')
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [activeSearch, setActiveSearch] = useState<PhotoSearchParams>({})
+
+  // Toolbar state (albums tab)
+  const [albumsGridSize, setAlbumsGridSize] = useState<GridSize>('medium')
+
+  // Toolbar state (album photos view)
+  const [albumPhotosMediaFilter, setAlbumPhotosMediaFilter] = useState<MediaFilter>('all')
+  const [albumPhotosSearchInput, setAlbumPhotosSearchInput] = useState('')
+  const [albumPhotosSearchOperator, setAlbumPhotosSearchOperator] = useState('contains')
+  const [albumPhotosSort, setAlbumPhotosSort] = useState('default')
+  const [albumPhotosDrawerOpen, setAlbumPhotosDrawerOpen] = useState(false)
+  const [albumPhotosDateField, setAlbumPhotosDateField] = useState<DateRangeField>('taken')
+  const [albumPhotosDateMin, setAlbumPhotosDateMin] = useState('')
+  const [albumPhotosDateMax, setAlbumPhotosDateMax] = useState('')
+  const [albumPhotosActiveDateMin, setAlbumPhotosActiveDateMin] = useState('')
+  const [albumPhotosActiveDateMax, setAlbumPhotosActiveDateMax] = useState('')
+  const [albumPhotosActiveDateField, setAlbumPhotosActiveDateField] = useState<DateRangeField>('taken')
+
   const loadedContactsRef = useRef(false)
 
   useEffect(() => {
@@ -93,7 +131,7 @@ export default function DiscoverPeople(): React.JSX.Element {
     setView('user-photos')
     setUserTab('photos')
     setUserPhotos([])
-    setUserAlbums([]) // clear stale albums from previous user
+    setUserAlbums([])
     setPhotosPage(1)
     setPhotosPages(1)
     setPhotosError(null)
@@ -104,8 +142,21 @@ export default function DiscoverPeople(): React.JSX.Element {
     setSearching(false)
     setUserSelectMode(false)
     setUserSelectedIds(new Set())
+    // Reset toolbar state for new user
+    setSort('date-posted-desc')
+    setMediaFilter('all')
+    setSearchOperator('contains')
+    setPhotoSearchInput('')
+    setTagInput('')
+    setTagMode('any')
+    setDateField('taken')
+    setDateMode('all')
+    setDateCustomMin('')
+    setDateCustomMax('')
+    setDrawerOpen(false)
+    setActiveSearch({})
     try {
-      const result = await window.flickrAPI.discoverGetPublicPhotos(user.nsid, 1)
+      const result = await window.flickrAPI.discoverGetPublicPhotos(user.nsid, 1, 'date-posted-desc', {})
       setUserPhotos(result.photos)
       setPhotosPage(result.page)
       setPhotosPages(result.pages)
@@ -126,16 +177,39 @@ export default function DiscoverPeople(): React.JSX.Element {
     openUser(user)
   }, [openUser])
 
+  const applySearch = useCallback(async (newSort?: string, newSearch?: PhotoSearchParams): Promise<void> => {
+    if (!foundUser) return
+    const effectiveSort = newSort !== undefined ? newSort : sort
+    const effectiveSearch = newSearch !== undefined ? newSearch : activeSearch
+    if (newSort !== undefined) setSort(newSort)
+    if (newSearch !== undefined) setActiveSearch(newSearch)
+    setPhotosLoading(true)
+    setUserPhotos([])
+    setPhotosPage(1)
+    setPhotosPages(1)
+    setPhotosError(null)
+    try {
+      const result = await window.flickrAPI.discoverGetPublicPhotos(foundUser.nsid, 1, effectiveSort, effectiveSearch)
+      setUserPhotos(result.photos)
+      setPhotosPage(result.page)
+      setPhotosPages(result.pages)
+    } catch (e) {
+      setPhotosError(e instanceof Error ? e.message : 'Failed to load photos')
+    } finally {
+      setPhotosLoading(false)
+    }
+  }, [foundUser, sort, activeSearch])
+
   const loadMorePhotos = useCallback(async (): Promise<void> => {
     if (!foundUser || photosLoadingMore || photosPage >= photosPages) return
     setPhotosLoadingMore(true)
     try {
-      const result = await window.flickrAPI.discoverGetPublicPhotos(foundUser.nsid, photosPage + 1)
+      const result = await window.flickrAPI.discoverGetPublicPhotos(foundUser.nsid, photosPage + 1, sort, activeSearch)
       setUserPhotos(prev => [...prev, ...result.photos])
       setPhotosPage(result.page)
     } catch { /* ignore */ }
     finally { setPhotosLoadingMore(false) }
-  }, [foundUser, photosLoadingMore, photosPage, photosPages])
+  }, [foundUser, photosLoadingMore, photosPage, photosPages, sort, activeSearch])
 
   const loadAlbums = useCallback(async (): Promise<void> => {
     if (!foundUser || albumsLoading) return
@@ -161,6 +235,17 @@ export default function DiscoverPeople(): React.JSX.Element {
     setDetailIndex(null)
     setAlbumSelectMode(false)
     setAlbumSelectedIds(new Set())
+    setAlbumPhotosMediaFilter('all')
+    setAlbumPhotosSearchInput('')
+    setAlbumPhotosSearchOperator('contains')
+    setAlbumPhotosSort('default')
+    setAlbumPhotosDrawerOpen(false)
+    setAlbumPhotosDateField('taken')
+    setAlbumPhotosDateMin('')
+    setAlbumPhotosDateMax('')
+    setAlbumPhotosActiveDateMin('')
+    setAlbumPhotosActiveDateMax('')
+    setAlbumPhotosActiveDateField('taken')
     setAlbumPhotosLoading(true)
     try {
       const albumResult = await window.flickrAPI.discoverGetAlbumPhotos(foundUser!.nsid, album.id, 1)
@@ -194,7 +279,7 @@ export default function DiscoverPeople(): React.JSX.Element {
 
   const handleUserDownloadSelected = async (): Promise<void> => {
     if (!foundUser) return
-    const selected = userPhotos.filter(p => userSelectedIds.has(p.id)).map(p => ({ id: p.id, title: p.title }))
+    const selected = filteredPhotos.filter(p => userSelectedIds.has(p.id)).map(p => ({ id: p.id, title: p.title }))
     if (!selected.length) return
     setUserDownloading(true)
     try {
@@ -220,9 +305,113 @@ export default function DiscoverPeople(): React.JSX.Element {
     }
   }
 
+  const handleTitleSearch = (): void => {
+    const q = photoSearchInput.trim()
+    if (!q) {
+      const newSearch = { ...activeSearch }
+      delete newSearch.query
+      delete newSearch.operator
+      void applySearch(undefined, newSearch)
+    } else {
+      void applySearch(undefined, { ...activeSearch, query: q, operator: searchOperator as SearchOperator })
+    }
+  }
+
+  const handleApplyDrawer = (): void => {
+    const dates = (dateMode !== 'all' && dateMode !== 'since' && dateMode !== 'between')
+      ? getPresetDates(dateMode)
+      : { min: dateCustomMin, max: dateCustomMax }
+    const newSearch: PhotoSearchParams = { ...activeSearch }
+    if (tagInput.trim()) {
+      newSearch.tagQuery = tagInput.trim()
+      newSearch.tagMode = tagMode
+    } else {
+      delete newSearch.tagQuery
+      delete newSearch.tagMode
+    }
+    if (dateMode !== 'all' && (dates.min || dates.max)) {
+      newSearch.dateField = dateField
+      newSearch.dateMin = dates.min
+      newSearch.dateMax = dates.max
+    } else {
+      delete newSearch.dateField
+      delete newSearch.dateMin
+      delete newSearch.dateMax
+    }
+    void applySearch(undefined, newSearch)
+    setDrawerOpen(false)
+  }
+
+  const handleClearFilters = (): void => {
+    const newSearch: PhotoSearchParams = {}
+    if (activeSearch.query) newSearch.query = activeSearch.query
+    if (activeSearch.operator) newSearch.operator = activeSearch.operator
+    setTagInput('')
+    setTagMode('any')
+    setDateField('taken')
+    setDateMode('all')
+    setDateCustomMin('')
+    setDateCustomMax('')
+    void applySearch(undefined, newSearch)
+    setDrawerOpen(false)
+  }
+
+  // Client-side filters: media type and photo ID
+  const filteredPhotos = useMemo(() => {
+    let result = userPhotos
+    if (mediaFilter !== 'all') result = result.filter(p => p.media === mediaFilter)
+    if (searchOperator === 'photo-id' && photoSearchInput.trim()) {
+      result = result.filter(p => p.id === photoSearchInput.trim())
+    }
+    return result
+  }, [userPhotos, mediaFilter, searchOperator, photoSearchInput])
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0
+    if (activeSearch.tagQuery) count++
+    if (activeSearch.dateMin || activeSearch.dateMax) count++
+    return count
+  }, [activeSearch])
+
+  const filteredAlbumPhotos = useMemo(() => {
+    let result = albumPhotos
+    if (albumPhotosMediaFilter !== 'all') result = result.filter(p => p.media === albumPhotosMediaFilter)
+    if (albumPhotosSearchOperator === 'photo-id' && albumPhotosSearchInput.trim()) {
+      return result.filter(p => p.id === albumPhotosSearchInput.trim())
+    }
+    if (albumPhotosSearchInput.trim()) {
+      const q = albumPhotosSearchInput.trim().toLowerCase()
+      result = result.filter(p => {
+        const t = p.title.toLowerCase()
+        if (albumPhotosSearchOperator === 'starts') return t.startsWith(q)
+        if (albumPhotosSearchOperator === 'ends') return t.endsWith(q)
+        if (albumPhotosSearchOperator === 'exact') return t === q
+        return t.includes(q)
+      })
+    }
+    if (albumPhotosActiveDateMin || albumPhotosActiveDateMax) {
+      result = result.filter(p => {
+        const dateStr = albumPhotosActiveDateField === 'taken'
+          ? (p.dateTaken ?? '').substring(0, 10)
+          : p.datePosted ? new Date(Number(p.datePosted) * 1000).toISOString().substring(0, 10) : ''
+        if (!dateStr) return true
+        if (albumPhotosActiveDateMin && dateStr < albumPhotosActiveDateMin) return false
+        if (albumPhotosActiveDateMax && dateStr > albumPhotosActiveDateMax) return false
+        return true
+      })
+    }
+    if (albumPhotosSort === 'date-taken-asc') result = [...result].sort((a, b) => (a.dateTaken ?? '').localeCompare(b.dateTaken ?? ''))
+    if (albumPhotosSort === 'date-taken-desc') result = [...result].sort((a, b) => (b.dateTaken ?? '').localeCompare(a.dateTaken ?? ''))
+    return result
+  }, [albumPhotos, albumPhotosMediaFilter, albumPhotosSearchInput, albumPhotosSearchOperator, albumPhotosSort, albumPhotosActiveDateMin, albumPhotosActiveDateMax, albumPhotosActiveDateField])
+
+  const albumPhotosActiveFilterCount = useMemo(() => {
+    return albumPhotosActiveDateMin || albumPhotosActiveDateMax ? 1 : 0
+  }, [albumPhotosActiveDateMin, albumPhotosActiveDateMax])
+
   // ── Photo detail view
   if (detailIndex !== null) {
-    const currentPhotos = view === 'album-photos' ? albumPhotos : userPhotos
+    const currentPhotos = view === 'album-photos' ? filteredAlbumPhotos : filteredPhotos
     if (!currentPhotos[detailIndex]) { setDetailIndex(null); return <></> }
     const hasMore = view === 'album-photos' ? albumPhotosPage < albumPhotosPages : photosPage < photosPages
     const sourceName = view === 'album-photos' ? (activeAlbum?.title ?? '') : (foundUser ? (foundUser.realname || foundUser.username) : '')
@@ -280,7 +469,12 @@ export default function DiscoverPeople(): React.JSX.Element {
                 />
               )}
               {albumPhotos.length > 0 && !albumSelectMode && (
-                <button style={s.selectBtn} onClick={() => setAlbumSelectMode(true)}>Select</button>
+                <button style={s.selectBtn} onClick={() => setAlbumSelectMode(true)}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <rect x="2" y="3" width="7" height="7" rx="1"/><rect x="13" y="3" width="7" height="7" rx="1"/><rect x="2" y="14" width="7" height="7" rx="1"/><path d="M14 17l2 2 4-4"/>
+                  </svg>
+                  Select Photos
+                </button>
               )}
               {albumSelectMode && (
                 <button style={s.selectBtn} onClick={() => { setAlbumSelectMode(false); setAlbumSelectedIds(new Set()) }}>Cancel</button>
@@ -290,21 +484,97 @@ export default function DiscoverPeople(): React.JSX.Element {
           {albumSelectMode && (
             <DiscoverSelectBar
               count={albumSelectedIds.size}
-              total={albumPhotos.length}
+              total={filteredAlbumPhotos.length}
               onDownload={handleAlbumDownloadSelected}
               onClearSelection={() => setAlbumSelectedIds(new Set())}
               onCancel={() => { setAlbumSelectMode(false); setAlbumSelectedIds(new Set()) }}
               downloading={albumDownloading}
             />
           )}
+          {/* Album photos toolbar */}
+          <div style={s.toolbarArea}>
+            <div style={ss.segGroup}>
+              {(['all', 'photo', 'video'] as MediaFilter[]).map(f => (
+                <button key={f} style={{ ...ss.seg, ...(albumPhotosMediaFilter === f ? ss.segActive : {}) }} onClick={() => setAlbumPhotosMediaFilter(f)}>
+                  {f === 'all' ? 'All' : f === 'photo' ? 'Photos' : 'Videos'}
+                </button>
+              ))}
+            </div>
+            <div style={ss.searchGroup}>
+              <select style={ss.operatorSelect} value={albumPhotosSearchOperator} onChange={e => { setAlbumPhotosSearchOperator(e.target.value); setAlbumPhotosSearchInput('') }}>
+                <option value="contains">contains</option>
+                <option value="starts">starts with</option>
+                <option value="ends">ends with</option>
+                <option value="exact">exact match</option>
+                <option value="photo-id">Photo ID</option>
+              </select>
+              <span style={ss.searchIcon}>
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.5"/><path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+              </span>
+              <input style={ss.searchInput} placeholder={albumPhotosSearchOperator === 'photo-id' ? 'Photo ID…' : 'Title…'} value={albumPhotosSearchInput} onChange={e => setAlbumPhotosSearchInput(e.target.value)} />
+              {albumPhotosSearchInput && (
+                <button style={ss.searchClearBtn} onClick={() => setAlbumPhotosSearchInput('')}>✕</button>
+              )}
+            </div>
+            <button
+              style={{ ...ss.moreFiltersBtn, ...(albumPhotosDrawerOpen || albumPhotosActiveFilterCount > 0 ? ss.moreFiltersBtnActive : {}) }}
+              onClick={() => setAlbumPhotosDrawerOpen(d => !d)}
+            >
+              Filters{albumPhotosActiveFilterCount > 0 && <span style={ss.drawerBadge}>{albumPhotosActiveFilterCount}</span>}
+            </button>
+            <div style={{ flex: 1 }} />
+            <div style={ss.segGroupDensity}>
+              {(['small', 'medium', 'large'] as GridSize[]).map(g => (
+                <button key={g} style={{ ...ss.densityBtn, ...(gridSize === g ? ss.densityBtnActive : {}) }} onClick={() => setGridSize(g)}>
+                  <GridIcon size={g} />
+                </button>
+              ))}
+            </div>
+            <select style={ss.sortSelect} value={albumPhotosSort} onChange={e => setAlbumPhotosSort(e.target.value)}>
+              <option value="default">Album order</option>
+              <option value="date-taken-desc">Date taken (newest)</option>
+              <option value="date-taken-asc">Date taken (oldest)</option>
+            </select>
+          </div>
+
+          {/* More filters drawer */}
+          {albumPhotosDrawerOpen && (
+            <div style={{ ...ss.drawer, marginLeft: '-20px', marginRight: '-20px', paddingLeft: '20px', paddingRight: '20px' }}>
+              <div style={ss.drawerRow}>
+                <span style={ss.drawerLabel}>Date</span>
+                <div style={ss.segGroup}>
+                  {(['taken', 'posted'] as DateRangeField[]).map(f => (
+                    <button key={f} style={{ ...ss.seg, ...(albumPhotosDateField === f ? ss.segActive : {}) }} onClick={() => setAlbumPhotosDateField(f)}>
+                      {f === 'taken' ? 'Date taken' : 'Date posted'}
+                    </button>
+                  ))}
+                </div>
+                <input type="date" style={ss.dateInput} value={albumPhotosDateMin} onChange={e => setAlbumPhotosDateMin(e.target.value)} />
+                <span style={ss.dateSep}>–</span>
+                <input type="date" style={ss.dateInput} value={albumPhotosDateMax} onChange={e => setAlbumPhotosDateMax(e.target.value)} />
+                <button style={ss.applyBtn} onClick={() => {
+                  setAlbumPhotosActiveDateMin(albumPhotosDateMin)
+                  setAlbumPhotosActiveDateMax(albumPhotosDateMax)
+                  setAlbumPhotosActiveDateField(albumPhotosDateField)
+                  setAlbumPhotosDrawerOpen(false)
+                }}>Apply</button>
+                {(albumPhotosActiveDateMin || albumPhotosActiveDateMax) && (
+                  <button style={ss.clearFiltersLink} onClick={() => {
+                    setAlbumPhotosDateMin(''); setAlbumPhotosDateMax('')
+                    setAlbumPhotosActiveDateMin(''); setAlbumPhotosActiveDateMax('')
+                  }}>Clear</button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
         <AttributionNotice />
         {albumPhotosLoading && <div style={s.loadingState}>Loading album…</div>}
         {albumPhotosError && <div style={s.errorState}>{albumPhotosError}</div>}
-        {albumPhotos.length > 0 && (
+        {filteredAlbumPhotos.length > 0 && (
           <>
-            <div style={s.grid}>
-              {albumPhotos.map((photo, idx) => (
+            <div style={{ ...s.grid, gridTemplateColumns: GRID_COLUMNS[gridSize] }}>
+              {filteredAlbumPhotos.map((photo, idx) => (
                 <DiscoverTile
                   key={photo.id}
                   photo={photo}
@@ -333,64 +603,289 @@ export default function DiscoverPeople(): React.JSX.Element {
     return (
       <div style={s.container}>
         <div style={s.stickyHeader}>
-        <div style={s.headerRow}>
-          <button style={s.backBtn} onClick={() => { setView('home'); setFoundUser(null) }}>← Back</button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-            <img
-              src={foundUser.avatarUrl}
-              alt={foundUser.username}
-              style={s.userAvatar}
-              onError={(e) => { e.currentTarget.src = 'https://www.flickr.com/images/buddyicon.gif' }}
-            />
-            <div>
-              <span style={s.userName}>{foundUser.realname || foundUser.username}</span>
-              {foundUser.realname && <div style={s.userHandle}>@{foundUser.username}</div>}
-              {foundUser.photoCount != null && (
-                <div style={s.userHandle}>{foundUser.photoCount.toLocaleString()} public photos</div>
-              )}
+          <div style={s.headerRow}>
+            <button style={s.backBtn} onClick={() => { setView('home'); setFoundUser(null) }}>← Back</button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+              <img
+                src={foundUser.avatarUrl}
+                alt={foundUser.username}
+                style={s.userAvatar}
+                onError={(e) => { e.currentTarget.src = 'https://www.flickr.com/images/buddyicon.gif' }}
+              />
+              <div>
+                <span style={s.userName}>{foundUser.realname || foundUser.username}</span>
+                {foundUser.realname && <div style={s.userHandle}>@{foundUser.username}</div>}
+                {foundUser.photoCount != null && (
+                  <div style={s.userHandle}>{foundUser.photoCount.toLocaleString()} public photos</div>
+                )}
+              </div>
             </div>
+            {userTab === 'photos' && (
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                {!userSelectMode && (
+                  <SmartDownloadButton
+                    label="Download All"
+                    onDownload={(mode) => {
+                      const smartMode = mode === 'all' ? undefined : mode
+                      void window.flickrAPI.startDiscoverUserBatch(foundUser.nsid, foundUser.username, `↓ ${foundUser.realname || foundUser.username}`, true, smartMode)
+                    }}
+                  />
+                )}
+                {filteredPhotos.length > 0 && !userSelectMode && (
+                  <button style={s.selectBtn} onClick={() => setUserSelectMode(true)}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                      <rect x="2" y="3" width="7" height="7" rx="1"/><rect x="13" y="3" width="7" height="7" rx="1"/><rect x="2" y="14" width="7" height="7" rx="1"/><path d="M14 17l2 2 4-4"/>
+                    </svg>
+                    Select Photos
+                  </button>
+                )}
+                {userSelectMode && (
+                  <button style={s.selectBtn} onClick={() => { setUserSelectMode(false); setUserSelectedIds(new Set()) }}>Cancel</button>
+                )}
+              </div>
+            )}
           </div>
+
+          <div style={s.userTabBar}>
+            <button
+              style={{ ...s.userTabBtn, ...(userTab === 'photos' ? s.userTabActive : {}) }}
+              onClick={() => setUserTab('photos')}
+            >Photos</button>
+            <button
+              style={{ ...s.userTabBtn, ...(userTab === 'albums' ? s.userTabActive : {}) }}
+              onClick={() => { setUserTab('albums'); loadAlbums() }}
+            >Albums</button>
+          </div>
+
+          {/* Photo toolbar — only in Photos tab */}
           {userTab === 'photos' && (
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              {!userSelectMode && (
-                <SmartDownloadButton
-                  label="Download All"
-                  onDownload={(mode) => {
-                    const smartMode = mode === 'all' ? undefined : mode
-                    void window.flickrAPI.startDiscoverUserBatch(foundUser.nsid, foundUser.username, `↓ ${foundUser.realname || foundUser.username}`, true, smartMode)
-                  }}
-                />
+            <div>
+              <div style={s.toolbarArea}>
+                {/* Media filter */}
+                <div style={ss.segGroup}>
+                  {(['all', 'photo', 'video'] as MediaFilter[]).map(f => (
+                    <button
+                      key={f}
+                      style={{ ...ss.seg, ...(mediaFilter === f ? ss.segActive : {}) }}
+                      onClick={() => setMediaFilter(f)}
+                    >
+                      {f === 'all' ? 'All' : f === 'photo' ? 'Photos' : 'Videos'}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Search (title or photo ID) */}
+                <div style={ss.searchGroup}>
+                  <select
+                    style={ss.operatorSelect}
+                    value={searchOperator}
+                    onChange={e => { setSearchOperator(e.target.value); setPhotoSearchInput('') }}
+                  >
+                    <option value="contains">contains</option>
+                    <option value="starts">starts with</option>
+                    <option value="ends">ends with</option>
+                    <option value="exact">exact match</option>
+                    <option value="photo-id">Photo ID</option>
+                  </select>
+                  <span style={ss.searchIcon}>
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.5"/><path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                  </span>
+                  <input
+                    style={ss.searchInput}
+                    placeholder={searchOperator === 'photo-id' ? 'Photo ID…' : 'Title…'}
+                    value={photoSearchInput}
+                    onChange={e => setPhotoSearchInput(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && searchOperator !== 'photo-id') handleTitleSearch()
+                    }}
+                  />
+                  {photoSearchInput && (
+                    <button
+                      style={ss.searchClearBtn}
+                      onClick={() => {
+                        setPhotoSearchInput('')
+                        if (searchOperator !== 'photo-id' && activeSearch.query) {
+                          const newSearch = { ...activeSearch }
+                          delete newSearch.query
+                          delete newSearch.operator
+                          void applySearch(undefined, newSearch)
+                        }
+                      }}
+                    >✕</button>
+                  )}
+                </div>
+
+                {/* More filters button */}
+                <button
+                  style={{ ...ss.moreFiltersBtn, ...(drawerOpen || activeFilterCount > 0 ? ss.moreFiltersBtnActive : {}) }}
+                  onClick={() => setDrawerOpen(d => !d)}
+                >
+                  Filters
+                  {activeFilterCount > 0 && <span style={ss.drawerBadge}>{activeFilterCount}</span>}
+                </button>
+
+                {/* Grid density */}
+                <div style={ss.segGroupDensity}>
+                  {(['small', 'medium', 'large'] as GridSize[]).map(g => (
+                    <button
+                      key={g}
+                      style={{ ...ss.densityBtn, ...(gridSize === g ? ss.densityBtnActive : {}) }}
+                      onClick={() => setGridSize(g)}
+                    >
+                      <GridIcon size={g} />
+                    </button>
+                  ))}
+                </div>
+
+                {/* Sort */}
+                <select
+                  style={ss.sortSelect}
+                  value={sort}
+                  onChange={e => { void applySearch(e.target.value, undefined) }}
+                >
+                  <option value="date-posted-desc">Newest posted</option>
+                  <option value="date-posted-asc">Oldest posted</option>
+                  <option value="date-taken-desc">Date taken (newest)</option>
+                  <option value="date-taken-asc">Date taken (oldest)</option>
+                  <option value="interestingness-desc">Most interesting</option>
+                </select>
+              </div>
+
+              {/* More filters drawer */}
+              {drawerOpen && (
+                <div style={ss.drawer}>
+                  {/* Tags row */}
+                  <div style={ss.drawerRow}>
+                    <span style={ss.drawerLabel}>Tags</span>
+                    <input
+                      style={s.drawerInput}
+                      placeholder="tag1 tag2…"
+                      value={tagInput}
+                      onChange={e => setTagInput(e.target.value)}
+                    />
+                    <div style={ss.segGroup}>
+                      {(['any', 'all'] as TagMode[]).map(m => (
+                        <button
+                          key={m}
+                          style={{ ...ss.seg, ...(tagMode === m ? ss.segActive : {}) }}
+                          onClick={() => setTagMode(m)}
+                        >
+                          {m === 'any' ? 'Any' : 'All'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Date row */}
+                  <div style={ss.drawerRow}>
+                    <span style={ss.drawerLabel}>Date</span>
+                    <div style={ss.segGroup}>
+                      {(['taken', 'posted'] as DateRangeField[]).map(f => (
+                        <button
+                          key={f}
+                          style={{ ...ss.seg, ...(dateField === f ? ss.segActive : {}) }}
+                          onClick={() => setDateField(f)}
+                        >
+                          {f === 'taken' ? 'Taken' : 'Posted'}
+                        </button>
+                      ))}
+                    </div>
+                    <select
+                      style={ss.sortSelect}
+                      value={dateMode}
+                      onChange={e => setDateMode(e.target.value as DateMode)}
+                    >
+                      <option value="all">All time</option>
+                      <option value="last7">Last 7 days</option>
+                      <option value="last30">Last 30 days</option>
+                      <option value="thisYear">This year</option>
+                      <option value="lastYear">Last year</option>
+                      <option value="between">Custom range</option>
+                    </select>
+                    {dateMode === 'between' && (
+                      <>
+                        <input
+                          type="date"
+                          style={s.dateInput}
+                          value={dateCustomMin}
+                          onChange={e => setDateCustomMin(e.target.value)}
+                        />
+                        <span style={s.dateSep}>–</span>
+                        <input
+                          type="date"
+                          style={s.dateInput}
+                          value={dateCustomMax}
+                          onChange={e => setDateCustomMax(e.target.value)}
+                        />
+                      </>
+                    )}
+                  </div>
+
+                  {/* Drawer actions row */}
+                  <div style={{ ...ss.drawerRow, justifyContent: 'flex-end', gap: '12px' }}>
+                    <button style={ss.clearFiltersLink} onClick={handleClearFilters}>Clear filters</button>
+                    <button style={s.applyBtn} onClick={handleApplyDrawer}>Apply</button>
+                  </div>
+                </div>
               )}
-              {userPhotos.length > 0 && !userSelectMode && (
-                <button style={s.selectBtn} onClick={() => setUserSelectMode(true)}>Select</button>
-              )}
-              {userSelectMode && (
-                <button style={s.selectBtn} onClick={() => { setUserSelectMode(false); setUserSelectedIds(new Set()) }}>Cancel</button>
+
+              {/* Active filter chips */}
+              {(activeSearch.query || activeSearch.tagQuery || activeSearch.dateMin || activeSearch.dateMax) && (
+                <div style={ss.chipRow}>
+                  {activeSearch.query && (
+                    <Chip
+                      label={`"${activeSearch.query}"`}
+                      onDismiss={() => {
+                        setPhotoSearchInput('')
+                        const newSearch = { ...activeSearch }
+                        delete newSearch.query
+                        delete newSearch.operator
+                        void applySearch(undefined, newSearch)
+                      }}
+                    />
+                  )}
+                  {activeSearch.tagQuery && (
+                    <Chip
+                      label={`tags: ${activeSearch.tagQuery}`}
+                      onDismiss={() => {
+                        setTagInput('')
+                        const newSearch = { ...activeSearch }
+                        delete newSearch.tagQuery
+                        delete newSearch.tagMode
+                        void applySearch(undefined, newSearch)
+                      }}
+                    />
+                  )}
+                  {(activeSearch.dateMin || activeSearch.dateMax) && (
+                    <Chip
+                      label={formatDateChip(activeSearch.dateMin ?? '', activeSearch.dateMax ?? '', activeSearch.dateField ?? 'taken')}
+                      onDismiss={() => {
+                        setDateMode('all')
+                        setDateCustomMin('')
+                        setDateCustomMax('')
+                        const newSearch = { ...activeSearch }
+                        delete newSearch.dateField
+                        delete newSearch.dateMin
+                        delete newSearch.dateMax
+                        void applySearch(undefined, newSearch)
+                      }}
+                    />
+                  )}
+                </div>
               )}
             </div>
           )}
-        </div>
 
-        <div style={s.userTabBar}>
-          <button
-            style={{ ...s.userTabBtn, ...(userTab === 'photos' ? s.userTabActive : {}) }}
-            onClick={() => setUserTab('photos')}
-          >Photos</button>
-          <button
-            style={{ ...s.userTabBtn, ...(userTab === 'albums' ? s.userTabActive : {}) }}
-            onClick={() => { setUserTab('albums'); loadAlbums() }}
-          >Albums</button>
-        </div>
-        {userTab === 'photos' && userSelectMode && (
-          <DiscoverSelectBar
-            count={userSelectedIds.size}
-            total={userPhotos.length}
-            onDownload={handleUserDownloadSelected}
-            onClearSelection={() => setUserSelectedIds(new Set())}
-            onCancel={() => { setUserSelectMode(false); setUserSelectedIds(new Set()) }}
-            downloading={userDownloading}
-          />
-        )}
+          {userTab === 'photos' && userSelectMode && (
+            <DiscoverSelectBar
+              count={userSelectedIds.size}
+              total={filteredPhotos.length}
+              onDownload={handleUserDownloadSelected}
+              onClearSelection={() => setUserSelectedIds(new Set())}
+              onCancel={() => { setUserSelectMode(false); setUserSelectedIds(new Set()) }}
+              downloading={userDownloading}
+            />
+          )}
         </div>
 
         <AttributionNotice />
@@ -399,13 +894,16 @@ export default function DiscoverPeople(): React.JSX.Element {
           <>
             {photosLoading && <div style={s.loadingState}>Loading photos…</div>}
             {photosError && <div style={s.errorState}>{photosError}</div>}
-            {!photosLoading && !photosError && userPhotos.length === 0 && (
+            {!photosLoading && !photosError && filteredPhotos.length === 0 && userPhotos.length === 0 && (
               <div style={s.emptyState}>No public photos found.</div>
             )}
-            {userPhotos.length > 0 && (
+            {!photosLoading && !photosError && filteredPhotos.length === 0 && userPhotos.length > 0 && (
+              <div style={s.emptyState}>No photos match the current filters.</div>
+            )}
+            {filteredPhotos.length > 0 && (
               <>
-                <div style={s.grid}>
-                  {userPhotos.map((photo, idx) => (
+                <div style={{ ...s.grid, gridTemplateColumns: GRID_COLUMNS[gridSize] }}>
+                  {filteredPhotos.map((photo, idx) => (
                     <DiscoverTile
                       key={photo.id}
                       photo={photo}
@@ -416,7 +914,7 @@ export default function DiscoverPeople(): React.JSX.Element {
                     />
                   ))}
                 </div>
-                {photosPage < photosPages && (
+                {photosPage < photosPages && searchOperator !== 'photo-id' && (
                   <div style={s.loadMoreRow}>
                     <button style={s.loadMoreBtn} disabled={photosLoadingMore} onClick={loadMorePhotos}>
                       {photosLoadingMore ? 'Loading…' : 'Load more'}
@@ -430,18 +928,34 @@ export default function DiscoverPeople(): React.JSX.Element {
 
         {userTab === 'albums' && (
           <>
+            {/* Albums toolbar — grid density only */}
+            <div style={s.toolbarArea}>
+              <div style={{ flex: 1 }} />
+              <div style={ss.segGroupDensity}>
+                {(['small', 'medium', 'large'] as GridSize[]).map(g => (
+                  <button
+                    key={g}
+                    style={{ ...ss.densityBtn, ...(albumsGridSize === g ? ss.densityBtnActive : {}) }}
+                    onClick={() => setAlbumsGridSize(g)}
+                  >
+                    <GridIcon size={g} />
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {albumsLoading && <div style={s.loadingState}>Loading albums…</div>}
             {albumsError && <div style={s.errorState}>{albumsError}</div>}
             {!albumsLoading && !albumsError && userAlbums.length === 0 && (
               <div style={s.emptyState}>No public albums.</div>
             )}
             {userAlbums.length > 0 && (
-              <div style={s.albumGrid}>
+              <div style={{ ...s.albumGrid, gridTemplateColumns: ALBUM_COLUMNS[albumsGridSize] }}>
                 {userAlbums.map(album => (
                   <div key={album.id} style={s.albumCard} onClick={() => openAlbum(album)}>
                     <div style={s.albumCover}>
                       {album.coverPhotoUrl
-                        ? <img src={album.coverPhotoUrl} alt="" style={s.albumCoverImg} />
+                        ? <img src={album.coverPhotoUrl} alt="" style={s.albumCoverImg} loading="lazy" />
                         : <div style={s.albumCoverPlaceholder} />
                       }
                     </div>
@@ -536,7 +1050,7 @@ const s: Record<string, React.CSSProperties> = {
   heading: { margin: 0, fontSize: '18px', fontWeight: 600, color: '#1a1a1a' },
   subheading: { margin: '4px 0 0', fontSize: '13px', color: '#888' },
   backBtn: { background: 'none', border: 'none', color: '#0063DC', cursor: 'pointer', fontSize: '14px', padding: '4px 0', flexShrink: 0 },
-  selectBtn: { padding: '6px 14px', borderRadius: '8px', border: '1px solid #ddd', background: '#fff', cursor: 'pointer', fontSize: '13px', color: '#444', flexShrink: 0 },
+  selectBtn: { background: 'none', border: '1px solid #ccc', borderRadius: '6px', padding: '5px 12px', fontSize: '13px', color: '#555', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px' },
   searchForm: { display: 'flex', gap: '8px' },
   searchInput: {
     flex: 1, height: '36px', borderRadius: '8px', border: '1px solid #ddd',
@@ -564,7 +1078,7 @@ const s: Record<string, React.CSSProperties> = {
   contactAvatar: { width: '52px', height: '52px', borderRadius: '50%', objectFit: 'cover' },
   contactName: { fontSize: '12px', fontWeight: 500, color: '#1a1a1a', textAlign: 'center', lineHeight: 1.3 },
   contactHandle: { fontSize: '11px', color: '#aaa', textAlign: 'center' },
-  userTabBar: { display: 'flex', gap: '0', borderBottom: '1px solid #e8e8e8', marginBottom: '4px' },
+  userTabBar: { display: 'flex', gap: '0', borderBottom: '1px solid #e8e8e8', marginBottom: '0' },
   userTabBtn: {
     background: 'none', border: 'none', borderBottom: '2px solid transparent',
     padding: '8px 16px', cursor: 'pointer', fontSize: '14px', fontWeight: 500,
@@ -574,6 +1088,27 @@ const s: Record<string, React.CSSProperties> = {
   userAvatar: { width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 },
   userName: { fontSize: '16px', fontWeight: 600, color: '#1a1a1a' },
   userHandle: { fontSize: '12px', color: '#888' },
+  toolbarArea: {
+    display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' as const,
+    padding: '8px 0 6px', backgroundColor: '#f5f5f5',
+    borderBottom: '1px solid #f0ede8',
+    marginLeft: '-20px', marginRight: '-20px',
+    paddingLeft: '20px', paddingRight: '20px',
+  },
+  drawerInput: {
+    border: '1px solid #ddd', borderRadius: '6px', padding: '4px 8px',
+    fontSize: '12px', outline: 'none', minWidth: '140px',
+  },
+  dateInput: {
+    border: '1px solid #ddd', borderRadius: '6px', padding: '4px 8px',
+    fontSize: '12px', outline: 'none', cursor: 'pointer',
+  },
+  dateSep: { fontSize: '12px', color: '#888' },
+  applyBtn: {
+    padding: '5px 14px', borderRadius: '6px', border: 'none',
+    background: '#0063DC', color: '#fff', fontSize: '12px',
+    fontWeight: 600, cursor: 'pointer',
+  },
   grid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px' },
   albumGrid: {
     display: 'grid',

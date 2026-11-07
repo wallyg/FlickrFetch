@@ -120,8 +120,8 @@ contextBridge.exposeInMainWorld('flickrAPI', {
   // Discover
   discoverFindUser: (query: string): Promise<DiscoverUser> =>
     ipcRenderer.invoke('discover:findUser', query),
-  discoverGetPublicPhotos: (nsid: string, page: number): Promise<PhotoPage> =>
-    ipcRenderer.invoke('discover:getPublicPhotos', nsid, page),
+  discoverGetPublicPhotos: (nsid: string, page: number, sort?: string, search?: PhotoSearchParams): Promise<PhotoPage> =>
+    ipcRenderer.invoke('discover:getPublicPhotos', nsid, page, sort, search),
   discoverGetUserAlbums: (nsid: string, page: number): Promise<AlbumPage> =>
     ipcRenderer.invoke('discover:getUserAlbums', nsid, page),
   discoverGetContacts: (): Promise<DiscoverContact[]> =>

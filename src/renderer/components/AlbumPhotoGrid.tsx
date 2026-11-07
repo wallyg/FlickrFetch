@@ -419,7 +419,7 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
               onMouseEnter={() => setHoveredId(photo.id)}
               onMouseLeave={() => setHoveredId(null)}
             >
-              <img src={photo.thumbnailUrl} alt={photo.title} style={styles.thumb} />
+              <img src={photo.thumbnailUrl} alt={photo.title} style={styles.thumb} loading="lazy" />
               {photo.media === 'video' && (
                 <div style={styles.videoOverlay}>
                   <svg width="30" height="30" viewBox="0 0 30 30" fill="none">

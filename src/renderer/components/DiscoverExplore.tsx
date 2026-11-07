@@ -200,7 +200,7 @@ export function DiscoverTile({ photo, onClick, selectMode, selected, onSelect }:
       title={photo.title}
     >
       {photo.thumbnailUrl
-        ? <img src={photo.thumbnailUrl} alt={photo.title} style={s.thumb} />
+        ? <img src={photo.thumbnailUrl} alt={photo.title} style={s.thumb} loading="lazy" />
         : <div style={s.thumbPlaceholder} />
       }
       {selected && <div style={s.checkOverlay}><span style={s.check}>✓</span></div>}

@@ -586,17 +586,42 @@ export async function findDiscoverUser(query: string, tokenData: FlickrTokenData
   }
 }
 
-export async function getPublicPhotos(nsid: string, tokenData: FlickrTokenData, page: number = 1): Promise<PhotoPage> {
-  const url = `${FLICKR_API_BASE}?method=flickr.photos.search` +
+export async function getPublicPhotos(nsid: string, tokenData: FlickrTokenData, page: number = 1, sort: string = 'date-posted-desc', search?: PhotoSearchParams): Promise<PhotoPage> {
+  let url = `${FLICKR_API_BASE}?method=flickr.photos.search` +
     `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
     `&user_id=${encodeURIComponent(nsid)}` +
     `&extras=${encodeURIComponent('url_q,date_taken,date_upload,last_update,media')}` +
+    `&sort=${encodeURIComponent(sort)}` +
     `&per_page=100&page=${page}&format=json&nojsoncallback=1`
+
+  if (search?.query) url += `&text=${encodeURIComponent(search.query)}`
+  if (search?.tagQuery) url += `&tags=${encodeURIComponent(search.tagQuery)}&tag_mode=${search.tagMode ?? 'any'}`
+  if (search?.dateField === 'taken') {
+    if (search?.dateMin) url += `&min_taken_date=${encodeURIComponent(search.dateMin)}`
+    if (search?.dateMax) url += `&max_taken_date=${encodeURIComponent(search.dateMax + ' 23:59:59')}`
+  } else if (search?.dateField === 'posted') {
+    if (search?.dateMin) url += `&min_upload_date=${Math.floor(new Date(search.dateMin).getTime() / 1000)}`
+    if (search?.dateMax) url += `&max_upload_date=${Math.floor(new Date(search.dateMax + 'T23:59:59').getTime() / 1000)}`
+  }
+
   const authHeader = getOAuthHeader(url, 'GET', tokenData)
   const response = await axios.get(url, { headers: { ...authHeader, 'User-Agent': USER_AGENT } })
   if (response.data.stat !== 'ok') throw new Error(response.data.message ?? 'unknown error')
   const data = response.data.photos
-  return { photos: mapPublicPhotos(data.photo), page: Number(data.page), pages: Number(data.pages), total: Number(data.total) }
+  let photos = mapPublicPhotos(data.photo)
+
+  if (search?.query && search.operator && search.operator !== 'contains') {
+    const q = search.query.toLowerCase()
+    photos = photos.filter(p => {
+      const t = p.title.toLowerCase()
+      if (search.operator === 'starts') return t.startsWith(q)
+      if (search.operator === 'ends') return t.endsWith(q)
+      if (search.operator === 'exact') return t === q
+      return true
+    })
+  }
+
+  return { photos, page: Number(data.page), pages: Number(data.pages), total: Number(data.total) }
 }
 
 export async function getUserPublicAlbums(nsid: string, tokenData: FlickrTokenData, page: number = 1): Promise<AlbumPage> {

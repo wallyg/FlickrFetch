@@ -967,10 +967,10 @@ ipcMain.handle('discover:findUser', async (_event, query: string): Promise<Disco
   return findDiscoverUser(query, tokenData)
 })
 
-ipcMain.handle('discover:getPublicPhotos', async (_event, nsid: string, page: number = 1) => {
+ipcMain.handle('discover:getPublicPhotos', async (_event, nsid: string, page: number = 1, sort?: string, search?: PhotoSearchParams) => {
   const tokenData = loadToken()
   if (!tokenData) throw new Error('Not authenticated')
-  return getPublicPhotos(nsid, tokenData, page)
+  return getPublicPhotos(nsid, tokenData, page, sort, search)
 })
 
 ipcMain.handle('discover:getUserAlbums', async (_event, nsid: string, page: number = 1) => {

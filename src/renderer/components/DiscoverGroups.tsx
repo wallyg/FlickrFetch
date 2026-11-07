@@ -127,7 +127,7 @@ export default function DiscoverGroups(): React.JSX.Element {
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <button style={s.backBtn} onClick={handleBack}>← My Groups</button>
               {activeGroup.iconUrl && (
-                <img src={activeGroup.iconUrl} alt="" style={s.groupIcon}
+                <img src={activeGroup.iconUrl} alt="" style={s.groupIcon} loading="lazy"
                   onError={(e) => { e.currentTarget.style.display = 'none' }} />
               )}
               <div>
@@ -234,7 +234,7 @@ export default function DiscoverGroups(): React.JSX.Element {
             <div key={g.id} style={s.groupRow} onClick={() => openGroup(g)}>
               <div style={s.groupAvatarWrap}>
                 {g.iconUrl
-                  ? <img src={g.iconUrl} alt="" style={s.groupAvatar}
+                  ? <img src={g.iconUrl} alt="" style={s.groupAvatar} loading="lazy"
                       onError={(e) => { (e.currentTarget as HTMLImageElement).src = '' }} />
                   : <div style={s.groupAvatarFallback}>{g.name.charAt(0).toUpperCase()}</div>
                 }

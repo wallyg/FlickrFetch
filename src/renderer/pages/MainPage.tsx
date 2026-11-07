@@ -44,6 +44,8 @@ interface MainPageProps {
 export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.Element {
   const displayName = user.realname || user.username
   const [appMode, setAppMode] = useState<'you' | 'discover'>('you')
+  const [youHovered, setYouHovered] = useState(false)
+  const [discoverHovered, setDiscoverHovered] = useState(false)
   const [view, setView] = useState<MainView>('photostream')
   const [selectedAlbum, setSelectedAlbum] = useState<FlickrAlbum | null>(null)
   const [photoDetailIndex, setPhotoDetailIndex] = useState<number | null>(null)
@@ -371,14 +373,24 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
           </div>
         </div>
         <div style={styles.modePill}>
-          <button
-            style={{ ...styles.modePillBtn, ...(appMode === 'you' ? styles.modePillActive : {}) }}
-            onClick={() => setAppMode('you')}
-          >You</button>
-          <button
-            style={{ ...styles.modePillBtn, ...(appMode === 'discover' ? styles.modePillActive : {}) }}
-            onClick={() => setAppMode('discover')}
-          >Discover</button>
+          <div style={{ position: 'relative' }}>
+            <button
+              style={{ ...styles.modePillBtn, ...(appMode === 'you' ? styles.modePillActive : {}) }}
+              onClick={() => setAppMode('you')}
+              onMouseEnter={() => setYouHovered(true)}
+              onMouseLeave={() => setYouHovered(false)}
+            >You</button>
+            {youHovered && <div style={styles.pillTooltip}>Your Flickr photos, albums & collections</div>}
+          </div>
+          <div style={{ position: 'relative' }}>
+            <button
+              style={{ ...styles.modePillBtn, ...(appMode === 'discover' ? styles.modePillActive : {}) }}
+              onClick={() => setAppMode('discover')}
+              onMouseEnter={() => setDiscoverHovered(true)}
+              onMouseLeave={() => setDiscoverHovered(false)}
+            >Discover</button>
+            {discoverHovered && <div style={styles.pillTooltip}>Browse photos from other users, groups & trending</div>}
+          </div>
         </div>
         <div style={styles.headerActions}>
           <IconBtn label="Download History" onClick={() => setShowHistory(true)}>
@@ -586,11 +598,9 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
         </div>
       )}
 
-      {appMode === 'discover' && (
-        <main style={{ ...styles.main, display: 'flex', flexDirection: 'column' }}>
-          <DiscoverPage />
-        </main>
-      )}
+      <main style={{ ...styles.main, display: appMode === 'discover' ? 'flex' : 'none', flexDirection: 'column' }}>
+        <DiscoverPage />
+      </main>
 
       <main style={{ ...styles.main, ...(appMode === 'discover' ? { display: 'none' } : {}) }}>
         <div style={view === 'photostream' ? styles.tabPane : styles.tabPaneHidden}>
@@ -831,6 +841,20 @@ const styles: Record<string, React.CSSProperties> = {
     position: 'absolute' as const,
     top: 'calc(100% + 6px)',
     right: 0,
+    backgroundColor: '#1a1a1a',
+    color: '#fff',
+    fontSize: '12px',
+    padding: '4px 8px',
+    borderRadius: '5px',
+    whiteSpace: 'nowrap' as const,
+    pointerEvents: 'none' as const,
+    zIndex: 999,
+  },
+  pillTooltip: {
+    position: 'absolute' as const,
+    top: 'calc(100% + 6px)',
+    left: '50%',
+    transform: 'translateX(-50%)',
     backgroundColor: '#1a1a1a',
     color: '#fff',
     fontSize: '12px',

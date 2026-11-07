@@ -4,6 +4,7 @@ import '@fontsource/lato/400.css'
 import '@fontsource/lato/700.css'
 import '@fontsource/lato/400-italic.css'
 import type { FlickrUser } from '../../shared/types'
+import ProblemModal from '../components/ProblemModal'
 
 interface LoginPageProps {
   onAuthSuccess: (user: FlickrUser) => void
@@ -11,6 +12,7 @@ interface LoginPageProps {
 
 export default function LoginPage({ onAuthSuccess }: LoginPageProps): React.JSX.Element {
   const [step, setStep] = useState<'idle' | 'waiting' | 'verifying'>('idle')
+  const [showProblem, setShowProblem] = useState(false)
   const [verifierCode, setVerifierCode] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [codeValid, setCodeValid] = useState(false)
@@ -74,6 +76,9 @@ export default function LoginPage({ onAuthSuccess }: LoginPageProps): React.JSX.
             style={styles.brandImage}
             draggable={false}
           />
+          <button style={styles.problemLink} onClick={() => setShowProblem(true)}>
+            The Problem FlickrFetch Solves
+          </button>
           {/* Subtle wave at the bottom */}
           <div style={styles.waveContainer} aria-hidden="true">
             <svg viewBox="0 0 320 52" preserveAspectRatio="none" style={{ width: '100%', height: '52px', display: 'block' }}>
@@ -86,75 +91,112 @@ export default function LoginPage({ onAuthSuccess }: LoginPageProps): React.JSX.
         {/* ── Divider ── */}
         <div style={styles.columnDivider} />
 
-        {/* ── Right column: authorization ── */}
+        {/* ── Right column ── */}
         <div style={styles.rightCol}>
           <div style={styles.formGroup}>
 
-            <h1 style={styles.heading}>Connect your Flickr account</h1>
-            <p style={styles.intro}>
-              Back up your Flickr photos to your Mac. Connect your account to get started.
-            </p>
+            {step === 'idle' ? (
+              /* ── Intro / marketing view ── */
+              <>
+                <h1 style={styles.tagline}>
+                  <span style={styles.taglineNav}>Your photos.</span><br />
+                  <span style={styles.taglineBlue}>All of them.</span><br />
+                  <span style={styles.taglineNav}>Everything about them.</span>
+                </h1>
 
-            <div style={styles.stepsArea}>
-
-              {/* Step 1 */}
-              <p style={styles.stepLabel}>1. Authorize in your browser</p>
-              <p style={styles.stepBody}>
-                Open Flickr and approve FlickrFetch's access. Flickr will give you an authorization code.
-              </p>
-              {step === 'waiting' && (
-                <p style={styles.statusText}>
-                  Continue in your browser, then paste your code below.
+                <p style={styles.taglineBody}>
+                  Flickr stores your photos — but not inside them. Titles, tags, descriptions,
+                  and licenses live on Flickr's servers, not in your files. FlickrFetch downloads
+                  your library and embeds that metadata directly into each photo and video, so
+                  your archive travels with you — independent of Flickr, forever.
                 </p>
-              )}
-              <button
-                style={styles.outlinedBtn}
-                onClick={step === 'idle' ? handleConnect : handleReopenFlickr}
-                disabled={isConnecting}
-              >
-                {step === 'idle' ? 'Open Flickr to authorize' : 'Reopen Flickr'}
-              </button>
 
-              {/* Step 2 */}
-              <p style={{ ...styles.stepLabel, marginTop: '20px' }}>2. Enter your authorization code</p>
-              <input
-                id="verifier-input"
-                style={styles.input}
-                type="text"
-                placeholder="Paste the code from Flickr"
-                value={verifierCode}
-                onChange={(e) => handleCodeChange(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter' && !connectDisabled) handleVerify() }}
-                disabled={isConnecting}
-                autoComplete="off"
-                aria-label="Authorization code"
-              />
-              {error && (
-                <p style={styles.errorText} role="alert">⚠️ {error}</p>
-              )}
-              <button
-                style={{
-                  ...styles.primaryBtn,
-                  ...(connectDisabled ? styles.primaryBtnDisabled : {})
-                }}
-                onClick={handleVerify}
-                disabled={connectDisabled}
-                aria-busy={isConnecting}
-              >
-                {isConnecting ? 'Connecting…' : 'Connect account'}
-              </button>
+                <div style={styles.introCta}>
+                  <button
+                    style={{ ...styles.primaryBtn, ...styles.connectBtn }}
+                    onClick={handleConnect}
+                    disabled={isConnecting}
+                  >
+                    <span style={styles.flickrDots} aria-hidden="true">
+                      <span style={styles.dotBlue} />
+                      <span style={styles.dotPink} />
+                    </span>
+                    {isConnecting ? 'Opening Flickr…' : 'Connect Flickr Account'}
+                  </button>
+                </div>
 
-            </div>
+                {error && <p style={styles.errorText} role="alert">⚠️ {error}</p>}
 
-            {/* Trust line */}
-            <p style={styles.trustText}>
-              Authorization takes place on Flickr in your browser.
-            </p>
+                <p style={styles.trustText}>
+                  Authorization takes place on Flickr in your browser. We never see your password.
+                </p>
+              </>
+            ) : (
+              /* ── Authorization flow ── */
+              <>
+                <h1 style={styles.heading}>Almost there</h1>
+                <p style={styles.intro}>
+                  Flickr is open in your browser. Approve access and copy the code it gives you.
+                </p>
+
+                <div style={styles.stepsArea}>
+                  <p style={styles.stepLabel}>1. Authorize in your browser</p>
+                  <p style={styles.stepBody}>
+                    Approve FlickrFetch's access on Flickr. You'll receive an authorization code.
+                  </p>
+                  {step === 'waiting' && (
+                    <p style={styles.statusText}>
+                      Continue in your browser, then paste your code below.
+                    </p>
+                  )}
+                  <button
+                    style={styles.outlinedBtn}
+                    onClick={handleReopenFlickr}
+                    disabled={isConnecting}
+                  >
+                    Reopen Flickr
+                  </button>
+
+                  <p style={{ ...styles.stepLabel, marginTop: '20px' }}>2. Enter your authorization code</p>
+                  <input
+                    id="verifier-input"
+                    style={styles.input}
+                    type="text"
+                    placeholder="Paste the code from Flickr"
+                    value={verifierCode}
+                    onChange={(e) => handleCodeChange(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' && !connectDisabled) handleVerify() }}
+                    disabled={isConnecting}
+                    autoComplete="off"
+                    aria-label="Authorization code"
+                  />
+                  {error && (
+                    <p style={styles.errorText} role="alert">⚠️ {error}</p>
+                  )}
+                  <button
+                    style={{
+                      ...styles.primaryBtn,
+                      ...(connectDisabled ? styles.primaryBtnDisabled : {})
+                    }}
+                    onClick={handleVerify}
+                    disabled={connectDisabled}
+                    aria-busy={isConnecting}
+                  >
+                    {isConnecting ? 'Connecting…' : 'Connect account'}
+                  </button>
+                </div>
+
+                <p style={styles.trustText}>
+                  Authorization takes place on Flickr in your browser.
+                </p>
+              </>
+            )}
 
           </div>
         </div>
 
       </div>
+      {showProblem && <ProblemModal onClose={() => setShowProblem(false)} />}
     </div>
   )
 }
@@ -205,6 +247,24 @@ const styles: Record<string, React.CSSProperties> = {
     left: 0,
     right: 0,
     zIndex: 0
+  },
+  problemLink: {
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '11px',
+    fontWeight: '600',
+    color: 'var(--ff-blue)',
+    opacity: 0.8,
+    textDecoration: 'underline',
+    textDecorationStyle: 'dotted' as const,
+    textUnderlineOffset: '3px',
+    padding: '0',
+    fontFamily: "'Lato', -apple-system, sans-serif",
+    textAlign: 'center' as const,
+    lineHeight: 1.4,
+    position: 'relative' as const,
+    zIndex: 1,
   },
 
   // ── Divider ──
@@ -321,8 +381,64 @@ const styles: Record<string, React.CSSProperties> = {
   },
   trustText: {
     fontSize: '12px',
-    color: '#888',
+    color: '#aaa',
     margin: '16px 0 0',
     lineHeight: 1.5
-  }
+  },
+
+  // ── Intro / marketing view ──
+  tagline: {
+    margin: '0 0 20px',
+    fontSize: '34px',
+    fontWeight: '700',
+    lineHeight: 1.18,
+    fontFamily: "'Lato', -apple-system, sans-serif",
+    letterSpacing: '-0.01em',
+  },
+  taglineNav: {
+    color: 'var(--ff-navy)',
+  },
+  taglineBlue: {
+    color: 'var(--ff-blue)',
+  },
+  taglineBody: {
+    fontSize: '14px',
+    lineHeight: '1.65',
+    color: '#5a5a6a',
+    margin: '0 0 28px',
+    maxWidth: '420px',
+  },
+  introCta: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '10px',
+  },
+  connectBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '10px',
+    height: '48px',
+    fontSize: '15px',
+    letterSpacing: '0.01em',
+  },
+  flickrDots: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
+    flexShrink: 0,
+  } as React.CSSProperties,
+  dotBlue: {
+    width: '10px',
+    height: '10px',
+    borderRadius: '50%',
+    backgroundColor: '#fff',
+    opacity: 0.9,
+  } as React.CSSProperties,
+  dotPink: {
+    width: '10px',
+    height: '10px',
+    borderRadius: '50%',
+    backgroundColor: 'rgba(255,255,255,0.65)',
+  } as React.CSSProperties,
 }
