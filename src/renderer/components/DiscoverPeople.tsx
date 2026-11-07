@@ -172,7 +172,7 @@ export default function DiscoverPeople(): React.JSX.Element {
     } finally {
       setAlbumPhotosLoading(false)
     }
-  }, [])
+  }, [foundUser])
 
   const loadMoreAlbumPhotos = useCallback(async (): Promise<void> => {
     if (!activeAlbum || albumPhotosLoadingMore || albumPhotosPage >= albumPhotosPages) return
@@ -183,7 +183,7 @@ export default function DiscoverPeople(): React.JSX.Element {
       setAlbumPhotosPage(result.page)
     } catch { /* ignore */ }
     finally { setAlbumPhotosLoadingMore(false) }
-  }, [activeAlbum, albumPhotosLoadingMore, albumPhotosPage, albumPhotosPages])
+  }, [foundUser, activeAlbum, albumPhotosLoadingMore, albumPhotosPage, albumPhotosPages])
 
   const toggleUserSelect = (id: string): void => {
     setUserSelectedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
@@ -563,7 +563,7 @@ const s: Record<string, React.CSSProperties> = {
     padding: '8px 16px', cursor: 'pointer', fontSize: '14px', color: '#888',
     marginBottom: '-1px',
   },
-  userTabActive: { borderBottomColor: '#0063DC', color: '#0063DC', fontWeight: 500 },
+  userTabActive: { borderBottomColor: '#FF0084', color: '#FF0084', fontWeight: 500 },
   userAvatar: { width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 },
   userName: { fontSize: '16px', fontWeight: 600, color: '#1a1a1a' },
   userHandle: { fontSize: '12px', color: '#888' },

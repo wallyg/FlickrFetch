@@ -244,7 +244,7 @@ const sb: Record<string, React.CSSProperties> = {
   label: { fontSize: '14px', color: '#444', fontWeight: 500 },
   actions: { display: 'flex', gap: '8px' },
   cancelBtn: { padding: '7px 16px', borderRadius: '8px', border: '1px solid #ddd', background: '#fff', cursor: 'pointer', fontSize: '13px', color: '#444' },
-  downloadBtn: { padding: '7px 16px', borderRadius: '8px', border: 'none', background: '#0063DC', color: '#fff', cursor: 'pointer', fontSize: '13px', fontWeight: 500 },
+  downloadBtn: { padding: '7px 16px', borderRadius: '8px', border: 'none', background: '#FF0084', color: '#fff', cursor: 'pointer', fontSize: '13px', fontWeight: 500 },
   downloadBtnDisabled: { opacity: 0.4, cursor: 'not-allowed' },
 }
 
@@ -271,13 +271,13 @@ const s: Record<string, React.CSSProperties> = {
     cursor: 'pointer', borderRadius: '4px', background: '#f0f0f0',
   },
   tileHover: { opacity: 0.9 },
-  tileSelected: { outline: '3px solid #0063DC', outlineOffset: '-3px' },
+  tileSelected: { outline: '3px solid #FF0084', outlineOffset: '-3px' },
   checkOverlay: {
-    position: 'absolute', inset: 0, background: 'rgba(0,99,220,0.25)',
+    position: 'absolute', inset: 0, background: 'rgba(255,0,132,0.25)',
     display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', padding: '6px',
   },
   check: {
-    width: '20px', height: '20px', borderRadius: '50%', background: '#0063DC',
+    width: '20px', height: '20px', borderRadius: '50%', background: '#FF0084',
     color: '#fff', fontSize: '11px', fontWeight: 700,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
   },
