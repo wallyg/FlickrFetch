@@ -256,48 +256,48 @@ export default function DiscoverPeople(): React.JSX.Element {
     return (
       <div style={s.container}>
         <div style={s.stickyHeader}>
-        <div style={s.headerRow}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <button style={s.backBtn} onClick={() => { setView('user-photos'); setUserTab('albums'); setActiveAlbum(null) }}>
-              ← {foundUser.realname || foundUser.username}
-            </button>
-            <div>
-              <h2 style={s.heading}>{activeAlbum.title}</h2>
-              <p style={s.subheading}>{activeAlbum.photoCount.toLocaleString()} photos</p>
+          <div style={s.headerRow}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <button style={s.backBtn} onClick={() => { setView('user-photos'); setUserTab('albums'); setActiveAlbum(null) }}>
+                ← {foundUser.realname || foundUser.username}
+              </button>
+              <div>
+                <h2 style={s.heading}>{activeAlbum.title}</h2>
+                <p style={s.subheading}>{activeAlbum.photoCount.toLocaleString()} photos</p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              {!albumSelectMode && (
+                <SmartDownloadButton
+                  label="Download Album"
+                  onDownload={() => {
+                    void window.flickrAPI.startDiscoverSelectedBatch(
+                      albumPhotos.map(p => ({ id: p.id, title: p.title })),
+                      activeAlbum.title,
+                      ['Users', foundUser.username, activeAlbum.title]
+                    )
+                  }}
+                />
+              )}
+              {albumPhotos.length > 0 && !albumSelectMode && (
+                <button style={s.selectBtn} onClick={() => setAlbumSelectMode(true)}>Select</button>
+              )}
+              {albumSelectMode && (
+                <button style={s.selectBtn} onClick={() => { setAlbumSelectMode(false); setAlbumSelectedIds(new Set()) }}>Cancel</button>
+              )}
             </div>
           </div>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            {!albumSelectMode && (
-              <SmartDownloadButton
-                label="Download Album"
-                onDownload={() => {
-                  void window.flickrAPI.startDiscoverSelectedBatch(
-                    albumPhotos.map(p => ({ id: p.id, title: p.title })),
-                    activeAlbum.title,
-                    ['Users', foundUser.username, activeAlbum.title]
-                  )
-                }}
-              />
-            )}
-            {albumPhotos.length > 0 && !albumSelectMode && (
-              <button style={s.selectBtn} onClick={() => setAlbumSelectMode(true)}>Select</button>
-            )}
-            {albumSelectMode && (
-              <button style={s.selectBtn} onClick={() => { setAlbumSelectMode(false); setAlbumSelectedIds(new Set()) }}>Cancel</button>
-            )}
-          </div>
+          {albumSelectMode && (
+            <DiscoverSelectBar
+              count={albumSelectedIds.size}
+              total={albumPhotos.length}
+              onDownload={handleAlbumDownloadSelected}
+              onClearSelection={() => setAlbumSelectedIds(new Set())}
+              onCancel={() => { setAlbumSelectMode(false); setAlbumSelectedIds(new Set()) }}
+              downloading={albumDownloading}
+            />
+          )}
         </div>
-        </div>
-        {albumSelectMode && (
-          <DiscoverSelectBar
-            count={albumSelectedIds.size}
-            total={albumPhotos.length}
-            onDownload={handleAlbumDownloadSelected}
-            onClearSelection={() => setAlbumSelectedIds(new Set())}
-            onCancel={() => { setAlbumSelectMode(false); setAlbumSelectedIds(new Set()) }}
-            downloading={albumDownloading}
-          />
-        )}
         <AttributionNotice />
         {albumPhotosLoading && <div style={s.loadingState}>Loading album…</div>}
         {albumPhotosError && <div style={s.errorState}>{albumPhotosError}</div>}
@@ -381,8 +381,6 @@ export default function DiscoverPeople(): React.JSX.Element {
             onClick={() => { setUserTab('albums'); loadAlbums() }}
           >Albums</button>
         </div>
-        </div>
-
         {userTab === 'photos' && userSelectMode && (
           <DiscoverSelectBar
             count={userSelectedIds.size}
@@ -393,6 +391,7 @@ export default function DiscoverPeople(): React.JSX.Element {
             downloading={userDownloading}
           />
         )}
+        </div>
 
         <AttributionNotice />
 

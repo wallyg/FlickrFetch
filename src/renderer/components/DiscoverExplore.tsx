@@ -99,26 +99,27 @@ export default function DiscoverExplore({ onDownload }: Props): React.JSX.Elemen
 
   return (
     <div style={s.container}>
-      <div style={s.headerRow}>
-        <div>
-          <h2 style={s.heading}>Explore</h2>
-          <p style={s.subheading}>Today's most interesting photos on Flickr</p>
+      <div style={s.stickyHeader}>
+        <div style={s.headerRow}>
+          <div>
+            <h2 style={s.heading}>Explore</h2>
+            <p style={s.subheading}>Today's most interesting photos on Flickr</p>
+          </div>
+          {photos.length > 0 && !selectMode && (
+            <button style={s.selectToggleBtn} onClick={() => setSelectMode(true)}>Select</button>
+          )}
         </div>
-        {photos.length > 0 && !selectMode && (
-          <button style={s.selectToggleBtn} onClick={() => setSelectMode(true)}>Select</button>
+        {selectMode && (
+          <DiscoverSelectBar
+            count={selectedIds.size}
+            total={photos.length}
+            onDownload={handleDownloadSelected}
+            onClearSelection={() => setSelectedIds(new Set())}
+            onCancel={() => { setSelectMode(false); setSelectedIds(new Set()) }}
+            downloading={downloading}
+          />
         )}
       </div>
-
-      {selectMode && (
-        <DiscoverSelectBar
-          count={selectedIds.size}
-          total={photos.length}
-          onDownload={handleDownloadSelected}
-          onClearSelection={() => setSelectedIds(new Set())}
-          onCancel={() => { setSelectMode(false); setSelectedIds(new Set()) }}
-          downloading={downloading}
-        />
-      )}
 
       <AttributionNotice />
 
@@ -269,7 +270,8 @@ const TILE_SIZE = `calc((100% - ${(GRID_COLS - 1) * 4}px) / ${GRID_COLS})`
 
 const s: Record<string, React.CSSProperties> = {
   container: { display: 'flex', flexDirection: 'column', gap: '16px', padding: '0 20px 32px' },
-  headerRow: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', paddingTop: '20px', paddingBottom: '8px', position: 'sticky' as const, top: 0, zIndex: 10, background: '#fff' },
+  stickyHeader: { position: 'sticky' as const, top: 0, zIndex: 10, background: '#fff', paddingBottom: '8px' },
+  headerRow: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', paddingTop: '20px' },
   heading: { margin: 0, fontSize: '18px', fontWeight: 600, color: '#1a1a1a' },
   subheading: { margin: '4px 0 0', fontSize: '13px', color: '#888' },
   attrNotice: {

@@ -122,49 +122,50 @@ export default function DiscoverGroups(): React.JSX.Element {
 
     return (
       <div style={s.container}>
-        <div style={s.headerRow}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <button style={s.backBtn} onClick={handleBack}>← My Groups</button>
-            {activeGroup.iconUrl && (
-              <img src={activeGroup.iconUrl} alt="" style={s.groupIcon}
-                onError={(e) => { e.currentTarget.style.display = 'none' }} />
-            )}
-            <div>
-              <h2 style={s.heading}>{activeGroup.name}</h2>
-              {activeGroup.photoCount != null && (
-                <p style={s.subheading}>{activeGroup.photoCount.toLocaleString()} photos in pool</p>
+        <div style={s.stickyHeader}>
+          <div style={s.headerRow}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <button style={s.backBtn} onClick={handleBack}>← My Groups</button>
+              {activeGroup.iconUrl && (
+                <img src={activeGroup.iconUrl} alt="" style={s.groupIcon}
+                  onError={(e) => { e.currentTarget.style.display = 'none' }} />
+              )}
+              <div>
+                <h2 style={s.heading}>{activeGroup.name}</h2>
+                {activeGroup.photoCount != null && (
+                  <p style={s.subheading}>{activeGroup.photoCount.toLocaleString()} photos in pool</p>
+                )}
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              {!selectMode && (
+                <SmartDownloadButton
+                  label="Download Group"
+                  onDownload={(mode) => {
+                    const smartMode = mode === 'all' ? undefined : mode
+                    void window.flickrAPI.startDiscoverGroupBatch(activeGroup.id, activeGroup.name, `↓ ${activeGroup.name}`, true, smartMode)
+                  }}
+                />
+              )}
+              {poolPhotos.length > 0 && !selectMode && (
+                <button style={s.selectBtn} onClick={() => setSelectMode(true)}>Select</button>
+              )}
+              {selectMode && (
+                <button style={s.selectBtn} onClick={() => { setSelectMode(false); setSelectedIds(new Set()) }}>Cancel</button>
               )}
             </div>
           </div>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            {!selectMode && (
-              <SmartDownloadButton
-                label="Download Group"
-                onDownload={(mode) => {
-                  const smartMode = mode === 'all' ? undefined : mode
-                  void window.flickrAPI.startDiscoverGroupBatch(activeGroup.id, activeGroup.name, `↓ ${activeGroup.name}`, true, smartMode)
-                }}
-              />
-            )}
-            {poolPhotos.length > 0 && !selectMode && (
-              <button style={s.selectBtn} onClick={() => setSelectMode(true)}>Select</button>
-            )}
-            {selectMode && (
-              <button style={s.selectBtn} onClick={() => { setSelectMode(false); setSelectedIds(new Set()) }}>Cancel</button>
-            )}
-          </div>
+          {selectMode && (
+            <DiscoverSelectBar
+              count={selectedIds.size}
+              total={poolPhotos.length}
+              onDownload={handleDownloadSelected}
+              onClearSelection={() => setSelectedIds(new Set())}
+              onCancel={() => { setSelectMode(false); setSelectedIds(new Set()) }}
+              downloading={downloading}
+            />
+          )}
         </div>
-
-        {selectMode && (
-          <DiscoverSelectBar
-            count={selectedIds.size}
-            total={poolPhotos.length}
-            onDownload={handleDownloadSelected}
-            onClearSelection={() => setSelectedIds(new Set())}
-            onCancel={() => { setSelectMode(false); setSelectedIds(new Set()) }}
-            downloading={downloading}
-          />
-        )}
 
         <AttributionNotice />
 
@@ -257,7 +258,8 @@ export default function DiscoverGroups(): React.JSX.Element {
 
 const s: Record<string, React.CSSProperties> = {
   container: { display: 'flex', flexDirection: 'column', gap: '16px', padding: '0 20px 32px' },
-  headerRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '20px', paddingBottom: '8px', position: 'sticky' as const, top: 0, zIndex: 10, background: '#fff' },
+  stickyHeader: { position: 'sticky' as const, top: 0, zIndex: 10, background: '#fff', paddingBottom: '8px' },
+  headerRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '20px' },
   heading: { margin: 0, fontSize: '18px', fontWeight: 600, color: '#1a1a1a' },
   subheading: { margin: '4px 0 0', fontSize: '13px', color: '#888' },
   backBtn: { background: 'none', border: 'none', color: '#0063DC', cursor: 'pointer', fontSize: '14px', padding: '4px 0', flexShrink: 0 },
