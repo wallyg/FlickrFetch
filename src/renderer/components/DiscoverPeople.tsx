@@ -560,10 +560,10 @@ const s: Record<string, React.CSSProperties> = {
   userTabBar: { display: 'flex', gap: '0', borderBottom: '1px solid #e8e8e8', marginBottom: '4px' },
   userTabBtn: {
     background: 'none', border: 'none', borderBottom: '2px solid transparent',
-    padding: '8px 16px', cursor: 'pointer', fontSize: '14px', color: '#888',
-    marginBottom: '-1px',
+    padding: '8px 16px', cursor: 'pointer', fontSize: '14px', fontWeight: 500,
+    color: '#888', marginBottom: '-1px', outline: 'none',
   },
-  userTabActive: { borderBottomColor: '#FF0084', color: '#FF0084', fontWeight: 500 },
+  userTabActive: { borderBottom: '2px solid #FF0084', color: '#FF0084' },
   userAvatar: { width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 },
   userName: { fontSize: '16px', fontWeight: 600, color: '#1a1a1a' },
   userHandle: { fontSize: '12px', color: '#888' },

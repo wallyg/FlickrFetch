@@ -60,7 +60,7 @@ const s: Record<string, React.CSSProperties> = {
   wrapper: { display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' },
   tabBar: {
     display: 'flex', alignItems: 'center',
-    padding: '0 20px',
+    paddingLeft: '24px', paddingRight: '16px',
     borderBottom: '1px solid #e8e4de',
     background: '#fff',
     flexShrink: 0,
@@ -68,10 +68,10 @@ const s: Record<string, React.CSSProperties> = {
   tabGroup: { display: 'flex', gap: '0' },
   tab: {
     background: 'none', border: 'none', borderBottom: '2px solid transparent',
-    padding: '10px 16px', cursor: 'pointer', fontSize: '14px', color: '#888',
-    marginBottom: '-1px',
+    padding: '10px 16px', cursor: 'pointer', fontSize: '14px', fontWeight: 500,
+    color: '#888', marginBottom: '-1px', outline: 'none',
   },
-  tabActive: { borderBottomColor: '#FF0084', color: '#FF0084', fontWeight: 500 },
+  tabActive: { borderBottom: '2px solid #FF0084', color: '#FF0084' },
   content: { flex: 1, overflowY: 'auto', position: 'relative' },
   paneVisible: { display: 'block' },
   paneHidden: { display: 'none' },
