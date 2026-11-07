@@ -2,6 +2,18 @@
 
 Mac desktop app for downloading your personal Flickr library at original resolution with metadata embedded.
 
+## The Problem FlickrFetch Solves
+
+Flickr is one of the longest-running photo communities on the internet, and for many photographers it holds years — sometimes decades — of work. But getting your photos off Flickr in any meaningful way has always been harder than it should be.
+
+Flickr's native export tools let you download your photos, but the files you get are largely stripped of context. The titles, descriptions, tags, album names, dates, and license information you spent years adding live on Flickr's servers — not in the files themselves. Download a photo through Flickr's interface and you get a JPEG. The story behind it stays behind.
+
+This matters because metadata embedded in a file travels with it. It survives a move to a new photo library, a backup drive, or a different platform. Metadata that only exists in Flickr's database disappears the moment Flickr does — or the moment you leave.
+
+FlickrFetch was built to close that gap. It downloads photos and videos from your Flickr library and embeds the metadata directly into each file using industry-standard EXIF and IPTC fields — title, description, tags, GPS coordinates, capture date, album, license, and more. The result is a true archive: files that are self-describing, portable, and not dependent on Flickr remaining online or your account remaining active.
+
+For photographers who built their archive on Flickr, FlickrFetch is the difference between a backup and an archive.
+
 ## Features
 
 - Sign in with your Flickr account via OAuth
