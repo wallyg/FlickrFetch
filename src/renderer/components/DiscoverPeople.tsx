@@ -255,6 +255,7 @@ export default function DiscoverPeople(): React.JSX.Element {
   if (view === 'album-photos' && activeAlbum && foundUser) {
     return (
       <div style={s.container}>
+        <div style={s.stickyHeader}>
         <div style={s.headerRow}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <button style={s.backBtn} onClick={() => { setView('user-photos'); setUserTab('albums'); setActiveAlbum(null) }}>
@@ -285,6 +286,7 @@ export default function DiscoverPeople(): React.JSX.Element {
               <button style={s.selectBtn} onClick={() => { setAlbumSelectMode(false); setAlbumSelectedIds(new Set()) }}>Cancel</button>
             )}
           </div>
+        </div>
         </div>
         {albumSelectMode && (
           <DiscoverSelectBar
@@ -330,6 +332,7 @@ export default function DiscoverPeople(): React.JSX.Element {
   if (view === 'user-photos' && foundUser) {
     return (
       <div style={s.container}>
+        <div style={s.stickyHeader}>
         <div style={s.headerRow}>
           <button style={s.backBtn} onClick={() => { setView('home'); setFoundUser(null) }}>← Back</button>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
@@ -377,6 +380,7 @@ export default function DiscoverPeople(): React.JSX.Element {
             style={{ ...s.userTabBtn, ...(userTab === 'albums' ? s.userTabActive : {}) }}
             onClick={() => { setUserTab('albums'); loadAlbums() }}
           >Albums</button>
+        </div>
         </div>
 
         {userTab === 'photos' && userSelectMode && (
@@ -528,7 +532,8 @@ function ContactCard({ contact, onClick }: { contact: DiscoverContact; onClick: 
 
 const s: Record<string, React.CSSProperties> = {
   container: { display: 'flex', flexDirection: 'column', gap: '16px', padding: '0 20px 32px' },
-  headerRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', paddingTop: '20px' },
+  stickyHeader: { position: 'sticky' as const, top: 0, zIndex: 10, background: '#fff', display: 'flex', flexDirection: 'column' as const },
+  headerRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', paddingTop: '20px', paddingBottom: '8px' },
   heading: { margin: 0, fontSize: '18px', fontWeight: 600, color: '#1a1a1a' },
   subheading: { margin: '4px 0 0', fontSize: '13px', color: '#888' },
   backBtn: { background: 'none', border: 'none', color: '#0063DC', cursor: 'pointer', fontSize: '14px', padding: '4px 0', flexShrink: 0 },
