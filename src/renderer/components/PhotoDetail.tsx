@@ -292,7 +292,7 @@ export default function PhotoDetail({
     setSavedPath(null)
     try {
       const { filePath } = discoverMode
-        ? await window.flickrAPI.discoverDownloadPhoto(photo.id, photo.title, downloadSize, photo.thumbnailUrl, photo.lastUpdate ?? 0)
+        ? await window.flickrAPI.discoverDownloadPhoto(photo.id, photo.title, downloadSize, photo.thumbnailUrl, photo.lastUpdate ?? 0, sourceName)
         : await window.flickrAPI.downloadPhoto(photo.id, photo.title, downloadSize, trackDownload, photo.thumbnailUrl, photo.lastUpdate ?? 0)
       if (filePath) {
         setSavedPath(filePath)

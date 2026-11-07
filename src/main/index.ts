@@ -665,7 +665,7 @@ async function runDiscoverSelectedBatch(photos: { id: string; title: string }[],
       if (outcome.status === 'downloaded') {
         downloadedCount++
         lastFilePath = outcome.filePath
-        if (track) writeDiscoverRecord(photo.id, 0, photo.title, photo.thumbnailUrl ?? '')
+        if (track) writeDiscoverRecord(photo.id, 0, photo.title, photo.thumbnailUrl ?? '', albumTitle)
         sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: outcome.filePath, status: 'running', skippedCount, skippedSizeUnavailableCount, failedCount })
       } else if (outcome.reason === 'size-unavailable') {
         skippedSizeUnavailableCount++
@@ -776,7 +776,7 @@ async function runDiscoverPublicBatch(
       if (outcome.status === 'downloaded') {
         downloadedCount++
         lastFilePath = outcome.filePath
-        if (track) writeDiscoverRecord(photo.id, photo.lastUpdate ?? 0, photo.title, photo.thumbnailUrl)
+        if (track) writeDiscoverRecord(photo.id, photo.lastUpdate ?? 0, photo.title, photo.thumbnailUrl, albumTitle)
         sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: outcome.filePath, status: 'running', skippedCount, skippedSizeUnavailableCount, failedCount })
       } else if (outcome.reason === 'size-unavailable') {
         skippedSizeUnavailableCount++
@@ -1009,7 +1009,7 @@ ipcMain.handle('discover:getInterestingness', async (_event, page: number = 1) =
   return getInterestingness(tokenData, page)
 })
 
-ipcMain.handle('discover:downloadPhoto', async (_event, photoId: string, photoTitle: string, downloadSize?: DownloadSize, thumbnailUrl = '', lastUpdate = 0) => {
+ipcMain.handle('discover:downloadPhoto', async (_event, photoId: string, photoTitle: string, downloadSize?: DownloadSize, thumbnailUrl = '', lastUpdate = 0, source = '') => {
   const tokenData = loadToken()
   if (!tokenData) throw new Error('Not authenticated')
   if (!mainWindow) throw new Error('No window')
@@ -1020,7 +1020,7 @@ ipcMain.handle('discover:downloadPhoto', async (_event, photoId: string, photoTi
     getPhotoInfo(photoId, tokenData)
   ])
   const filePath = await downloadPhoto(sizes, photoTitle, mainWindow, activeDownloadController?.signal, photoInfo, forcedMetadata, downloadSize)
-  if (filePath && lastUpdate !== undefined) writeDiscoverRecord(photoId, lastUpdate, photoTitle, thumbnailUrl)
+  if (filePath && lastUpdate !== undefined) writeDiscoverRecord(photoId, lastUpdate, photoTitle, thumbnailUrl, source)
   return { filePath }
 })
 

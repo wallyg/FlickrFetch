@@ -132,8 +132,8 @@ contextBridge.exposeInMainWorld('flickrAPI', {
     ipcRenderer.invoke('discover:getGroupPhotos', groupId, page),
   discoverGetInterestingness: (page: number): Promise<PhotoPage> =>
     ipcRenderer.invoke('discover:getInterestingness', page),
-  discoverDownloadPhoto: (photoId: string, title: string, downloadSize?: string, thumbnailUrl?: string, lastUpdate?: number): Promise<{ filePath: string | null }> =>
-    ipcRenderer.invoke('discover:downloadPhoto', photoId, title, downloadSize, thumbnailUrl ?? '', lastUpdate ?? 0),
+  discoverDownloadPhoto: (photoId: string, title: string, downloadSize?: string, thumbnailUrl?: string, lastUpdate?: number, source?: string): Promise<{ filePath: string | null }> =>
+    ipcRenderer.invoke('discover:downloadPhoto', photoId, title, downloadSize, thumbnailUrl ?? '', lastUpdate ?? 0, source ?? ''),
   discoverGetAlbumPhotos: (ownerNsid: string, albumId: string, page: number): Promise<PhotoPage> =>
     ipcRenderer.invoke('discover:getAlbumPhotos', ownerNsid, albumId, page),
   startDiscoverUserBatch: (nsid: string, username: string, displayTitle: string, track?: boolean, smartMode?: 'updated' | 'never-downloaded'): Promise<void> =>

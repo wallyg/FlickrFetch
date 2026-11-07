@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react'
-import type { BatchLogEntry, PhotoDownloadRecord, FlickrAlbum } from '../../shared/types'
+import type { BatchLogEntry, PhotoDownloadRecord, DiscoverDownloadRecord, FlickrAlbum } from '../../shared/types'
 
 interface HistoryPanelProps {
   onClose: () => void
@@ -7,8 +7,6 @@ interface HistoryPanelProps {
 
 type Tab = 'batches' | 'photos' | 'discover'
 
-const DISCOVER_TYPES: BatchLogEntry['sourceType'][] = ['discover', 'discover_people', 'discover_groups']
-const YOUR_TYPES: BatchLogEntry['sourceType'][] = ['album', 'photostream', 'selected']
 type DatePreset = 'all' | 'last24h' | 'last7d' | 'last30d' | 'last60d' | 'custom'
 type ClearMode = 'idle' | 'choose' | 'confirm-preset' | 'confirm-before' | 'confirm-after' | 'confirm-all'
 
@@ -32,9 +30,9 @@ function formatDateShort(ts: number): string {
 function sourceLabel(entry: BatchLogEntry): string {
   if (entry.sourceType === 'photostream') return 'Photostream'
   if (entry.sourceType === 'selected') return `Selected — ${entry.source}`
-  if (entry.sourceType === 'discover_people') return `People — ${entry.source}`
+  if (entry.sourceType === 'discover_people') return `User — ${entry.source}`
   if (entry.sourceType === 'discover_groups') return `Groups — ${entry.source}`
-  if (entry.sourceType === 'discover') return `Discover — ${entry.source}`
+  if (entry.sourceType === 'discover') return `Explore — ${entry.source}`
   return entry.source
 }
 
@@ -63,7 +61,7 @@ function BatchesTab({ onClear }: { onClear: () => void }) {
 
   useEffect(() => {
     setLoading(true)
-    window.flickrAPI.getBatchLog().then(log => { setEntries(log.filter(e => YOUR_TYPES.includes(e.sourceType))); setLoading(false) })
+    window.flickrAPI.getBatchLog().then(log => { setEntries(log); setLoading(false) })
   }, [])
 
   async function handleClear() {
@@ -562,14 +560,14 @@ function PhotosTab() {
 // ── Discover tab ─────────────────────────────────────────────────────────────
 
 function DiscoverTab() {
-  const [entries, setEntries] = useState<BatchLogEntry[]>([])
+  const [records, setRecords] = useState<DiscoverDownloadRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [confirming, setConfirming] = useState(false)
 
   useEffect(() => {
     setLoading(true)
-    window.flickrAPI.getBatchLog().then(log => {
-      setEntries(log.filter(e => DISCOVER_TYPES.includes(e.sourceType)))
+    window.flickrAPI.searchDiscoverRecords({}).then(results => {
+      setRecords(results)
       setLoading(false)
     })
   }, [])
@@ -577,45 +575,30 @@ function DiscoverTab() {
   async function handleClear() {
     if (!confirming) { setConfirming(true); return }
     await window.flickrAPI.clearDiscoverRecords()
-    // Also clear discover entries from batch_log — reuse clearHistory for now
-    // (batch_log has no namespace; use a full clear only if user has no other history)
     setConfirming(false)
-    setEntries([])
+    setRecords([])
   }
 
   if (loading) return <p style={styles.empty}>Loading…</p>
 
-  if (entries.length === 0) return (
-    <p style={styles.empty}>No Discover download history yet. Photos downloaded from People, Groups, and Explore appear here.</p>
+  if (records.length === 0) return (
+    <p style={styles.empty}>No Discover download history yet. Individual photos downloaded from People, Groups, and Explore appear here.</p>
   )
 
   return (
     <>
       <div style={styles.tabBody}>
-        {entries.map(entry => (
-          <div key={entry.id} style={styles.row}>
+        {records.map(record => (
+          <div key={record.photoId} style={styles.row}>
             <div style={styles.rowTop}>
-              <span style={{ ...styles.statusDot, color: statusColor(entry.status) }}>
-                {statusDot(entry.status)}
-              </span>
-              <span style={styles.source}>{sourceLabel(entry)}</span>
-              <span style={styles.date}>{formatDate(entry.createdAt)}</span>
-            </div>
-            <div style={styles.rowCounts}>
-              <span style={styles.countSaved}>{entry.downloaded} saved</span>
-              {entry.skippedCollision > 0 && (
-                <span style={styles.countSkip}>{entry.skippedCollision} skipped</span>
+              {record.thumbnailUrl && (
+                <img src={record.thumbnailUrl} alt="" style={styles.discoverThumb} />
               )}
-              {entry.failed > 0 && (
-                <span style={styles.countFail}>{entry.failed} failed</span>
-              )}
-              {(() => {
-                const smartFiltered = entry.total - entry.downloaded - entry.skippedCollision - entry.failed
-                return smartFiltered > 0 ? (
-                  <span style={styles.countSkip}>{smartFiltered} already downloaded</span>
-                ) : null
-              })()}
-              {entry.total > 0 && <span style={styles.countTotal}>of {entry.total}</span>}
+              <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
+                <span style={styles.source}>{record.title || record.photoId}</span>
+                {record.source && <span style={styles.discoverSource}>{record.source}</span>}
+              </div>
+              <span style={styles.date}>{formatDate(record.lastDownloadedAt)}</span>
             </div>
           </div>
         ))}
@@ -827,6 +810,15 @@ const styles: Record<string, React.CSSProperties> = {
     width: 44, height: 44, borderRadius: 4,
     objectFit: 'cover', flexShrink: 0,
     background: '#f3f4f6',
+  },
+  discoverThumb: {
+    width: 44, height: 44, borderRadius: 4,
+    objectFit: 'cover', flexShrink: 0,
+    background: '#f3f4f6',
+  },
+  discoverSource: {
+    fontSize: 11, color: '#888', marginTop: 2,
+    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
   },
   thumbPlaceholder: {
     width: 44, height: 44, borderRadius: 4, flexShrink: 0,

@@ -108,7 +108,9 @@ export interface PhotoRecordQuery {
 
 // Same shape as PhotoDownloadRecord but stored in a separate table so
 // Discover downloads never interfere with Smart Download checks on your own photos.
-export type DiscoverDownloadRecord = PhotoDownloadRecord
+export interface DiscoverDownloadRecord extends PhotoDownloadRecord {
+  source: string
+}
 
 export interface MetadataSettings {
   embedTitle: boolean

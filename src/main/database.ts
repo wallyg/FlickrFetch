@@ -36,14 +36,17 @@ export function openDatabase(): void {
       last_downloaded_at INTEGER NOT NULL,
       flickr_last_update INTEGER NOT NULL DEFAULT 0,
       title TEXT NOT NULL DEFAULT '',
-      thumbnail_url TEXT NOT NULL DEFAULT ''
+      thumbnail_url TEXT NOT NULL DEFAULT '',
+      source TEXT NOT NULL DEFAULT ''
     );
   `)
 
-  // Migration: add title and thumbnail_url to existing installs that only have the original 3 columns
+  // Migration: add columns to existing installs
   const cols = (db.prepare("PRAGMA table_info(photo_download_record)").all() as Array<{ name: string }>).map(r => r.name)
   if (!cols.includes('title')) db.exec("ALTER TABLE photo_download_record ADD COLUMN title TEXT NOT NULL DEFAULT ''")
   if (!cols.includes('thumbnail_url')) db.exec("ALTER TABLE photo_download_record ADD COLUMN thumbnail_url TEXT NOT NULL DEFAULT ''")
+  const discoverCols = (db.prepare("PRAGMA table_info(discover_download_record)").all() as Array<{ name: string }>).map(r => r.name)
+  if (!discoverCols.includes('source')) db.exec("ALTER TABLE discover_download_record ADD COLUMN source TEXT NOT NULL DEFAULT ''")
 }
 
 export function closeDatabase(): void {
@@ -192,17 +195,25 @@ export function clearAllHistory(): void {
 
 // ── Discover download records (kept separate from your own photo records) ──────
 
-export function writeDiscoverRecord(photoId: string, flickrLastUpdate: number, title = '', thumbnailUrl = ''): void {
+function rowToDiscoverRecord(row: Record<string, unknown>): DiscoverDownloadRecord {
+  return {
+    ...rowToRecord(row),
+    source: (row['source'] as string) || '',
+  }
+}
+
+export function writeDiscoverRecord(photoId: string, flickrLastUpdate: number, title = '', thumbnailUrl = '', source = ''): void {
   if (!db) return
   db.prepare(`
-    INSERT INTO discover_download_record (photo_id, last_downloaded_at, flickr_last_update, title, thumbnail_url)
-    VALUES (@photoId, @now, @flickrLastUpdate, @title, @thumbnailUrl)
+    INSERT INTO discover_download_record (photo_id, last_downloaded_at, flickr_last_update, title, thumbnail_url, source)
+    VALUES (@photoId, @now, @flickrLastUpdate, @title, @thumbnailUrl, @source)
     ON CONFLICT(photo_id) DO UPDATE SET
       last_downloaded_at = excluded.last_downloaded_at,
       flickr_last_update = excluded.flickr_last_update,
       title = excluded.title,
-      thumbnail_url = excluded.thumbnail_url
-  `).run({ photoId, now: Date.now(), flickrLastUpdate, title, thumbnailUrl })
+      thumbnail_url = excluded.thumbnail_url,
+      source = excluded.source
+  `).run({ photoId, now: Date.now(), flickrLastUpdate, title, thumbnailUrl, source })
 }
 
 export function getDiscoverRecordsBatch(photoIds: string[]): Map<string, DiscoverDownloadRecord> {
@@ -211,7 +222,7 @@ export function getDiscoverRecordsBatch(photoIds: string[]): Map<string, Discove
   const placeholders = photoIds.map(() => '?').join(',')
   const rows = (db.prepare(`SELECT * FROM discover_download_record WHERE photo_id IN (${placeholders})`).all(...photoIds)) as Record<string, unknown>[]
   for (const row of rows) {
-    const rec = rowToRecord(row)
+    const rec = rowToDiscoverRecord(row)
     map.set(rec.photoId, rec)
   }
   return map
@@ -233,7 +244,7 @@ export function searchDiscoverRecords(query: PhotoRecordQuery, limit?: number): 
   const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
   const limitClause = limit !== undefined ? ` LIMIT ${limit}` : ''
   const rows = db.prepare(`SELECT * FROM discover_download_record ${where} ORDER BY last_downloaded_at DESC${limitClause}`).all(params) as Record<string, unknown>[]
-  return rows.map(rowToRecord)
+  return rows.map(rowToDiscoverRecord)
 }
 
 export function deleteDiscoverRecord(photoId: string): void {
