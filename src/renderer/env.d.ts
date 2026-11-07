@@ -34,6 +34,8 @@ declare global {
       startPhotostreamBatch: (albumTitle: string, track?: boolean, smartMode?: 'updated' | 'never-downloaded', privacyFilter?: string, sort?: string) => Promise<void>
       cancelBatch: () => void
       skipBatch: () => void
+      pauseBatch: () => void
+      resumeBatch: () => void
       removeFromQueue: (id: string) => Promise<void>
       confirm: (message: string, detail?: string) => Promise<boolean>
       onBatchProgress: (cb: (progress: BatchProgress) => void) => () => void

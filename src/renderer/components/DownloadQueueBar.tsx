@@ -85,10 +85,12 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
   const isRunning = status === 'running'
   const isDone = status === 'done'
   const isCancelled = status === 'cancelled'
+  const isPaused = progress?.paused ?? false
   const doneWithIssues = isDone && (skipped > 0 || sizeUnavailable > 0 || failed > 0)
 
   // Color-coded left border by status
-  const borderColor = isRunning ? 'var(--ff-pink)'
+  const borderColor = isPaused ? '#f59e0b'
+    : isRunning ? 'var(--ff-pink)'
     : doneWithIssues ? '#ff8c00'
     : isDone ? '#4caf50'
     : isCancelled ? '#cc6600'
@@ -99,6 +101,9 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
     setCancelling(true)
     window.flickrAPI.cancelBatch()
   }
+
+  const handlePause = (): void => window.flickrAPI.pauseBatch()
+  const handleResume = (): void => window.flickrAPI.resumeBatch()
 
   const handleDismiss = (): void => {
     if (dismissTimer.current) clearTimeout(dismissTimer.current)
@@ -232,7 +237,7 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
           )}
           <span style={{ ...styles.label, ...(isRunning ? styles.labelRunning : {}) }}>
             {cancelling && 'Cancelling…'}
-            {!cancelling && isRunning && `${current.toLocaleString()} of ${total.toLocaleString()} · ${albumTitle}${progress?.queuedCount ? ` · +${progress.queuedCount} queued` : ''}`}
+            {!cancelling && isRunning && `${isPaused ? '⏸ ' : ''}${current.toLocaleString()} of ${total.toLocaleString()} · ${albumTitle}${progress?.queuedCount ? ` · +${progress.queuedCount} queued` : ''}`}
             {!cancelling && isDone && (() => {
               const parts: string[] = [`✓ ${downloaded.toLocaleString()} saved`]
               if (skipped > 0) parts.push(`${skipped.toLocaleString()} skipped`)
@@ -261,6 +266,12 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
           </span>
         </div>
         <div style={styles.right}>
+          {isRunning && !isPaused && !cancelling && (
+            <button style={styles.pauseBtn} onClick={handlePause}>Pause</button>
+          )}
+          {isPaused && (
+            <button style={styles.resumeBtn} onClick={handleResume}>Resume</button>
+          )}
           {isRunning && !cancelling && (progress?.queuedCount ?? 0) > 0 && (
             <button style={styles.skipBtn} onClick={() => window.flickrAPI.skipBatch()}>
               Skip
@@ -360,6 +371,25 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     gap: '8px',
     flexShrink: 0
+  },
+  pauseBtn: {
+    background: 'none',
+    border: '1px solid #ccc',
+    borderRadius: '6px',
+    fontSize: '12px',
+    color: '#666',
+    cursor: 'pointer',
+    padding: '4px 12px'
+  },
+  resumeBtn: {
+    background: 'none',
+    border: '1px solid #f59e0b',
+    borderRadius: '6px',
+    fontSize: '12px',
+    color: '#b45309',
+    cursor: 'pointer',
+    padding: '4px 12px',
+    fontWeight: '500'
   },
   skipBtn: {
     background: 'none',

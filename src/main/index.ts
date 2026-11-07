@@ -341,7 +341,13 @@ let activeBatchController: AbortController | null = null
 let activeBatchAlbumId: string | null = null
 let lastBatchProgress: BatchProgress | null = null
 let batchIdCounter = 0
+let isPaused = false
+let resumeResolve: (() => void) | null = null
 
+async function waitIfPaused(): Promise<void> {
+  if (!isPaused) return
+  await new Promise<void>(resolve => { resumeResolve = resolve })
+}
 
 function enqueueBatch(job: Omit<BatchJob, 'id'>): void {
   const jobWithId: BatchJob = { ...job, id: String(++batchIdCounter) }
@@ -401,7 +407,7 @@ async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'p
   ensureDownloadFolder(albumFolder)
 
   const sendProgress = (p: Omit<BatchProgress, 'queuedCount' | 'queuedAlbums'>): void => {
-    const full = { ...p, queuedCount: batchQueue.length, queuedAlbums: batchQueue.map(j => ({ id: j.id, title: j.albumTitle, photoCount: j.photoCount, videoCount: j.videoCount })) }
+    const full = { ...p, paused: isPaused, queuedCount: batchQueue.length, queuedAlbums: batchQueue.map(j => ({ id: j.id, title: j.albumTitle, photoCount: j.photoCount, videoCount: j.videoCount })) }
     lastBatchProgress = full
     mainWindow?.webContents.send('batch:progress', full)
     if (showDockProgress) {
@@ -471,6 +477,7 @@ async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'p
       if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'album', total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
       return
     }
+    await waitIfPaused()
 
     const photo = filteredBatch[i]
     sendProgress({ current: i, total, albumTitle, activeTitle: photo.title, latestTitle: '', latestFilePath: null, status: 'running', skippedCount, skippedSizeUnavailableCount, failedCount })
@@ -535,7 +542,7 @@ async function runSelectedBatch(photos: { id: string; title: string }[], albumTi
   ensureDownloadFolder(targetFolder)
 
   const sendProgress = (p: Omit<BatchProgress, 'queuedCount' | 'queuedAlbums'>): void => {
-    const full = { ...p, queuedCount: batchQueue.length, queuedAlbums: batchQueue.map(j => ({ id: j.id, title: j.albumTitle, photoCount: j.photoCount, videoCount: j.videoCount })) }
+    const full = { ...p, paused: isPaused, queuedCount: batchQueue.length, queuedAlbums: batchQueue.map(j => ({ id: j.id, title: j.albumTitle, photoCount: j.photoCount, videoCount: j.videoCount })) }
     lastBatchProgress = full
     mainWindow?.webContents.send('batch:progress', full)
     if (showDockProgress) {
@@ -566,6 +573,7 @@ async function runSelectedBatch(photos: { id: string; title: string }[], albumTi
       if (track) writeBatchLog({ createdAt: Date.now(), source: baseTitle, sourceType: 'selected', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
       return
     }
+    await waitIfPaused()
 
     const photo = photos[i]
     sendProgress({ current: i, total, albumTitle, activeTitle: photo.title, latestTitle: '', latestFilePath: null, status: 'running', skippedCount, skippedSizeUnavailableCount, failedCount })
@@ -628,7 +636,7 @@ async function runDiscoverSelectedBatch(photos: { id: string; title: string }[],
   ensureDownloadFolder(targetFolder)
 
   const sendProgress = (p: Omit<BatchProgress, 'queuedCount' | 'queuedAlbums'>): void => {
-    const full = { ...p, queuedCount: batchQueue.length, queuedAlbums: batchQueue.map(j => ({ id: j.id, title: j.albumTitle, photoCount: j.photoCount, videoCount: j.videoCount })) }
+    const full = { ...p, paused: isPaused, queuedCount: batchQueue.length, queuedAlbums: batchQueue.map(j => ({ id: j.id, title: j.albumTitle, photoCount: j.photoCount, videoCount: j.videoCount })) }
     lastBatchProgress = full
     mainWindow?.webContents.send('batch:progress', full)
     if (showDockProgress) {
@@ -653,6 +661,7 @@ async function runDiscoverSelectedBatch(photos: { id: string; title: string }[],
       if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'discover', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
       return
     }
+    await waitIfPaused()
     const photo = photos[i]
     sendProgress({ current: i, total, albumTitle, activeTitle: photo.title, latestTitle: '', latestFilePath: null, status: 'running', skippedCount, skippedSizeUnavailableCount, failedCount })
     try {
@@ -714,7 +723,7 @@ async function runDiscoverPublicBatch(
   ensureDownloadFolder(targetFolder)
 
   const sendProgress = (p: Omit<BatchProgress, 'queuedCount' | 'queuedAlbums'>): void => {
-    const full = { ...p, queuedCount: batchQueue.length, queuedAlbums: batchQueue.map(j => ({ id: j.id, title: j.albumTitle, photoCount: j.photoCount, videoCount: j.videoCount })) }
+    const full = { ...p, paused: isPaused, queuedCount: batchQueue.length, queuedAlbums: batchQueue.map(j => ({ id: j.id, title: j.albumTitle, photoCount: j.photoCount, videoCount: j.videoCount })) }
     lastBatchProgress = full
     mainWindow?.webContents.send('batch:progress', full)
     if (showDockProgress) {
@@ -764,6 +773,7 @@ async function runDiscoverPublicBatch(
       if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: batchSourceType, total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
       return
     }
+    await waitIfPaused()
     const photo = filteredPhotos[i]
     sendProgress({ current: i, total, albumTitle, activeTitle: photo.title, latestTitle: '', latestFilePath: null, status: 'running', skippedCount, skippedSizeUnavailableCount, failedCount })
     try {
@@ -836,7 +846,7 @@ async function runPhotostreamBatch(albumTitle: string, track = true, smartMode?:
   ensureDownloadFolder(downloadFolder)
 
   const sendProgress = (p: Omit<BatchProgress, 'queuedCount' | 'queuedAlbums'>): void => {
-    const full = { ...p, queuedCount: batchQueue.length, queuedAlbums: batchQueue.map(j => ({ id: j.id, title: j.albumTitle, photoCount: j.photoCount, videoCount: j.videoCount })) }
+    const full = { ...p, paused: isPaused, queuedCount: batchQueue.length, queuedAlbums: batchQueue.map(j => ({ id: j.id, title: j.albumTitle, photoCount: j.photoCount, videoCount: j.videoCount })) }
     lastBatchProgress = full
     mainWindow?.webContents.send('batch:progress', full)
     if (showDockProgress) {
@@ -914,6 +924,7 @@ async function runPhotostreamBatch(albumTitle: string, track = true, smartMode?:
       if (track) writeBatchLog({ createdAt: Date.now(), source: 'Photostream', sourceType: 'photostream', total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
       return
     }
+    await waitIfPaused()
 
     const photo = filteredPhotos[i]
     sendProgress({ current: i, total, albumTitle, activeTitle: photo.title, latestTitle: '', latestFilePath: null, status: 'running', skippedCount, failedCount })
@@ -1068,11 +1079,33 @@ ipcMain.handle('batch:startPhotostream', (_event, albumTitle: string, track = tr
 
 ipcMain.on('batch:cancel', () => {
   batchQueue = []
+  isPaused = false
+  resumeResolve?.()
+  resumeResolve = null
   activeBatchController?.abort()
 })
 
 ipcMain.on('batch:skipCurrent', () => {
+  const r = resumeResolve
+  resumeResolve = null
+  r?.()
   activeBatchController?.abort()
+})
+
+ipcMain.on('batch:pause', () => {
+  isPaused = true
+  if (lastBatchProgress) {
+    mainWindow?.webContents.send('batch:progress', { ...lastBatchProgress, paused: true })
+  }
+})
+
+ipcMain.on('batch:resume', () => {
+  isPaused = false
+  resumeResolve?.()
+  resumeResolve = null
+  if (lastBatchProgress) {
+    mainWindow?.webContents.send('batch:progress', { ...lastBatchProgress, paused: false })
+  }
 })
 
 ipcMain.handle('batch:removeFromQueue', (_event, id: string) => {

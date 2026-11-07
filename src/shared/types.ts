@@ -77,6 +77,7 @@ export interface BatchProgress {
   skippedSizeUnavailableCount?: number    // photos where the requested size doesn't exist on Flickr
   failedCount?: number                    // photos that errored and were skipped
   smartFilteredCount?: number // photos excluded by smart filter (Never Downloaded / Download Updated)
+  paused?: boolean
 }
 
 export interface BatchLogEntry {

@@ -86,6 +86,8 @@ contextBridge.exposeInMainWorld('flickrAPI', {
   clearPhotoRecords: (beforeMs?: number, afterMs?: number): Promise<void> => ipcRenderer.invoke('db:clearPhotoRecords', beforeMs, afterMs),
   cancelBatch: (): void => ipcRenderer.send('batch:cancel'),
   skipBatch: (): void => ipcRenderer.send('batch:skipCurrent'),
+  pauseBatch: (): void => ipcRenderer.send('batch:pause'),
+  resumeBatch: (): void => ipcRenderer.send('batch:resume'),
   removeFromQueue: (id: string): Promise<void> => ipcRenderer.invoke('batch:removeFromQueue', id),
   onBatchProgress: (cb: (progress: BatchProgress) => void): (() => void) => {
     const handler = (_evt: IpcRendererEvent, data: BatchProgress) => cb(data)
