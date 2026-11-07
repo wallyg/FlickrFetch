@@ -212,7 +212,7 @@ export default function DiscoverPeople(): React.JSX.Element {
     if (!selected.length) return
     setAlbumDownloading(true)
     try {
-      await window.flickrAPI.startDiscoverSelectedBatch(selected, `Selected from ${activeAlbum.title}`, ['Users', foundUser.username])
+      await window.flickrAPI.startDiscoverSelectedBatch(selected, `Selected from ${activeAlbum.title}`, ['Users', foundUser.username, activeAlbum.title])
     } finally {
       setAlbumDownloading(false)
       setAlbumSelectMode(false)
@@ -273,7 +273,7 @@ export default function DiscoverPeople(): React.JSX.Element {
                   void window.flickrAPI.startDiscoverSelectedBatch(
                     albumPhotos.map(p => ({ id: p.id, title: p.title })),
                     activeAlbum.title,
-                    ['Users', foundUser.username]
+                    ['Users', foundUser.username, activeAlbum.title]
                   )
                 }}
               />
