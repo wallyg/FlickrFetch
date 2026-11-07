@@ -17,6 +17,14 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
   const [cancelling, setCancelling] = useState(false)
   const [toastMsg, setToastMsg] = useState<string | null>(null)
   const [folderPath, setFolderPath] = useState<string | null>(null)
+  const [expandedFailures, setExpandedFailures] = useState<Set<string>>(new Set())
+
+  const toggleFailures = (key: string): void =>
+    setExpandedFailures(prev => {
+      const next = new Set(prev)
+      next.has(key) ? next.delete(key) : next.add(key)
+      return next
+    })
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const dismissTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -155,6 +163,27 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
               {isRunning && activeTitle && (
                 <span style={styles.activeTicker}>↓ {activeTitle}</span>
               )}
+              {/* Failure list for current batch (shown after done) */}
+              {isDone && (progress?.failedPhotos ?? []).length > 0 && (
+                <>
+                  <button style={styles.failureToggle} onClick={() => toggleFailures('current')}>
+                    {expandedFailures.has('current') ? '▾' : '▸'} See {progress!.failedPhotos!.length} failed
+                  </button>
+                  {expandedFailures.has('current') && (
+                    <div style={styles.failureList}>
+                      {progress!.failedPhotos!.map((p, i) => (
+                        <div key={i} style={styles.failureItem}>✗ {p.title}</div>
+                      ))}
+                    </div>
+                  )}
+                  <button
+                    style={styles.retryBtn}
+                    onClick={() => window.flickrAPI.startSelectedBatch(progress!.failedPhotos!, `Retry: ${albumTitle}`)}
+                  >
+                    Retry {progress!.failedPhotos!.length} failed
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
@@ -214,6 +243,26 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
                         )}
                       </div>
                       <span style={styles.batchMeta}>{bParts.join(' · ')}</span>
+                      {(b.failedPhotos ?? []).length > 0 && (
+                        <>
+                          <button style={styles.failureToggle} onClick={() => toggleFailures(`stacked-${i}`)}>
+                            {expandedFailures.has(`stacked-${i}`) ? '▾' : '▸'} See {b.failedPhotos!.length} failed
+                          </button>
+                          {expandedFailures.has(`stacked-${i}`) && (
+                            <div style={styles.failureList}>
+                              {b.failedPhotos!.map((p, pi) => (
+                                <div key={pi} style={styles.failureItem}>✗ {p.title}</div>
+                              ))}
+                            </div>
+                          )}
+                          <button
+                            style={styles.retryBtn}
+                            onClick={() => window.flickrAPI.startSelectedBatch(b.failedPhotos!, `Retry: ${b.albumTitle}`)}
+                          >
+                            Retry {b.failedPhotos!.length} failed
+                          </button>
+                        </>
+                      )}
                     </div>
                     <button style={styles.removeQueueBtn} title="Dismiss" onClick={() => onStackedDismiss?.(i)}>✕</button>
                   </div>
@@ -396,7 +445,7 @@ const styles: Record<string, React.CSSProperties> = {
     border: '1px solid #ccc',
     borderRadius: '6px',
     fontSize: '12px',
-    color: '#999',
+    color: '#666',
     cursor: 'pointer',
     padding: '4px 10px'
   },
@@ -547,5 +596,34 @@ const styles: Record<string, React.CSSProperties> = {
     height: '1px',
     backgroundColor: '#f0ede8',
     margin: '0 20px'
+  },
+  failureToggle: {
+    background: 'none',
+    border: 'none',
+    fontSize: '11px',
+    color: '#cc4400',
+    cursor: 'pointer',
+    padding: '2px 0',
+    textAlign: 'left' as const
+  },
+  failureList: {
+    marginTop: '2px',
+    marginBottom: '4px'
+  },
+  failureItem: {
+    fontSize: '11px',
+    color: '#cc4400',
+    padding: '1px 0'
+  },
+  retryBtn: {
+    background: 'none',
+    border: '1px solid #cc4400',
+    borderRadius: '5px',
+    fontSize: '11px',
+    color: '#cc4400',
+    cursor: 'pointer',
+    padding: '3px 8px',
+    marginTop: '4px',
+    display: 'inline-block' as const
   }
 }

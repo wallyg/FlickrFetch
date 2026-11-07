@@ -76,6 +76,7 @@ export interface BatchProgress {
   skippedCount?: number                   // collision skips (file already exists, behavior = skip)
   skippedSizeUnavailableCount?: number    // photos where the requested size doesn't exist on Flickr
   failedCount?: number                    // photos that errored and were skipped
+  failedPhotos?: { id: string; title: string }[]
   smartFilteredCount?: number // photos excluded by smart filter (Never Downloaded / Download Updated)
   paused?: boolean
 }

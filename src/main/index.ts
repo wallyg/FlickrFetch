@@ -468,6 +468,7 @@ async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'p
   let skippedCount = 0
   let skippedSizeUnavailableCount = 0
   let failedCount = 0
+  const failedPhotos: { id: string; title: string }[] = []
   let downloadedCount = 0
 
   for (let i = 0; i < filteredBatch.length; i++) {
@@ -509,6 +510,7 @@ async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'p
         return
       }
       failedCount++
+      failedPhotos.push({ id: photo.id, title: photo.title })
       process.stderr.write(`[flickrfetch] batch skip ${photo.id}: ${err}\n`)
       sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: null, status: 'running', skippedCount, skippedSizeUnavailableCount, failedCount })
     }
@@ -516,7 +518,7 @@ async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'p
 
   activeBatchAlbumId = null
   const finalStatus = failedCount > 0 || skippedCount > 0 || skippedSizeUnavailableCount > 0 ? 'partial' : 'complete'
-  sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'done', skippedCount, skippedSizeUnavailableCount, failedCount, smartFilteredCount: preSmartTotal - total })
+  sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'done', skippedCount, skippedSizeUnavailableCount, failedCount, failedPhotos, smartFilteredCount: preSmartTotal - total })
   if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'album', total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: finalStatus })
   if (notifyOnComplete && Notification.isSupported()) {
     const body = (skippedCount + skippedSizeUnavailableCount + failedCount) > 0
@@ -565,6 +567,7 @@ async function runSelectedBatch(photos: { id: string; title: string }[], albumTi
   let skippedCount = 0
   let skippedSizeUnavailableCount = 0
   let failedCount = 0
+  const failedPhotos: { id: string; title: string }[] = []
   let downloadedCount = 0
 
   for (let i = 0; i < photos.length; i++) {
@@ -604,13 +607,14 @@ async function runSelectedBatch(photos: { id: string; title: string }[], albumTi
         return
       }
       failedCount++
+      failedPhotos.push({ id: photo.id, title: photo.title })
       process.stderr.write(`[flickrfetch] batch skip ${photo.id}: ${err}\n`)
       sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: null, status: 'running', skippedCount, skippedSizeUnavailableCount, failedCount })
     }
   }
 
   const finalStatus = failedCount > 0 || skippedCount > 0 || skippedSizeUnavailableCount > 0 ? 'partial' : 'complete'
-  sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'done', skippedCount, skippedSizeUnavailableCount, failedCount })
+  sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'done', skippedCount, skippedSizeUnavailableCount, failedCount, failedPhotos })
   if (track) writeBatchLog({ createdAt: Date.now(), source: baseTitle, sourceType: 'selected', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: finalStatus })
   if (notifyOnComplete && Notification.isSupported()) {
     const body = (skippedCount + skippedSizeUnavailableCount + failedCount) > 0
@@ -653,6 +657,7 @@ async function runDiscoverSelectedBatch(photos: { id: string; title: string }[],
   let skippedCount = 0
   let skippedSizeUnavailableCount = 0
   let failedCount = 0
+  const failedPhotos: { id: string; title: string }[] = []
   let downloadedCount = 0
 
   for (let i = 0; i < photos.length; i++) {
@@ -690,11 +695,12 @@ async function runDiscoverSelectedBatch(photos: { id: string; title: string }[],
         return
       }
       failedCount++
+      failedPhotos.push({ id: photo.id, title: photo.title })
       sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: null, status: 'running', skippedCount, skippedSizeUnavailableCount, failedCount })
     }
   }
 
-  sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'done', skippedCount, skippedSizeUnavailableCount, failedCount })
+  sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'done', skippedCount, skippedSizeUnavailableCount, failedCount, failedPhotos })
   const finalStatus = failedCount > 0 || skippedCount > 0 || skippedSizeUnavailableCount > 0 ? 'partial' : 'complete'
   if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'discover', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: finalStatus })
   if (notifyOnComplete && Notification.isSupported()) {
@@ -765,6 +771,7 @@ async function runDiscoverPublicBatch(
   let skippedCount = 0
   let skippedSizeUnavailableCount = 0
   let failedCount = 0
+  const failedPhotos: { id: string; title: string }[] = []
   let downloadedCount = 0
 
   for (let i = 0; i < filteredPhotos.length; i++) {
@@ -802,13 +809,14 @@ async function runDiscoverPublicBatch(
         return
       }
       failedCount++
+      failedPhotos.push({ id: photo.id, title: photo.title })
       process.stderr.write(`[flickrfetch] discover batch skip ${photo.id}: ${err}\n`)
       sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: null, status: 'running', skippedCount, skippedSizeUnavailableCount, failedCount })
     }
   }
 
   const finalStatus = failedCount > 0 || skippedCount > 0 || skippedSizeUnavailableCount > 0 ? 'partial' : 'complete'
-  sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'done', skippedCount, skippedSizeUnavailableCount, failedCount, smartFilteredCount: preSmartTotal - total })
+  sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'done', skippedCount, skippedSizeUnavailableCount, failedCount, failedPhotos, smartFilteredCount: preSmartTotal - total })
   if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: batchSourceType, total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: finalStatus })
   if (notifyOnComplete && Notification.isSupported()) {
     const body = (skippedCount + skippedSizeUnavailableCount + failedCount) > 0
@@ -916,6 +924,7 @@ async function runPhotostreamBatch(albumTitle: string, track = true, smartMode?:
   let lastFilePath: string | null = null
   let skippedCount = 0
   let failedCount = 0
+  const failedPhotos: { id: string; title: string }[] = []
   let downloadedCount = 0
 
   for (let i = 0; i < filteredPhotos.length; i++) {
@@ -952,13 +961,14 @@ async function runPhotostreamBatch(albumTitle: string, track = true, smartMode?:
         return
       }
       failedCount++
+      failedPhotos.push({ id: photo.id, title: photo.title })
       process.stderr.write(`[flickrfetch] batch skip ${photo.id}: ${err}\n`)
       sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: null, status: 'running', skippedCount, failedCount })
     }
   }
 
   const finalStatus = failedCount > 0 || skippedCount > 0 ? 'partial' : 'complete'
-  sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'done', skippedCount, failedCount, smartFilteredCount: preSmartTotal - total })
+  sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'done', skippedCount, failedCount, failedPhotos, smartFilteredCount: preSmartTotal - total })
   if (track) writeBatchLog({ createdAt: Date.now(), source: 'Photostream', sourceType: 'photostream', total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: finalStatus })
   if (notifyOnComplete && Notification.isSupported()) {
     const body = (skippedCount + failedCount) > 0
