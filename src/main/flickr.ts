@@ -240,6 +240,42 @@ export async function getAlbums(tokenData: FlickrTokenData, page: number = 1): P
   }
 }
 
+export async function getPublicAlbumPhotos(albumId: string, ownerNsid: string, tokenData: FlickrTokenData, page: number = 1): Promise<PhotoPage> {
+  const url =
+    `${FLICKR_API_BASE}` +
+    `?method=flickr.photosets.getPhotos` +
+    `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
+    `&photoset_id=${encodeURIComponent(albumId)}` +
+    `&user_id=${encodeURIComponent(ownerNsid)}` +
+    `&extras=${encodeURIComponent('url_q,date_taken,date_upload,last_update,media,tags,license')}` +
+    `&per_page=100` +
+    `&page=${page}` +
+    `&format=json` +
+    `&nojsoncallback=1`
+
+  const authHeader = getOAuthHeader(url, 'GET', tokenData)
+  const response = await axios.get(url, {
+    headers: { ...authHeader, 'User-Agent': USER_AGENT }
+  })
+
+  if (response.data.stat !== 'ok') {
+    throw new Error(`Flickr API error: ${response.data.message ?? 'unknown error'}`)
+  }
+
+  const data = response.data.photoset
+  const photos: FlickrPhoto[] = (data.photo as Record<string, string>[]).map((p) => ({
+    id: p.id,
+    title: p.title || 'Untitled',
+    thumbnailUrl: p.url_q || '',
+    dateTaken: p.datetaken || '',
+    media: (p.media === 'video' ? 'video' : 'photo') as 'photo' | 'video',
+    tags: p.tags ? (p.tags as string).split(' ').filter(Boolean) : [],
+    lastUpdate: p.lastupdate ? Number(p.lastupdate) : undefined,
+  }))
+
+  return { photos, page: Number(data.page), pages: Number(data.pages), total: Number(data.total) }
+}
+
 export async function getAlbumPhotos(albumId: string, tokenData: FlickrTokenData, page: number = 1, mediaType?: 'photo' | 'video'): Promise<PhotoPage> {
   const mediaParam = mediaType ? `&media=${mediaType === 'photo' ? 'photos' : 'videos'}` : ''
   const url =

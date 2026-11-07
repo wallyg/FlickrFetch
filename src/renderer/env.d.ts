@@ -55,6 +55,7 @@ declare global {
       discoverGetContacts: () => Promise<DiscoverContact[]>
       discoverGetMyGroups: () => Promise<DiscoverGroup[]>
       discoverGetGroupPhotos: (groupId: string, page: number) => Promise<PhotoPage>
+      discoverGetAlbumPhotos: (ownerNsid: string, albumId: string, page: number) => Promise<PhotoPage>
       discoverGetInterestingness: (page: number) => Promise<PhotoPage>
       discoverDownloadPhoto: (photoId: string, title: string, downloadSize?: string, thumbnailUrl?: string, lastUpdate?: number) => Promise<{ filePath: string | null }>
       startDiscoverUserBatch: (nsid: string, username: string, displayTitle: string, track?: boolean, smartMode?: 'updated' | 'never-downloaded') => Promise<void>

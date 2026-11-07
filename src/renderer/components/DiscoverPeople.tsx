@@ -163,7 +163,7 @@ export default function DiscoverPeople(): React.JSX.Element {
     setAlbumSelectedIds(new Set())
     setAlbumPhotosLoading(true)
     try {
-      const albumResult = await window.flickrAPI.getAlbumPhotos(album.id, 1)
+      const albumResult = await window.flickrAPI.discoverGetAlbumPhotos(foundUser!.nsid, album.id, 1)
       setAlbumPhotos(albumResult.photos)
       setAlbumPhotosPage(albumResult.page)
       setAlbumPhotosPages(albumResult.pages)
@@ -178,7 +178,7 @@ export default function DiscoverPeople(): React.JSX.Element {
     if (!activeAlbum || albumPhotosLoadingMore || albumPhotosPage >= albumPhotosPages) return
     setAlbumPhotosLoadingMore(true)
     try {
-      const result = await window.flickrAPI.getAlbumPhotos(activeAlbum.id, albumPhotosPage + 1)
+      const result = await window.flickrAPI.discoverGetAlbumPhotos(foundUser!.nsid, activeAlbum.id, albumPhotosPage + 1)
       setAlbumPhotos(prev => [...prev, ...result.photos])
       setAlbumPhotosPage(result.page)
     } catch { /* ignore */ }
@@ -521,7 +521,7 @@ function ContactCard({ contact, onClick }: { contact: DiscoverContact; onClick: 
 
 const s: Record<string, React.CSSProperties> = {
   container: { display: 'flex', flexDirection: 'column', gap: '16px', padding: '0 20px 32px' },
-  headerRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '20px' },
+  headerRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', paddingTop: '20px' },
   heading: { margin: 0, fontSize: '18px', fontWeight: 600, color: '#1a1a1a' },
   subheading: { margin: '4px 0 0', fontSize: '13px', color: '#888' },
   backBtn: { background: 'none', border: 'none', color: '#0063DC', cursor: 'pointer', fontSize: '14px', padding: '4px 0', flexShrink: 0 },
