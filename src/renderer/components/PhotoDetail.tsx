@@ -319,7 +319,9 @@ export default function PhotoDetail({
     setLastDownloadedAt(null)
   }
 
-  const privacyBadge = getPrivacyBadge(photo)
+  const privacyBadge = discoverMode
+    ? { label: 'Public', bg: '#e8f8ea', color: '#27ae60' }
+    : getPrivacyBadge(photo)
   const originalSize = sizes.find(s => s.label === 'Original') ?? sizes.filter(s => s.media === 'photo').at(-1)
 
   // Find the best video source URL from sizes — widen filter to check label too,
