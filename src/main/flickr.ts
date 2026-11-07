@@ -341,18 +341,31 @@ function parseCollection(raw: Record<string, unknown>): FlickrCollection {
   }
 }
 
-// Walk a collection tree and fill in iconUrl + coverUrls from the cover map
+// Walk a collection tree and fill in iconUrl + coverUrls from the cover map.
+// For sub-collections: take one cover from each sub-collection first (spread),
+// so the mosaic represents different sub-collections rather than 4 from the same one.
 function collectCovers(col: FlickrCollection, coverMap: Map<string, string>, limit: number): string[] {
   const urls: string[] = []
+
+  // Direct sets first
   for (const s of col.sets) {
     if (urls.length >= limit) break
     const url = coverMap.get(s.id)
     if (url) urls.push(url)
   }
-  for (const sub of col.collections) {
+
+  if (urls.length >= limit) return urls
+
+  // One from each sub-collection (spread), then fill extras
+  const subFirsts = col.collections
+    .map(sub => collectCovers(sub, coverMap, limit)[0])
+    .filter((u): u is string => u !== undefined)
+
+  for (const url of subFirsts) {
     if (urls.length >= limit) break
-    urls.push(...collectCovers(sub, coverMap, limit - urls.length))
+    urls.push(url)
   }
+
   return urls
 }
 
