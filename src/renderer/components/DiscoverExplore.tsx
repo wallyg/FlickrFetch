@@ -107,9 +107,6 @@ export default function DiscoverExplore({ onDownload }: Props): React.JSX.Elemen
         {photos.length > 0 && !selectMode && (
           <button style={s.selectToggleBtn} onClick={() => setSelectMode(true)}>Select</button>
         )}
-        {selectMode && (
-          <button style={s.selectToggleBtn} onClick={() => { setSelectMode(false); setSelectedIds(new Set()) }}>Cancel</button>
-        )}
       </div>
 
       <AttributionNotice />
@@ -238,9 +235,11 @@ export function DiscoverSelectBar({ count, total, onDownload, onCancel, download
 
 const sb: Record<string, React.CSSProperties> = {
   bar: {
-    position: 'sticky', bottom: 0, background: '#fff', borderTop: '1px solid #e8e8e8',
+    position: 'fixed', bottom: 0, left: 0, right: 0,
+    background: '#fff', borderTop: '1px solid #e8e8e8',
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '12px 20px', marginTop: 'auto', zIndex: 10,
+    padding: '12px 24px', zIndex: 200,
+    boxShadow: '0 -2px 8px rgba(0,0,0,0.06)',
   },
   label: { fontSize: '14px', color: '#444', fontWeight: 500 },
   actions: { display: 'flex', gap: '8px' },

@@ -137,13 +137,15 @@ export default function DiscoverGroups(): React.JSX.Element {
             </div>
           </div>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <SmartDownloadButton
-              label="Download Group"
-              onDownload={(mode) => {
-                const smartMode = mode === 'all' ? undefined : mode
-                void window.flickrAPI.startDiscoverGroupBatch(activeGroup.id, activeGroup.name, `↓ ${activeGroup.name}`, true, smartMode)
-              }}
-            />
+            {!selectMode && (
+              <SmartDownloadButton
+                label="Download Group"
+                onDownload={(mode) => {
+                  const smartMode = mode === 'all' ? undefined : mode
+                  void window.flickrAPI.startDiscoverGroupBatch(activeGroup.id, activeGroup.name, `↓ ${activeGroup.name}`, true, smartMode)
+                }}
+              />
+            )}
             {poolPhotos.length > 0 && !selectMode && (
               <button style={s.selectBtn} onClick={() => setSelectMode(true)}>Select</button>
             )}

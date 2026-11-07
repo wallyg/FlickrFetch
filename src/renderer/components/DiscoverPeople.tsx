@@ -266,16 +266,18 @@ export default function DiscoverPeople(): React.JSX.Element {
             </div>
           </div>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <SmartDownloadButton
-              label="Download Album"
-              onDownload={(mode) => {
-                void window.flickrAPI.startDiscoverSelectedBatch(
-                  albumPhotos.map(p => ({ id: p.id, title: p.title })),
-                  activeAlbum.title,
-                  ['Users', foundUser.username]
-                )
-              }}
-            />
+            {!albumSelectMode && (
+              <SmartDownloadButton
+                label="Download Album"
+                onDownload={() => {
+                  void window.flickrAPI.startDiscoverSelectedBatch(
+                    albumPhotos.map(p => ({ id: p.id, title: p.title })),
+                    activeAlbum.title,
+                    ['Users', foundUser.username]
+                  )
+                }}
+              />
+            )}
             {albumPhotos.length > 0 && !albumSelectMode && (
               <button style={s.selectBtn} onClick={() => setAlbumSelectMode(true)}>Select</button>
             )}
@@ -346,13 +348,15 @@ export default function DiscoverPeople(): React.JSX.Element {
           </div>
           {userTab === 'photos' && (
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <SmartDownloadButton
-                label="Download All"
-                onDownload={(mode) => {
-                  const smartMode = mode === 'all' ? undefined : mode
-                  void window.flickrAPI.startDiscoverUserBatch(foundUser.nsid, foundUser.username, `↓ ${foundUser.realname || foundUser.username}`, true, smartMode)
-                }}
-              />
+              {!userSelectMode && (
+                <SmartDownloadButton
+                  label="Download All"
+                  onDownload={(mode) => {
+                    const smartMode = mode === 'all' ? undefined : mode
+                    void window.flickrAPI.startDiscoverUserBatch(foundUser.nsid, foundUser.username, `↓ ${foundUser.realname || foundUser.username}`, true, smartMode)
+                  }}
+                />
+              )}
               {userPhotos.length > 0 && !userSelectMode && (
                 <button style={s.selectBtn} onClick={() => setUserSelectMode(true)}>Select</button>
               )}
