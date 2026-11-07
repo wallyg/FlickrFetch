@@ -286,6 +286,15 @@ export default function DiscoverPeople(): React.JSX.Element {
             )}
           </div>
         </div>
+        {albumSelectMode && (
+          <DiscoverSelectBar
+            count={albumSelectedIds.size}
+            total={albumPhotos.length}
+            onDownload={handleAlbumDownloadSelected}
+            onCancel={() => { setAlbumSelectMode(false); setAlbumSelectedIds(new Set()) }}
+            downloading={albumDownloading}
+          />
+        )}
         <AttributionNotice />
         {albumPhotosLoading && <div style={s.loadingState}>Loading album…</div>}
         {albumPhotosError && <div style={s.errorState}>{albumPhotosError}</div>}
@@ -311,15 +320,6 @@ export default function DiscoverPeople(): React.JSX.Element {
               </div>
             )}
           </>
-        )}
-        {albumSelectMode && (
-          <DiscoverSelectBar
-            count={albumSelectedIds.size}
-            total={albumPhotos.length}
-            onDownload={handleAlbumDownloadSelected}
-            onCancel={() => { setAlbumSelectMode(false); setAlbumSelectedIds(new Set()) }}
-            downloading={albumDownloading}
-          />
         )}
       </div>
     )
@@ -378,6 +378,16 @@ export default function DiscoverPeople(): React.JSX.Element {
           >Albums</button>
         </div>
 
+        {userTab === 'photos' && userSelectMode && (
+          <DiscoverSelectBar
+            count={userSelectedIds.size}
+            total={userPhotos.length}
+            onDownload={handleUserDownloadSelected}
+            onCancel={() => { setUserSelectMode(false); setUserSelectedIds(new Set()) }}
+            downloading={userDownloading}
+          />
+        )}
+
         <AttributionNotice />
 
         {userTab === 'photos' && (
@@ -409,15 +419,6 @@ export default function DiscoverPeople(): React.JSX.Element {
                   </div>
                 )}
               </>
-            )}
-            {userSelectMode && (
-              <DiscoverSelectBar
-                count={userSelectedIds.size}
-                total={userPhotos.length}
-                onDownload={handleUserDownloadSelected}
-                onCancel={() => { setUserSelectMode(false); setUserSelectedIds(new Set()) }}
-                downloading={userDownloading}
-              />
             )}
           </>
         )}

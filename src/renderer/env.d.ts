@@ -1,4 +1,4 @@
-import type { FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery, DiscoverUser, DiscoverContact, DiscoverGroup } from '../shared/types'
+import type { FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery, DiscoverDownloadRecord, DiscoverUser, DiscoverContact, DiscoverGroup } from '../shared/types'
 
 declare module '*.png' {
   const src: string
@@ -61,6 +61,10 @@ declare global {
       startDiscoverUserBatch: (nsid: string, username: string, displayTitle: string, track?: boolean, smartMode?: 'updated' | 'never-downloaded') => Promise<void>
       startDiscoverGroupBatch: (groupId: string, groupName: string, displayTitle: string, track?: boolean, smartMode?: 'updated' | 'never-downloaded') => Promise<void>
       startDiscoverSelectedBatch: (photos: { id: string; title: string }[], displayTitle: string, folderParts: string[], track?: boolean) => Promise<void>
+      searchDiscoverRecords: (query: PhotoRecordQuery) => Promise<DiscoverDownloadRecord[]>
+      deleteDiscoverRecord: (photoId: string) => Promise<void>
+      deleteDiscoverRecords: (photoIds: string[]) => Promise<void>
+      clearDiscoverRecords: (beforeMs?: number, afterMs?: number) => Promise<void>
     }
   }
 }

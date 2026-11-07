@@ -109,6 +109,16 @@ export default function DiscoverExplore({ onDownload }: Props): React.JSX.Elemen
         )}
       </div>
 
+      {selectMode && (
+        <DiscoverSelectBar
+          count={selectedIds.size}
+          total={photos.length}
+          onDownload={handleDownloadSelected}
+          onCancel={() => { setSelectMode(false); setSelectedIds(new Set()) }}
+          downloading={downloading}
+        />
+      )}
+
       <AttributionNotice />
 
       {loading && (
@@ -149,15 +159,6 @@ export default function DiscoverExplore({ onDownload }: Props): React.JSX.Elemen
             </div>
           )}
         </>
-      )}
-      {selectMode && (
-        <DiscoverSelectBar
-          count={selectedIds.size}
-          total={photos.length}
-          onDownload={handleDownloadSelected}
-          onCancel={() => { setSelectMode(false); setSelectedIds(new Set()) }}
-          downloading={downloading}
-        />
       )}
     </div>
   )
@@ -235,11 +236,9 @@ export function DiscoverSelectBar({ count, total, onDownload, onCancel, download
 
 const sb: Record<string, React.CSSProperties> = {
   bar: {
-    position: 'fixed', bottom: 0, left: 0, right: 0,
-    background: '#fff', borderTop: '1px solid #e8e8e8',
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '12px 24px', zIndex: 200,
-    boxShadow: '0 -2px 8px rgba(0,0,0,0.06)',
+    gap: '10px', padding: '8px 0',
+    borderBottom: '1px solid #e8e4de', marginBottom: '4px',
   },
   label: { fontSize: '14px', color: '#444', fontWeight: 500 },
   actions: { display: 'flex', gap: '8px' },

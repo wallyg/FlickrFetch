@@ -83,7 +83,7 @@ export interface BatchLogEntry {
   id: number
   createdAt: number            // ms since epoch
   source: string               // album name / 'Photostream' / 'Selected Photos'
-  sourceType: 'album' | 'photostream' | 'selected'
+  sourceType: 'album' | 'photostream' | 'selected' | 'discover' | 'discover_people' | 'discover_groups'
   total: number
   downloaded: number
   skippedCollision: number
@@ -105,6 +105,10 @@ export interface PhotoRecordQuery {
   dateMin?: number  // ms since epoch
   dateMax?: number  // ms since epoch
 }
+
+// Same shape as PhotoDownloadRecord but stored in a separate table so
+// Discover downloads never interfere with Smart Download checks on your own photos.
+export type DiscoverDownloadRecord = PhotoDownloadRecord
 
 export interface MetadataSettings {
   embedTitle: boolean

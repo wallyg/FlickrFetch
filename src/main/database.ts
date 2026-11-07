@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3'
 import { app } from 'electron'
 import { join } from 'path'
-import type { BatchLogEntry, PhotoDownloadRecord } from '../shared/types'
+import type { BatchLogEntry, PhotoDownloadRecord, DiscoverDownloadRecord } from '../shared/types'
 
 let db: Database.Database | null = null
 
@@ -24,6 +24,14 @@ export function openDatabase(): void {
     );
 
     CREATE TABLE IF NOT EXISTS photo_download_record (
+      photo_id TEXT PRIMARY KEY,
+      last_downloaded_at INTEGER NOT NULL,
+      flickr_last_update INTEGER NOT NULL DEFAULT 0,
+      title TEXT NOT NULL DEFAULT '',
+      thumbnail_url TEXT NOT NULL DEFAULT ''
+    );
+
+    CREATE TABLE IF NOT EXISTS discover_download_record (
       photo_id TEXT PRIMARY KEY,
       last_downloaded_at INTEGER NOT NULL,
       flickr_last_update INTEGER NOT NULL DEFAULT 0,
@@ -179,4 +187,72 @@ export function clearBatchLog(): void {
 export function clearAllHistory(): void {
   db?.prepare('DELETE FROM batch_log').run()
   db?.prepare('DELETE FROM photo_download_record').run()
+  db?.prepare('DELETE FROM discover_download_record').run()
+}
+
+// ── Discover download records (kept separate from your own photo records) ──────
+
+export function writeDiscoverRecord(photoId: string, flickrLastUpdate: number, title = '', thumbnailUrl = ''): void {
+  if (!db) return
+  db.prepare(`
+    INSERT INTO discover_download_record (photo_id, last_downloaded_at, flickr_last_update, title, thumbnail_url)
+    VALUES (@photoId, @now, @flickrLastUpdate, @title, @thumbnailUrl)
+    ON CONFLICT(photo_id) DO UPDATE SET
+      last_downloaded_at = excluded.last_downloaded_at,
+      flickr_last_update = excluded.flickr_last_update,
+      title = excluded.title,
+      thumbnail_url = excluded.thumbnail_url
+  `).run({ photoId, now: Date.now(), flickrLastUpdate, title, thumbnailUrl })
+}
+
+export function getDiscoverRecordsBatch(photoIds: string[]): Map<string, DiscoverDownloadRecord> {
+  const map = new Map<string, DiscoverDownloadRecord>()
+  if (!db || photoIds.length === 0) return map
+  const placeholders = photoIds.map(() => '?').join(',')
+  const rows = (db.prepare(`SELECT * FROM discover_download_record WHERE photo_id IN (${placeholders})`).all(...photoIds)) as Record<string, unknown>[]
+  for (const row of rows) {
+    const rec = rowToRecord(row)
+    map.set(rec.photoId, rec)
+  }
+  return map
+}
+
+export function searchDiscoverRecords(query: PhotoRecordQuery, limit?: number): DiscoverDownloadRecord[] {
+  if (!db) return []
+  const conditions: string[] = []
+  const params: Record<string, unknown> = {}
+  if (query.photoId) {
+    conditions.push('photo_id = @photoId')
+    params['photoId'] = query.photoId
+  } else if (query.title) {
+    conditions.push('title LIKE @title')
+    params['title'] = `%${query.title}%`
+  }
+  if (query.dateMin) { conditions.push('last_downloaded_at >= @dateMin'); params['dateMin'] = query.dateMin }
+  if (query.dateMax) { conditions.push('last_downloaded_at <= @dateMax'); params['dateMax'] = query.dateMax }
+  const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
+  const limitClause = limit !== undefined ? ` LIMIT ${limit}` : ''
+  const rows = db.prepare(`SELECT * FROM discover_download_record ${where} ORDER BY last_downloaded_at DESC${limitClause}`).all(params) as Record<string, unknown>[]
+  return rows.map(rowToRecord)
+}
+
+export function deleteDiscoverRecord(photoId: string): void {
+  db?.prepare('DELETE FROM discover_download_record WHERE photo_id = ?').run(photoId)
+}
+
+export function deleteDiscoverRecords(photoIds: string[]): void {
+  if (!db || photoIds.length === 0) return
+  const placeholders = photoIds.map(() => '?').join(',')
+  db.prepare(`DELETE FROM discover_download_record WHERE photo_id IN (${placeholders})`).run(...photoIds)
+}
+
+export function clearDiscoverRecords(beforeMs?: number, afterMs?: number): void {
+  if (!db) return
+  if (beforeMs !== undefined) {
+    db.prepare('DELETE FROM discover_download_record WHERE last_downloaded_at < ?').run(beforeMs)
+  } else if (afterMs !== undefined) {
+    db.prepare('DELETE FROM discover_download_record WHERE last_downloaded_at > ?').run(afterMs)
+  } else {
+    db.prepare('DELETE FROM discover_download_record').run()
+  }
 }

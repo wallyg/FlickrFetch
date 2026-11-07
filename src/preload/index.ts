@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { IpcRendererEvent } from 'electron'
-import type { FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery, DiscoverUser, DiscoverContact, DiscoverGroup } from '../shared/types'
+import type { FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery, DiscoverDownloadRecord, DiscoverUser, DiscoverContact, DiscoverGroup } from '../shared/types'
 
 // Expose a safe, limited API surface to the renderer process.
 // The renderer cannot access Node.js or Electron directly — only these methods.
@@ -142,5 +142,9 @@ contextBridge.exposeInMainWorld('flickrAPI', {
     ipcRenderer.invoke('batch:startDiscoverGroup', groupId, groupName, displayTitle, track, smartMode),
   startDiscoverSelectedBatch: (photos: { id: string; title: string }[], displayTitle: string, folderParts: string[], track?: boolean): Promise<void> =>
     ipcRenderer.invoke('batch:startDiscoverSelected', photos, displayTitle, folderParts, track),
+  searchDiscoverRecords: (query: PhotoRecordQuery): Promise<DiscoverDownloadRecord[]> => ipcRenderer.invoke('db:searchDiscoverRecords', query),
+  deleteDiscoverRecord: (photoId: string): Promise<void> => ipcRenderer.invoke('db:deleteDiscoverRecord', photoId),
+  deleteDiscoverRecords: (photoIds: string[]): Promise<void> => ipcRenderer.invoke('db:deleteDiscoverRecords', photoIds),
+  clearDiscoverRecords: (beforeMs?: number, afterMs?: number): Promise<void> => ipcRenderer.invoke('db:clearDiscoverRecords', beforeMs, afterMs),
 
 })

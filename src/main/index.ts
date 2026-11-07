@@ -6,7 +6,7 @@ import { getUserInfo, getPhotos, getPhotoSizes, getPhotoInfo, getPhotoExif, getA
 import { downloadPhoto, downloadToFolder } from './downloader'
 import { endExifTool } from './exiftool'
 import { loadSettings, saveSettings, resetSettings, ensureDownloadFolder } from './settings'
-import { openDatabase, closeDatabase, writeBatchLog, writePhotoRecord, getPhotoRecord, getPhotoRecordsBatch, getBatchLog, clearBatchLog, clearAllHistory, searchPhotoRecords, deletePhotoRecord, deletePhotoRecords, clearPhotoRecords } from './database'
+import { openDatabase, closeDatabase, writeBatchLog, writePhotoRecord, getPhotoRecord, getPhotoRecordsBatch, getBatchLog, clearBatchLog, clearAllHistory, searchPhotoRecords, deletePhotoRecord, deletePhotoRecords, clearPhotoRecords, writeDiscoverRecord, getDiscoverRecordsBatch, searchDiscoverRecords, deleteDiscoverRecord, deleteDiscoverRecords, clearDiscoverRecords } from './database'
 import type { AppSettings, FileNamingConfig, PhotoInfo, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams, MetadataSettings, DiscoverUser, DiscoverContact, DiscoverGroup } from '../shared/types'
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
@@ -650,7 +650,7 @@ async function runDiscoverSelectedBatch(photos: { id: string; title: string }[],
   for (let i = 0; i < photos.length; i++) {
     if (activeBatchController?.signal.aborted) {
       sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled', skippedCount, skippedSizeUnavailableCount, failedCount })
-      if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'selected', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
+      if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'discover', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
       return
     }
     const photo = photos[i]
@@ -665,7 +665,7 @@ async function runDiscoverSelectedBatch(photos: { id: string; title: string }[],
       if (outcome.status === 'downloaded') {
         downloadedCount++
         lastFilePath = outcome.filePath
-        if (track) writePhotoRecord(photo.id, 0, photo.title, photo.thumbnailUrl ?? '')
+        if (track) writeDiscoverRecord(photo.id, 0, photo.title, photo.thumbnailUrl ?? '')
         sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: outcome.filePath, status: 'running', skippedCount, skippedSizeUnavailableCount, failedCount })
       } else if (outcome.reason === 'size-unavailable') {
         skippedSizeUnavailableCount++
@@ -677,7 +677,7 @@ async function runDiscoverSelectedBatch(photos: { id: string; title: string }[],
     } catch (err) {
       if ((err as { name?: string }).name === 'AbortError' || activeBatchController?.signal.aborted) {
         sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled', skippedCount, skippedSizeUnavailableCount, failedCount })
-        if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'selected', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
+        if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'discover', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
         return
       }
       failedCount++
@@ -687,7 +687,7 @@ async function runDiscoverSelectedBatch(photos: { id: string; title: string }[],
 
   sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'done', skippedCount, skippedSizeUnavailableCount, failedCount })
   const finalStatus = failedCount > 0 || skippedCount > 0 || skippedSizeUnavailableCount > 0 ? 'partial' : 'complete'
-  if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'selected', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: finalStatus })
+  if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'discover', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: finalStatus })
   if (notifyOnComplete && Notification.isSupported()) {
     const body = (skippedCount + skippedSizeUnavailableCount + failedCount) > 0
       ? `Saved ${downloadedCount}, skipped ${skippedCount + skippedSizeUnavailableCount + failedCount} from "${albumTitle}"`
@@ -702,7 +702,8 @@ async function runDiscoverPublicBatch(
   albumTitle: string,
   targetFolder: string,
   track: boolean,
-  smartMode?: 'updated' | 'never-downloaded'
+  smartMode?: 'updated' | 'never-downloaded',
+  batchSourceType: 'discover_people' | 'discover_groups' = 'discover_people'
 ): Promise<void> {
   if (!mainWindow) return
   const tokenData = loadToken()
@@ -736,7 +737,7 @@ async function runDiscoverPublicBatch(
   const preSmartTotal = filteredPhotos.length
 
   if (smartMode === 'never-downloaded' || smartMode === 'updated') {
-    const recordMap = getPhotoRecordsBatch(filteredPhotos.map(p => p.id))
+    const recordMap = getDiscoverRecordsBatch(filteredPhotos.map(p => p.id))
     if (smartMode === 'never-downloaded') {
       filteredPhotos = filteredPhotos.filter(p => !recordMap.has(p.id))
     } else {
@@ -760,7 +761,7 @@ async function runDiscoverPublicBatch(
   for (let i = 0; i < filteredPhotos.length; i++) {
     if (activeBatchController?.signal.aborted) {
       sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled', skippedCount, skippedSizeUnavailableCount, failedCount })
-      if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'album', total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
+      if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: batchSourceType, total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
       return
     }
     const photo = filteredPhotos[i]
@@ -775,7 +776,7 @@ async function runDiscoverPublicBatch(
       if (outcome.status === 'downloaded') {
         downloadedCount++
         lastFilePath = outcome.filePath
-        if (track) writePhotoRecord(photo.id, photo.lastUpdate ?? 0, photo.title, photo.thumbnailUrl)
+        if (track) writeDiscoverRecord(photo.id, photo.lastUpdate ?? 0, photo.title, photo.thumbnailUrl)
         sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: outcome.filePath, status: 'running', skippedCount, skippedSizeUnavailableCount, failedCount })
       } else if (outcome.reason === 'size-unavailable') {
         skippedSizeUnavailableCount++
@@ -787,7 +788,7 @@ async function runDiscoverPublicBatch(
     } catch (err) {
       if ((err as { name?: string }).name === 'AbortError' || activeBatchController?.signal.aborted) {
         sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled', skippedCount, skippedSizeUnavailableCount, failedCount })
-        if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'album', total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
+        if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: batchSourceType, total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
         return
       }
       failedCount++
@@ -798,7 +799,7 @@ async function runDiscoverPublicBatch(
 
   const finalStatus = failedCount > 0 || skippedCount > 0 || skippedSizeUnavailableCount > 0 ? 'partial' : 'complete'
   sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'done', skippedCount, skippedSizeUnavailableCount, failedCount, smartFilteredCount: preSmartTotal - total })
-  if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'album', total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: finalStatus })
+  if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: batchSourceType, total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: finalStatus })
   if (notifyOnComplete && Notification.isSupported()) {
     const body = (skippedCount + skippedSizeUnavailableCount + failedCount) > 0
       ? `Saved ${downloadedCount}, skipped ${skippedCount + skippedSizeUnavailableCount + failedCount} from "${albumTitle}"`
@@ -813,7 +814,7 @@ async function runDiscoverUserBatch(nsid: string, albumTitle: string, targetFold
   if (!tokenData) return
   await runDiscoverPublicBatch(
     page => getPublicPhotos(nsid, tokenData, page).then(r => ({ photos: r.photos.map(p => ({ id: p.id, title: p.title, lastUpdate: p.lastUpdate, thumbnailUrl: p.thumbnailUrl })), pages: r.pages })),
-    albumTitle, targetFolder, track, smartMode
+    albumTitle, targetFolder, track, smartMode, 'discover_people'
   )
 }
 
@@ -822,7 +823,7 @@ async function runDiscoverGroupBatch(groupId: string, albumTitle: string, target
   if (!tokenData) return
   await runDiscoverPublicBatch(
     page => getGroupPhotos(groupId, tokenData, page).then(r => ({ photos: r.photos.map(p => ({ id: p.id, title: p.title, lastUpdate: p.lastUpdate, thumbnailUrl: p.thumbnailUrl })), pages: r.pages })),
-    albumTitle, targetFolder, track, smartMode
+    albumTitle, targetFolder, track, smartMode, 'discover_groups'
   )
 }
 
@@ -1019,7 +1020,7 @@ ipcMain.handle('discover:downloadPhoto', async (_event, photoId: string, photoTi
     getPhotoInfo(photoId, tokenData)
   ])
   const filePath = await downloadPhoto(sizes, photoTitle, mainWindow, activeDownloadController?.signal, photoInfo, forcedMetadata, downloadSize)
-  if (filePath && lastUpdate !== undefined) writePhotoRecord(photoId, lastUpdate, photoTitle, thumbnailUrl)
+  if (filePath && lastUpdate !== undefined) writeDiscoverRecord(photoId, lastUpdate, photoTitle, thumbnailUrl)
   return { filePath }
 })
 
@@ -1125,6 +1126,10 @@ ipcMain.handle('db:searchPhotoRecords', (_event, query: { title?: string; photoI
 ipcMain.handle('db:deletePhotoRecord', (_event, photoId: string) => deletePhotoRecord(photoId))
 ipcMain.handle('db:deletePhotoRecords', (_event, photoIds: string[]) => deletePhotoRecords(photoIds))
 ipcMain.handle('db:clearPhotoRecords', (_event, beforeMs?: number, afterMs?: number) => clearPhotoRecords(beforeMs, afterMs))
+ipcMain.handle('db:searchDiscoverRecords', (_event, query: { title?: string; photoId?: string; dateMin?: number; dateMax?: number }) => searchDiscoverRecords(query))
+ipcMain.handle('db:deleteDiscoverRecord', (_event, photoId: string) => deleteDiscoverRecord(photoId))
+ipcMain.handle('db:deleteDiscoverRecords', (_event, photoIds: string[]) => deleteDiscoverRecords(photoIds))
+ipcMain.handle('db:clearDiscoverRecords', (_event, beforeMs?: number, afterMs?: number) => clearDiscoverRecords(beforeMs, afterMs))
 
 // Pin userData to the app name used at launch so upgrades don't change the path
 app.setPath('userData', join(app.getPath('appData'), 'flickr-fetch'))

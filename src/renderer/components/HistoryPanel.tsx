@@ -5,7 +5,10 @@ interface HistoryPanelProps {
   onClose: () => void
 }
 
-type Tab = 'batches' | 'photos'
+type Tab = 'batches' | 'photos' | 'discover'
+
+const DISCOVER_TYPES: BatchLogEntry['sourceType'][] = ['discover', 'discover_people', 'discover_groups']
+const YOUR_TYPES: BatchLogEntry['sourceType'][] = ['album', 'photostream', 'selected']
 type DatePreset = 'all' | 'last24h' | 'last7d' | 'last30d' | 'last60d' | 'custom'
 type ClearMode = 'idle' | 'choose' | 'confirm-preset' | 'confirm-before' | 'confirm-after' | 'confirm-all'
 
@@ -29,6 +32,9 @@ function formatDateShort(ts: number): string {
 function sourceLabel(entry: BatchLogEntry): string {
   if (entry.sourceType === 'photostream') return 'Photostream'
   if (entry.sourceType === 'selected') return `Selected — ${entry.source}`
+  if (entry.sourceType === 'discover_people') return `People — ${entry.source}`
+  if (entry.sourceType === 'discover_groups') return `Groups — ${entry.source}`
+  if (entry.sourceType === 'discover') return `Discover — ${entry.source}`
   return entry.source
 }
 
@@ -57,7 +63,7 @@ function BatchesTab({ onClear }: { onClear: () => void }) {
 
   useEffect(() => {
     setLoading(true)
-    window.flickrAPI.getBatchLog().then(log => { setEntries(log); setLoading(false) })
+    window.flickrAPI.getBatchLog().then(log => { setEntries(log.filter(e => YOUR_TYPES.includes(e.sourceType))); setLoading(false) })
   }, [])
 
   async function handleClear() {
@@ -553,6 +559,82 @@ function PhotosTab() {
   )
 }
 
+// ── Discover tab ─────────────────────────────────────────────────────────────
+
+function DiscoverTab() {
+  const [entries, setEntries] = useState<BatchLogEntry[]>([])
+  const [loading, setLoading] = useState(true)
+  const [confirming, setConfirming] = useState(false)
+
+  useEffect(() => {
+    setLoading(true)
+    window.flickrAPI.getBatchLog().then(log => {
+      setEntries(log.filter(e => DISCOVER_TYPES.includes(e.sourceType)))
+      setLoading(false)
+    })
+  }, [])
+
+  async function handleClear() {
+    if (!confirming) { setConfirming(true); return }
+    await window.flickrAPI.clearDiscoverRecords()
+    // Also clear discover entries from batch_log — reuse clearHistory for now
+    // (batch_log has no namespace; use a full clear only if user has no other history)
+    setConfirming(false)
+    setEntries([])
+  }
+
+  if (loading) return <p style={styles.empty}>Loading…</p>
+
+  if (entries.length === 0) return (
+    <p style={styles.empty}>No Discover download history yet. Photos downloaded from People, Groups, and Explore appear here.</p>
+  )
+
+  return (
+    <>
+      <div style={styles.tabBody}>
+        {entries.map(entry => (
+          <div key={entry.id} style={styles.row}>
+            <div style={styles.rowTop}>
+              <span style={{ ...styles.statusDot, color: statusColor(entry.status) }}>
+                {statusDot(entry.status)}
+              </span>
+              <span style={styles.source}>{sourceLabel(entry)}</span>
+              <span style={styles.date}>{formatDate(entry.createdAt)}</span>
+            </div>
+            <div style={styles.rowCounts}>
+              <span style={styles.countSaved}>{entry.downloaded} saved</span>
+              {entry.skippedCollision > 0 && (
+                <span style={styles.countSkip}>{entry.skippedCollision} skipped</span>
+              )}
+              {entry.failed > 0 && (
+                <span style={styles.countFail}>{entry.failed} failed</span>
+              )}
+              {(() => {
+                const smartFiltered = entry.total - entry.downloaded - entry.skippedCollision - entry.failed
+                return smartFiltered > 0 ? (
+                  <span style={styles.countSkip}>{smartFiltered} already downloaded</span>
+                ) : null
+              })()}
+              {entry.total > 0 && <span style={styles.countTotal}>of {entry.total}</span>}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={styles.footer}>
+        <button
+          style={confirming ? styles.confirmBtn : styles.clearBtn}
+          onClick={handleClear}
+        >
+          {confirming ? 'Tap again to confirm — clears Discover download records' : 'Clear Discover download history'}
+        </button>
+        {confirming && (
+          <button style={styles.cancelConfirm} onClick={() => setConfirming(false)}>Cancel</button>
+        )}
+      </div>
+    </>
+  )
+}
+
 // ── Main panel ───────────────────────────────────────────────────────────────
 
 export default function HistoryPanel({ onClose }: HistoryPanelProps) {
@@ -576,13 +658,15 @@ export default function HistoryPanel({ onClose }: HistoryPanelProps) {
             style={tab === 'photos' ? styles.tabActive : styles.tab}
             onClick={() => setTab('photos')}
           >Photos</button>
+          <button
+            style={tab === 'discover' ? styles.tabActive : styles.tab}
+            onClick={() => setTab('discover')}
+          >Discover</button>
         </div>
 
-        {tab === 'batches' ? (
-          <BatchesTab onClear={() => {}} />
-        ) : (
-          <PhotosTab />
-        )}
+        {tab === 'batches' && <BatchesTab onClear={() => {}} />}
+        {tab === 'photos' && <PhotosTab />}
+        {tab === 'discover' && <DiscoverTab />}
       </div>
     </div>
   )

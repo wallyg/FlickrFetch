@@ -155,6 +155,16 @@ export default function DiscoverGroups(): React.JSX.Element {
           </div>
         </div>
 
+        {selectMode && (
+          <DiscoverSelectBar
+            count={selectedIds.size}
+            total={poolPhotos.length}
+            onDownload={handleDownloadSelected}
+            onCancel={() => { setSelectMode(false); setSelectedIds(new Set()) }}
+            downloading={downloading}
+          />
+        )}
+
         <AttributionNotice />
 
         {poolLoading && <div style={s.loadingState}>Loading group pool…</div>}
@@ -184,15 +194,6 @@ export default function DiscoverGroups(): React.JSX.Element {
               </div>
             )}
           </>
-        )}
-        {selectMode && (
-          <DiscoverSelectBar
-            count={selectedIds.size}
-            total={poolPhotos.length}
-            onDownload={handleDownloadSelected}
-            onCancel={() => { setSelectMode(false); setSelectedIds(new Set()) }}
-            downloading={downloading}
-          />
         )}
       </div>
     )
