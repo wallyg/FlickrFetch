@@ -7,6 +7,18 @@ export interface Release {
 
 const changelog: Release[] = [
   {
+    version: '2.2',
+    date: 'November 2026',
+    highlights: [
+      'Pause and resume downloads mid-queue — handy when you need your connection back; the queue holds its place and picks up where it left off',
+      'Failed downloads are now listed by name after a batch completes — tap "Retry X failed" to re-queue just the ones that errored',
+      'Fixed: grid density in Discover People no longer affects your main photostream grid size',
+      'Fixed: History no longer mixes in Discover downloads with your own photostream and album batches',
+      'Fixed: Discover load-more photo count now stays accurate when a title filter is active',
+      'Fixed: Discover posted-date filter now uses your local midnight instead of UTC',
+    ]
+  },
+  {
     version: '2.15',
     date: 'November 2026',
     highlights: [

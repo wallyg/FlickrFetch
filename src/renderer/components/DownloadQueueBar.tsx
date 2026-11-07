@@ -178,7 +178,10 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
                   )}
                   <button
                     style={styles.retryBtn}
-                    onClick={() => window.flickrAPI.startSelectedBatch(progress!.failedPhotos!, `Retry: ${albumTitle}`)}
+                    onClick={() => progress!.discoverFolder
+                      ? window.flickrAPI.retryDiscoverSelectedBatch(progress!.failedPhotos!, `Retry: ${albumTitle}`, progress!.discoverFolder)
+                      : window.flickrAPI.startSelectedBatch(progress!.failedPhotos!, `Retry: ${albumTitle}`)
+                    }
                   >
                     Retry {progress!.failedPhotos!.length} failed
                   </button>
@@ -257,7 +260,10 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
                           )}
                           <button
                             style={styles.retryBtn}
-                            onClick={() => window.flickrAPI.startSelectedBatch(b.failedPhotos!, `Retry: ${b.albumTitle}`)}
+                            onClick={() => b.discoverFolder
+                              ? window.flickrAPI.retryDiscoverSelectedBatch(b.failedPhotos!, `Retry: ${b.albumTitle}`, b.discoverFolder)
+                              : window.flickrAPI.startSelectedBatch(b.failedPhotos!, `Retry: ${b.albumTitle}`)
+                            }
                           >
                             Retry {b.failedPhotos!.length} failed
                           </button>

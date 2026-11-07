@@ -700,7 +700,7 @@ async function runDiscoverSelectedBatch(photos: { id: string; title: string }[],
     }
   }
 
-  sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'done', skippedCount, skippedSizeUnavailableCount, failedCount, failedPhotos })
+  sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'done', skippedCount, skippedSizeUnavailableCount, failedCount, failedPhotos, discoverFolder: targetFolder })
   const finalStatus = failedCount > 0 || skippedCount > 0 || skippedSizeUnavailableCount > 0 ? 'partial' : 'complete'
   if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'discover', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: finalStatus })
   if (notifyOnComplete && Notification.isSupported()) {
@@ -1067,6 +1067,11 @@ ipcMain.handle('batch:startDiscoverSelected', (_event, photos: { id: string; tit
   enqueueBatch({ type: 'discover-selected', photos, albumTitle: displayTitle, discoverFolder, track })
 })
 
+ipcMain.handle('batch:retryDiscoverSelected', (_event, photos: { id: string; title: string }[], albumTitle: string, targetFolder: string) => {
+  ensureDownloadFolder(targetFolder)
+  enqueueBatch({ type: 'discover-selected', photos, albumTitle, discoverFolder: targetFolder, track: true })
+})
+
 ipcMain.handle('batch:startAlbum', (_event, albumId: string, albumTitle: string, photoCount?: number, videoCount?: number, force?: boolean, mediaType?: 'photo' | 'video', privacyFilter?: string, track = true, smartMode?: 'updated' | 'never-downloaded') => {
   if (!force) {
     const isDuplicate =
@@ -1096,6 +1101,7 @@ ipcMain.on('batch:cancel', () => {
 })
 
 ipcMain.on('batch:skipCurrent', () => {
+  isPaused = false
   const r = resumeResolve
   resumeResolve = null
   r?.()

@@ -77,6 +77,7 @@ export interface BatchProgress {
   skippedSizeUnavailableCount?: number    // photos where the requested size doesn't exist on Flickr
   failedCount?: number                    // photos that errored and were skipped
   failedPhotos?: { id: string; title: string }[]
+  discoverFolder?: string    // set on done events from Discover batch runners, used for retry routing
   smartFilteredCount?: number // photos excluded by smart filter (Never Downloaded / Download Updated)
   paused?: boolean
 }
