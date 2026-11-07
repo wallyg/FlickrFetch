@@ -776,7 +776,7 @@ async function runDiscoverPublicBatch(
       if (outcome.status === 'downloaded') {
         downloadedCount++
         lastFilePath = outcome.filePath
-        if (track) writeDiscoverRecord(photo.id, photo.lastUpdate ?? 0, photo.title, photo.thumbnailUrl, albumTitle)
+        if (track) writeDiscoverRecord(photo.id, photo.lastUpdate ?? 0, photo.title, photo.thumbnailUrl, albumTitle.replace(/^↓\s*/, ''))
         sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: outcome.filePath, status: 'running', skippedCount, skippedSizeUnavailableCount, failedCount })
       } else if (outcome.reason === 'size-unavailable') {
         skippedSizeUnavailableCount++

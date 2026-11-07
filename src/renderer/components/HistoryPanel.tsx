@@ -61,7 +61,10 @@ function BatchesTab({ onClear }: { onClear: () => void }) {
 
   useEffect(() => {
     setLoading(true)
-    window.flickrAPI.getBatchLog().then(log => { setEntries(log); setLoading(false) })
+    window.flickrAPI.getBatchLog().then(log => {
+      setEntries(log.filter(e => !['discover', 'discover_people', 'discover_groups'].includes(e.sourceType)))
+      setLoading(false)
+    })
   }, [])
 
   async function handleClear() {

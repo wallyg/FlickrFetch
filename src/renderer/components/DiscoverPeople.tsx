@@ -14,7 +14,7 @@ const ALBUM_COLUMNS: Record<GridSize, string> = {
 type PeopleView = 'home' | 'user-photos' | 'user-albums' | 'album-photos' | 'photo-detail'
 type UserTab = 'photos' | 'albums'
 
-export default function DiscoverPeople(): React.JSX.Element {
+export default function DiscoverPeople({ isActive }: { isActive: boolean }): React.JSX.Element {
   const [view, setView] = useState<PeopleView>('home')
   const [searchQuery, setSearchQuery] = useState('')
   const [searching, setSearching] = useState(false)
@@ -78,6 +78,7 @@ export default function DiscoverPeople(): React.JSX.Element {
   const [albumsGridSize, setAlbumsGridSize] = useState<GridSize>('medium')
 
   // Toolbar state (album photos view)
+  const [albumPhotosGridSize, setAlbumPhotosGridSize] = useState<GridSize>('medium')
   const [albumPhotosMediaFilter, setAlbumPhotosMediaFilter] = useState<MediaFilter>('all')
   const [albumPhotosSearchInput, setAlbumPhotosSearchInput] = useState('')
   const [albumPhotosSearchOperator, setAlbumPhotosSearchOperator] = useState('contains')
@@ -93,13 +94,13 @@ export default function DiscoverPeople(): React.JSX.Element {
   const loadedContactsRef = useRef(false)
 
   useEffect(() => {
-    if (loadedContactsRef.current) return
+    if (!isActive || loadedContactsRef.current) return
     loadedContactsRef.current = true
     setContactsLoading(true)
     window.flickrAPI.discoverGetContacts()
       .then(c => { setContacts(c); setContactsLoading(false) })
       .catch(() => setContactsLoading(false))
-  }, [])
+  }, [isActive])
 
   // Real-time contact filter
   const filteredContacts = searchQuery.trim()
@@ -412,7 +413,7 @@ export default function DiscoverPeople(): React.JSX.Element {
   // ── Photo detail view
   if (detailIndex !== null) {
     const currentPhotos = view === 'album-photos' ? filteredAlbumPhotos : filteredPhotos
-    if (!currentPhotos[detailIndex]) { setDetailIndex(null); return <></> }
+    if (!currentPhotos[detailIndex]) { setDetailIndex(currentPhotos.length > 0 ? currentPhotos.length - 1 : null); return <></> }
     const hasMore = view === 'album-photos' ? albumPhotosPage < albumPhotosPages : photosPage < photosPages
     const sourceName = view === 'album-photos' ? (activeAlbum?.title ?? '') : (foundUser ? (foundUser.realname || foundUser.username) : '')
     return (
@@ -525,7 +526,7 @@ export default function DiscoverPeople(): React.JSX.Element {
             <div style={{ flex: 1 }} />
             <div style={ss.segGroupDensity}>
               {(['small', 'medium', 'large'] as GridSize[]).map(g => (
-                <button key={g} style={{ ...ss.densityBtn, ...(gridSize === g ? ss.densityBtnActive : {}) }} onClick={() => setGridSize(g)}>
+                <button key={g} style={{ ...ss.densityBtn, ...(albumPhotosGridSize === g ? ss.densityBtnActive : {}) }} onClick={() => setAlbumPhotosGridSize(g)}>
                   <GridIcon size={g} />
                 </button>
               ))}
@@ -573,7 +574,7 @@ export default function DiscoverPeople(): React.JSX.Element {
         {albumPhotosError && <div style={s.errorState}>{albumPhotosError}</div>}
         {filteredAlbumPhotos.length > 0 && (
           <>
-            <div style={{ ...s.grid, gridTemplateColumns: GRID_COLUMNS[gridSize] }}>
+            <div style={{ ...s.grid, gridTemplateColumns: GRID_COLUMNS[albumPhotosGridSize] }}>
               {filteredAlbumPhotos.map((photo, idx) => (
                 <DiscoverTile
                   key={photo.id}

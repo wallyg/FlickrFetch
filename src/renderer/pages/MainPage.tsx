@@ -599,7 +599,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
       )}
 
       <main style={{ ...styles.main, display: appMode === 'discover' ? 'flex' : 'none', flexDirection: 'column' }}>
-        <DiscoverPage />
+        <DiscoverPage isActive={appMode === 'discover'} />
       </main>
 
       <main style={{ ...styles.main, ...(appMode === 'discover' ? { display: 'none' } : {}) }}>

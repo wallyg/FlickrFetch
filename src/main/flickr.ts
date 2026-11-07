@@ -600,7 +600,7 @@ export async function getPublicPhotos(nsid: string, tokenData: FlickrTokenData, 
     if (search?.dateMin) url += `&min_taken_date=${encodeURIComponent(search.dateMin)}`
     if (search?.dateMax) url += `&max_taken_date=${encodeURIComponent(search.dateMax + ' 23:59:59')}`
   } else if (search?.dateField === 'posted') {
-    if (search?.dateMin) url += `&min_upload_date=${Math.floor(new Date(search.dateMin).getTime() / 1000)}`
+    if (search?.dateMin) url += `&min_upload_date=${Math.floor(new Date(search.dateMin + 'T00:00:00').getTime() / 1000)}`
     if (search?.dateMax) url += `&max_upload_date=${Math.floor(new Date(search.dateMax + 'T23:59:59').getTime() / 1000)}`
   }
 
@@ -621,7 +621,13 @@ export async function getPublicPhotos(nsid: string, tokenData: FlickrTokenData, 
     })
   }
 
-  return { photos, page: Number(data.page), pages: Number(data.pages), total: Number(data.total) }
+  const operatorFiltered = !!(search?.query && search.operator && search.operator !== 'contains')
+  return {
+    photos,
+    page: Number(data.page),
+    pages: operatorFiltered ? 1 : Number(data.pages),
+    total: operatorFiltered ? photos.length : Number(data.total),
+  }
 }
 
 export async function getUserPublicAlbums(nsid: string, tokenData: FlickrTokenData, page: number = 1): Promise<AlbumPage> {

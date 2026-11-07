@@ -5,7 +5,7 @@ import DiscoverExplore from '../components/DiscoverExplore'
 
 type DiscoverTab = 'people' | 'groups' | 'explore'
 
-export default function DiscoverPage(): React.JSX.Element {
+export default function DiscoverPage({ isActive }: { isActive: boolean }): React.JSX.Element {
   const [tab, setTab] = useState<DiscoverTab>('people')
   const [peopleVisited, setPeopleVisited] = useState(false)
   const [groupsVisited, setGroupsVisited] = useState(false)
@@ -38,7 +38,7 @@ export default function DiscoverPage(): React.JSX.Element {
         {/* Mount and unmount People lazily — keep alive once visited */}
         {(tab === 'people' || peopleVisited) && (
           <div style={tab === 'people' ? s.paneVisible : s.paneHidden}>
-            <DiscoverPeople />
+            <DiscoverPeople isActive={isActive} />
           </div>
         )}
         {(tab === 'groups' || groupsVisited) && (
