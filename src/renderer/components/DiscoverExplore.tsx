@@ -16,6 +16,9 @@ export default function DiscoverExplore({ onDownload }: Props): React.JSX.Elemen
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [detailIndex, setDetailIndex] = useState<number | null>(null)
+  const [selectMode, setSelectMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [downloading, setDownloading] = useState(false)
   const loadedRef = useRef(false)
 
   const loadPage = useCallback(async (p: number): Promise<void> => {
@@ -72,6 +75,28 @@ export default function DiscoverExplore({ onDownload }: Props): React.JSX.Elemen
     )
   }
 
+  const toggleSelect = (id: string): void => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const handleDownloadSelected = async (): Promise<void> => {
+    const selected = photos.filter(p => selectedIds.has(p.id)).map(p => ({ id: p.id, title: p.title }))
+    if (!selected.length) return
+    setDownloading(true)
+    try {
+      await window.flickrAPI.startDiscoverSelectedBatch(selected, 'Explore', ['Explore'])
+    } finally {
+      setDownloading(false)
+      setSelectMode(false)
+      setSelectedIds(new Set())
+    }
+  }
+
   return (
     <div style={s.container}>
       <div style={s.headerRow}>
@@ -79,6 +104,12 @@ export default function DiscoverExplore({ onDownload }: Props): React.JSX.Elemen
           <h2 style={s.heading}>Explore</h2>
           <p style={s.subheading}>Today's most interesting photos on Flickr</p>
         </div>
+        {photos.length > 0 && !selectMode && (
+          <button style={s.selectToggleBtn} onClick={() => setSelectMode(true)}>Select</button>
+        )}
+        {selectMode && (
+          <button style={s.selectToggleBtn} onClick={() => { setSelectMode(false); setSelectedIds(new Set()) }}>Cancel</button>
+        )}
       </div>
 
       <AttributionNotice />
@@ -102,7 +133,10 @@ export default function DiscoverExplore({ onDownload }: Props): React.JSX.Elemen
               <DiscoverTile
                 key={photo.id}
                 photo={photo}
-                onClick={() => setDetailIndex(idx)}
+                onClick={() => !selectMode && setDetailIndex(idx)}
+                selectMode={selectMode}
+                selected={selectedIds.has(photo.id)}
+                onSelect={() => toggleSelect(photo.id)}
               />
             ))}
           </div>
@@ -118,6 +152,15 @@ export default function DiscoverExplore({ onDownload }: Props): React.JSX.Elemen
             </div>
           )}
         </>
+      )}
+      {selectMode && (
+        <DiscoverSelectBar
+          count={selectedIds.size}
+          total={photos.length}
+          onDownload={handleDownloadSelected}
+          onCancel={() => { setSelectMode(false); setSelectedIds(new Set()) }}
+          downloading={downloading}
+        />
       )}
     </div>
   )
@@ -137,14 +180,21 @@ export function AttributionNotice(): React.JSX.Element {
 interface TileProps {
   photo: FlickrPhoto
   onClick: () => void
+  selectMode?: boolean
+  selected?: boolean
+  onSelect?: () => void
 }
 
-export function DiscoverTile({ photo, onClick }: TileProps): React.JSX.Element {
+export function DiscoverTile({ photo, onClick, selectMode, selected, onSelect }: TileProps): React.JSX.Element {
   const [hovered, setHovered] = useState(false)
+  const handleClick = (): void => {
+    if (selectMode) onSelect?.()
+    else onClick()
+  }
   return (
     <div
-      style={{ ...s.tile, ...(hovered ? s.tileHover : {}) }}
-      onClick={onClick}
+      style={{ ...s.tile, ...(hovered ? s.tileHover : {}), ...(selected ? s.tileSelected : {}) }}
+      onClick={handleClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       title={photo.title}
@@ -153,7 +203,8 @@ export function DiscoverTile({ photo, onClick }: TileProps): React.JSX.Element {
         ? <img src={photo.thumbnailUrl} alt={photo.title} style={s.thumb} />
         : <div style={s.thumbPlaceholder} />
       }
-      {hovered && (
+      {selected && <div style={s.checkOverlay}><span style={s.check}>✓</span></div>}
+      {!selected && hovered && (
         <div style={s.overlay}>
           <span style={s.overlayTitle}>{photo.title || 'Untitled'}</span>
           {photo.media === 'video' && <span style={s.videoTag}>Video</span>}
@@ -161,6 +212,41 @@ export function DiscoverTile({ photo, onClick }: TileProps): React.JSX.Element {
       )}
     </div>
   )
+}
+
+interface SelectBarProps {
+  count: number
+  total: number
+  onDownload: () => void
+  onCancel: () => void
+  downloading?: boolean
+}
+
+export function DiscoverSelectBar({ count, total, onDownload, onCancel, downloading }: SelectBarProps): React.JSX.Element {
+  return (
+    <div style={sb.bar}>
+      <span style={sb.label}>{count} of {total} selected</span>
+      <div style={sb.actions}>
+        <button style={sb.cancelBtn} onClick={onCancel}>Cancel</button>
+        <button style={{ ...sb.downloadBtn, ...(count === 0 || downloading ? sb.downloadBtnDisabled : {}) }} disabled={count === 0 || downloading} onClick={onDownload}>
+          {downloading ? 'Queueing…' : `Download ${count}`}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+const sb: Record<string, React.CSSProperties> = {
+  bar: {
+    position: 'sticky', bottom: 0, background: '#fff', borderTop: '1px solid #e8e8e8',
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    padding: '12px 20px', marginTop: 'auto', zIndex: 10,
+  },
+  label: { fontSize: '14px', color: '#444', fontWeight: 500 },
+  actions: { display: 'flex', gap: '8px' },
+  cancelBtn: { padding: '7px 16px', borderRadius: '8px', border: '1px solid #ddd', background: '#fff', cursor: 'pointer', fontSize: '13px', color: '#444' },
+  downloadBtn: { padding: '7px 16px', borderRadius: '8px', border: 'none', background: '#0063DC', color: '#fff', cursor: 'pointer', fontSize: '13px', fontWeight: 500 },
+  downloadBtnDisabled: { opacity: 0.4, cursor: 'not-allowed' },
 }
 
 const TILE_SIZE = `calc((100% - ${(GRID_COLS - 1) * 4}px) / ${GRID_COLS})`
@@ -186,6 +272,16 @@ const s: Record<string, React.CSSProperties> = {
     cursor: 'pointer', borderRadius: '4px', background: '#f0f0f0',
   },
   tileHover: { opacity: 0.9 },
+  tileSelected: { outline: '3px solid #0063DC', outlineOffset: '-3px' },
+  checkOverlay: {
+    position: 'absolute', inset: 0, background: 'rgba(0,99,220,0.25)',
+    display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', padding: '6px',
+  },
+  check: {
+    width: '20px', height: '20px', borderRadius: '50%', background: '#0063DC',
+    color: '#fff', fontSize: '11px', fontWeight: 700,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+  },
   thumb: { width: '100%', height: '100%', objectFit: 'cover', display: 'block' },
   thumbPlaceholder: { width: '100%', height: '100%', background: '#e8e8e8' },
   overlay: {
@@ -203,4 +299,5 @@ const s: Record<string, React.CSSProperties> = {
   loadingState: { textAlign: 'center', color: '#888', fontSize: '14px', paddingTop: '48px' },
   errorState: { textAlign: 'center', color: '#c0392b', fontSize: '14px', paddingTop: '48px' },
   emptyState: { textAlign: 'center', color: '#888', fontSize: '14px', paddingTop: '48px' },
+  selectToggleBtn: { padding: '6px 14px', borderRadius: '8px', border: '1px solid #ddd', background: '#fff', cursor: 'pointer', fontSize: '13px', color: '#444', flexShrink: 0 },
 }

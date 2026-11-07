@@ -138,5 +138,7 @@ contextBridge.exposeInMainWorld('flickrAPI', {
     ipcRenderer.invoke('batch:startDiscoverUser', nsid, username, displayTitle, track, smartMode),
   startDiscoverGroupBatch: (groupId: string, groupName: string, displayTitle: string, track?: boolean, smartMode?: 'updated' | 'never-downloaded'): Promise<void> =>
     ipcRenderer.invoke('batch:startDiscoverGroup', groupId, groupName, displayTitle, track, smartMode),
+  startDiscoverSelectedBatch: (photos: { id: string; title: string }[], displayTitle: string, folderParts: string[], track?: boolean): Promise<void> =>
+    ipcRenderer.invoke('batch:startDiscoverSelected', photos, displayTitle, folderParts, track),
 
 })

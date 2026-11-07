@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import type { FlickrPhoto, DiscoverGroup } from '../../shared/types'
 import PhotoDetail from './PhotoDetail'
-import { AttributionNotice, DiscoverTile } from './DiscoverExplore'
+import { AttributionNotice, DiscoverTile, DiscoverSelectBar } from './DiscoverExplore'
 import SmartDownloadButton from './SmartDownloadButton'
 
 type GroupView = 'list' | 'pool'
@@ -11,6 +11,7 @@ export default function DiscoverGroups(): React.JSX.Element {
   const [groups, setGroups] = useState<DiscoverGroup[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [groupFilter, setGroupFilter] = useState('')
   const [activeGroup, setActiveGroup] = useState<DiscoverGroup | null>(null)
   const [poolPhotos, setPoolPhotos] = useState<FlickrPhoto[]>([])
   const [poolPage, setPoolPage] = useState(1)
@@ -19,6 +20,9 @@ export default function DiscoverGroups(): React.JSX.Element {
   const [poolLoadingMore, setPoolLoadingMore] = useState(false)
   const [poolError, setPoolError] = useState<string | null>(null)
   const [detailIndex, setDetailIndex] = useState<number | null>(null)
+  const [selectMode, setSelectMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [downloading, setDownloading] = useState(false)
   const loadedRef = useRef(false)
 
   useEffect(() => {
@@ -30,6 +34,10 @@ export default function DiscoverGroups(): React.JSX.Element {
       .catch(e => { setError(e instanceof Error ? e.message : 'Failed to load groups'); setLoading(false) })
   }, [])
 
+  const filteredGroups = groupFilter.trim()
+    ? groups.filter(g => g.name.toLowerCase().includes(groupFilter.toLowerCase()))
+    : groups
+
   const openGroup = useCallback(async (group: DiscoverGroup): Promise<void> => {
     setActiveGroup(group)
     setView('pool')
@@ -38,6 +46,8 @@ export default function DiscoverGroups(): React.JSX.Element {
     setPoolPages(1)
     setPoolError(null)
     setDetailIndex(null)
+    setSelectMode(false)
+    setSelectedIds(new Set())
     setPoolLoading(true)
     try {
       const result = await window.flickrAPI.discoverGetGroupPhotos(group.id, 1)
@@ -55,8 +65,7 @@ export default function DiscoverGroups(): React.JSX.Element {
     if (!activeGroup || poolLoadingMore || poolPage >= poolPages) return
     setPoolLoadingMore(true)
     try {
-      const nextPage = poolPage + 1
-      const result = await window.flickrAPI.discoverGetGroupPhotos(activeGroup.id, nextPage)
+      const result = await window.flickrAPI.discoverGetGroupPhotos(activeGroup.id, poolPage + 1)
       setPoolPhotos(prev => [...prev, ...result.photos])
       setPoolPage(result.page)
     } catch { /* ignore */ }
@@ -67,6 +76,26 @@ export default function DiscoverGroups(): React.JSX.Element {
     setView('list')
     setActiveGroup(null)
     setDetailIndex(null)
+    setSelectMode(false)
+    setSelectedIds(new Set())
+  }
+
+  const toggleSelect = (id: string): void => {
+    setSelectedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
+  }
+
+  const handleDownloadSelected = async (): Promise<void> => {
+    if (!activeGroup) return
+    const selected = poolPhotos.filter(p => selectedIds.has(p.id)).map(p => ({ id: p.id, title: p.title }))
+    if (!selected.length) return
+    setDownloading(true)
+    try {
+      await window.flickrAPI.startDiscoverSelectedBatch(selected, `Selected from ${activeGroup.name}`, ['Groups', activeGroup.name])
+    } finally {
+      setDownloading(false)
+      setSelectMode(false)
+      setSelectedIds(new Set())
+    }
   }
 
   if (view === 'pool' && activeGroup) {
@@ -107,13 +136,21 @@ export default function DiscoverGroups(): React.JSX.Element {
               )}
             </div>
           </div>
-          <SmartDownloadButton
-            label="Download Group"
-            onDownload={(mode) => {
-              const smartMode = mode === 'all' ? undefined : mode
-              window.flickrAPI.startDiscoverGroupBatch(activeGroup.id, activeGroup.name, `↓ ${activeGroup.name}`, true, smartMode)
-            }}
-          />
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <SmartDownloadButton
+              label="Download Group"
+              onDownload={(mode) => {
+                const smartMode = mode === 'all' ? undefined : mode
+                void window.flickrAPI.startDiscoverGroupBatch(activeGroup.id, activeGroup.name, `↓ ${activeGroup.name}`, true, smartMode)
+              }}
+            />
+            {poolPhotos.length > 0 && !selectMode && (
+              <button style={s.selectBtn} onClick={() => setSelectMode(true)}>Select</button>
+            )}
+            {selectMode && (
+              <button style={s.selectBtn} onClick={() => { setSelectMode(false); setSelectedIds(new Set()) }}>Cancel</button>
+            )}
+          </div>
         </div>
 
         <AttributionNotice />
@@ -127,7 +164,14 @@ export default function DiscoverGroups(): React.JSX.Element {
           <>
             <div style={s.grid}>
               {poolPhotos.map((photo, idx) => (
-                <DiscoverTile key={photo.id} photo={photo} onClick={() => setDetailIndex(idx)} />
+                <DiscoverTile
+                  key={photo.id}
+                  photo={photo}
+                  onClick={() => !selectMode && setDetailIndex(idx)}
+                  selectMode={selectMode}
+                  selected={selectedIds.has(photo.id)}
+                  onSelect={() => toggleSelect(photo.id)}
+                />
               ))}
             </div>
             {poolPage < poolPages && (
@@ -138,6 +182,15 @@ export default function DiscoverGroups(): React.JSX.Element {
               </div>
             )}
           </>
+        )}
+        {selectMode && (
+          <DiscoverSelectBar
+            count={selectedIds.size}
+            total={poolPhotos.length}
+            onDownload={handleDownloadSelected}
+            onCancel={() => { setSelectMode(false); setSelectedIds(new Set()) }}
+            downloading={downloading}
+          />
         )}
       </div>
     )
@@ -152,14 +205,27 @@ export default function DiscoverGroups(): React.JSX.Element {
         </div>
       </div>
 
+      {!loading && groups.length > 5 && (
+        <input
+          style={s.filterInput}
+          type="text"
+          placeholder="Filter groups…"
+          value={groupFilter}
+          onChange={e => setGroupFilter(e.target.value)}
+        />
+      )}
+
       {loading && <div style={s.loadingState}>Loading groups…</div>}
       {error && <div style={s.errorState}>{error}</div>}
       {!loading && !error && groups.length === 0 && (
         <div style={s.emptyState}>You are not a member of any groups.</div>
       )}
-      {groups.length > 0 && (
+      {!loading && !error && filteredGroups.length === 0 && groups.length > 0 && (
+        <div style={s.emptyState}>No groups match "{groupFilter}".</div>
+      )}
+      {filteredGroups.length > 0 && (
         <div style={s.groupList}>
-          {groups.map(g => (
+          {filteredGroups.map(g => (
             <div key={g.id} style={s.groupRow} onClick={() => openGroup(g)}>
               <div style={s.groupAvatarWrap}>
                 {g.iconUrl
@@ -190,7 +256,12 @@ const s: Record<string, React.CSSProperties> = {
   headerRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '20px' },
   heading: { margin: 0, fontSize: '18px', fontWeight: 600, color: '#1a1a1a' },
   subheading: { margin: '4px 0 0', fontSize: '13px', color: '#888' },
-  backBtn: { background: 'none', border: 'none', color: '#0063DC', cursor: 'pointer', fontSize: '14px', padding: '4px 0' },
+  backBtn: { background: 'none', border: 'none', color: '#0063DC', cursor: 'pointer', fontSize: '14px', padding: '4px 0', flexShrink: 0 },
+  selectBtn: { padding: '6px 14px', borderRadius: '8px', border: '1px solid #ddd', background: '#fff', cursor: 'pointer', fontSize: '13px', color: '#444', flexShrink: 0 },
+  filterInput: {
+    height: '36px', borderRadius: '8px', border: '1px solid #ddd',
+    padding: '0 12px', fontSize: '14px', outline: 'none', width: '100%', boxSizing: 'border-box',
+  },
   groupList: { display: 'flex', flexDirection: 'column', gap: '0' },
   groupRow: {
     display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0',

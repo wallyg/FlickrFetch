@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import type { FlickrPhoto, FlickrAlbum, DiscoverUser, DiscoverContact } from '../../shared/types'
 import PhotoDetail from './PhotoDetail'
-import { AttributionNotice, DiscoverTile } from './DiscoverExplore'
+import { AttributionNotice, DiscoverTile, DiscoverSelectBar } from './DiscoverExplore'
 import SmartDownloadButton from './SmartDownloadButton'
 
 type PeopleView = 'home' | 'user-photos' | 'user-albums' | 'album-photos' | 'photo-detail'
@@ -31,7 +31,7 @@ export default function DiscoverPeople(): React.JSX.Element {
   const [albumsError, setAlbumsError] = useState<string | null>(null)
   const [activeAlbum, setActiveAlbum] = useState<FlickrAlbum | null>(null)
 
-  // Album photos state (when browsing a specific album)
+  // Album photos state
   const [albumPhotos, setAlbumPhotos] = useState<FlickrPhoto[]>([])
   const [albumPhotosPage, setAlbumPhotosPage] = useState(1)
   const [albumPhotosPages, setAlbumPhotosPages] = useState(1)
@@ -41,9 +41,16 @@ export default function DiscoverPeople(): React.JSX.Element {
 
   // Detail view
   const [detailIndex, setDetailIndex] = useState<number | null>(null)
-  const [detailPhotos, setDetailPhotos] = useState<FlickrPhoto[]>([])
-  const [detailSourceName, setDetailSourceName] = useState('')
-  const [detailHasMore, setDetailHasMore] = useState(false)
+
+  // Multi-select for user photos
+  const [userSelectMode, setUserSelectMode] = useState(false)
+  const [userSelectedIds, setUserSelectedIds] = useState<Set<string>>(new Set())
+  const [userDownloading, setUserDownloading] = useState(false)
+
+  // Multi-select for album photos
+  const [albumSelectMode, setAlbumSelectMode] = useState(false)
+  const [albumSelectedIds, setAlbumSelectedIds] = useState<Set<string>>(new Set())
+  const [albumDownloading, setAlbumDownloading] = useState(false)
 
   const loadedContactsRef = useRef(false)
 
@@ -55,6 +62,14 @@ export default function DiscoverPeople(): React.JSX.Element {
       .then(c => { setContacts(c); setContactsLoading(false) })
       .catch(() => setContactsLoading(false))
   }, [])
+
+  // Real-time contact filter
+  const filteredContacts = searchQuery.trim()
+    ? contacts.filter(c =>
+        c.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (c.realname ?? '').toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : contacts
 
   const handleSearch = useCallback(async (e?: React.FormEvent): Promise<void> => {
     if (e) e.preventDefault()
@@ -78,6 +93,7 @@ export default function DiscoverPeople(): React.JSX.Element {
     setView('user-photos')
     setUserTab('photos')
     setUserPhotos([])
+    setUserAlbums([]) // clear stale albums from previous user
     setPhotosPage(1)
     setPhotosPages(1)
     setPhotosError(null)
@@ -86,6 +102,8 @@ export default function DiscoverPeople(): React.JSX.Element {
     setDetailIndex(null)
     setPhotosLoading(true)
     setSearching(false)
+    setUserSelectMode(false)
+    setUserSelectedIds(new Set())
     try {
       const result = await window.flickrAPI.discoverGetPublicPhotos(user.nsid, 1)
       setUserPhotos(result.photos)
@@ -121,7 +139,6 @@ export default function DiscoverPeople(): React.JSX.Element {
 
   const loadAlbums = useCallback(async (): Promise<void> => {
     if (!foundUser || albumsLoading) return
-    if (userAlbums.length > 0) return // already loaded
     setAlbumsLoading(true)
     setAlbumsError(null)
     try {
@@ -132,7 +149,7 @@ export default function DiscoverPeople(): React.JSX.Element {
     } finally {
       setAlbumsLoading(false)
     }
-  }, [foundUser, albumsLoading, userAlbums.length])
+  }, [foundUser, albumsLoading])
 
   const openAlbum = useCallback(async (album: FlickrAlbum): Promise<void> => {
     setActiveAlbum(album)
@@ -142,21 +159,20 @@ export default function DiscoverPeople(): React.JSX.Element {
     setAlbumPhotosPages(1)
     setAlbumPhotosError(null)
     setDetailIndex(null)
+    setAlbumSelectMode(false)
+    setAlbumSelectedIds(new Set())
     setAlbumPhotosLoading(true)
     try {
-      const result = await window.flickrAPI.discoverGetUserAlbums(foundUser!.nsid, 1)
-      // We use getAlbumPhotos for the actual album content (uses existing album IPC, photos are public)
       const albumResult = await window.flickrAPI.getAlbumPhotos(album.id, 1)
       setAlbumPhotos(albumResult.photos)
       setAlbumPhotosPage(albumResult.page)
       setAlbumPhotosPages(albumResult.pages)
-      void result // suppress unused
     } catch (e) {
       setAlbumPhotosError(e instanceof Error ? e.message : 'Failed to load album')
     } finally {
       setAlbumPhotosLoading(false)
     }
-  }, [foundUser])
+  }, [])
 
   const loadMoreAlbumPhotos = useCallback(async (): Promise<void> => {
     if (!activeAlbum || albumPhotosLoadingMore || albumPhotosPage >= albumPhotosPages) return
@@ -169,30 +185,58 @@ export default function DiscoverPeople(): React.JSX.Element {
     finally { setAlbumPhotosLoadingMore(false) }
   }, [activeAlbum, albumPhotosLoadingMore, albumPhotosPage, albumPhotosPages])
 
-  const openPhotoDetail = useCallback((photos: FlickrPhoto[], idx: number, sourceName: string, hasMore: boolean): void => {
-    setDetailPhotos(photos)
-    setDetailIndex(idx)
-    setDetailSourceName(sourceName)
-    setDetailHasMore(hasMore)
-  }, [])
+  const toggleUserSelect = (id: string): void => {
+    setUserSelectedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
+  }
+  const toggleAlbumSelect = (id: string): void => {
+    setAlbumSelectedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
+  }
+
+  const handleUserDownloadSelected = async (): Promise<void> => {
+    if (!foundUser) return
+    const selected = userPhotos.filter(p => userSelectedIds.has(p.id)).map(p => ({ id: p.id, title: p.title }))
+    if (!selected.length) return
+    setUserDownloading(true)
+    try {
+      await window.flickrAPI.startDiscoverSelectedBatch(selected, `Selected from ${foundUser.realname || foundUser.username}`, ['Users', foundUser.username])
+    } finally {
+      setUserDownloading(false)
+      setUserSelectMode(false)
+      setUserSelectedIds(new Set())
+    }
+  }
+
+  const handleAlbumDownloadSelected = async (): Promise<void> => {
+    if (!foundUser || !activeAlbum) return
+    const selected = albumPhotos.filter(p => albumSelectedIds.has(p.id)).map(p => ({ id: p.id, title: p.title }))
+    if (!selected.length) return
+    setAlbumDownloading(true)
+    try {
+      await window.flickrAPI.startDiscoverSelectedBatch(selected, `Selected from ${activeAlbum.title}`, ['Users', foundUser.username])
+    } finally {
+      setAlbumDownloading(false)
+      setAlbumSelectMode(false)
+      setAlbumSelectedIds(new Set())
+    }
+  }
 
   // ── Photo detail view
-  if (detailIndex !== null && detailPhotos[detailIndex]) {
-    const isPhotoTab = view === 'user-photos' || (view === 'album-photos' && !activeAlbum)
-    const currentDetailPhotos = view === 'album-photos' && activeAlbum ? albumPhotos : userPhotos
+  if (detailIndex !== null) {
+    const currentPhotos = view === 'album-photos' ? albumPhotos : userPhotos
+    if (!currentPhotos[detailIndex]) { setDetailIndex(null); return <></> }
     const hasMore = view === 'album-photos' ? albumPhotosPage < albumPhotosPages : photosPage < photosPages
-
+    const sourceName = view === 'album-photos' ? (activeAlbum?.title ?? '') : (foundUser ? (foundUser.realname || foundUser.username) : '')
     return (
       <PhotoDetail
-        photo={currentDetailPhotos[detailIndex]}
+        photo={currentPhotos[detailIndex]}
         index={detailIndex}
-        total={currentDetailPhotos.length}
+        total={currentPhotos.length}
         hasMore={hasMore}
         canGoPrev={detailIndex > 0}
-        canGoNext={detailIndex < currentDetailPhotos.length - 1 || hasMore}
+        canGoNext={detailIndex < currentPhotos.length - 1 || hasMore}
         onPrev={() => setDetailIndex(d => (d !== null && d > 0 ? d - 1 : d))}
         onNext={() => {
-          if (detailIndex < currentDetailPhotos.length - 1) {
+          if (detailIndex < currentPhotos.length - 1) {
             setDetailIndex(detailIndex + 1)
           } else if (view === 'album-photos') {
             loadMoreAlbumPhotos().then(() => setDetailIndex(di => di !== null ? di + 1 : di))
@@ -201,7 +245,7 @@ export default function DiscoverPeople(): React.JSX.Element {
           }
         }}
         onClose={() => setDetailIndex(null)}
-        sourceName={detailSourceName}
+        sourceName={sourceName}
         discoverMode
       />
     )
@@ -221,6 +265,24 @@ export default function DiscoverPeople(): React.JSX.Element {
               <p style={s.subheading}>{activeAlbum.photoCount.toLocaleString()} photos</p>
             </div>
           </div>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <SmartDownloadButton
+              label="Download Album"
+              onDownload={(mode) => {
+                void window.flickrAPI.startDiscoverSelectedBatch(
+                  albumPhotos.map(p => ({ id: p.id, title: p.title })),
+                  activeAlbum.title,
+                  ['Users', foundUser.username]
+                )
+              }}
+            />
+            {albumPhotos.length > 0 && !albumSelectMode && (
+              <button style={s.selectBtn} onClick={() => setAlbumSelectMode(true)}>Select</button>
+            )}
+            {albumSelectMode && (
+              <button style={s.selectBtn} onClick={() => { setAlbumSelectMode(false); setAlbumSelectedIds(new Set()) }}>Cancel</button>
+            )}
+          </div>
         </div>
         <AttributionNotice />
         {albumPhotosLoading && <div style={s.loadingState}>Loading album…</div>}
@@ -232,7 +294,10 @@ export default function DiscoverPeople(): React.JSX.Element {
                 <DiscoverTile
                   key={photo.id}
                   photo={photo}
-                  onClick={() => openPhotoDetail(albumPhotos, idx, activeAlbum.title, albumPhotosPage < albumPhotosPages)}
+                  onClick={() => !albumSelectMode && setDetailIndex(idx)}
+                  selectMode={albumSelectMode}
+                  selected={albumSelectedIds.has(photo.id)}
+                  onSelect={() => toggleAlbumSelect(photo.id)}
                 />
               ))}
             </div>
@@ -245,12 +310,21 @@ export default function DiscoverPeople(): React.JSX.Element {
             )}
           </>
         )}
+        {albumSelectMode && (
+          <DiscoverSelectBar
+            count={albumSelectedIds.size}
+            total={albumPhotos.length}
+            onDownload={handleAlbumDownloadSelected}
+            onCancel={() => { setAlbumSelectMode(false); setAlbumSelectedIds(new Set()) }}
+            downloading={albumDownloading}
+          />
+        )}
       </div>
     )
   }
 
   // ── User profile view (photos + albums tabs)
-  if ((view === 'user-photos') && foundUser) {
+  if (view === 'user-photos' && foundUser) {
     return (
       <div style={s.container}>
         <div style={s.headerRow}>
@@ -271,13 +345,21 @@ export default function DiscoverPeople(): React.JSX.Element {
             </div>
           </div>
           {userTab === 'photos' && (
-            <SmartDownloadButton
-              label="Download All"
-              onDownload={(mode) => {
-                const smartMode = mode === 'all' ? undefined : mode
-                window.flickrAPI.startDiscoverUserBatch(foundUser.nsid, foundUser.username, `↓ ${foundUser.realname || foundUser.username}`, true, smartMode)
-              }}
-            />
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <SmartDownloadButton
+                label="Download All"
+                onDownload={(mode) => {
+                  const smartMode = mode === 'all' ? undefined : mode
+                  void window.flickrAPI.startDiscoverUserBatch(foundUser.nsid, foundUser.username, `↓ ${foundUser.realname || foundUser.username}`, true, smartMode)
+                }}
+              />
+              {userPhotos.length > 0 && !userSelectMode && (
+                <button style={s.selectBtn} onClick={() => setUserSelectMode(true)}>Select</button>
+              )}
+              {userSelectMode && (
+                <button style={s.selectBtn} onClick={() => { setUserSelectMode(false); setUserSelectedIds(new Set()) }}>Cancel</button>
+              )}
+            </div>
           )}
         </div>
 
@@ -308,7 +390,10 @@ export default function DiscoverPeople(): React.JSX.Element {
                     <DiscoverTile
                       key={photo.id}
                       photo={photo}
-                      onClick={() => openPhotoDetail(userPhotos, idx, foundUser.realname || foundUser.username, photosPage < photosPages)}
+                      onClick={() => !userSelectMode && setDetailIndex(idx)}
+                      selectMode={userSelectMode}
+                      selected={userSelectedIds.has(photo.id)}
+                      onSelect={() => toggleUserSelect(photo.id)}
                     />
                   ))}
                 </div>
@@ -320,6 +405,15 @@ export default function DiscoverPeople(): React.JSX.Element {
                   </div>
                 )}
               </>
+            )}
+            {userSelectMode && (
+              <DiscoverSelectBar
+                count={userSelectedIds.size}
+                total={userPhotos.length}
+                onDownload={handleUserDownloadSelected}
+                onCancel={() => { setUserSelectMode(false); setUserSelectedIds(new Set()) }}
+                downloading={userDownloading}
+              />
             )}
           </>
         )}
@@ -369,27 +463,32 @@ export default function DiscoverPeople(): React.JSX.Element {
         <input
           style={s.searchInput}
           type="text"
-          placeholder="Search by username or profile URL…"
+          placeholder="Filter contacts or search Flickr by username…"
           value={searchQuery}
           onChange={e => { setSearchQuery(e.target.value); setSearchError(null) }}
           disabled={searching}
         />
         <button type="submit" style={s.searchBtn} disabled={searching || !searchQuery.trim()}>
-          {searching ? 'Finding…' : 'Find'}
+          {searching ? 'Finding…' : 'Find on Flickr'}
         </button>
       </form>
 
       {searchError && <div style={s.searchError}>{searchError}</div>}
 
       <div style={s.contactsSection}>
-        <div style={s.contactsLabel}>Following</div>
+        <div style={s.contactsLabel}>
+          {searchQuery.trim() ? `Contacts matching "${searchQuery}"` : 'Following'}
+        </div>
         {contactsLoading && <div style={s.loadingState}>Loading contacts…</div>}
-        {!contactsLoading && contacts.length === 0 && (
+        {!contactsLoading && filteredContacts.length === 0 && contacts.length === 0 && (
           <div style={s.emptyState}>You are not following anyone on Flickr.</div>
         )}
-        {contacts.length > 0 && (
+        {!contactsLoading && filteredContacts.length === 0 && contacts.length > 0 && searchQuery.trim() && (
+          <div style={s.emptyState}>No contacts match "{searchQuery}". Press Find to search all of Flickr.</div>
+        )}
+        {filteredContacts.length > 0 && (
           <div style={s.contactsGrid}>
-            {contacts.map(c => (
+            {filteredContacts.map(c => (
               <ContactCard key={c.nsid} contact={c} onClick={() => openContact(c)} />
             ))}
           </div>
@@ -426,6 +525,7 @@ const s: Record<string, React.CSSProperties> = {
   heading: { margin: 0, fontSize: '18px', fontWeight: 600, color: '#1a1a1a' },
   subheading: { margin: '4px 0 0', fontSize: '13px', color: '#888' },
   backBtn: { background: 'none', border: 'none', color: '#0063DC', cursor: 'pointer', fontSize: '14px', padding: '4px 0', flexShrink: 0 },
+  selectBtn: { padding: '6px 14px', borderRadius: '8px', border: '1px solid #ddd', background: '#fff', cursor: 'pointer', fontSize: '13px', color: '#444', flexShrink: 0 },
   searchForm: { display: 'flex', gap: '8px' },
   searchInput: {
     flex: 1, height: '36px', borderRadius: '8px', border: '1px solid #ddd',
