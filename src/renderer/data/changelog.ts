@@ -7,6 +7,18 @@ export interface Release {
 
 const changelog: Release[] = [
   {
+    version: '2.1',
+    date: 'November 2026',
+    highlights: [
+      'New Discover mode — browse and download photos from your contacts, groups, and Flickr\'s Explore feed',
+      'People tab: search your contacts, browse their photostream and albums, download individual photos or select multiple',
+      'Groups tab: browse your group pools with a filter for quick lookup; download the full pool or select photos',
+      'Explore tab: browse today\'s most interesting photos on Flickr; download individually or in bulk',
+      'Creator, License, Photo URL, and Photo ID are always embedded when downloading Discover photos — required for proper attribution',
+      'Downloads route to organized subfolders: Users/username/, Groups/groupname/, and Explore/',
+    ]
+  },
+  {
     version: '2.0',
     date: 'November 2026',
     milestone: 'FlickrFetch 2.0 — a polished, cohesive app built on two years of features',
