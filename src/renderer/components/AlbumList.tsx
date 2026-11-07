@@ -146,6 +146,13 @@ export default function AlbumList({ onAlbumSelect }: AlbumListProps): React.JSX.
             }
           </span>
           <div style={styles.segGroupDensity}>
+            <button
+              style={{ ...styles.densityBtn, ...(viewMode === 'list' ? styles.densityBtnActive : {}) }}
+              onClick={() => setAndSaveViewMode('list')}
+              title="List view"
+            >
+              <ListIcon />
+            </button>
             {(['small', 'medium', 'large'] as GridSize[]).map(v => (
               <button
                 key={v}
@@ -156,13 +163,6 @@ export default function AlbumList({ onAlbumSelect }: AlbumListProps): React.JSX.
                 <GridIcon size={v} />
               </button>
             ))}
-            <button
-              style={{ ...styles.densityBtn, ...(viewMode === 'list' ? styles.densityBtnActive : {}) }}
-              onClick={() => setAndSaveViewMode('list')}
-              title="List view"
-            >
-              <ListIcon />
-            </button>
           </div>
         </div>
       </div>

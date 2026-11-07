@@ -933,6 +933,13 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
             <div style={s.toolbarArea}>
               <div style={{ flex: 1 }} />
               <div style={ss.segGroupDensity}>
+                <button
+                  style={{ ...ss.densityBtn, ...(albumsViewMode === 'list' ? ss.densityBtnActive : {}) }}
+                  onClick={() => { setAlbumsViewMode('list'); saveAlbumViewMode('list') }}
+                  title="List view"
+                >
+                  <ListIcon />
+                </button>
                 {(['small', 'medium', 'large'] as GridSize[]).map(g => (
                   <button
                     key={g}
@@ -943,13 +950,6 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
                     <GridIcon size={g} />
                   </button>
                 ))}
-                <button
-                  style={{ ...ss.densityBtn, ...(albumsViewMode === 'list' ? ss.densityBtnActive : {}) }}
-                  onClick={() => { setAlbumsViewMode('list'); saveAlbumViewMode('list') }}
-                  title="List view"
-                >
-                  <ListIcon />
-                </button>
               </div>
             </div>
 

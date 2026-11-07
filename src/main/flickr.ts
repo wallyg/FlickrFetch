@@ -364,6 +364,7 @@ function enrichCollectionCovers(collections: FlickrCollection[], coverMap: Map<s
       ...col,
       iconUrl: firstCover || col.iconUrl,
       coverUrls,
+      sets: col.sets.map((s) => ({ ...s, coverPhotoUrl: coverMap.get(s.id) ?? '' })),
       collections: enrichCollectionCovers(col.collections, coverMap)
     }
   })
@@ -390,10 +391,15 @@ export async function getCollectionTree(tokenData: FlickrTokenData): Promise<Fli
   const topLevel = (response.data.collections?.collection as Record<string, unknown>[] | undefined) ?? []
   const tree = topLevel.map(parseCollection)
 
-  // Fetch album covers so we can show them on collection cards instead of broken auth-gated icons
+  // Fetch album covers so we can show them on collection cards and sets
   try {
-    const albumsData = await getAlbums(tokenData, 1)
-    const coverMap = new Map<string, string>(albumsData.albums.map((a) => [a.id, a.coverPhotoUrl]))
+    const first = await getAlbums(tokenData, 1)
+    const allAlbums = [...first.albums]
+    for (let p = 2; p <= first.pages; p++) {
+      const next = await getAlbums(tokenData, p)
+      allAlbums.push(...next.albums)
+    }
+    const coverMap = new Map<string, string>(allAlbums.map((a) => [a.id, a.coverPhotoUrl]))
     return enrichCollectionCovers(tree, coverMap)
   } catch {
     return tree

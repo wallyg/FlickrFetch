@@ -179,6 +179,7 @@ export interface FlickrSet {
   id: string
   title: string
   description: string
+  coverPhotoUrl?: string
 }
 
 export interface FlickrCollection {

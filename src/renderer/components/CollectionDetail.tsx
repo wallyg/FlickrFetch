@@ -40,6 +40,13 @@ export default function CollectionDetail({ collection, onCollectionSelect, onSet
           <div style={styles.albumsHeader}>
             {hasSubCollections && <p style={{ ...styles.sectionLabel, margin: 0 }}>Albums</p>}
             <div style={styles.sizerGroup}>
+              <button
+                style={{ ...styles.densityBtn, ...(viewMode === 'list' ? styles.densityBtnActive : {}) }}
+                onClick={() => setAndSaveViewMode('list')}
+                title="List view"
+              >
+                <ListIcon />
+              </button>
               {(['small', 'medium', 'large'] as GridSize[]).map(v => (
                 <button
                   key={v}
@@ -50,13 +57,6 @@ export default function CollectionDetail({ collection, onCollectionSelect, onSet
                   <GridIcon size={v} />
                 </button>
               ))}
-              <button
-                style={{ ...styles.densityBtn, ...(viewMode === 'list' ? styles.densityBtnActive : {}) }}
-                onClick={() => setAndSaveViewMode('list')}
-                title="List view"
-              >
-                <ListIcon />
-              </button>
             </div>
           </div>
           {viewMode === 'list' ? (
@@ -127,7 +127,10 @@ function AlbumGridCard({ set, gridSize, onClick }: { set: FlickrSet; gridSize: G
       onMouseLeave={() => setHovered(false)}
     >
       <div style={{ ...styles.albumCardIcon, height }}>
-        <StackIcon />
+        {set.coverPhotoUrl
+          ? <img src={set.coverPhotoUrl} alt="" style={styles.albumCardCover} />
+          : <StackIcon />
+        }
       </div>
       <div style={styles.albumCardInfo}>
         <span style={styles.albumCardTitle}>{set.title}</span>
@@ -145,11 +148,11 @@ function AlbumRow({ set, onClick }: { set: FlickrSet; onClick: () => void }): Re
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      <div style={styles.albumIcon}>
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-          <rect x="1" y="3" width="14" height="12" rx="2" fill="#d4cfc8" />
-          <rect x="3" y="1" width="14" height="12" rx="2" fill="#e8e4de" stroke="#ccc" strokeWidth="0.75" />
-        </svg>
+      <div style={styles.albumThumb}>
+        {set.coverPhotoUrl
+          ? <img src={set.coverPhotoUrl} alt="" style={styles.albumThumbImg} />
+          : <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="1" y="3" width="14" height="12" rx="2" fill="#d4cfc8" /><rect x="3" y="1" width="14" height="12" rx="2" fill="#e8e4de" stroke="#ccc" strokeWidth="0.75" /></svg>
+        }
       </div>
       <span style={styles.albumRowTitle}>{set.title}</span>
       <span style={styles.albumRowChevron}>›</span>
@@ -298,6 +301,12 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'center',
   },
+  albumCardCover: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover' as const,
+    display: 'block',
+  },
   albumCardInfo: {
     padding: '8px 10px',
   },
@@ -319,7 +328,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
-    padding: '10px 14px',
+    padding: '8px 14px',
     background: '#fff',
     border: '1px solid #e8e4de',
     borderRadius: '8px',
@@ -331,10 +340,22 @@ const styles: Record<string, React.CSSProperties> = {
   albumRowHover: {
     background: '#faf8f5'
   },
-  albumIcon: {
+  albumThumb: {
+    width: '44px',
+    height: '44px',
+    borderRadius: '6px',
+    overflow: 'hidden',
+    background: '#f0ede8',
     flexShrink: 0,
     display: 'flex',
-    alignItems: 'center'
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  albumThumbImg: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover' as const,
+    display: 'block',
   },
   albumRowTitle: {
     flex: 1,
