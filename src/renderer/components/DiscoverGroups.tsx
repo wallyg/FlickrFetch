@@ -3,6 +3,7 @@ import type { FlickrPhoto, DiscoverGroup } from '../../shared/types'
 import PhotoDetail from './PhotoDetail'
 import { AttributionNotice, DiscoverTile, DiscoverSelectBar } from './DiscoverExplore'
 import SmartDownloadButton from './SmartDownloadButton'
+import { GridIcon, ListIcon, GRID_COLUMNS, sharedStyles as ss, type GridSize, type AlbumViewMode, type DownloadFilter, PhotoListRow, loadAlbumViewMode, saveAlbumViewMode, DOWNLOAD_FILTER_NEXT, DOWNLOAD_FILTER_LABEL } from './PhotoGridShared'
 
 type GroupView = 'list' | 'pool'
 
@@ -23,7 +24,12 @@ export default function DiscoverGroups(): React.JSX.Element {
   const [selectMode, setSelectMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [downloading, setDownloading] = useState(false)
+  const [poolViewMode, setPoolViewMode] = useState<AlbumViewMode>(loadAlbumViewMode)
+  const [poolDownloadFilter, setPoolDownloadFilter] = useState<DownloadFilter>('all')
+  const [poolDownloadRecords, setPoolDownloadRecords] = useState<Record<string, true>>({})
   const loadedRef = useRef(false)
+
+  const poolGridSize: GridSize = poolViewMode === 'list' ? 'medium' : poolViewMode
 
   useEffect(() => {
     if (loadedRef.current) return
@@ -48,6 +54,8 @@ export default function DiscoverGroups(): React.JSX.Element {
     setDetailIndex(null)
     setSelectMode(false)
     setSelectedIds(new Set())
+    setPoolDownloadFilter('all')
+    setPoolDownloadRecords({})
     setPoolLoading(true)
     try {
       const result = await window.flickrAPI.discoverGetGroupPhotos(group.id, 1)
@@ -71,6 +79,21 @@ export default function DiscoverGroups(): React.JSX.Element {
     } catch { /* ignore */ }
     finally { setPoolLoadingMore(false) }
   }, [activeGroup, poolLoadingMore, poolPage, poolPages])
+
+  useEffect(() => {
+    if (poolPhotos.length === 0) return
+    window.flickrAPI.getDiscoverRecordsBatch(poolPhotos.map(p => p.id))
+      .then(records => {
+        const map: Record<string, true> = {}
+        Object.keys(records).forEach(id => { map[id] = true })
+        setPoolDownloadRecords(map)
+      })
+      .catch(() => {})
+  }, [poolPhotos])
+
+  const filteredPoolPhotos = poolDownloadFilter !== 'all'
+    ? poolPhotos.filter(p => poolDownloadFilter === 'downloaded' ? !!poolDownloadRecords[p.id] : !poolDownloadRecords[p.id])
+    : poolPhotos
 
   const handleBack = (): void => {
     setView('list')
@@ -99,18 +122,18 @@ export default function DiscoverGroups(): React.JSX.Element {
   }
 
   if (view === 'pool' && activeGroup) {
-    if (detailIndex !== null && poolPhotos[detailIndex]) {
+    if (detailIndex !== null && filteredPoolPhotos[detailIndex]) {
       return (
         <PhotoDetail
-          photo={poolPhotos[detailIndex]}
+          photo={filteredPoolPhotos[detailIndex]}
           index={detailIndex}
-          total={poolPhotos.length}
+          total={filteredPoolPhotos.length}
           hasMore={poolPage < poolPages}
           canGoPrev={detailIndex > 0}
-          canGoNext={detailIndex < poolPhotos.length - 1 || poolPage < poolPages}
+          canGoNext={detailIndex < filteredPoolPhotos.length - 1 || poolPage < poolPages}
           onPrev={() => setDetailIndex(d => (d !== null && d > 0 ? d - 1 : d))}
           onNext={() => {
-            if (detailIndex < poolPhotos.length - 1) setDetailIndex(detailIndex + 1)
+            if (detailIndex < filteredPoolPhotos.length - 1) setDetailIndex(detailIndex + 1)
             else { loadMorePool().then(() => setDetailIndex(di => di !== null ? di + 1 : di)) }
           }}
           onClose={() => setDetailIndex(null)}
@@ -165,6 +188,27 @@ export default function DiscoverGroups(): React.JSX.Element {
               downloading={downloading}
             />
           )}
+          {!selectMode && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', paddingTop: '6px' }}>
+              <button
+                style={{ ...ss.downloadFilterBtn, ...(poolDownloadFilter !== 'all' ? ss.downloadFilterBtnActive : {}) }}
+                onClick={() => setPoolDownloadFilter(f => DOWNLOAD_FILTER_NEXT[f])}
+              >
+                {DOWNLOAD_FILTER_LABEL[poolDownloadFilter]}
+              </button>
+              <div style={{ flex: 1 }} />
+              <div style={ss.segGroupDensity}>
+                <button style={{ ...ss.densityBtn, ...(poolViewMode === 'list' ? ss.densityBtnActive : {}) }} onClick={() => { const m: AlbumViewMode = 'list'; setPoolViewMode(m); saveAlbumViewMode(m) }}>
+                  <ListIcon />
+                </button>
+                {(['small', 'medium', 'large'] as GridSize[]).map(g => (
+                  <button key={g} style={{ ...ss.densityBtn, ...(poolViewMode === g ? ss.densityBtnActive : {}) }} onClick={() => { setPoolViewMode(g); saveAlbumViewMode(g) }}>
+                    <GridIcon size={g} />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <AttributionNotice />
@@ -174,20 +218,35 @@ export default function DiscoverGroups(): React.JSX.Element {
         {!poolLoading && !poolError && poolPhotos.length === 0 && (
           <div style={s.emptyState}>No public photos in this group pool.</div>
         )}
-        {poolPhotos.length > 0 && (
+        {filteredPoolPhotos.length > 0 && (
           <>
-            <div style={s.grid}>
-              {poolPhotos.map((photo, idx) => (
-                <DiscoverTile
-                  key={photo.id}
-                  photo={photo}
-                  onClick={() => !selectMode && setDetailIndex(idx)}
-                  selectMode={selectMode}
-                  selected={selectedIds.has(photo.id)}
-                  onSelect={() => toggleSelect(photo.id)}
-                />
-              ))}
-            </div>
+            {poolViewMode === 'list' ? (
+              <div style={ss.listContainer}>
+                {filteredPoolPhotos.map((photo, idx) => (
+                  <PhotoListRow
+                    key={photo.id}
+                    photo={photo}
+                    isDownloaded={!!poolDownloadRecords[photo.id]}
+                    isSelected={selectMode ? selectedIds.has(photo.id) : undefined}
+                    selectMode={selectMode}
+                    onClick={() => selectMode ? toggleSelect(photo.id) : setDetailIndex(idx)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div style={{ ...s.grid, gridTemplateColumns: GRID_COLUMNS[poolGridSize] }}>
+                {filteredPoolPhotos.map((photo, idx) => (
+                  <DiscoverTile
+                    key={photo.id}
+                    photo={photo}
+                    onClick={() => !selectMode && setDetailIndex(idx)}
+                    selectMode={selectMode}
+                    selected={selectedIds.has(photo.id)}
+                    onSelect={() => toggleSelect(photo.id)}
+                  />
+                ))}
+              </div>
+            )}
             {poolPage < poolPages && (
               <div style={s.loadMoreRow}>
                 <button style={s.loadMoreBtn} disabled={poolLoadingMore} onClick={loadMorePool}>

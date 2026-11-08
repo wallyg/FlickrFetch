@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import type { FlickrPhoto, PhotoPage } from '../../shared/types'
 import PhotoDetail from './PhotoDetail'
+import { GridIcon, ListIcon, GRID_COLUMNS, sharedStyles as ss, type GridSize, type AlbumViewMode, type DownloadFilter, PhotoListRow, loadAlbumViewMode, saveAlbumViewMode, DOWNLOAD_FILTER_NEXT, DOWNLOAD_FILTER_LABEL } from './PhotoGridShared'
 
 const GRID_COLS = 4
 
@@ -19,7 +20,12 @@ export default function DiscoverExplore({ onDownload }: Props): React.JSX.Elemen
   const [selectMode, setSelectMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [downloading, setDownloading] = useState(false)
+  const [exploreViewMode, setExploreViewMode] = useState<AlbumViewMode>(loadAlbumViewMode)
+  const [exploreDownloadFilter, setExploreDownloadFilter] = useState<DownloadFilter>('all')
+  const [exploreDownloadRecords, setExploreDownloadRecords] = useState<Record<string, true>>({})
   const loadedRef = useRef(false)
+
+  const exploreGridSize: GridSize = exploreViewMode === 'list' ? 'medium' : exploreViewMode
 
   const loadPage = useCallback(async (p: number): Promise<void> => {
     if (p === 1) { setLoading(true); setError(null) }
@@ -43,29 +49,44 @@ export default function DiscoverExplore({ onDownload }: Props): React.JSX.Elemen
     loadPage(1)
   }, [loadPage])
 
+  useEffect(() => {
+    if (photos.length === 0) return
+    window.flickrAPI.getDiscoverRecordsBatch(photos.map(p => p.id))
+      .then(records => {
+        const map: Record<string, true> = {}
+        Object.keys(records).forEach(id => { map[id] = true })
+        setExploreDownloadRecords(map)
+      })
+      .catch(() => {})
+  }, [photos])
+
+  const filteredExplorePhotos = exploreDownloadFilter !== 'all'
+    ? photos.filter(p => exploreDownloadFilter === 'downloaded' ? !!exploreDownloadRecords[p.id] : !exploreDownloadRecords[p.id])
+    : photos
+
   const handlePrev = useCallback(() => {
     setDetailIndex(prev => (prev !== null && prev > 0 ? prev - 1 : prev))
   }, [])
 
   const handleNext = useCallback(() => {
     if (detailIndex === null) return
-    if (detailIndex < photos.length - 1) {
+    if (detailIndex < filteredExplorePhotos.length - 1) {
       setDetailIndex(detailIndex + 1)
     } else if (page < pages) {
       loadPage(page + 1).then(() => setDetailIndex(detailIndex + 1))
     }
-  }, [detailIndex, photos.length, page, pages, loadPage])
+  }, [detailIndex, filteredExplorePhotos.length, page, pages, loadPage])
 
-  if (detailIndex !== null && photos[detailIndex]) {
-    const detailPhoto = photos[detailIndex]
+  if (detailIndex !== null && filteredExplorePhotos[detailIndex]) {
+    const detailPhoto = filteredExplorePhotos[detailIndex]
     return (
       <PhotoDetail
         photo={detailPhoto}
         index={detailIndex}
-        total={photos.length}
+        total={filteredExplorePhotos.length}
         hasMore={page < pages}
         canGoPrev={detailIndex > 0}
-        canGoNext={detailIndex < photos.length - 1 || page < pages}
+        canGoNext={detailIndex < filteredExplorePhotos.length - 1 || page < pages}
         onPrev={handlePrev}
         onNext={handleNext}
         onClose={() => setDetailIndex(null)}
@@ -119,6 +140,27 @@ export default function DiscoverExplore({ onDownload }: Props): React.JSX.Elemen
             downloading={downloading}
           />
         )}
+        {!selectMode && photos.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', paddingTop: '6px' }}>
+            <button
+              style={{ ...ss.downloadFilterBtn, ...(exploreDownloadFilter !== 'all' ? ss.downloadFilterBtnActive : {}) }}
+              onClick={() => setExploreDownloadFilter(f => DOWNLOAD_FILTER_NEXT[f])}
+            >
+              {DOWNLOAD_FILTER_LABEL[exploreDownloadFilter]}
+            </button>
+            <div style={{ flex: 1 }} />
+            <div style={ss.segGroupDensity}>
+              <button style={{ ...ss.densityBtn, ...(exploreViewMode === 'list' ? ss.densityBtnActive : {}) }} onClick={() => { const m: AlbumViewMode = 'list'; setExploreViewMode(m); saveAlbumViewMode(m) }}>
+                <ListIcon />
+              </button>
+              {(['small', 'medium', 'large'] as GridSize[]).map(g => (
+                <button key={g} style={{ ...ss.densityBtn, ...(exploreViewMode === g ? ss.densityBtnActive : {}) }} onClick={() => { setExploreViewMode(g); saveAlbumViewMode(g) }}>
+                  <GridIcon size={g} />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <AttributionNotice />
@@ -135,20 +177,35 @@ export default function DiscoverExplore({ onDownload }: Props): React.JSX.Elemen
         <div style={s.emptyState}>No photos found.</div>
       )}
 
-      {photos.length > 0 && (
+      {filteredExplorePhotos.length > 0 && (
         <>
-          <div style={s.grid}>
-            {photos.map((photo, idx) => (
-              <DiscoverTile
-                key={photo.id}
-                photo={photo}
-                onClick={() => !selectMode && setDetailIndex(idx)}
-                selectMode={selectMode}
-                selected={selectedIds.has(photo.id)}
-                onSelect={() => toggleSelect(photo.id)}
-              />
-            ))}
-          </div>
+          {exploreViewMode === 'list' ? (
+            <div style={ss.listContainer}>
+              {filteredExplorePhotos.map((photo, idx) => (
+                <PhotoListRow
+                  key={photo.id}
+                  photo={photo}
+                  isDownloaded={!!exploreDownloadRecords[photo.id]}
+                  isSelected={selectMode ? selectedIds.has(photo.id) : undefined}
+                  selectMode={selectMode}
+                  onClick={() => selectMode ? toggleSelect(photo.id) : setDetailIndex(idx)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div style={{ ...s.grid, gridTemplateColumns: GRID_COLUMNS[exploreGridSize] }}>
+              {filteredExplorePhotos.map((photo, idx) => (
+                <DiscoverTile
+                  key={photo.id}
+                  photo={photo}
+                  onClick={() => !selectMode && setDetailIndex(idx)}
+                  selectMode={selectMode}
+                  selected={selectedIds.has(photo.id)}
+                  onSelect={() => toggleSelect(photo.id)}
+                />
+              ))}
+            </div>
+          )}
           {page < pages && (
             <div style={s.loadMoreRow}>
               <button

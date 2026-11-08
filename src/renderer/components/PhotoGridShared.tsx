@@ -5,6 +5,8 @@ import type { FlickrPhoto } from '../../shared/types'
 export type MediaFilter = 'all' | 'photo' | 'video'
 export type GridSize = 'small' | 'medium' | 'large'
 export type AlbumViewMode = GridSize | 'list'
+export type PhotoViewMode = GridSize | 'list'
+export type DownloadFilter = 'all' | 'not-downloaded' | 'downloaded'
 export type PrivacyFilter = 'all' | 'public' | 'friends' | 'family' | 'friendsFamily' | 'private'
 export type PrivacyLevel = 'public' | 'friends' | 'family' | 'friendsFamily' | 'private'
 
@@ -34,6 +36,89 @@ export function loadAlbumViewMode(): AlbumViewMode {
 }
 export function saveAlbumViewMode(mode: AlbumViewMode): void {
   try { localStorage.setItem(ALBUM_VIEW_KEY, mode) } catch { /* ignore */ }
+}
+
+// ── Photo grid view mode persistence ─────────────────────────────────────────
+const PHOTO_VIEW_KEY = 'ff-photo-view-mode'
+export function loadPhotoViewMode(): PhotoViewMode {
+  try { const v = localStorage.getItem(PHOTO_VIEW_KEY); if (v === 'list' || v === 'small' || v === 'medium' || v === 'large') return v } catch { /* ignore */ }
+  return 'medium'
+}
+export function savePhotoViewMode(mode: PhotoViewMode): void {
+  try { localStorage.setItem(PHOTO_VIEW_KEY, mode) } catch { /* ignore */ }
+}
+
+// ── Download filter cycling ───────────────────────────────────────────────────
+export const DOWNLOAD_FILTER_NEXT: Record<DownloadFilter, DownloadFilter> = {
+  'all': 'not-downloaded',
+  'not-downloaded': 'downloaded',
+  'downloaded': 'all',
+}
+export const DOWNLOAD_FILTER_LABEL: Record<DownloadFilter, string> = {
+  'all': 'All',
+  'not-downloaded': 'Not downloaded',
+  'downloaded': 'Downloaded',
+}
+
+// ── Photo list row ────────────────────────────────────────────────────────────
+function formatRowDate(raw: string): string {
+  if (!raw) return ''
+  return raw.slice(0, 10)
+}
+
+interface PhotoListRowProps {
+  photo: FlickrPhoto
+  isDownloaded: boolean
+  isSelected?: boolean
+  selectMode?: boolean
+  onClick: (e: React.MouseEvent) => void
+}
+
+export function PhotoListRow({ photo, isDownloaded, isSelected, selectMode, onClick }: PhotoListRowProps): React.JSX.Element {
+  const privacyLevel = getPrivacyLevel(photo)
+  return (
+    <div
+      style={{
+        display: 'flex', alignItems: 'center', gap: '10px',
+        padding: '7px 16px', cursor: 'pointer',
+        borderBottom: '1px solid #f0ece6',
+        background: isSelected ? 'rgba(255,0,132,0.06)' : 'transparent',
+      }}
+      onClick={onClick}
+    >
+      {selectMode && (
+        <div style={{
+          width: 18, height: 18, borderRadius: '50%', flexShrink: 0,
+          border: `2px solid ${isSelected ? 'var(--ff-pink)' : '#ccc'}`,
+          background: isSelected ? 'var(--ff-pink)' : 'transparent',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          {isSelected && <span style={{ color: '#fff', fontSize: '10px', fontWeight: 700 }}>✓</span>}
+        </div>
+      )}
+      {photo.thumbnailUrl
+        ? <img src={photo.thumbnailUrl} alt={photo.title} loading="lazy" style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: '4px', flexShrink: 0 }} />
+        : <div style={{ width: 40, height: 40, background: '#d0d0d0', borderRadius: '4px', flexShrink: 0 }} />
+      }
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: '13px', fontWeight: 600, color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {photo.title || '(untitled)'}
+        </div>
+        <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
+          {formatRowDate(photo.dateTaken)}
+        </div>
+      </div>
+      {photo.media === 'video' && (
+        <span style={{ fontSize: '11px', color: '#888', background: '#f0ece6', borderRadius: '3px', padding: '2px 6px', flexShrink: 0 }}>Video</span>
+      )}
+      {privacyLevel !== 'public' && (
+        <span style={{ flexShrink: 0 }}><PrivacyIcon level={privacyLevel} /></span>
+      )}
+      <span style={{ fontSize: '13px', color: isDownloaded ? '#22a85d' : '#ddd', flexShrink: 0, width: 16, textAlign: 'center' as const }}>
+        {isDownloaded ? '✓' : '—'}
+      </span>
+    </div>
+  )
 }
 
 // ── Shared components ─────────────────────────────────────────────────────────
@@ -203,6 +288,9 @@ export const sharedStyles: Record<string, React.CSSProperties> = {
   dateToLabel: { fontSize: '12px', color: '#888' },
   applyBtn: { backgroundColor: '#111', border: 'none', borderRadius: '5px', padding: '4px 10px', fontSize: '12px', color: '#fff', cursor: 'pointer' },
   comingSoon: { fontSize: '12px', color: '#bbb' },
+  downloadFilterBtn: { background: 'none', border: '1px solid #ddd', borderRadius: '6px', padding: '5px 10px', fontSize: '12px', color: '#555', cursor: 'pointer', whiteSpace: 'nowrap' as const },
+  downloadFilterBtnActive: { backgroundColor: '#111', color: '#fff', borderColor: '#111' },
+  listContainer: { display: 'flex', flexDirection: 'column' as const },
   tagHint: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#ddd', fontSize: '10px', color: '#666', cursor: 'default', fontWeight: '600', flexShrink: 0 } as React.CSSProperties,
   // Empty / error states
   centered: { display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', height: '100%', gap: '12px' },

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react'
 import type { FlickrPhoto, PhotoSearchParams, SearchOperator, DateRangeField, TagMode } from '../../shared/types'
-import { MediaFilter, GridSize, PrivacyFilter, PrivacyLevel, PRIVACY_OPTIONS, PRIVACY_LABELS, GRID_COLUMNS, GridIcon, PrivacyIcon, Tooltip, Chip, getPrivacyLevel, sharedStyles, DateMode, getPresetDates, formatDateChip } from './PhotoGridShared'
+import { MediaFilter, GridSize, PhotoViewMode, DownloadFilter, PrivacyFilter, PrivacyLevel, PRIVACY_OPTIONS, PRIVACY_LABELS, GRID_COLUMNS, GridIcon, ListIcon, PrivacyIcon, Tooltip, Chip, PhotoListRow, getPrivacyLevel, sharedStyles, DateMode, getPresetDates, formatDateChip, loadPhotoViewMode, savePhotoViewMode, DOWNLOAD_FILTER_NEXT, DOWNLOAD_FILTER_LABEL } from './PhotoGridShared'
 
 type SortOrder = 'date-posted-desc' | 'date-posted-asc' | 'date-taken-desc' | 'date-taken-asc'
 
@@ -29,8 +29,12 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
   // Display state
   const [sort, setSort] = useState<SortOrder>('date-posted-desc')
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>('all')
-  const [gridSize, setGridSize] = useState<GridSize>('medium')
+  const [viewMode, setViewMode] = useState<PhotoViewMode>(loadPhotoViewMode)
   const [privacyFilter, setPrivacyFilter] = useState<PrivacyFilter>('all')
+  const [downloadFilter, setDownloadFilter] = useState<DownloadFilter>('all')
+  const [downloadRecords, setDownloadRecords] = useState<Record<string, true>>({})
+
+  const gridSize: GridSize = viewMode === 'list' ? 'medium' : viewMode
   const autoLoadCountRef = useRef(0)
   const [autoLoadCapped, setAutoLoadCapped] = useState(false)
   const [scanAllMode, setScanAllMode] = useState(false)
@@ -148,7 +152,7 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
   }
 
   const clearAllFilters = (): void => {
-    setMediaFilter('all'); setPrivacyFilter('all')
+    setMediaFilter('all'); setPrivacyFilter('all'); setDownloadFilter('all')
     setSearchQuery(''); setTagQuery('')
     setDateMode('all'); setDateCustomMin(''); setDateCustomMax('')
     applySearch({})
@@ -183,11 +187,14 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
     let result = photos
       .filter(p => mediaFilter === 'all' || p.media === mediaFilter)
       .filter(p => privacyFilter === 'all' || getPrivacyLevel(p) === privacyFilter)
+    if (downloadFilter !== 'all') {
+      result = result.filter(p => downloadFilter === 'downloaded' ? !!downloadRecords[p.id] : !downloadRecords[p.id])
+    }
     if (searchMode === 'id' && photoIdQuery.trim()) {
       result = result.filter(p => p.id === photoIdQuery.trim())
     }
     return result
-  }, [photos, mediaFilter, privacyFilter, searchMode, photoIdQuery])
+  }, [photos, mediaFilter, privacyFilter, downloadFilter, downloadRecords, searchMode, photoIdQuery])
 
   useEffect(() => { onFilteredPhotosChange?.(filteredPhotos) }, [filteredPhotos, onFilteredPhotosChange])
 
@@ -219,8 +226,19 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
     }
   }, [mediaFilter, privacyFilter, photos.length, page, pages, loadingMore, loading, sort, scanAllMode, autoLoadError])
 
+  useEffect(() => {
+    if (photos.length === 0) return
+    window.flickrAPI.getPhotoRecordsBatch(photos.map(p => p.id))
+      .then(records => {
+        const map: Record<string, true> = {}
+        Object.keys(records).forEach(id => { map[id] = true })
+        setDownloadRecords(map)
+      })
+      .catch(() => {})
+  }, [photos])
+
   const hasServerSearch = !!(activeSearch.query || activeSearch.tagQuery || activeSearch.dateMin || activeSearch.dateMax)
-  const hasClientFilter = mediaFilter !== 'all' || privacyFilter !== 'all'
+  const hasClientFilter = mediaFilter !== 'all' || privacyFilter !== 'all' || downloadFilter !== 'all'
   const hasAnyFilter = hasServerSearch || hasClientFilter
   const drawerBadgeCount =
     (privacyFilter !== 'all' ? 1 : 0) +
@@ -346,13 +364,19 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
               )}
             </button>
 
+            <button
+              style={{ ...styles.downloadFilterBtn, ...(downloadFilter !== 'all' ? styles.downloadFilterBtnActive : {}) }}
+              onClick={() => setDownloadFilter(f => DOWNLOAD_FILTER_NEXT[f])}
+            >
+              {DOWNLOAD_FILTER_LABEL[downloadFilter]}
+            </button>
+
             <div style={styles.segGroupDensity}>
+              <button style={{ ...styles.densityBtn, ...(viewMode === 'list' ? styles.densityBtnActive : {}) }} onClick={() => { const m: PhotoViewMode = 'list'; setViewMode(m); savePhotoViewMode(m) }}>
+                <ListIcon />
+              </button>
               {(['small', 'medium', 'large'] as GridSize[]).map(v => (
-                <button
-                  key={v}
-                  style={{ ...styles.densityBtn, ...(gridSize === v ? styles.densityBtnActive : {}) }}
-                  onClick={() => setGridSize(v)}
-                >
+                <button key={v} style={{ ...styles.densityBtn, ...(viewMode === v ? styles.densityBtnActive : {}) }} onClick={() => { setViewMode(v); savePhotoViewMode(v) }}>
                   <GridIcon size={v} />
                 </button>
               ))}
@@ -471,12 +495,6 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
                 )}
               </div>
 
-              {/* Camera placeholder */}
-              <div style={{ ...styles.drawerRow, opacity: 0.35 }}>
-                <span style={styles.drawerLabel}>Camera</span>
-                <span style={styles.comingSoon}>Coming soon</span>
-              </div>
-
             </div>
           )}
 
@@ -503,6 +521,9 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
               )}
               {privacyFilter !== 'all' && (
                 <Chip label={`Privacy: ${PRIVACY_LABELS[privacyFilter]}`} onDismiss={() => setPrivacyFilter('all')} />
+              )}
+              {downloadFilter !== 'all' && (
+                <Chip label={DOWNLOAD_FILTER_LABEL[downloadFilter]} onDismiss={() => setDownloadFilter('all')} />
               )}
               <button style={styles.clearFiltersLink} onClick={clearAllFilters}>Clear all</button>
             </div>
@@ -547,58 +568,73 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
         </div>
       )}
 
-      <div style={{ ...styles.grid, gridTemplateColumns: GRID_COLUMNS[gridSize] }}>
-        {filteredPhotos.map(photo => {
-          const isSelected = selectMode && (selectedIds?.has(photo.id) ?? false)
-          const privacyLevel = getPrivacyLevel(photo)
-          return (
-            <div
+      {viewMode === 'list' ? (
+        <div style={styles.listContainer}>
+          {filteredPhotos.map(photo => (
+            <PhotoListRow
               key={photo.id}
-              style={{
-                ...styles.tile,
-                ...(isSelected ? { outline: '3px solid var(--ff-pink)', outlineOffset: '-3px', zIndex: 1 } : {}),
-                ...(selectMode && !isSelected ? { opacity: 0.75 } : {})
-              }}
-              onMouseEnter={() => setHoveredId(photo.id)}
-              onMouseLeave={() => setHoveredId(null)}
+              photo={photo}
+              isDownloaded={!!downloadRecords[photo.id]}
+              isSelected={selectMode ? (selectedIds?.has(photo.id) ?? false) : undefined}
+              selectMode={selectMode}
               onClick={(e) => selectMode ? onToggleSelect?.(photo, e.shiftKey) : onPhotoSelect(photo)}
-            >
-              {photo.thumbnailUrl ? (
-                <img src={photo.thumbnailUrl} alt={photo.title} style={styles.thumb} loading="lazy" />
-              ) : (
-                <div style={styles.thumbPlaceholder} />
-              )}
-              {photo.media === 'video' && (
-                <div style={styles.videoOverlay}>
-                  <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
-                    <circle cx="15" cy="15" r="15" fill="rgba(0,0,0,0.52)"/>
-                    <polygon points="12,9 23,15 12,21" fill="white"/>
-                  </svg>
-                </div>
-              )}
-              {privacyLevel !== 'public' && (
-                <div style={styles.privacyBadge}>
-                  <PrivacyIcon level={privacyLevel} />
-                </div>
-              )}
-              {!selectMode && hoveredId === photo.id && (
-                <div style={styles.overlay}>
-                  <span style={styles.overlayTitle}>{photo.title}</span>
-                </div>
-              )}
-              {selectMode && (
-                <div style={{
-                  ...styles.selectBadge,
-                  backgroundColor: isSelected ? 'var(--ff-pink)' : 'rgba(255,255,255,0.75)',
-                  border: isSelected ? '2px solid var(--ff-pink)' : '2px solid rgba(255,255,255,0.9)'
-                }}>
-                  {isSelected && <span style={styles.selectCheck}>✓</span>}
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
+            />
+          ))}
+        </div>
+      ) : (
+        <div style={{ ...styles.grid, gridTemplateColumns: GRID_COLUMNS[gridSize] }}>
+          {filteredPhotos.map(photo => {
+            const isSelected = selectMode && (selectedIds?.has(photo.id) ?? false)
+            const privacyLevel = getPrivacyLevel(photo)
+            return (
+              <div
+                key={photo.id}
+                style={{
+                  ...styles.tile,
+                  ...(isSelected ? { outline: '3px solid var(--ff-pink)', outlineOffset: '-3px', zIndex: 1 } : {}),
+                  ...(selectMode && !isSelected ? { opacity: 0.75 } : {})
+                }}
+                onMouseEnter={() => setHoveredId(photo.id)}
+                onMouseLeave={() => setHoveredId(null)}
+                onClick={(e) => selectMode ? onToggleSelect?.(photo, e.shiftKey) : onPhotoSelect(photo)}
+              >
+                {photo.thumbnailUrl ? (
+                  <img src={photo.thumbnailUrl} alt={photo.title} style={styles.thumb} loading="lazy" />
+                ) : (
+                  <div style={styles.thumbPlaceholder} />
+                )}
+                {photo.media === 'video' && (
+                  <div style={styles.videoOverlay}>
+                    <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
+                      <circle cx="15" cy="15" r="15" fill="rgba(0,0,0,0.52)"/>
+                      <polygon points="12,9 23,15 12,21" fill="white"/>
+                    </svg>
+                  </div>
+                )}
+                {privacyLevel !== 'public' && (
+                  <div style={styles.privacyBadge}>
+                    <PrivacyIcon level={privacyLevel} />
+                  </div>
+                )}
+                {!selectMode && hoveredId === photo.id && (
+                  <div style={styles.overlay}>
+                    <span style={styles.overlayTitle}>{photo.title}</span>
+                  </div>
+                )}
+                {selectMode && (
+                  <div style={{
+                    ...styles.selectBadge,
+                    backgroundColor: isSelected ? 'var(--ff-pink)' : 'rgba(255,255,255,0.75)',
+                    border: isSelected ? '2px solid var(--ff-pink)' : '2px solid rgba(255,255,255,0.9)'
+                  }}>
+                    {isSelected && <span style={styles.selectCheck}>✓</span>}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
 
       {page < pages && (
         <div style={styles.loadMoreRow}>

@@ -66,6 +66,7 @@ declare global {
       startDiscoverGroupBatch: (groupId: string, groupName: string, displayTitle: string, track?: boolean, smartMode?: 'updated' | 'never-downloaded') => Promise<void>
       startDiscoverSelectedBatch: (photos: { id: string; title: string }[], displayTitle: string, folderParts: string[], track?: boolean) => Promise<void>
       retryDiscoverSelectedBatch: (photos: { id: string; title: string }[], albumTitle: string, targetFolder: string) => Promise<void>
+      getDiscoverRecordsBatch: (photoIds: string[]) => Promise<Record<string, DiscoverDownloadRecord>>
       searchDiscoverRecords: (query: PhotoRecordQuery) => Promise<DiscoverDownloadRecord[]>
       deleteDiscoverRecord: (photoId: string) => Promise<void>
       deleteDiscoverRecords: (photoIds: string[]) => Promise<void>

@@ -10,7 +10,8 @@ const changelog: Release[] = [
     version: '2.4',
     date: 'November 2026',
     highlights: [
-      'Choose a photo size in the detail view before downloading — Original, Extra Large, Large, Medium, Small, or Square, with pixel dimensions shown for each',
+      'Filter any photo grid by download status — cycle through All, Not Downloaded, and Downloaded to focus on what you still need',
+      'List view across every photo grid — switch between grid and list with the density toggle; list view shows a download indicator (✓) so you can see at a glance what\'s been saved',
       'Strip parentheses or square brackets from photo titles in File Naming — useful when titles like "NYC Highline (2024)" clutter filenames',
     ]
   },

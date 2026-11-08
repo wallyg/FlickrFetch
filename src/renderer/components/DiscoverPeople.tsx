@@ -3,7 +3,7 @@ import type { FlickrPhoto, FlickrAlbum, FlickrCollection, DiscoverUser, Discover
 import PhotoDetail from './PhotoDetail'
 import { AttributionNotice, DiscoverTile, DiscoverSelectBar } from './DiscoverExplore'
 import SmartDownloadButton from './SmartDownloadButton'
-import { GridIcon, ListIcon, GRID_COLUMNS, sharedStyles as ss, type MediaFilter, type GridSize, type AlbumViewMode, type DateMode, getPresetDates, formatDateChip, Chip, loadAlbumViewMode, saveAlbumViewMode } from './PhotoGridShared'
+import { GridIcon, ListIcon, GRID_COLUMNS, sharedStyles as ss, type MediaFilter, type GridSize, type AlbumViewMode, type PhotoViewMode, type DownloadFilter, type DateMode, getPresetDates, formatDateChip, Chip, PhotoListRow, loadAlbumViewMode, saveAlbumViewMode, loadPhotoViewMode, savePhotoViewMode, DOWNLOAD_FILTER_NEXT, DOWNLOAD_FILTER_LABEL } from './PhotoGridShared'
 
 const ALBUM_COLUMNS: Record<GridSize, string> = {
   small: 'repeat(auto-fill, minmax(130px, 1fr))',
@@ -68,7 +68,9 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
   const [albumDownloading, setAlbumDownloading] = useState(false)
 
   // Toolbar state (user photos view)
-  const [gridSize, setGridSize] = useState<GridSize>('medium')
+  const [userPhotosViewMode, setUserPhotosViewMode] = useState<PhotoViewMode>(loadPhotoViewMode)
+  const [userDownloadFilter, setUserDownloadFilter] = useState<DownloadFilter>('all')
+  const [userDownloadRecords, setUserDownloadRecords] = useState<Record<string, true>>({})
   const [sort, setSort] = useState('date-posted-desc')
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>('all')
   const [searchOperator, setSearchOperator] = useState<string>('contains')
@@ -86,7 +88,9 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
   const [albumsViewMode, setAlbumsViewMode] = useState<AlbumViewMode>(loadAlbumViewMode)
 
   // Toolbar state (album photos view)
-  const [albumPhotosGridSize, setAlbumPhotosGridSize] = useState<GridSize>('medium')
+  const [albumPhotosViewMode, setAlbumPhotosViewMode] = useState<AlbumViewMode>(loadAlbumViewMode)
+  const [albumPhotosDownloadFilter, setAlbumPhotosDownloadFilter] = useState<DownloadFilter>('all')
+  const [albumPhotosDownloadRecords, setAlbumPhotosDownloadRecords] = useState<Record<string, true>>({})
   const [albumPhotosMediaFilter, setAlbumPhotosMediaFilter] = useState<MediaFilter>('all')
   const [albumPhotosSearchInput, setAlbumPhotosSearchInput] = useState('')
   const [albumPhotosSearchOperator, setAlbumPhotosSearchOperator] = useState('contains')
@@ -98,6 +102,9 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
   const [albumPhotosActiveDateMin, setAlbumPhotosActiveDateMin] = useState('')
   const [albumPhotosActiveDateMax, setAlbumPhotosActiveDateMax] = useState('')
   const [albumPhotosActiveDateField, setAlbumPhotosActiveDateField] = useState<DateRangeField>('taken')
+
+  const userPhotosGridSize: GridSize = userPhotosViewMode === 'list' ? 'medium' : userPhotosViewMode
+  const albumPhotosGridSize: GridSize = albumPhotosViewMode === 'list' ? 'medium' : albumPhotosViewMode
 
   const loadedContactsRef = useRef(false)
 
@@ -160,6 +167,8 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
     // Reset toolbar state for new user
     setSort('date-posted-desc')
     setMediaFilter('all')
+    setUserDownloadFilter('all')
+    setUserDownloadRecords({})
     setSearchOperator('contains')
     setPhotoSearchInput('')
     setTagInput('')
@@ -266,6 +275,8 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
     setAlbumSelectMode(false)
     setAlbumSelectedIds(new Set())
     setAlbumPhotosMediaFilter('all')
+    setAlbumPhotosDownloadFilter('all')
+    setAlbumPhotosDownloadRecords({})
     setAlbumPhotosSearchInput('')
     setAlbumPhotosSearchOperator('contains')
     setAlbumPhotosSort('default')
@@ -393,8 +404,11 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
     if (searchOperator === 'photo-id' && photoSearchInput.trim()) {
       result = result.filter(p => p.id === photoSearchInput.trim())
     }
+    if (userDownloadFilter !== 'all') {
+      result = result.filter(p => userDownloadFilter === 'downloaded' ? !!userDownloadRecords[p.id] : !userDownloadRecords[p.id])
+    }
     return result
-  }, [userPhotos, mediaFilter, searchOperator, photoSearchInput])
+  }, [userPhotos, mediaFilter, searchOperator, photoSearchInput, userDownloadFilter, userDownloadRecords])
 
   const activeFilterCount = useMemo(() => {
     let count = 0
@@ -432,12 +446,37 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
     }
     if (albumPhotosSort === 'date-taken-asc') result = [...result].sort((a, b) => (a.dateTaken ?? '').localeCompare(b.dateTaken ?? ''))
     if (albumPhotosSort === 'date-taken-desc') result = [...result].sort((a, b) => (b.dateTaken ?? '').localeCompare(a.dateTaken ?? ''))
+    if (albumPhotosDownloadFilter !== 'all') {
+      result = result.filter(p => albumPhotosDownloadFilter === 'downloaded' ? !!albumPhotosDownloadRecords[p.id] : !albumPhotosDownloadRecords[p.id])
+    }
     return result
-  }, [albumPhotos, albumPhotosMediaFilter, albumPhotosSearchInput, albumPhotosSearchOperator, albumPhotosSort, albumPhotosActiveDateMin, albumPhotosActiveDateMax, albumPhotosActiveDateField])
+  }, [albumPhotos, albumPhotosMediaFilter, albumPhotosSearchInput, albumPhotosSearchOperator, albumPhotosSort, albumPhotosActiveDateMin, albumPhotosActiveDateMax, albumPhotosActiveDateField, albumPhotosDownloadFilter, albumPhotosDownloadRecords])
 
   const albumPhotosActiveFilterCount = useMemo(() => {
     return albumPhotosActiveDateMin || albumPhotosActiveDateMax ? 1 : 0
   }, [albumPhotosActiveDateMin, albumPhotosActiveDateMax])
+
+  useEffect(() => {
+    if (userPhotos.length === 0) return
+    window.flickrAPI.getDiscoverRecordsBatch(userPhotos.map(p => p.id))
+      .then(records => {
+        const map: Record<string, true> = {}
+        Object.keys(records).forEach(id => { map[id] = true })
+        setUserDownloadRecords(map)
+      })
+      .catch(() => {})
+  }, [userPhotos])
+
+  useEffect(() => {
+    if (albumPhotos.length === 0) return
+    window.flickrAPI.getDiscoverRecordsBatch(albumPhotos.map(p => p.id))
+      .then(records => {
+        const map: Record<string, true> = {}
+        Object.keys(records).forEach(id => { map[id] = true })
+        setAlbumPhotosDownloadRecords(map)
+      })
+      .catch(() => {})
+  }, [albumPhotos])
 
   // ── Photo detail view
   if (detailIndex !== null) {
@@ -553,9 +592,18 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
               Filters{albumPhotosActiveFilterCount > 0 && <span style={ss.drawerBadge}>{albumPhotosActiveFilterCount}</span>}
             </button>
             <div style={{ flex: 1 }} />
+            <button
+              style={{ ...ss.downloadFilterBtn, ...(albumPhotosDownloadFilter !== 'all' ? ss.downloadFilterBtnActive : {}) }}
+              onClick={() => setAlbumPhotosDownloadFilter(f => DOWNLOAD_FILTER_NEXT[f])}
+            >
+              {DOWNLOAD_FILTER_LABEL[albumPhotosDownloadFilter]}
+            </button>
             <div style={ss.segGroupDensity}>
+              <button style={{ ...ss.densityBtn, ...(albumPhotosViewMode === 'list' ? ss.densityBtnActive : {}) }} onClick={() => { const m: AlbumViewMode = 'list'; setAlbumPhotosViewMode(m); saveAlbumViewMode(m) }}>
+                <ListIcon />
+              </button>
               {(['small', 'medium', 'large'] as GridSize[]).map(g => (
-                <button key={g} style={{ ...ss.densityBtn, ...(albumPhotosGridSize === g ? ss.densityBtnActive : {}) }} onClick={() => setAlbumPhotosGridSize(g)}>
+                <button key={g} style={{ ...ss.densityBtn, ...(albumPhotosViewMode === g ? ss.densityBtnActive : {}) }} onClick={() => { setAlbumPhotosViewMode(g); saveAlbumViewMode(g) }}>
                   <GridIcon size={g} />
                 </button>
               ))}
@@ -603,18 +651,33 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
         {albumPhotosError && <div style={s.errorState}>{albumPhotosError}</div>}
         {filteredAlbumPhotos.length > 0 && (
           <>
-            <div style={{ ...s.grid, gridTemplateColumns: GRID_COLUMNS[albumPhotosGridSize] }}>
-              {filteredAlbumPhotos.map((photo, idx) => (
-                <DiscoverTile
-                  key={photo.id}
-                  photo={photo}
-                  onClick={() => !albumSelectMode && setDetailIndex(idx)}
-                  selectMode={albumSelectMode}
-                  selected={albumSelectedIds.has(photo.id)}
-                  onSelect={() => toggleAlbumSelect(photo.id)}
-                />
-              ))}
-            </div>
+            {albumPhotosViewMode === 'list' ? (
+              <div style={ss.listContainer}>
+                {filteredAlbumPhotos.map((photo, idx) => (
+                  <PhotoListRow
+                    key={photo.id}
+                    photo={photo}
+                    isDownloaded={!!albumPhotosDownloadRecords[photo.id]}
+                    isSelected={albumSelectMode ? albumSelectedIds.has(photo.id) : undefined}
+                    selectMode={albumSelectMode}
+                    onClick={() => albumSelectMode ? toggleAlbumSelect(photo.id) : setDetailIndex(idx)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div style={{ ...s.grid, gridTemplateColumns: GRID_COLUMNS[albumPhotosGridSize] }}>
+                {filteredAlbumPhotos.map((photo, idx) => (
+                  <DiscoverTile
+                    key={photo.id}
+                    photo={photo}
+                    onClick={() => !albumSelectMode && setDetailIndex(idx)}
+                    selectMode={albumSelectMode}
+                    selected={albumSelectedIds.has(photo.id)}
+                    onSelect={() => toggleAlbumSelect(photo.id)}
+                  />
+                ))}
+              </div>
+            )}
             {albumPhotosPage < albumPhotosPages && (
               <div style={s.loadMoreRow}>
                 <button style={s.loadMoreBtn} disabled={albumPhotosLoadingMore} onClick={loadMoreAlbumPhotos}>
@@ -758,13 +821,24 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
                   {activeFilterCount > 0 && <span style={ss.drawerBadge}>{activeFilterCount}</span>}
                 </button>
 
-                {/* Grid density */}
+                {/* Download filter */}
+                <button
+                  style={{ ...ss.downloadFilterBtn, ...(userDownloadFilter !== 'all' ? ss.downloadFilterBtnActive : {}) }}
+                  onClick={() => setUserDownloadFilter(f => DOWNLOAD_FILTER_NEXT[f])}
+                >
+                  {DOWNLOAD_FILTER_LABEL[userDownloadFilter]}
+                </button>
+
+                {/* Grid density + list toggle */}
                 <div style={ss.segGroupDensity}>
+                  <button style={{ ...ss.densityBtn, ...(userPhotosViewMode === 'list' ? ss.densityBtnActive : {}) }} onClick={() => { const m: PhotoViewMode = 'list'; setUserPhotosViewMode(m); savePhotoViewMode(m) }}>
+                    <ListIcon />
+                  </button>
                   {(['small', 'medium', 'large'] as GridSize[]).map(g => (
                     <button
                       key={g}
-                      style={{ ...ss.densityBtn, ...(gridSize === g ? ss.densityBtnActive : {}) }}
-                      onClick={() => setGridSize(g)}
+                      style={{ ...ss.densityBtn, ...(userPhotosViewMode === g ? ss.densityBtnActive : {}) }}
+                      onClick={() => { setUserPhotosViewMode(g); savePhotoViewMode(g) }}
                     >
                       <GridIcon size={g} />
                     </button>
@@ -936,18 +1010,33 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
             )}
             {filteredPhotos.length > 0 && (
               <>
-                <div style={{ ...s.grid, gridTemplateColumns: GRID_COLUMNS[gridSize] }}>
-                  {filteredPhotos.map((photo, idx) => (
-                    <DiscoverTile
-                      key={photo.id}
-                      photo={photo}
-                      onClick={() => !userSelectMode && setDetailIndex(idx)}
-                      selectMode={userSelectMode}
-                      selected={userSelectedIds.has(photo.id)}
-                      onSelect={() => toggleUserSelect(photo.id)}
-                    />
-                  ))}
-                </div>
+                {userPhotosViewMode === 'list' ? (
+                  <div style={ss.listContainer}>
+                    {filteredPhotos.map((photo, idx) => (
+                      <PhotoListRow
+                        key={photo.id}
+                        photo={photo}
+                        isDownloaded={!!userDownloadRecords[photo.id]}
+                        isSelected={userSelectMode ? userSelectedIds.has(photo.id) : undefined}
+                        selectMode={userSelectMode}
+                        onClick={() => userSelectMode ? toggleUserSelect(photo.id) : setDetailIndex(idx)}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ ...s.grid, gridTemplateColumns: GRID_COLUMNS[userPhotosGridSize] }}>
+                    {filteredPhotos.map((photo, idx) => (
+                      <DiscoverTile
+                        key={photo.id}
+                        photo={photo}
+                        onClick={() => !userSelectMode && setDetailIndex(idx)}
+                        selectMode={userSelectMode}
+                        selected={userSelectedIds.has(photo.id)}
+                        onSelect={() => toggleUserSelect(photo.id)}
+                      />
+                    ))}
+                  </div>
+                )}
                 {photosPage < photosPages && searchOperator !== 'photo-id' && (
                   <div style={s.loadMoreRow}>
                     <button style={s.loadMoreBtn} disabled={photosLoadingMore} onClick={loadMorePhotos}>

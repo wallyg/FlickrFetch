@@ -1203,6 +1203,10 @@ ipcMain.handle('db:searchPhotoRecords', (_event, query: { title?: string; photoI
 ipcMain.handle('db:deletePhotoRecord', (_event, photoId: string) => deletePhotoRecord(photoId))
 ipcMain.handle('db:deletePhotoRecords', (_event, photoIds: string[]) => deletePhotoRecords(photoIds))
 ipcMain.handle('db:clearPhotoRecords', (_event, beforeMs?: number, afterMs?: number) => clearPhotoRecords(beforeMs, afterMs))
+ipcMain.handle('db:getDiscoverRecordsBatch', (_event, photoIds: string[]) => {
+  const map = getDiscoverRecordsBatch(photoIds)
+  return Object.fromEntries(map)
+})
 ipcMain.handle('db:searchDiscoverRecords', (_event, query: { title?: string; photoId?: string; dateMin?: number; dateMax?: number }) => searchDiscoverRecords(query))
 ipcMain.handle('db:deleteDiscoverRecord', (_event, photoId: string) => deleteDiscoverRecord(photoId))
 ipcMain.handle('db:deleteDiscoverRecords', (_event, photoIds: string[]) => deleteDiscoverRecords(photoIds))

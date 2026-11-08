@@ -150,6 +150,7 @@ contextBridge.exposeInMainWorld('flickrAPI', {
     ipcRenderer.invoke('batch:startDiscoverSelected', photos, displayTitle, folderParts, track),
   retryDiscoverSelectedBatch: (photos: { id: string; title: string }[], albumTitle: string, targetFolder: string): Promise<void> =>
     ipcRenderer.invoke('batch:retryDiscoverSelected', photos, albumTitle, targetFolder),
+  getDiscoverRecordsBatch: (photoIds: string[]): Promise<Record<string, DiscoverDownloadRecord>> => ipcRenderer.invoke('db:getDiscoverRecordsBatch', photoIds),
   searchDiscoverRecords: (query: PhotoRecordQuery): Promise<DiscoverDownloadRecord[]> => ipcRenderer.invoke('db:searchDiscoverRecords', query),
   deleteDiscoverRecord: (photoId: string): Promise<void> => ipcRenderer.invoke('db:deleteDiscoverRecord', photoId),
   deleteDiscoverRecords: (photoIds: string[]): Promise<void> => ipcRenderer.invoke('db:deleteDiscoverRecords', photoIds),
