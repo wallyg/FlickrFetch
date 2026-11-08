@@ -239,11 +239,11 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: '13px', color: '#555', fontWeight: '500', flexShrink: 0,
   },
   segGroup: {
-    display: 'flex', borderRadius: '7px', border: '1px solid #ddd', overflow: 'hidden',
+    display: 'flex', borderRadius: '7px', border: '1px solid #d8d4ce', overflow: 'hidden',
   },
   segBtn: {
-    padding: '5px 12px', fontSize: '12px', fontWeight: '500',
-    background: '#fff', border: 'none', borderRight: '1px solid #ddd',
+    padding: '5px 12px', fontSize: '13px', fontWeight: '500',
+    background: '#fff', border: 'none', borderRight: '1px solid #d8d4ce',
     cursor: 'pointer', color: '#555',
   },
   segBtnActive: {
@@ -256,7 +256,7 @@ const s: Record<string, React.CSSProperties> = {
     padding: '12px 20px 0',
   },
   trackLabel: {
-    display: 'flex', alignItems: 'center', fontSize: 13, color: '#374151',
+    display: 'flex', alignItems: 'center', fontSize: 13, color: '#555',
     cursor: 'pointer', fontWeight: '500',
   },
   footer: {
