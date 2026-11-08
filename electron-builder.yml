@@ -41,3 +41,8 @@ dmg:
 
 pkg:
   scripts: resources/pkg-scripts
+
+publish:
+  provider: github
+  owner: wallyg
+  repo: FlickrFetch

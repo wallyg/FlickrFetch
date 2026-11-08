@@ -68,14 +68,14 @@ contextBridge.exposeInMainWorld('flickrAPI', {
   pickFolder: (): Promise<string | null> => ipcRenderer.invoke('shell:pickFolder'),
 
   // Batch downloads
-  startBatch: (albumId: string, albumTitle: string, photoCount?: number, videoCount?: number, force?: boolean, mediaType?: 'photo' | 'video', privacyFilter?: string, track?: boolean, smartMode?: 'updated' | 'never-downloaded'): Promise<{ alreadyQueued: boolean }> =>
-    ipcRenderer.invoke('batch:startAlbum', albumId, albumTitle, photoCount, videoCount, force, mediaType, privacyFilter, track, smartMode),
+  startBatch: (albumId: string, albumTitle: string, photoCount?: number, videoCount?: number, force?: boolean, mediaType?: 'photo' | 'video', privacyFilter?: string, track?: boolean, smartMode?: 'updated' | 'never-downloaded', zipMode?: boolean): Promise<{ alreadyQueued: boolean }> =>
+    ipcRenderer.invoke('batch:startAlbum', albumId, albumTitle, photoCount, videoCount, force, mediaType, privacyFilter, track, smartMode, zipMode),
   confirm: (message: string, detail?: string): Promise<boolean> =>
     ipcRenderer.invoke('shell:confirm', message, detail),
-  startSelectedBatch: (photos: { id: string; title: string }[], displayTitle: string, track?: boolean): Promise<void> =>
-    ipcRenderer.invoke('batch:startSelected', photos, displayTitle, track),
-  startPhotostreamBatch: (albumTitle: string, track?: boolean, smartMode?: 'updated' | 'never-downloaded', privacyFilter?: string, sort?: string): Promise<void> =>
-    ipcRenderer.invoke('batch:startPhotostream', albumTitle, track, smartMode, privacyFilter, sort),
+  startSelectedBatch: (photos: { id: string; title: string }[], displayTitle: string, track?: boolean, zipMode?: boolean): Promise<void> =>
+    ipcRenderer.invoke('batch:startSelected', photos, displayTitle, track, zipMode),
+  startPhotostreamBatch: (albumTitle: string, track?: boolean, smartMode?: 'updated' | 'never-downloaded', privacyFilter?: string, sort?: string, zipMode?: boolean): Promise<void> =>
+    ipcRenderer.invoke('batch:startPhotostream', albumTitle, track, smartMode, privacyFilter, sort, zipMode),
 
   // Download history DB
   getBatchLog: (): Promise<BatchLogEntry[]> => ipcRenderer.invoke('db:getBatchLog'),
@@ -119,6 +119,12 @@ contextBridge.exposeInMainWorld('flickrAPI', {
     const handler = () => cb()
     ipcRenderer.on('app:signOut', handler)
     return () => ipcRenderer.removeListener('app:signOut', handler)
+  },
+
+  onUpdateAvailable: (cb: (info: { version: string }) => void): (() => void) => {
+    const handler = (_evt: IpcRendererEvent, info: { version: string }) => cb(info)
+    ipcRenderer.on('update:available', handler)
+    return () => ipcRenderer.removeListener('update:available', handler)
   },
 
   // Discover

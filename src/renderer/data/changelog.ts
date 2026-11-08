@@ -10,8 +10,10 @@ const changelog: Release[] = [
     version: '2.4',
     date: 'November 2026',
     highlights: [
-      'Filter any photo grid by download status — cycle through All, Not Downloaded, and Downloaded to focus on what you still need',
-      'List view across every photo grid — switch between grid and list with the density toggle; list view shows a download indicator (✓) so you can see at a glance what\'s been saved',
+      'Export any album, collection, or selection as a ZIP archive — choose "Individual files" or "ZIP archive" before starting a batch download; a manifest.json is included automatically',
+      'Update notifications — FlickrFetch now checks for new releases at launch and shows a badge on the Settings icon plus a banner inside Settings when an update is available',
+      'Filter any photo grid by download status — use the Downloaded dropdown in More Filters to show All, Not Downloaded, or Downloaded photos',
+      'List view across every photo grid — switch between grid and list with the density toggle; list view shows a download arrow on photos you\'ve already saved',
       'Strip parentheses or square brackets from photo titles in File Naming — useful when titles like "NYC Highline (2024)" clutter filenames',
     ]
   },

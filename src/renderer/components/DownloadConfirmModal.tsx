@@ -28,7 +28,7 @@ export interface PendingDownload {
   photoCount: number
   videoCount: number
   note?: string
-  onConfirm: (track: boolean) => void
+  onConfirm: (track: boolean, exportFormat: 'files' | 'zip') => void
 }
 
 interface DownloadConfirmModalProps {
@@ -41,13 +41,14 @@ interface DownloadConfirmModalProps {
 export default function DownloadConfirmModal({ pending, settingsKey, onCancel, onOpenSettings }: DownloadConfirmModalProps): React.JSX.Element {
   const [settings, setSettings] = useState<AppSettings | null>(null)
   const [track, setTrack] = useState(true)
+  const [exportFormat, setExportFormat] = useState<'files' | 'zip'>('files')
 
   useEffect(() => {
     window.flickrAPI.getSettings().then(setSettings).catch(() => {})
   }, [settingsKey])
 
   const handleConfirm = (): void => {
-    pending.onConfirm(track)
+    pending.onConfirm(track, exportFormat)
     onCancel()
   }
 
@@ -122,6 +123,18 @@ export default function DownloadConfirmModal({ pending, settingsKey, onCancel, o
           </div>
         </div>
 
+        <div style={s.formatRow}>
+          <span style={s.formatLabel}>Export as</span>
+          <div style={s.segGroup}>
+            <button style={{ ...s.segBtn, ...(exportFormat === 'files' ? s.segBtnActive : {}) }} onClick={() => setExportFormat('files')}>
+              Individual files
+            </button>
+            <button style={{ ...s.segBtn, ...s.segBtnLast, ...(exportFormat === 'zip' ? s.segBtnActive : {}) }} onClick={() => setExportFormat('zip')}>
+              ZIP archive
+            </button>
+          </div>
+        </div>
+
         <div style={s.trackRow}>
           <label style={s.trackLabel}>
             <input
@@ -138,7 +151,9 @@ export default function DownloadConfirmModal({ pending, settingsKey, onCancel, o
           <button style={s.settingsLink} onClick={onOpenSettings}>Change Settings</button>
           <div style={s.footerBtns}>
             <button style={s.cancelBtn} onClick={onCancel}>Cancel</button>
-            <button style={s.confirmBtn} onClick={handleConfirm}>Start Download</button>
+            <button style={s.confirmBtn} onClick={handleConfirm}>
+              {exportFormat === 'zip' ? 'Download as ZIP' : 'Start Download'}
+            </button>
           </div>
         </div>
 
@@ -216,8 +231,29 @@ const s: Record<string, React.CSSProperties> = {
   offFields: {
     margin: '0', fontSize: '11px', color: '#bbb', lineHeight: '1.4',
   },
-  trackRow: {
+  formatRow: {
+    display: 'flex', alignItems: 'center', gap: '12px',
     padding: '14px 20px 0',
+  },
+  formatLabel: {
+    fontSize: '13px', color: '#555', fontWeight: '500', flexShrink: 0,
+  },
+  segGroup: {
+    display: 'flex', borderRadius: '7px', border: '1px solid #ddd', overflow: 'hidden',
+  },
+  segBtn: {
+    padding: '5px 12px', fontSize: '12px', fontWeight: '500',
+    background: '#fff', border: 'none', borderRight: '1px solid #ddd',
+    cursor: 'pointer', color: '#555',
+  },
+  segBtnActive: {
+    background: '#0063DC', color: '#fff',
+  },
+  segBtnLast: {
+    borderRight: 'none',
+  },
+  trackRow: {
+    padding: '12px 20px 0',
   },
   trackLabel: {
     display: 'flex', alignItems: 'center', fontSize: 13, color: '#374151',

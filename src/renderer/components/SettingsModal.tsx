@@ -74,7 +74,7 @@ function PosToggle({ value, onChange }: { value: PartPosition; onChange: (v: Par
   )
 }
 
-export default function SettingsModal({ onClose }: { onClose: () => void }): React.JSX.Element {
+export default function SettingsModal({ onClose, updateVersion }: { onClose: () => void; updateVersion?: string }): React.JSX.Element {
   const [activeTab, setActiveTab] = useState<Tab>('general')
 
   // General tab
@@ -272,6 +272,15 @@ export default function SettingsModal({ onClose }: { onClose: () => void }): Rea
           <h2 style={s.title}>Settings</h2>
           <button style={s.closeBtn} onClick={onClose}>✕</button>
         </div>
+
+        {updateVersion && (
+          <div style={s.updateBanner}>
+            <span style={s.updateText}>⬆ FlickrFetch {updateVersion} is available</span>
+            <button style={s.updateBtn} onClick={() => window.flickrAPI.openExternal('https://github.com/wallyg/FlickrFetch/releases/latest')}>
+              Download
+            </button>
+          </div>
+        )}
 
         {/* Tab bar */}
         <div style={s.tabBar}>
@@ -730,6 +739,9 @@ const s: Record<string, React.CSSProperties> = {
   header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px 0', flexShrink: 0 },
   title: { fontSize: '18px', fontWeight: '600', color: '#111', margin: 0 },
   closeBtn: { background: 'none', border: 'none', fontSize: '16px', color: '#888', cursor: 'pointer', padding: '4px' },
+  updateBanner: { display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 24px', backgroundColor: '#edf4ff', borderBottom: '1px solid #cce0ff', flexShrink: 0 },
+  updateText: { flex: 1, fontSize: '13px', color: '#0063DC', fontWeight: '500' },
+  updateBtn: { background: '#0063DC', color: '#fff', border: 'none', borderRadius: '6px', padding: '5px 12px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', flexShrink: 0 },
   tabBar: { display: 'flex', padding: '0 24px', marginTop: '16px', borderBottom: '1px solid #e8e4de', flexShrink: 0 },
   tabBtn: { background: 'none', border: 'none', borderBottom: '2px solid transparent', padding: '8px 14px', fontSize: '13px', fontWeight: '500', color: '#888', cursor: 'pointer', marginBottom: '-1px', transition: 'color 0.15s' },
   tabBtnActive: { color: 'var(--ff-pink)', borderBottom: '2px solid var(--ff-pink)' },

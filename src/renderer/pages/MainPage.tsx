@@ -15,7 +15,7 @@ import SmartDownloadButton from '../components/SmartDownloadButton'
 import DiscoverPage from './DiscoverPage'
 
 
-function IconBtn({ label, onClick, children }: { label: string; onClick: () => void; children: React.ReactNode }) {
+function IconBtn({ label, onClick, children, badge }: { label: string; onClick: () => void; children: React.ReactNode; badge?: boolean }) {
   const [hovered, setHovered] = React.useState(false)
   return (
     <div style={{ position: 'relative' }}>
@@ -27,6 +27,7 @@ function IconBtn({ label, onClick, children }: { label: string; onClick: () => v
       >
         {children}
       </button>
+      {badge && <span style={styles.updateBadge} />}
       {hovered && (
         <div style={styles.iconTooltip}>{label}</div>
       )}
@@ -58,6 +59,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
   const waitingToAdvanceRef = useRef(false)
   const [showSettings, setShowSettings] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
+  const [updateVersion, setUpdateVersion] = useState<string | null>(null)
   const [albumsVisited, setAlbumsVisited] = useState(false)
   const [collectionsVisited, setCollectionsVisited] = useState(false)
   const [collectionPath, setCollectionPath] = useState<FlickrCollection[]>([])
@@ -127,6 +129,11 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
     const unsubscribe = window.flickrAPI.onMenuSignOut(() => onSignOut())
     return unsubscribe
   }, [onSignOut])
+
+  useEffect(() => {
+    const unsubscribe = window.flickrAPI.onUpdateAvailable(({ version }) => setUpdateVersion(version))
+    return unsubscribe
+  }, [])
 
   const exitAlbumSelect = useCallback((): void => {
     setAlbumSelectMode(false); setAlbumSelectedIds(new Set()); setAlbumLastClickedId(null)
@@ -212,8 +219,8 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
       title: `↓ Download Selected from "${albumTitle}"`,
       photoCount,
       videoCount,
-      onConfirm: (track) => {
-        window.flickrAPI.startSelectedBatch(photos, `${albumTitle} (${photos.length} selected)`, track)
+      onConfirm: (track, exportFormat) => {
+        window.flickrAPI.startSelectedBatch(photos, `${albumTitle} (${photos.length} selected)`, track, exportFormat === 'zip')
         exitAlbumSelect()
       },
     })
@@ -229,8 +236,8 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
       title: `↓ Download Selected from Photostream`,
       photoCount,
       videoCount,
-      onConfirm: (track) => {
-        window.flickrAPI.startSelectedBatch(photos, `Photostream (${photos.length} selected)`, track)
+      onConfirm: (track, exportFormat) => {
+        window.flickrAPI.startSelectedBatch(photos, `Photostream (${photos.length} selected)`, track, exportFormat === 'zip')
         exitPhotostreamSelect()
       },
     })
@@ -401,7 +408,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
               <polyline points="12 7 12 12 15.5 14" strokeWidth="2"/>
             </svg>
           </IconBtn>
-          <IconBtn label="Settings" onClick={() => setShowSettings(true)}>
+          <IconBtn label="Settings" onClick={() => setShowSettings(true)} badge={!!updateVersion}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <line x1="4" y1="6" x2="20" y2="6"/>
               <line x1="4" y1="12" x2="20" y2="12"/>
@@ -463,8 +470,8 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
                   photoCount,
                   videoCount,
                   note: `${(photoCount + videoCount).toLocaleString()} loaded — batch downloads your full photostream`,
-                  onConfirm: (track) => {
-                    window.flickrAPI.startPhotostreamBatch('Photostream', track, smartMode, undefined, photostreamSort)
+                  onConfirm: (track, exportFormat) => {
+                    window.flickrAPI.startPhotostreamBatch('Photostream', track, smartMode, undefined, photostreamSort, exportFormat === 'zip')
                   },
                 })
               }}
@@ -507,14 +514,15 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
                     title: modeTitle,
                     photoCount,
                     videoCount,
-                    onConfirm: async (track) => {
-                      const result = await window.flickrAPI.startBatch(selectedAlbum.id, selectedAlbum.title, selectedAlbum.photoCount, selectedAlbum.videoCount, false, mt, pf, track, smartMode)
+                    onConfirm: async (track, exportFormat) => {
+                      const zipMode = exportFormat === 'zip'
+                      const result = await window.flickrAPI.startBatch(selectedAlbum.id, selectedAlbum.title, selectedAlbum.photoCount, selectedAlbum.videoCount, false, mt, pf, track, smartMode, zipMode)
                       if (result.alreadyQueued) {
                         const ok = await window.flickrAPI.confirm(
                           `"${selectedAlbum.title}" is already downloading or queued.`,
                           'Do you want to add it to the queue again?'
                         )
-                        if (ok) window.flickrAPI.startBatch(selectedAlbum.id, selectedAlbum.title, selectedAlbum.photoCount, selectedAlbum.videoCount, true, mt, pf, track, smartMode)
+                        if (ok) window.flickrAPI.startBatch(selectedAlbum.id, selectedAlbum.title, selectedAlbum.photoCount, selectedAlbum.videoCount, true, mt, pf, track, smartMode, zipMode)
                       }
                     },
                   })
@@ -677,7 +685,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
         )}
       </main>
 
-      {showSettings && <SettingsModal onClose={() => { setShowSettings(false); setSettingsKey(k => k + 1) }} />}
+      {showSettings && <SettingsModal onClose={() => { setShowSettings(false); setSettingsKey(k => k + 1) }} updateVersion={updateVersion ?? undefined} />}
       {showHistory && <HistoryPanel onClose={() => setShowHistory(false)} />}
       {aboutVersion && <AboutModal version={aboutVersion} onClose={() => setAboutVersion(null)} />}
       {pendingDownload && (
@@ -857,6 +865,13 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  updateBadge: {
+    position: 'absolute' as const,
+    top: '1px', right: '1px',
+    width: '8px', height: '8px', borderRadius: '50%',
+    backgroundColor: '#FF0084', border: '2px solid #fff',
+    pointerEvents: 'none' as const,
   },
   iconTooltip: {
     position: 'absolute' as const,

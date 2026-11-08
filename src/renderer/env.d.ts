@@ -30,9 +30,9 @@ declare global {
       resetSettings: () => Promise<AppSettings>
       resolveVideoUrl: (sourceUrl: string) => Promise<string>
       pickFolder: () => Promise<string | null>
-      startBatch: (albumId: string, albumTitle: string, photoCount?: number, videoCount?: number, force?: boolean, mediaType?: 'photo' | 'video', privacyFilter?: string, track?: boolean, smartMode?: 'updated' | 'never-downloaded') => Promise<{ alreadyQueued: boolean }>
-      startSelectedBatch: (photos: { id: string; title: string }[], displayTitle: string, track?: boolean) => Promise<void>
-      startPhotostreamBatch: (albumTitle: string, track?: boolean, smartMode?: 'updated' | 'never-downloaded', privacyFilter?: string, sort?: string) => Promise<void>
+      startBatch: (albumId: string, albumTitle: string, photoCount?: number, videoCount?: number, force?: boolean, mediaType?: 'photo' | 'video', privacyFilter?: string, track?: boolean, smartMode?: 'updated' | 'never-downloaded', zipMode?: boolean) => Promise<{ alreadyQueued: boolean }>
+      startSelectedBatch: (photos: { id: string; title: string }[], displayTitle: string, track?: boolean, zipMode?: boolean) => Promise<void>
+      startPhotostreamBatch: (albumTitle: string, track?: boolean, smartMode?: 'updated' | 'never-downloaded', privacyFilter?: string, sort?: string, zipMode?: boolean) => Promise<void>
       cancelBatch: () => void
       skipBatch: () => void
       pauseBatch: () => void
@@ -44,6 +44,7 @@ declare global {
       onOpenSettings: (cb: () => void) => () => void
       onOpenHistory: (cb: () => void) => () => void
       onMenuSignOut: (cb: () => void) => () => void
+      onUpdateAvailable: (cb: (info: { version: string }) => void) => () => void
       getBatchLog: () => Promise<BatchLogEntry[]>
       getPhotoRecord: (photoId: string) => Promise<PhotoDownloadRecord | null>
       getPhotoRecordsBatch: (photoIds: string[]) => Promise<Record<string, PhotoDownloadRecord>>
