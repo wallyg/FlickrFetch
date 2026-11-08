@@ -7,6 +7,14 @@ export interface Release {
 
 const changelog: Release[] = [
   {
+    version: '2.4',
+    date: 'November 2026',
+    highlights: [
+      'Choose a photo size in the detail view before downloading — Original, Extra Large, Large, Medium, Small, or Square, with pixel dimensions shown for each',
+      'Strip parentheses or square brackets from photo titles in File Naming — useful when titles like "NYC Highline (2024)" clutter filenames',
+    ]
+  },
+  {
     version: '2.3',
     date: 'November 2026',
     highlights: [

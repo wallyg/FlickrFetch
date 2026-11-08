@@ -85,7 +85,7 @@ export async function downloadPhoto(
   signal?: AbortSignal,
   photoInfo?: PhotoInfo,
   metadataSettings?: MetadataSettings,
-  downloadSize: DownloadSize = 'original'
+  downloadSize: DownloadSize = 'original',
 ): Promise<string | null> {
   const chosen = pickSize(sizes, downloadSize)
   if (!chosen) throw new Error('No downloadable size found')
@@ -153,7 +153,7 @@ export async function downloadToFolder(
   photoInfo?: PhotoInfo,
   conflictBehavior: ConflictBehavior = 'rename',
   downloadSize: DownloadSize = 'original',
-  metadataSettings?: MetadataSettings
+  metadataSettings?: MetadataSettings,
 ): Promise<DownloadOutcome> {
   const chosen = pickSize(sizes, downloadSize)
   if (!chosen) return { status: 'skipped', reason: 'size-unavailable' }

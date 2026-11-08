@@ -109,6 +109,8 @@ export default function SettingsModal({ onClose }: { onClose: () => void }): Rea
   const [customText, setCustomText] = useState('')
   const [caseTransform, setCaseTransform] = useState<CaseTransform>('none')
   const [charSubstitution, setCharSubstitution] = useState(false)
+  const [subStripParens, setSubStripParens] = useState(false)
+  const [subStripBrackets, setSubStripBrackets] = useState(false)
   const [sizeTokenPos, setSizeTokenPos] = useState<PartPosition>('off')
 
   const [showFade, setShowFade] = useState(false)
@@ -151,6 +153,8 @@ export default function SettingsModal({ onClose }: { onClose: () => void }): Rea
     setCustomText(fn.customText.text)
     setCaseTransform(fn.caseTransform ?? 'none')
     setCharSubstitution(fn.charSubstitution ?? false)
+    setSubStripParens(fn.subStripParens ?? false)
+    setSubStripBrackets(fn.subStripBrackets ?? false)
     setSizeTokenPos(fn.sizeToken?.position ?? 'off')
     const m = settings.metadata
     if (m) {
@@ -193,6 +197,7 @@ export default function SettingsModal({ onClose }: { onClose: () => void }): Rea
         customText: { position: customPos, text: customText.trim() },
         caseTransform,
         charSubstitution,
+        subStripParens, subStripBrackets,
         sizeToken: { position: sizeTokenPos }
       }
       const metadata: MetadataSettings = {
@@ -207,18 +212,22 @@ export default function SettingsModal({ onClose }: { onClose: () => void }): Rea
     return () => clearTimeout(timer)
   }, [
     core, sep, datePos, dateFmt, seqPos, customPos, customText,
-    caseTransform, charSubstitution, sizeTokenPos, downloadFolder,
-    showDockProgress, notifyOnComplete, conflictBehavior, downloadSize,
-    openFinderOnComplete, embedTitle, embedDescription, embedTags,
+    caseTransform, charSubstitution, subStripParens, subStripBrackets,
+    sizeTokenPos, downloadFolder, showDockProgress, notifyOnComplete,
+    conflictBehavior, downloadSize, openFinderOnComplete,
+    embedTitle, embedDescription, embedTags,
     embedDateTaken, embedCreator, embedGps, stripGpsFromPrivate,
     embedLicense, embedPhotoUrl, embedPhotoId
   ])
 
-  const previewTitle = 'NYC - Highline'
+  const previewTitle = 'NYC Highline (2024)'
   const previewId = '12345678'
 
   const preview = useMemo(() => {
-    const rawTitle = previewTitle.replace(/[/\\:*?"<>|]/g, '_').trim()
+    let titleStr = previewTitle
+    if (subStripParens)    titleStr = titleStr.replace(/[()]/g, '')
+    if (subStripBrackets)  titleStr = titleStr.replace(/[\[\]]/g, '')
+    const rawTitle = titleStr.replace(/[/\\:*?"<>|]/g, '_').trim()
     const safeTitle = charSubstitution ? rawTitle.replace(/\s+/g, sep) : rawTitle
 
     let coreStr: string
@@ -247,7 +256,7 @@ export default function SettingsModal({ onClose }: { onClose: () => void }): Rea
       : caseTransform === 'uppercase' ? assembled.toUpperCase()
       : assembled
     return final + '.jpg'
-  }, [core, sep, datePos, dateFmt, seqPos, customPos, customText, caseTransform, charSubstitution, sizeTokenPos, downloadSize])
+  }, [core, sep, datePos, dateFmt, seqPos, customPos, customText, caseTransform, charSubstitution, subStripParens, subStripBrackets, sizeTokenPos, downloadSize])
 
   const handlePickFolder = async (): Promise<void> => {
     const folder = await window.flickrAPI.pickFolder()
@@ -552,6 +561,31 @@ export default function SettingsModal({ onClose }: { onClose: () => void }): Rea
                       style={{ ...s.posBtn, borderRight: 'none', ...(charSubstitution ? s.posBtnActive : {}) }}
                       onClick={() => { setCharSubstitution(true) }}
                     >On</button>
+                  </div>
+                </div>
+
+                {/* Char substitution presets */}
+                <div style={{ ...s.optRow, marginTop: '6px', flexDirection: 'column', alignItems: 'stretch', gap: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <span style={s.optName}>Character substitutions</span>
+                    <InfoTip direction="up" text="Parentheses and square brackets are legal in filenames and kept as-is by default. Turn these on to strip them for cleaner filenames." />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '5px' }}>
+                    {([
+                      ['subStripParens',    subStripParens,    setSubStripParens,    'Strip parentheses',   'e.g. Title (2024) → Title 2024'],
+                      ['subStripBrackets',  subStripBrackets,  setSubStripBrackets,  'Strip square brackets', 'e.g. Title [edit] → Title edit'],
+                    ] as [string, boolean, (v: boolean) => void, string, string][]).map(([key, val, setter, label, example]) => (
+                      <div key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', padding: '7px 10px', borderRadius: '6px', background: '#fafaf8', border: '1px solid #eeebe6' }}>
+                        <div>
+                          <div style={{ fontSize: '12px', fontWeight: '500', color: '#333' }}>{label}</div>
+                          <div style={{ fontSize: '11px', color: '#aaa', fontFamily: 'monospace', marginTop: '1px' }}>{example}</div>
+                        </div>
+                        <div style={s.posGroup}>
+                          <button style={{ ...s.posBtn, ...(!val ? s.posBtnActive : {}) }} onClick={() => { setter(false) }}>Off</button>
+                          <button style={{ ...s.posBtn, borderRight: 'none', ...(val ? s.posBtnActive : {}) }} onClick={() => { setter(true) }}>On</button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>

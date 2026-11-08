@@ -16,7 +16,7 @@ declare global {
       getPhotos: (page: number, sort?: string, search?: PhotoSearchParams) => Promise<PhotoPage>
       getSizes: (photoId: string) => Promise<PhotoSize[]>
       getPhotoDetail: (photoId: string) => Promise<{ sizes: PhotoSize[]; info: PhotoInfo; exif: CameraExif }>
-      downloadPhoto: (photoId: string, title: string, downloadSize?: DownloadSize, track?: boolean, thumbnailUrl?: string) => Promise<{ filePath: string | null }>
+      downloadPhoto: (photoId: string, title: string, downloadSize?: DownloadSize, track?: boolean, thumbnailUrl?: string, lastUpdate?: number) => Promise<{ filePath: string | null }>
       onDownloadProgress: (callback: (percent: number) => void) => () => void
       showInFinder: (filePath: string) => void
       openExternal: (url: string) => void

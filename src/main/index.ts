@@ -46,7 +46,10 @@ function buildFilename(
   downloadSize?: string
 ): string {
   const s = config.separator
-  const rawTitle = (title || photoId).replace(/[/\\:*?"<>|]/g, '_').trim().slice(0, 150)
+  let titleStr = title || photoId
+  if (config.subStripParens) titleStr = titleStr.replace(/[()]/g, '')
+  if (config.subStripBrackets) titleStr = titleStr.replace(/[\[\]]/g, '')
+  const rawTitle = titleStr.replace(/[/\\:*?"<>|]/g, '_').trim().slice(0, 150)
   const safeTitle = config.charSubstitution
     ? rawTitle.replace(/\s+/g, s)
     : rawTitle

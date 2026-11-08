@@ -48,6 +48,8 @@ export interface FileNamingConfig {
   caseTransform: CaseTransform
   charSubstitution: boolean  // replace spaces in title with separator
   sizeToken: { position: PartPosition }  // size indicator as prefix or suffix
+  subStripParens?: boolean     // strip '(' and ')' before sanitization
+  subStripBrackets?: boolean   // strip '[' and ']' before sanitization
 }
 
 export interface AppSettings {

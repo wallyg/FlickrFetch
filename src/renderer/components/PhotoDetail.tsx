@@ -214,7 +214,7 @@ export default function PhotoDetail({
   // Init downloadSize from settings once on mount (session-sticky: persists while navigating)
   useEffect(() => {
     window.flickrAPI.getSettings()
-      .then(s => setDownloadSize(s.downloadSize))
+      .then(s => { setDownloadSize(s.downloadSize) })
       .catch(() => {})
   }, [])
 
@@ -564,7 +564,7 @@ export default function PhotoDetail({
 
         {/* Download area — fixed at bottom of panel */}
         <div style={styles.downloadArea}>
-          {photo.media !== 'video' ? (
+          {photo.media !== 'video' && (
             <select
               value={downloadSize}
               onChange={e => setDownloadSize(e.target.value as DownloadSize)}
@@ -577,8 +577,6 @@ export default function PhotoDetail({
                 </option>
               ))}
             </select>
-          ) : (
-            <p style={styles.videoQualityNote}>Downloads at best available quality</p>
           )}
 
           {lastDownloadedAt != null && downloadState === 'idle' && (
@@ -988,12 +986,6 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'center',
     paddingLeft: '3px',
-  },
-  videoQualityNote: {
-    fontSize: '11px',
-    color: '#777',
-    margin: '0 0 8px',
-    textAlign: 'center' as const,
   },
   lastDownloadedRow: {
     display: 'flex',
