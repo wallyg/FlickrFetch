@@ -870,7 +870,7 @@ const styles: Record<string, React.CSSProperties> = {
     position: 'absolute' as const,
     top: '1px', right: '1px',
     width: '8px', height: '8px', borderRadius: '50%',
-    backgroundColor: '#FF0084', border: '2px solid #fff',
+    backgroundColor: 'var(--ff-pink)', border: '2px solid #fff',
     pointerEvents: 'none' as const,
   },
   iconTooltip: {

@@ -333,6 +333,7 @@ async function zipFolder(
     const output = createWriteStream(zipPath)
     const archive = archiver('zip', { zlib: { level: 6 } })
     output.on('close', resolve)
+    output.on('error', reject)
     archive.on('error', reject)
     archive.pipe(output)
     archive.directory(sourceDir, false)
@@ -528,7 +529,7 @@ async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'p
         const outcome = await downloadToFolder(sizes, filename, downloadDir, activeBatchController?.signal, photoInfo, conflictBehavior, downloadSize, metadata)
         if (outcome.status === 'downloaded') {
           downloadedCount++
-          lastFilePath = outcome.filePath
+          if (!zipMode) lastFilePath = outcome.filePath
           if (track) writePhotoRecord(photo.id, photo.lastUpdate ?? 0, photo.title, photo.thumbnailUrl)
           if (zipMode) manifestPhotos.push({ id: photo.id, title: photo.title, filename: basename(outcome.filePath) })
           sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: outcome.filePath, status: 'running', skippedCount, skippedSizeUnavailableCount, failedCount })
@@ -553,7 +554,7 @@ async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'p
       }
     }
 
-    if (zipMode && tempDir && downloadedCount > 0) {
+    if (tempDir && downloadedCount > 0) {
       const { filePath: chosenPath, canceled } = await dialog.showSaveDialog(mainWindow!, {
         defaultPath: join(zipParentDir, safeAlbumTitle + '.zip'),
         filters: [{ name: 'ZIP Archives', extensions: ['zip'] }]
@@ -651,7 +652,7 @@ async function runSelectedBatch(photos: { id: string; title: string }[], albumTi
         const outcome = await downloadToFolder(sizes, filename, downloadDir, activeBatchController?.signal, photoInfo, conflictBehavior, downloadSize, metadata)
         if (outcome.status === 'downloaded') {
           downloadedCount++
-          lastFilePath = outcome.filePath
+          if (!zipMode) lastFilePath = outcome.filePath
           if (track) writePhotoRecord(photo.id, 0, photo.title, photo.thumbnailUrl)
           if (zipMode) manifestPhotos.push({ id: photo.id, title: photo.title, filename: basename(outcome.filePath) })
           sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: outcome.filePath, status: 'running', skippedCount, skippedSizeUnavailableCount, failedCount })
@@ -675,7 +676,7 @@ async function runSelectedBatch(photos: { id: string; title: string }[], albumTi
       }
     }
 
-    if (zipMode && tempDir && downloadedCount > 0) {
+    if (tempDir && downloadedCount > 0) {
       const dateStr = new Date().toISOString().slice(0, 10)
       const defaultZipName = baseTitle === 'Photostream' ? `Photostream — ${dateStr}.zip` : safeBaseTitle + '.zip'
       const { filePath: chosenPath, canceled } = await dialog.showSaveDialog(mainWindow!, {
@@ -1033,7 +1034,7 @@ async function runPhotostreamBatch(albumTitle: string, track = true, smartMode?:
         const outcome = await downloadToFolder(sizes, filename, downloadDir, activeBatchController?.signal, photoInfo, conflictBehavior, downloadSize, metadata)
         if (outcome.status === 'downloaded') {
           downloadedCount++
-          lastFilePath = outcome.filePath
+          if (!zipMode) lastFilePath = outcome.filePath
           if (track) writePhotoRecord(photo.id, photo.lastUpdate ?? 0, photo.title, photo.thumbnailUrl)
           if (zipMode) manifestPhotos.push({ id: photo.id, title: photo.title, filename: basename(outcome.filePath) })
           sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: outcome.filePath, status: 'running', skippedCount, failedCount })
@@ -1054,7 +1055,7 @@ async function runPhotostreamBatch(albumTitle: string, track = true, smartMode?:
       }
     }
 
-    if (zipMode && tempDir && downloadedCount > 0) {
+    if (tempDir && downloadedCount > 0) {
       const dateStr = new Date().toISOString().slice(0, 10)
       const { filePath: chosenPath, canceled } = await dialog.showSaveDialog(mainWindow!, {
         defaultPath: join(downloadFolder, `Photostream — ${dateStr}.zip`),
