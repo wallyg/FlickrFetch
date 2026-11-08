@@ -470,20 +470,20 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
                     <PrivacyIcon level={privacyLevel} />
                   </div>
                 )}
+                {!selectMode && downloadRecords[photo.id] && (
+                  <div style={styles.downloadBadge}>
+                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M6 1v7M3 5.5l3 3 3-3M2 11h8"/>
+                    </svg>
+                  </div>
+                )}
                 {!selectMode && (
                   <div style={{
                     ...styles.overlay,
                     opacity: hoveredId === photo.id ? 1 : 0,
                     background: hoveredId === photo.id ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0)'
                   }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', width: '100%' }}>
-                      <span style={styles.overlayTitle}>{photo.title}</span>
-                      {downloadRecords[photo.id] && (
-                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" style={{ flexShrink: 0, opacity: 0.75, marginTop: '1px' }}>
-                          <path d="M6 1v6M3 5l3 3 3-3M2 11h8"/>
-                        </svg>
-                      )}
-                    </div>
+                    <span style={styles.overlayTitle}>{photo.title}</span>
                   </div>
                 )}
                 {selectMode && (
@@ -520,6 +520,7 @@ const styles: Record<string, React.CSSProperties> = {
   // Album tile uses opacity transition for hover overlay; PhotoGrid conditionally renders its overlay instead
   overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'flex-end', padding: '8px', opacity: 0, transition: 'opacity 0.15s' },
   overlayTitle: { color: '#fff', fontSize: '12px', fontWeight: '500', textShadow: '0 1px 3px rgba(0,0,0,0.8)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', width: '100%' } as React.CSSProperties,
+  downloadBadge: { position: 'absolute', top: '5px', right: '5px', width: '18px', height: '18px', borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.52)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 },
   loadMore: { padding: '16px', textAlign: 'center' },
   loadMoreBtn: { background: 'transparent', border: '1px solid #ccc', borderRadius: '6px', padding: '8px 20px', fontSize: '13px', color: '#555', cursor: 'pointer' },
 }

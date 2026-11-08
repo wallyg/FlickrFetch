@@ -342,14 +342,11 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
               Show in Finder
             </button>
           )}
-          {completedBatches.length >= 2 && (
-            <button style={styles.dismissAllBtn} onClick={onDismissAll}>Dismiss all</button>
+          {!progress && completedBatches.length > 0 && (
+            <button style={styles.dismissAllBtn} onClick={onDismissAll}>Clear completed</button>
           )}
           {(isDone || isCancelled) && !cancelling && (
             <button style={styles.dismissBtn} onClick={handleDismiss} title="Dismiss">✕</button>
-          )}
-          {!progress && completedBatches.length > 0 && completedBatches.length < 2 && (
-            <button style={styles.dismissBtn} onClick={() => onStackedDismiss?.(0)} title="Dismiss">✕</button>
           )}
         </div>
       </div>
@@ -583,11 +580,13 @@ const styles: Record<string, React.CSSProperties> = {
     background: 'none',
     border: 'none',
     fontSize: '12px',
-    color: '#ccc',
+    color: '#bbb',
     cursor: 'pointer',
-    padding: '2px 4px',
+    padding: '5px 9px',
     flexShrink: 0,
-    lineHeight: 1
+    lineHeight: 1,
+    borderRadius: '4px',
+    minWidth: '28px'
   },
   dismissAllBtn: {
     background: 'none',
