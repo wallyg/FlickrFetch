@@ -476,7 +476,14 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
                     opacity: hoveredId === photo.id ? 1 : 0,
                     background: hoveredId === photo.id ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0)'
                   }}>
-                    <span style={styles.overlayTitle}>{photo.title}</span>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', width: '100%' }}>
+                      <span style={styles.overlayTitle}>{photo.title}</span>
+                      {downloadRecords[photo.id] && (
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" style={{ flexShrink: 0, opacity: 0.75, marginTop: '1px' }}>
+                          <path d="M6 1v6M3 5l3 3 3-3M2 11h8"/>
+                        </svg>
+                      )}
+                    </div>
                   </div>
                 )}
                 {selectMode && (

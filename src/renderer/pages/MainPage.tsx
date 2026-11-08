@@ -84,10 +84,28 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
   const [photostreamFilteredPhotos, setPhotostreamFilteredPhotos] = useState<FlickrPhoto[]>([])
   const [albumMediaFilter, setAlbumMediaFilter] = useState<'all' | 'photo' | 'video'>('all')
   const [albumPrivacyFilter, setAlbumPrivacyFilter] = useState<'all' | 'public' | 'friends' | 'family' | 'private'>('all')
+  const handleResetRecords = useCallback(async () => {
+    if (!selectedAlbum) return
+    setShowResetConfirm(false)
+    const allIds: string[] = []
+    let page = 1
+    let hasMore = true
+    while (hasMore) {
+      const result = await window.flickrAPI.getAlbumPhotos(selectedAlbum.id, page)
+      allIds.push(...result.photos.map((p: { id: string }) => p.id))
+      hasMore = page < result.pages
+      page++
+    }
+    if (allIds.length > 0) await window.flickrAPI.deletePhotoRecords(allIds)
+  }, [selectedAlbum])
+
   const handleBatchDismiss = useCallback(() => setBatchProgress(null), [])
   const handleStackedDismiss = useCallback((idx: number) => setCompletedBatches(prev => prev.filter((_, i) => i !== idx)), [])
   const handleDismissAll = useCallback(() => { setBatchProgress(null); setCompletedBatches([]) }, [])
   const [photostreamRefreshKey, setPhotostreamRefreshKey] = useState(0)
+  const [showAlbumOverflow, setShowAlbumOverflow] = useState(false)
+  const [showResetConfirm, setShowResetConfirm] = useState(false)
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false)
   useEffect(() => {
     const unsubscribe = window.flickrAPI.onBatchProgress((p) => {
       const prev = prevProgressRef.current
@@ -376,7 +394,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             </div>
             <span style={styles.userHandle}>
               @{user.username} · Flickring since {user.memberSince} ·{' '}
-              <button style={styles.signOutLink} onClick={onSignOut}>Sign out</button>
+              <button style={styles.signOutLink} onClick={() => setShowSignOutConfirm(true)}>Sign out</button>
             </span>
           </div>
         </div>
@@ -528,35 +546,28 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
                   })
                 }}
               />
-              <button
-                style={styles.selectButton}
-                title="Reset download records for all photos in this album"
-                onClick={async () => {
-                  if (!selectedAlbum) return
-                  const total = (selectedAlbum.photoCount ?? 0) + (selectedAlbum.videoCount ?? 0)
-                  const ok = await window.flickrAPI.confirm(
-                    `Reset download records for "${selectedAlbum.title}"?`,
-                    `This will remove the download record for all ${total} photos in this album. Smart Download will treat them as never downloaded. Batch history is not affected.`
-                  )
-                  if (!ok) return
-                  const allIds: string[] = []
-                  let page = 1
-                  let hasMore = true
-                  while (hasMore) {
-                    const result = await window.flickrAPI.getAlbumPhotos(selectedAlbum.id, page)
-                    allIds.push(...result.photos.map((p: { id: string }) => p.id))
-                    hasMore = page < result.pages
-                    page++
-                  }
-                  if (allIds.length > 0) await window.flickrAPI.deletePhotoRecords(allIds)
-                }}
-              >Reset records</button>
               <button style={styles.selectButton} onClick={() => setAlbumSelectMode(true)}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                   <rect x="2" y="3" width="7" height="7" rx="1"/><rect x="13" y="3" width="7" height="7" rx="1"/><rect x="2" y="14" width="7" height="7" rx="1"/><path d="M14 17l2 2 4-4"/>
                 </svg>
                 Select Photos
               </button>
+              <div style={{ position: 'relative' }}>
+                <button style={styles.overflowBtn} onClick={() => setShowAlbumOverflow(o => !o)} title="More actions">⋯</button>
+                {showAlbumOverflow && (
+                  <>
+                    <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setShowAlbumOverflow(false)} />
+                    <div style={styles.overflowMenu}>
+                      <button
+                        style={styles.overflowMenuItemDestructive}
+                        onClick={() => { setShowAlbumOverflow(false); setShowResetConfirm(true) }}
+                      >
+                        Reset download records
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </>
           ) : (
             <>
@@ -685,6 +696,32 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
         )}
       </main>
 
+      {showResetConfirm && selectedAlbum && (
+        <div style={styles.confirmOverlay}>
+          <div style={styles.confirmCard}>
+            <p style={styles.confirmTitle}>Reset download records?</p>
+            <p style={styles.confirmBody}>
+              This will remove the download record for all {((selectedAlbum.photoCount ?? 0) + (selectedAlbum.videoCount ?? 0)).toLocaleString()} items in &ldquo;{selectedAlbum.title}&rdquo;. Smart Download will treat them as never downloaded.
+            </p>
+            <div style={styles.confirmActions}>
+              <button style={styles.confirmCancel} onClick={() => setShowResetConfirm(false)}>Cancel</button>
+              <button style={styles.confirmDestructive} onClick={handleResetRecords}>Reset</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showSignOutConfirm && (
+        <div style={styles.confirmOverlay}>
+          <div style={styles.confirmCard}>
+            <p style={styles.confirmTitle}>Sign out of Flickr?</p>
+            <p style={styles.confirmBody}>You&rsquo;ll need to reconnect your Flickr account to use FlickrFetch.</p>
+            <div style={styles.confirmActions}>
+              <button style={styles.confirmCancel} onClick={() => setShowSignOutConfirm(false)}>Cancel</button>
+              <button style={styles.confirmDestructive} onClick={() => { setShowSignOutConfirm(false); onSignOut() }}>Sign Out</button>
+            </div>
+          </div>
+        </div>
+      )}
       {showSettings && <SettingsModal onClose={() => { setShowSettings(false); setSettingsKey(k => k + 1) }} updateVersion={updateVersion ?? undefined} />}
       {showHistory && <HistoryPanel onClose={() => setShowHistory(false)} />}
       {aboutVersion && <AboutModal version={aboutVersion} onClose={() => setAboutVersion(null)} />}
@@ -991,5 +1028,38 @@ const styles: Record<string, React.CSSProperties> = {
   modePillActive: {
     background: '#fff', color: '#1a1a1a',
     boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
+  },
+  overflowBtn: {
+    background: 'none', border: '1px solid #ccc', borderRadius: '6px',
+    padding: '5px 10px', fontSize: '16px', color: '#555', cursor: 'pointer',
+    flexShrink: 0, lineHeight: 1,
+  },
+  overflowMenu: {
+    position: 'absolute' as const, top: 'calc(100% + 4px)', right: 0,
+    background: '#fff', border: '1px solid #e0dcd8', borderRadius: '8px',
+    boxShadow: '0 4px 16px rgba(0,0,0,0.12)', zIndex: 100, minWidth: '190px', padding: '4px',
+  },
+  overflowMenuItemDestructive: {
+    display: 'block', width: '100%', textAlign: 'left' as const, background: 'none', border: 'none',
+    padding: '8px 12px', fontSize: '13px', color: '#c0392b', cursor: 'pointer', borderRadius: '5px',
+  },
+  confirmOverlay: {
+    position: 'fixed' as const, inset: 0, backgroundColor: 'rgba(0,0,0,0.4)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 700,
+  },
+  confirmCard: {
+    backgroundColor: '#fff', borderRadius: '12px', padding: '24px',
+    width: '360px', maxWidth: '90vw', boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
+  },
+  confirmTitle: { fontSize: '16px', fontWeight: '600' as const, color: '#111', margin: '0 0 8px' },
+  confirmBody: { fontSize: '13px', color: '#555', lineHeight: '1.5', margin: '0 0 20px' },
+  confirmActions: { display: 'flex', gap: '10px', justifyContent: 'flex-end' as const },
+  confirmCancel: {
+    background: 'none', border: '1px solid #d8d4ce', borderRadius: '8px',
+    padding: '8px 18px', fontSize: '14px', color: '#555', cursor: 'pointer',
+  },
+  confirmDestructive: {
+    background: '#c0392b', border: 'none', borderRadius: '8px',
+    padding: '8px 18px', fontSize: '14px', fontWeight: '600' as const, color: '#fff', cursor: 'pointer',
   },
 }
