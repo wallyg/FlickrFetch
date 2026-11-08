@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import type { FlickrPhoto, PhotoPage } from '../../shared/types'
 import PhotoDetail from './PhotoDetail'
-import { GridIcon, ListIcon, GRID_COLUMNS, sharedStyles as ss, type GridSize, type AlbumViewMode, type DownloadFilter, PhotoListRow, loadAlbumViewMode, saveAlbumViewMode, DOWNLOAD_FILTER_NEXT, DOWNLOAD_FILTER_LABEL } from './PhotoGridShared'
+import { GridIcon, ListIcon, GRID_COLUMNS, sharedStyles as ss, type GridSize, type AlbumViewMode, type DownloadFilter, PhotoListRow, DownloadFilterSelect, loadAlbumViewMode, saveAlbumViewMode } from './PhotoGridShared'
 
 const GRID_COLS = 4
 
@@ -142,12 +142,7 @@ export default function DiscoverExplore({ onDownload }: Props): React.JSX.Elemen
         )}
         {!selectMode && photos.length > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', paddingTop: '6px' }}>
-            <button
-              style={{ ...ss.downloadFilterBtn, ...(exploreDownloadFilter !== 'all' ? ss.downloadFilterBtnActive : {}) }}
-              onClick={() => setExploreDownloadFilter(f => DOWNLOAD_FILTER_NEXT[f])}
-            >
-              {DOWNLOAD_FILTER_LABEL[exploreDownloadFilter]}
-            </button>
+            <DownloadFilterSelect value={exploreDownloadFilter} onChange={setExploreDownloadFilter} />
             <div style={{ flex: 1 }} />
             <div style={ss.segGroupDensity}>
               <button style={{ ...ss.densityBtn, ...(exploreViewMode === 'list' ? ss.densityBtnActive : {}) }} onClick={() => { const m: AlbumViewMode = 'list'; setExploreViewMode(m); saveAlbumViewMode(m) }}>

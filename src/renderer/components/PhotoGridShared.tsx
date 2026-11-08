@@ -55,10 +55,11 @@ export const DOWNLOAD_FILTER_NEXT: Record<DownloadFilter, DownloadFilter> = {
   'downloaded': 'all',
 }
 export const DOWNLOAD_FILTER_LABEL: Record<DownloadFilter, string> = {
-  'all': 'Status: All',
+  'all': 'All photos',
   'not-downloaded': 'Not downloaded',
   'downloaded': 'Downloaded',
 }
+
 
 // ── Photo list row ────────────────────────────────────────────────────────────
 function formatRowDate(raw: string): string {
@@ -209,6 +210,20 @@ export const chipStyle: React.CSSProperties = {
 export const chipDismissStyle: React.CSSProperties = {
   background: 'none', border: 'none', padding: '0 0 0 2px',
   fontSize: '10px', color: '#888', cursor: 'pointer', lineHeight: 1
+}
+
+export function DownloadFilterSelect({ value, onChange }: { value: DownloadFilter; onChange: (v: DownloadFilter) => void }): React.JSX.Element {
+  return (
+    <select
+      style={sharedStyles.sortSelect}
+      value={value}
+      onChange={e => onChange(e.target.value as DownloadFilter)}
+    >
+      <option value="all">All photos</option>
+      <option value="not-downloaded">Not downloaded</option>
+      <option value="downloaded">Downloaded</option>
+    </select>
+  )
 }
 
 export function Chip({ label, onDismiss }: { label: string; onDismiss: () => void }): React.JSX.Element {

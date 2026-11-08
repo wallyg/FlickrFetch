@@ -3,7 +3,7 @@ import type { FlickrPhoto, FlickrAlbum, FlickrCollection, DiscoverUser, Discover
 import PhotoDetail from './PhotoDetail'
 import { AttributionNotice, DiscoverTile, DiscoverSelectBar } from './DiscoverExplore'
 import SmartDownloadButton from './SmartDownloadButton'
-import { GridIcon, ListIcon, GRID_COLUMNS, sharedStyles as ss, type MediaFilter, type GridSize, type AlbumViewMode, type PhotoViewMode, type DownloadFilter, type DateMode, getPresetDates, formatDateChip, Chip, PhotoListRow, loadAlbumViewMode, saveAlbumViewMode, loadPhotoViewMode, savePhotoViewMode, DOWNLOAD_FILTER_NEXT, DOWNLOAD_FILTER_LABEL } from './PhotoGridShared'
+import { GridIcon, ListIcon, GRID_COLUMNS, sharedStyles as ss, type MediaFilter, type GridSize, type AlbumViewMode, type PhotoViewMode, type DownloadFilter, type DateMode, getPresetDates, formatDateChip, Chip, PhotoListRow, DownloadFilterSelect, loadAlbumViewMode, saveAlbumViewMode, loadPhotoViewMode, savePhotoViewMode } from './PhotoGridShared'
 
 const ALBUM_COLUMNS: Record<GridSize, string> = {
   small: 'repeat(auto-fill, minmax(130px, 1fr))',
@@ -592,12 +592,7 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
               Filters{albumPhotosActiveFilterCount > 0 && <span style={ss.drawerBadge}>{albumPhotosActiveFilterCount}</span>}
             </button>
             <div style={{ flex: 1 }} />
-            <button
-              style={{ ...ss.downloadFilterBtn, ...(albumPhotosDownloadFilter !== 'all' ? ss.downloadFilterBtnActive : {}) }}
-              onClick={() => setAlbumPhotosDownloadFilter(f => DOWNLOAD_FILTER_NEXT[f])}
-            >
-              {DOWNLOAD_FILTER_LABEL[albumPhotosDownloadFilter]}
-            </button>
+            <DownloadFilterSelect value={albumPhotosDownloadFilter} onChange={setAlbumPhotosDownloadFilter} />
             <div style={ss.segGroupDensity}>
               <button style={{ ...ss.densityBtn, ...(albumPhotosViewMode === 'list' ? ss.densityBtnActive : {}) }} onClick={() => { const m: AlbumViewMode = 'list'; setAlbumPhotosViewMode(m); saveAlbumViewMode(m) }}>
                 <ListIcon />
@@ -822,12 +817,7 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
                 </button>
 
                 {/* Download filter */}
-                <button
-                  style={{ ...ss.downloadFilterBtn, ...(userDownloadFilter !== 'all' ? ss.downloadFilterBtnActive : {}) }}
-                  onClick={() => setUserDownloadFilter(f => DOWNLOAD_FILTER_NEXT[f])}
-                >
-                  {DOWNLOAD_FILTER_LABEL[userDownloadFilter]}
-                </button>
+                <DownloadFilterSelect value={userDownloadFilter} onChange={setUserDownloadFilter} />
 
                 {/* Grid density + list toggle */}
                 <div style={ss.segGroupDensity}>

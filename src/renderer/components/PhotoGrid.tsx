@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react'
 import type { FlickrPhoto, PhotoSearchParams, SearchOperator, DateRangeField, TagMode } from '../../shared/types'
-import { MediaFilter, GridSize, PhotoViewMode, DownloadFilter, PrivacyFilter, PrivacyLevel, PRIVACY_OPTIONS, PRIVACY_LABELS, GRID_COLUMNS, GridIcon, ListIcon, PrivacyIcon, Tooltip, Chip, PhotoListRow, getPrivacyLevel, sharedStyles, DateMode, getPresetDates, formatDateChip, loadPhotoViewMode, savePhotoViewMode, DOWNLOAD_FILTER_NEXT, DOWNLOAD_FILTER_LABEL } from './PhotoGridShared'
+import { MediaFilter, GridSize, PhotoViewMode, DownloadFilter, PrivacyFilter, PrivacyLevel, PRIVACY_OPTIONS, PRIVACY_LABELS, GRID_COLUMNS, GridIcon, ListIcon, PrivacyIcon, Tooltip, Chip, PhotoListRow, DownloadFilterSelect, getPrivacyLevel, sharedStyles, DateMode, getPresetDates, formatDateChip, loadPhotoViewMode, savePhotoViewMode, DOWNLOAD_FILTER_LABEL } from './PhotoGridShared'
 
 type SortOrder = 'date-posted-desc' | 'date-posted-asc' | 'date-taken-desc' | 'date-taken-asc'
 
@@ -364,12 +364,7 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
               )}
             </button>
 
-            <button
-              style={{ ...styles.downloadFilterBtn, ...(downloadFilter !== 'all' ? styles.downloadFilterBtnActive : {}) }}
-              onClick={() => setDownloadFilter(f => DOWNLOAD_FILTER_NEXT[f])}
-            >
-              {DOWNLOAD_FILTER_LABEL[downloadFilter]}
-            </button>
+            <DownloadFilterSelect value={downloadFilter} onChange={setDownloadFilter} />
 
             <div style={styles.segGroupDensity}>
               <button style={{ ...styles.densityBtn, ...(viewMode === 'list' ? styles.densityBtnActive : {}) }} onClick={() => { const m: PhotoViewMode = 'list'; setViewMode(m); savePhotoViewMode(m) }}>

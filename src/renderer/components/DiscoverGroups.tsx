@@ -3,7 +3,7 @@ import type { FlickrPhoto, DiscoverGroup } from '../../shared/types'
 import PhotoDetail from './PhotoDetail'
 import { AttributionNotice, DiscoverTile, DiscoverSelectBar } from './DiscoverExplore'
 import SmartDownloadButton from './SmartDownloadButton'
-import { GridIcon, ListIcon, GRID_COLUMNS, sharedStyles as ss, type GridSize, type AlbumViewMode, type DownloadFilter, PhotoListRow, loadAlbumViewMode, saveAlbumViewMode, DOWNLOAD_FILTER_NEXT, DOWNLOAD_FILTER_LABEL } from './PhotoGridShared'
+import { GridIcon, ListIcon, GRID_COLUMNS, sharedStyles as ss, type GridSize, type AlbumViewMode, type DownloadFilter, PhotoListRow, DownloadFilterSelect, loadAlbumViewMode, saveAlbumViewMode } from './PhotoGridShared'
 
 type GroupView = 'list' | 'pool'
 
@@ -190,12 +190,7 @@ export default function DiscoverGroups(): React.JSX.Element {
           )}
           {!selectMode && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', paddingTop: '6px' }}>
-              <button
-                style={{ ...ss.downloadFilterBtn, ...(poolDownloadFilter !== 'all' ? ss.downloadFilterBtnActive : {}) }}
-                onClick={() => setPoolDownloadFilter(f => DOWNLOAD_FILTER_NEXT[f])}
-              >
-                {DOWNLOAD_FILTER_LABEL[poolDownloadFilter]}
-              </button>
+              <DownloadFilterSelect value={poolDownloadFilter} onChange={setPoolDownloadFilter} />
               <div style={{ flex: 1 }} />
               <div style={ss.segGroupDensity}>
                 <button style={{ ...ss.densityBtn, ...(poolViewMode === 'list' ? ss.densityBtnActive : {}) }} onClick={() => { const m: AlbumViewMode = 'list'; setPoolViewMode(m); saveAlbumViewMode(m) }}>
