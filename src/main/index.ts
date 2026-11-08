@@ -554,9 +554,14 @@ async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'p
     }
 
     if (zipMode && tempDir && downloadedCount > 0) {
-      const zipFilePath = join(zipParentDir, safeAlbumTitle + '.zip')
-      await zipFolder(tempDir, zipFilePath, { source: albumTitle, exportedAt: new Date().toISOString(), photos: manifestPhotos })
-      lastFilePath = zipFilePath
+      const { filePath: chosenPath, canceled } = await dialog.showSaveDialog(mainWindow!, {
+        defaultPath: join(zipParentDir, safeAlbumTitle + '.zip'),
+        filters: [{ name: 'ZIP Archives', extensions: ['zip'] }]
+      })
+      if (!canceled && chosenPath) {
+        await zipFolder(tempDir, chosenPath, { source: albumTitle, exportedAt: new Date().toISOString(), photos: manifestPhotos })
+        lastFilePath = chosenPath
+      }
     }
   } finally {
     if (tempDir) { try { rmSync(tempDir, { recursive: true, force: true }) } catch { /* ignore */ } }
@@ -564,7 +569,7 @@ async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'p
 
   activeBatchAlbumId = null
   const finalStatus = failedCount > 0 || skippedCount > 0 || skippedSizeUnavailableCount > 0 ? 'partial' : 'complete'
-  sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'done', skippedCount, skippedSizeUnavailableCount, failedCount, failedPhotos, smartFilteredCount: preSmartTotal - total })
+  sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: zipMode ? lastFilePath : null, status: 'done', skippedCount, skippedSizeUnavailableCount, failedCount, failedPhotos, smartFilteredCount: preSmartTotal - total })
   if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'album', total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: finalStatus, failedPhotos })
   if (notifyOnComplete && Notification.isSupported()) {
     const body = zipMode
@@ -671,17 +676,22 @@ async function runSelectedBatch(photos: { id: string; title: string }[], albumTi
     }
 
     if (zipMode && tempDir && downloadedCount > 0) {
-      const zipName = baseTitle === 'Photostream' ? 'Photostream.zip' : safeBaseTitle + '.zip'
-      const zipFilePath = join(downloadFolder, zipName)
-      await zipFolder(tempDir, zipFilePath, { source: baseTitle, exportedAt: new Date().toISOString(), photos: manifestPhotos })
-      lastFilePath = zipFilePath
+      const defaultZipName = baseTitle === 'Photostream' ? 'Photostream.zip' : safeBaseTitle + '.zip'
+      const { filePath: chosenPath, canceled } = await dialog.showSaveDialog(mainWindow!, {
+        defaultPath: join(downloadFolder, defaultZipName),
+        filters: [{ name: 'ZIP Archives', extensions: ['zip'] }]
+      })
+      if (!canceled && chosenPath) {
+        await zipFolder(tempDir, chosenPath, { source: baseTitle, exportedAt: new Date().toISOString(), photos: manifestPhotos })
+        lastFilePath = chosenPath
+      }
     }
   } finally {
     if (tempDir) { try { rmSync(tempDir, { recursive: true, force: true }) } catch { /* ignore */ } }
   }
 
   const finalStatus = failedCount > 0 || skippedCount > 0 || skippedSizeUnavailableCount > 0 ? 'partial' : 'complete'
-  sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'done', skippedCount, skippedSizeUnavailableCount, failedCount, failedPhotos })
+  sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: zipMode ? lastFilePath : null, status: 'done', skippedCount, skippedSizeUnavailableCount, failedCount, failedPhotos })
   if (track) writeBatchLog({ createdAt: Date.now(), source: baseTitle, sourceType: 'selected', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: finalStatus })
   if (notifyOnComplete && Notification.isSupported()) {
     const body = zipMode
@@ -1044,16 +1054,21 @@ async function runPhotostreamBatch(albumTitle: string, track = true, smartMode?:
     }
 
     if (zipMode && tempDir && downloadedCount > 0) {
-      const zipFilePath = join(downloadFolder, 'Photostream.zip')
-      await zipFolder(tempDir, zipFilePath, { source: 'Photostream', exportedAt: new Date().toISOString(), photos: manifestPhotos })
-      lastFilePath = zipFilePath
+      const { filePath: chosenPath, canceled } = await dialog.showSaveDialog(mainWindow!, {
+        defaultPath: join(downloadFolder, 'Photostream.zip'),
+        filters: [{ name: 'ZIP Archives', extensions: ['zip'] }]
+      })
+      if (!canceled && chosenPath) {
+        await zipFolder(tempDir, chosenPath, { source: 'Photostream', exportedAt: new Date().toISOString(), photos: manifestPhotos })
+        lastFilePath = chosenPath
+      }
     }
   } finally {
     if (tempDir) { try { rmSync(tempDir, { recursive: true, force: true }) } catch { /* ignore */ } }
   }
 
   const finalStatus = failedCount > 0 || skippedCount > 0 ? 'partial' : 'complete'
-  sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'done', skippedCount, failedCount, failedPhotos, smartFilteredCount: preSmartTotal - total })
+  sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: zipMode ? lastFilePath : null, status: 'done', skippedCount, failedCount, failedPhotos, smartFilteredCount: preSmartTotal - total })
   if (track) writeBatchLog({ createdAt: Date.now(), source: 'Photostream', sourceType: 'photostream', total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: finalStatus })
   if (notifyOnComplete && Notification.isSupported()) {
     const body = zipMode
