@@ -290,35 +290,41 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
               <div style={{ ...styles.progressFill, width: `${percent}%` }} />
             </div>
           )}
-          <span style={{ ...styles.label, ...(isRunning ? styles.labelRunning : {}) }}>
-            {cancelling && 'Cancelling…'}
-            {!cancelling && isRunning && `${isPaused ? '⏸ ' : ''}${current.toLocaleString()} of ${total.toLocaleString()} · ${albumTitle}${progress?.queuedCount ? ` · +${progress.queuedCount} queued` : ''}`}
-            {!cancelling && isDone && (() => {
-              const parts: string[] = [`✓ ${downloaded.toLocaleString()} saved`]
-              if (skipped > 0) parts.push(`${skipped.toLocaleString()} skipped`)
-              if (sizeUnavailable > 0) parts.push(`${sizeUnavailable.toLocaleString()} size unavailable`)
-              if (failed > 0) parts.push(`${failed.toLocaleString()} failed`)
-              if (smartFiltered > 0) parts.push(`${smartFiltered.toLocaleString()} already downloaded`)
-              parts.push(albumTitle)
-              return parts.join(' · ')
+          <div style={styles.labelCol}>
+            <span style={styles.labelPrimary}>
+              {cancelling && 'Cancelling…'}
+              {!cancelling && isRunning && `${isPaused ? '⏸ ' : ''}${current.toLocaleString()} of ${total.toLocaleString()}${progress?.queuedCount ? ` · +${progress.queuedCount} queued` : ''}`}
+              {!cancelling && isDone && (() => {
+                const parts: string[] = [`✓ ${downloaded.toLocaleString()} saved`]
+                if (skipped > 0) parts.push(`${skipped.toLocaleString()} skipped`)
+                if (sizeUnavailable > 0) parts.push(`${sizeUnavailable.toLocaleString()} size unavailable`)
+                if (failed > 0) parts.push(`${failed.toLocaleString()} failed`)
+                if (smartFiltered > 0) parts.push(`${smartFiltered.toLocaleString()} already downloaded`)
+                return parts.join(' · ')
+              })()}
+              {!cancelling && isCancelled && `Cancelled · ${current.toLocaleString()} of ${total.toLocaleString()}`}
+              {!progress && completedBatches.length > 0 && (() => {
+                const newest = completedBatches[0]
+                const ns = newest.skippedCount ?? 0
+                const nsu = newest.skippedSizeUnavailableCount ?? 0
+                const nf = newest.failedCount ?? 0
+                const nsf = newest.smartFilteredCount ?? 0
+                const nd = (newest.total ?? 0) - ns - nsu - nf
+                const parts = [`✓ ${nd.toLocaleString()} saved`]
+                if (ns > 0) parts.push(`${ns.toLocaleString()} skipped`)
+                if (nsu > 0) parts.push(`${nsu.toLocaleString()} size unavailable`)
+                if (nf > 0) parts.push(`${nf.toLocaleString()} failed`)
+                if (nsf > 0) parts.push(`${nsf.toLocaleString()} already downloaded`)
+                return parts.join(' · ')
+              })()}
+            </span>
+            {!cancelling && (() => {
+              const name = (isRunning || isDone || isCancelled) ? albumTitle
+                : (!progress && completedBatches.length > 0) ? completedBatches[0].albumTitle
+                : null
+              return name ? <span style={styles.labelSecondary}>{name}</span> : null
             })()}
-            {!cancelling && isCancelled && `Cancelled · ${current.toLocaleString()} of ${total.toLocaleString()} · ${albumTitle}`}
-            {!progress && completedBatches.length > 0 && (() => {
-              const newest = completedBatches[0]
-              const ns = newest.skippedCount ?? 0
-              const nsu = newest.skippedSizeUnavailableCount ?? 0
-              const nf = newest.failedCount ?? 0
-              const nsf = newest.smartFilteredCount ?? 0
-              const nd = (newest.total ?? 0) - ns - nsu - nf
-              const parts = [`✓ ${nd.toLocaleString()} saved`]
-              if (ns > 0) parts.push(`${ns.toLocaleString()} skipped`)
-              if (nsu > 0) parts.push(`${nsu.toLocaleString()} size unavailable`)
-              if (nf > 0) parts.push(`${nf.toLocaleString()} failed`)
-              if (nsf > 0) parts.push(`${nsf.toLocaleString()} already downloaded`)
-              parts.push(newest.albumTitle)
-              return parts.join(' · ')
-            })()}
-          </span>
+          </div>
         </div>
         <div style={styles.right}>
           {isRunning && !isPaused && !cancelling && (
@@ -407,16 +413,27 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: '3px',
     transition: 'width 0.3s ease'
   },
-  label: {
+  labelCol: {
+    flex: 1,
+    minWidth: 0,
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '2px'
+  },
+  labelPrimary: {
     fontSize: '13px',
-    color: '#666',
+    fontWeight: '500',
+    color: '#222',
     whiteSpace: 'nowrap',
     overflow: 'hidden',
     textOverflow: 'ellipsis'
   },
-  labelRunning: {
-    color: '#333',
-    fontWeight: '500'
+  labelSecondary: {
+    fontSize: '11px',
+    color: '#aaa',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis'
   },
   right: {
     display: 'flex',

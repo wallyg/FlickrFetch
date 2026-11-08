@@ -619,8 +619,8 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
                 )}
                 {!selectMode && downloadRecords[photo.id] && (
                   <div style={styles.downloadBadge}>
-                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M6 1v7M3 5.5l3 3 3-3M2 11h8"/>
+                    <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1.5 5.5l2.5 2.5 4.5-4.5"/>
                     </svg>
                   </div>
                 )}
@@ -667,7 +667,7 @@ const styles: Record<string, React.CSSProperties> = {
   thumbPlaceholder: { width: '100%', height: '100%', backgroundColor: '#d0d0d0' },
   overlay: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.65)', padding: '6px 8px', display: 'flex', alignItems: 'flex-start', gap: '6px' },
   overlayTitle: { flex: 1, color: '#fff', fontSize: '12px', lineHeight: '1.3', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as React.CSSProperties,
-  downloadBadge: { position: 'absolute', top: '5px', right: '5px', width: '18px', height: '18px', borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.52)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 },
+  downloadBadge: { position: 'absolute', top: '5px', right: '5px', width: '18px', height: '18px', borderRadius: '50%', backgroundColor: 'rgba(34,168,93,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 },
   errorText: { color: '#cc0000', fontSize: '14px', margin: 0 },
   retryButton: { backgroundColor: 'var(--ff-pink-action)', color: '#fff', border: 'none', borderRadius: '6px', padding: '10px 20px', fontSize: '14px', cursor: 'pointer' },
   loadMoreRow: { display: 'flex', justifyContent: 'center', padding: '24px 16px' },
