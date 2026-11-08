@@ -243,7 +243,8 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
   const drawerBadgeCount =
     (privacyFilter !== 'all' ? 1 : 0) +
     (activeSearch.tagQuery ? 1 : 0) +
-    ((activeSearch.dateMin || activeSearch.dateMax) ? 1 : 0)
+    ((activeSearch.dateMin || activeSearch.dateMax) ? 1 : 0) +
+    (downloadFilter !== 'all' ? 1 : 0)
 
   const showDateInputs = dateMode === 'since' || dateMode === 'between'
 
@@ -364,8 +365,6 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
               )}
             </button>
 
-            <DownloadFilterSelect value={downloadFilter} onChange={setDownloadFilter} />
-
             <div style={styles.segGroupDensity}>
               <button style={{ ...styles.densityBtn, ...(viewMode === 'list' ? styles.densityBtnActive : {}) }} onClick={() => { const m: PhotoViewMode = 'list'; setViewMode(m); savePhotoViewMode(m) }}>
                 <ListIcon />
@@ -389,6 +388,12 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
           {/* ── More filters drawer ── */}
           {drawerOpen && (
             <div style={styles.drawer}>
+
+              {/* Downloaded */}
+              <div style={styles.drawerRow}>
+                <span style={styles.drawerLabel}>Downloaded</span>
+                <DownloadFilterSelect value={downloadFilter} onChange={setDownloadFilter} />
+              </div>
 
               {/* Privacy */}
               <div style={styles.drawerRow}>

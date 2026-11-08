@@ -3,7 +3,7 @@ import type { FlickrPhoto, DiscoverGroup } from '../../shared/types'
 import PhotoDetail from './PhotoDetail'
 import { AttributionNotice, DiscoverTile, DiscoverSelectBar } from './DiscoverExplore'
 import SmartDownloadButton from './SmartDownloadButton'
-import { GridIcon, ListIcon, GRID_COLUMNS, sharedStyles as ss, type GridSize, type AlbumViewMode, type DownloadFilter, PhotoListRow, DownloadFilterSelect, loadAlbumViewMode, saveAlbumViewMode } from './PhotoGridShared'
+import { GridIcon, ListIcon, GRID_COLUMNS, sharedStyles as ss, type GridSize, type AlbumViewMode, PhotoListRow, loadAlbumViewMode, saveAlbumViewMode } from './PhotoGridShared'
 
 type GroupView = 'list' | 'pool'
 
@@ -25,8 +25,6 @@ export default function DiscoverGroups(): React.JSX.Element {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [downloading, setDownloading] = useState(false)
   const [poolViewMode, setPoolViewMode] = useState<AlbumViewMode>(loadAlbumViewMode)
-  const [poolDownloadFilter, setPoolDownloadFilter] = useState<DownloadFilter>('all')
-  const [poolDownloadRecords, setPoolDownloadRecords] = useState<Record<string, true>>({})
   const loadedRef = useRef(false)
 
   const poolGridSize: GridSize = poolViewMode === 'list' ? 'medium' : poolViewMode
@@ -54,8 +52,6 @@ export default function DiscoverGroups(): React.JSX.Element {
     setDetailIndex(null)
     setSelectMode(false)
     setSelectedIds(new Set())
-    setPoolDownloadFilter('all')
-    setPoolDownloadRecords({})
     setPoolLoading(true)
     try {
       const result = await window.flickrAPI.discoverGetGroupPhotos(group.id, 1)
@@ -79,21 +75,6 @@ export default function DiscoverGroups(): React.JSX.Element {
     } catch { /* ignore */ }
     finally { setPoolLoadingMore(false) }
   }, [activeGroup, poolLoadingMore, poolPage, poolPages])
-
-  useEffect(() => {
-    if (poolPhotos.length === 0) return
-    window.flickrAPI.getDiscoverRecordsBatch(poolPhotos.map(p => p.id))
-      .then(records => {
-        const map: Record<string, true> = {}
-        Object.keys(records).forEach(id => { map[id] = true })
-        setPoolDownloadRecords(map)
-      })
-      .catch(() => {})
-  }, [poolPhotos])
-
-  const filteredPoolPhotos = poolDownloadFilter !== 'all'
-    ? poolPhotos.filter(p => poolDownloadFilter === 'downloaded' ? !!poolDownloadRecords[p.id] : !poolDownloadRecords[p.id])
-    : poolPhotos
 
   const handleBack = (): void => {
     setView('list')
@@ -122,18 +103,18 @@ export default function DiscoverGroups(): React.JSX.Element {
   }
 
   if (view === 'pool' && activeGroup) {
-    if (detailIndex !== null && filteredPoolPhotos[detailIndex]) {
+    if (detailIndex !== null && poolPhotos[detailIndex]) {
       return (
         <PhotoDetail
-          photo={filteredPoolPhotos[detailIndex]}
+          photo={poolPhotos[detailIndex]}
           index={detailIndex}
-          total={filteredPoolPhotos.length}
+          total={poolPhotos.length}
           hasMore={poolPage < poolPages}
           canGoPrev={detailIndex > 0}
-          canGoNext={detailIndex < filteredPoolPhotos.length - 1 || poolPage < poolPages}
+          canGoNext={detailIndex < poolPhotos.length - 1 || poolPage < poolPages}
           onPrev={() => setDetailIndex(d => (d !== null && d > 0 ? d - 1 : d))}
           onNext={() => {
-            if (detailIndex < filteredPoolPhotos.length - 1) setDetailIndex(detailIndex + 1)
+            if (detailIndex < poolPhotos.length - 1) setDetailIndex(detailIndex + 1)
             else { loadMorePool().then(() => setDetailIndex(di => di !== null ? di + 1 : di)) }
           }}
           onClose={() => setDetailIndex(null)}
@@ -190,7 +171,6 @@ export default function DiscoverGroups(): React.JSX.Element {
           )}
           {!selectMode && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', paddingTop: '6px' }}>
-              <DownloadFilterSelect value={poolDownloadFilter} onChange={setPoolDownloadFilter} />
               <div style={{ flex: 1 }} />
               <div style={ss.segGroupDensity}>
                 <button style={{ ...ss.densityBtn, ...(poolViewMode === 'list' ? ss.densityBtnActive : {}) }} onClick={() => { const m: AlbumViewMode = 'list'; setPoolViewMode(m); saveAlbumViewMode(m) }}>
@@ -213,15 +193,15 @@ export default function DiscoverGroups(): React.JSX.Element {
         {!poolLoading && !poolError && poolPhotos.length === 0 && (
           <div style={s.emptyState}>No public photos in this group pool.</div>
         )}
-        {filteredPoolPhotos.length > 0 && (
+        {poolPhotos.length > 0 && (
           <>
             {poolViewMode === 'list' ? (
               <div style={ss.listContainer}>
-                {filteredPoolPhotos.map((photo, idx) => (
+                {poolPhotos.map((photo, idx) => (
                   <PhotoListRow
                     key={photo.id}
                     photo={photo}
-                    isDownloaded={!!poolDownloadRecords[photo.id]}
+                    isDownloaded={false}
                     isSelected={selectMode ? selectedIds.has(photo.id) : undefined}
                     selectMode={selectMode}
                     onClick={() => selectMode ? toggleSelect(photo.id) : setDetailIndex(idx)}
@@ -230,7 +210,7 @@ export default function DiscoverGroups(): React.JSX.Element {
               </div>
             ) : (
               <div style={{ ...s.grid, gridTemplateColumns: GRID_COLUMNS[poolGridSize] }}>
-                {filteredPoolPhotos.map((photo, idx) => (
+                {poolPhotos.map((photo, idx) => (
                   <DiscoverTile
                     key={photo.id}
                     photo={photo}

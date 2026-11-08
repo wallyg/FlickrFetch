@@ -414,8 +414,9 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
     let count = 0
     if (activeSearch.tagQuery) count++
     if (activeSearch.dateMin || activeSearch.dateMax) count++
+    if (userDownloadFilter !== 'all') count++
     return count
-  }, [activeSearch])
+  }, [activeSearch, userDownloadFilter])
 
   const filteredAlbumPhotos = useMemo(() => {
     let result = albumPhotos
@@ -453,8 +454,8 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
   }, [albumPhotos, albumPhotosMediaFilter, albumPhotosSearchInput, albumPhotosSearchOperator, albumPhotosSort, albumPhotosActiveDateMin, albumPhotosActiveDateMax, albumPhotosActiveDateField, albumPhotosDownloadFilter, albumPhotosDownloadRecords])
 
   const albumPhotosActiveFilterCount = useMemo(() => {
-    return albumPhotosActiveDateMin || albumPhotosActiveDateMax ? 1 : 0
-  }, [albumPhotosActiveDateMin, albumPhotosActiveDateMax])
+    return (albumPhotosActiveDateMin || albumPhotosActiveDateMax ? 1 : 0) + (albumPhotosDownloadFilter !== 'all' ? 1 : 0)
+  }, [albumPhotosActiveDateMin, albumPhotosActiveDateMax, albumPhotosDownloadFilter])
 
   useEffect(() => {
     if (userPhotos.length === 0) return
@@ -592,7 +593,6 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
               Filters{albumPhotosActiveFilterCount > 0 && <span style={ss.drawerBadge}>{albumPhotosActiveFilterCount}</span>}
             </button>
             <div style={{ flex: 1 }} />
-            <DownloadFilterSelect value={albumPhotosDownloadFilter} onChange={setAlbumPhotosDownloadFilter} />
             <div style={ss.segGroupDensity}>
               <button style={{ ...ss.densityBtn, ...(albumPhotosViewMode === 'list' ? ss.densityBtnActive : {}) }} onClick={() => { const m: AlbumViewMode = 'list'; setAlbumPhotosViewMode(m); saveAlbumViewMode(m) }}>
                 <ListIcon />
@@ -613,6 +613,10 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
           {/* More filters drawer */}
           {albumPhotosDrawerOpen && (
             <div style={{ ...ss.drawer, marginLeft: '-20px', marginRight: '-20px', paddingLeft: '20px', paddingRight: '20px' }}>
+              <div style={ss.drawerRow}>
+                <span style={ss.drawerLabel}>Downloaded</span>
+                <DownloadFilterSelect value={albumPhotosDownloadFilter} onChange={setAlbumPhotosDownloadFilter} />
+              </div>
               <div style={ss.drawerRow}>
                 <span style={ss.drawerLabel}>Date</span>
                 <div style={ss.segGroup}>
@@ -816,9 +820,6 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
                   {activeFilterCount > 0 && <span style={ss.drawerBadge}>{activeFilterCount}</span>}
                 </button>
 
-                {/* Download filter */}
-                <DownloadFilterSelect value={userDownloadFilter} onChange={setUserDownloadFilter} />
-
                 {/* Grid density + list toggle */}
                 <div style={ss.segGroupDensity}>
                   <button style={{ ...ss.densityBtn, ...(userPhotosViewMode === 'list' ? ss.densityBtnActive : {}) }} onClick={() => { const m: PhotoViewMode = 'list'; setUserPhotosViewMode(m); savePhotoViewMode(m) }}>
@@ -852,6 +853,11 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
               {/* More filters drawer */}
               {drawerOpen && (
                 <div style={ss.drawer}>
+                  {/* Downloaded */}
+                  <div style={ss.drawerRow}>
+                    <span style={ss.drawerLabel}>Downloaded</span>
+                    <DownloadFilterSelect value={userDownloadFilter} onChange={setUserDownloadFilter} />
+                  </div>
                   {/* Tags row */}
                   <div style={ss.drawerRow}>
                     <span style={ss.drawerLabel}>Tags</span>

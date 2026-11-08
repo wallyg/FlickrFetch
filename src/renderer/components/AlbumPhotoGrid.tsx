@@ -205,7 +205,7 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
   }, [mediaFilter, privacyFilter, downloadFilter, activeTitleQuery, activeTagQuery, activeDateMin, activeDateMax, photos.length, pageInfo?.page, pageInfo?.pages, loadingMore, loading, handleLoadMore])
 
   const hasAnyFilter = mediaFilter !== 'all' || privacyFilter !== 'all' || downloadFilter !== 'all' || !!activeTitleQuery || !!activeTagQuery || !!activeDateMin || !!activeDateMax
-  const drawerBadgeCount = (privacyFilter !== 'all' ? 1 : 0) + (activeTagQuery ? 1 : 0) + ((activeDateMin || activeDateMax) ? 1 : 0)
+  const drawerBadgeCount = (privacyFilter !== 'all' ? 1 : 0) + (activeTagQuery ? 1 : 0) + ((activeDateMin || activeDateMax) ? 1 : 0) + (downloadFilter !== 'all' ? 1 : 0)
   const showDateInputs = dateMode === 'since' || dateMode === 'between'
   const hasMore = pageInfo ? pageInfo.page < pageInfo.pages : false
 
@@ -274,8 +274,6 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
               )}
             </button>
 
-            <DownloadFilterSelect value={downloadFilter} onChange={setDownloadFilter} />
-
             <div style={styles.segGroupDensity}>
               <button style={{ ...styles.densityBtn, ...(viewMode === 'list' ? styles.densityBtnActive : {}) }} onClick={() => { const m: AlbumViewMode = 'list'; setViewMode(m); saveAlbumViewMode(m) }}>
                 <ListIcon />
@@ -300,6 +298,12 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
           {/* ── More filters drawer ── */}
           {drawerOpen && (
             <div style={styles.drawer}>
+
+              {/* Downloaded */}
+              <div style={styles.drawerRow}>
+                <span style={styles.drawerLabel}>Downloaded</span>
+                <DownloadFilterSelect value={downloadFilter} onChange={setDownloadFilter} />
+              </div>
 
               <div style={styles.drawerRow}>
                 <span style={styles.drawerLabel}>Privacy</span>
