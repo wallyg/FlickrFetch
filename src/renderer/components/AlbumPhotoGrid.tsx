@@ -268,7 +268,8 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
               style={{ ...styles.moreFiltersBtn, ...(drawerOpen ? styles.moreFiltersBtnActive : {}) }}
               onClick={() => setDrawerOpen(o => !o)}
             >
-              {drawerOpen ? 'Hide filters' : 'More filters'}
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" style={{ flexShrink: 0 }}><path d="M1 2h10L7 6v4l-2-1V6L1 2z"/></svg>
+              Filters
               {drawerBadgeCount > 0 && !drawerOpen && (
                 <span style={styles.drawerBadge}>{drawerBadgeCount}</span>
               )}
