@@ -676,7 +676,8 @@ async function runSelectedBatch(photos: { id: string; title: string }[], albumTi
     }
 
     if (zipMode && tempDir && downloadedCount > 0) {
-      const defaultZipName = baseTitle === 'Photostream' ? 'Photostream.zip' : safeBaseTitle + '.zip'
+      const dateStr = new Date().toISOString().slice(0, 10)
+      const defaultZipName = baseTitle === 'Photostream' ? `Photostream — ${dateStr}.zip` : safeBaseTitle + '.zip'
       const { filePath: chosenPath, canceled } = await dialog.showSaveDialog(mainWindow!, {
         defaultPath: join(downloadFolder, defaultZipName),
         filters: [{ name: 'ZIP Archives', extensions: ['zip'] }]
@@ -1054,8 +1055,9 @@ async function runPhotostreamBatch(albumTitle: string, track = true, smartMode?:
     }
 
     if (zipMode && tempDir && downloadedCount > 0) {
+      const dateStr = new Date().toISOString().slice(0, 10)
       const { filePath: chosenPath, canceled } = await dialog.showSaveDialog(mainWindow!, {
-        defaultPath: join(downloadFolder, 'Photostream.zip'),
+        defaultPath: join(downloadFolder, `Photostream — ${dateStr}.zip`),
         filters: [{ name: 'ZIP Archives', extensions: ['zip'] }]
       })
       if (!canceled && chosenPath) {
