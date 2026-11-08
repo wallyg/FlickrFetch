@@ -14,6 +14,9 @@ const changelog: Release[] = [
       'Search and filter your collections by name, just like Albums',
       'Download All Albums — queue every album in a collection with one tap; each album downloads into its own subfolder under the collection\'s folder',
       'Batch history now shows exactly which photos failed in past downloads — tap "failed" on any batch row to expand the list',
+      'List view for albums and collections — switch between grid and list with the density toggle; your preference sticks across the app',
+      'Discover People now has a Collections tab — browse any user\'s collection hierarchy, drill into sub-collections, and open albums, just like your own Collections tab',
+      'Fixed: collection mosaics now show photos from each sub-collection instead of repeating the same one',
     ]
   },
   {

@@ -2,7 +2,7 @@ import { app, BrowserWindow, ipcMain, shell, dialog, Menu, Notification } from '
 import { join } from 'path'
 import { readFileSync } from 'fs'
 import { startOAuthFlow, verifyOAuth, loadToken, clearToken } from './auth'
-import { getUserInfo, getPhotos, getPhotoSizes, getPhotoInfo, getPhotoExif, getAlbums, getAlbumPhotos, getPublicAlbumPhotos, getCollectionTree, resolveVideoUrl, getRecentlyUpdated, findDiscoverUser, getPublicPhotos, getUserPublicAlbums, getContacts, getUserGroups, getGroupPhotos, getInterestingness } from './flickr'
+import { getUserInfo, getPhotos, getPhotoSizes, getPhotoInfo, getPhotoExif, getAlbums, getAlbumPhotos, getPublicAlbumPhotos, getCollectionTree, getDiscoverCollectionTree, resolveVideoUrl, getRecentlyUpdated, findDiscoverUser, getPublicPhotos, getUserPublicAlbums, getContacts, getUserGroups, getGroupPhotos, getInterestingness } from './flickr'
 import { downloadPhoto, downloadToFolder } from './downloader'
 import { endExifTool } from './exiftool'
 import { loadSettings, saveSettings, resetSettings, ensureDownloadFolder } from './settings'
@@ -1002,6 +1002,12 @@ ipcMain.handle('discover:getUserAlbums', async (_event, nsid: string, page: numb
   const tokenData = loadToken()
   if (!tokenData) throw new Error('Not authenticated')
   return getUserPublicAlbums(nsid, tokenData, page)
+})
+
+ipcMain.handle('discover:getCollectionTree', async (_event, nsid: string) => {
+  const tokenData = loadToken()
+  if (!tokenData) throw new Error('Not authenticated')
+  return getDiscoverCollectionTree(nsid, tokenData)
 })
 
 ipcMain.handle('discover:getAlbumPhotos', async (_event, ownerNsid: string, albumId: string, page: number = 1) => {

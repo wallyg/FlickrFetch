@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
-import type { FlickrPhoto, FlickrAlbum, DiscoverUser, DiscoverContact, PhotoSearchParams, SearchOperator, DateRangeField, TagMode } from '../../shared/types'
+import type { FlickrPhoto, FlickrAlbum, FlickrCollection, DiscoverUser, DiscoverContact, PhotoSearchParams, SearchOperator, DateRangeField, TagMode } from '../../shared/types'
 import PhotoDetail from './PhotoDetail'
 import { AttributionNotice, DiscoverTile, DiscoverSelectBar } from './DiscoverExplore'
 import SmartDownloadButton from './SmartDownloadButton'
@@ -12,7 +12,7 @@ const ALBUM_COLUMNS: Record<GridSize, string> = {
 }
 
 type PeopleView = 'home' | 'user-photos' | 'user-albums' | 'album-photos' | 'photo-detail'
-type UserTab = 'photos' | 'albums'
+type UserTab = 'photos' | 'albums' | 'collections'
 
 export default function DiscoverPeople({ isActive }: { isActive: boolean }): React.JSX.Element {
   const [view, setView] = useState<PeopleView>('home')
@@ -48,6 +48,14 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
 
   // Detail view
   const [detailIndex, setDetailIndex] = useState<number | null>(null)
+
+  // Collections state
+  const [userCollections, setUserCollections] = useState<FlickrCollection[]>([])
+  const [collectionsLoading, setCollectionsLoading] = useState(false)
+  const [collectionsError, setCollectionsError] = useState<string | null>(null)
+  const [collectionsLoaded, setCollectionsLoaded] = useState(false)
+  const [activeDiscoverCollection, setActiveDiscoverCollection] = useState<FlickrCollection | null>(null)
+  const [collectionNavStack, setCollectionNavStack] = useState<FlickrCollection[]>([])
 
   // Multi-select for user photos
   const [userSelectMode, setUserSelectMode] = useState(false)
@@ -133,6 +141,12 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
     setUserTab('photos')
     setUserPhotos([])
     setUserAlbums([])
+    setUserCollections([])
+    setCollectionsLoading(false)
+    setCollectionsError(null)
+    setCollectionsLoaded(false)
+    setActiveDiscoverCollection(null)
+    setCollectionNavStack([])
     setPhotosPage(1)
     setPhotosPages(1)
     setPhotosError(null)
@@ -225,6 +239,21 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
       setAlbumsLoading(false)
     }
   }, [foundUser, albumsLoading])
+
+  const loadCollections = useCallback(async (): Promise<void> => {
+    if (!foundUser || collectionsLoading || collectionsLoaded) return
+    setCollectionsLoading(true)
+    setCollectionsError(null)
+    try {
+      const result = await window.flickrAPI.discoverGetCollectionTree(foundUser.nsid)
+      setUserCollections(result)
+      setCollectionsLoaded(true)
+    } catch (e) {
+      setCollectionsError(e instanceof Error ? e.message : 'Failed to load collections')
+    } finally {
+      setCollectionsLoading(false)
+    }
+  }, [foundUser, collectionsLoading, collectionsLoaded])
 
   const openAlbum = useCallback(async (album: FlickrAlbum): Promise<void> => {
     setActiveAlbum(album)
@@ -448,7 +477,7 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
         <div style={s.stickyHeader}>
           <div style={s.headerRow}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <button style={s.backBtn} onClick={() => { setView('user-photos'); setUserTab('albums'); setActiveAlbum(null) }}>
+              <button style={s.backBtn} onClick={() => { setView('user-photos'); setUserTab(activeDiscoverCollection !== null ? 'collections' : 'albums'); setActiveAlbum(null) }}>
                 ← {foundUser.realname || foundUser.username}
               </button>
               <div>
@@ -654,8 +683,12 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
             >Photos</button>
             <button
               style={{ ...s.userTabBtn, ...(userTab === 'albums' ? s.userTabActive : {}) }}
-              onClick={() => { setUserTab('albums'); loadAlbums() }}
+              onClick={() => { setUserTab('albums'); void loadAlbums() }}
             >Albums</button>
+            <button
+              style={{ ...s.userTabBtn, ...(userTab === 'collections' ? s.userTabActive : {}) }}
+              onClick={() => { setUserTab('collections'); void loadCollections() }}
+            >Collections</button>
           </div>
 
           {/* Photo toolbar — only in Photos tab */}
@@ -998,6 +1031,123 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
             )}
           </>
         )}
+
+        {userTab === 'collections' && (
+          <>
+            {activeDiscoverCollection !== null && (
+              <div style={s.collectionBreadcrumb}>
+                <button style={s.backBtn} onClick={() => {
+                  if (collectionNavStack.length === 0) {
+                    setActiveDiscoverCollection(null)
+                  } else {
+                    const prev = collectionNavStack[collectionNavStack.length - 1]
+                    setCollectionNavStack(st => st.slice(0, -1))
+                    setActiveDiscoverCollection(prev)
+                  }
+                }}>
+                  ← {collectionNavStack.length === 0 ? 'Collections' : collectionNavStack[collectionNavStack.length - 1].title}
+                </button>
+                <span style={s.collectionBreadcrumbTitle}>{activeDiscoverCollection.title}</span>
+              </div>
+            )}
+            {collectionsLoading && <div style={s.loadingState}>Loading collections…</div>}
+            {collectionsError && <div style={s.errorState}>{collectionsError}</div>}
+            {!collectionsLoading && !collectionsError && collectionsLoaded && userCollections.length === 0 && activeDiscoverCollection === null && (
+              <div style={s.emptyState}>No public collections.</div>
+            )}
+            {activeDiscoverCollection === null && userCollections.length > 0 && (
+              <div style={s.collectionGrid}>
+                {userCollections.map(col => (
+                  <DiscoverCollCard key={col.id} col={col} onClick={() => setActiveDiscoverCollection(col)} />
+                ))}
+              </div>
+            )}
+            {activeDiscoverCollection !== null && (() => {
+              const col = activeDiscoverCollection
+              const hasSubColls = col.collections.length > 0
+              const hasSets = col.sets.length > 0
+              if (!hasSubColls && !hasSets) {
+                return <div style={s.emptyState}>This collection is empty.</div>
+              }
+              return (
+                <>
+                  {hasSubColls && (
+                    <section>
+                      {hasSets && <p style={s.collectionSectionLabel}>Sub-collections</p>}
+                      <div style={s.collectionGrid}>
+                        {col.collections.map(sub => (
+                          <DiscoverCollCard key={sub.id} col={sub} onClick={() => {
+                            setCollectionNavStack(prev => [...prev, col])
+                            setActiveDiscoverCollection(sub)
+                          }} />
+                        ))}
+                      </div>
+                    </section>
+                  )}
+                  {hasSets && (
+                    <section>
+                      <div style={s.collectionAlbumsHeader}>
+                        {hasSubColls && <p style={{ ...s.collectionSectionLabel, margin: 0 }}>Albums</p>}
+                        <div style={s.collectionSizerGroup}>
+                          <button
+                            style={{ ...ss.densityBtn, ...(albumsViewMode === 'list' ? ss.densityBtnActive : {}) }}
+                            onClick={() => { setAlbumsViewMode('list'); saveAlbumViewMode('list') }}
+                            title="List view"
+                          ><ListIcon /></button>
+                          {(['small', 'medium', 'large'] as GridSize[]).map(v => (
+                            <button key={v}
+                              style={{ ...ss.densityBtn, ...(albumsViewMode === v ? ss.densityBtnActive : {}) }}
+                              onClick={() => { setAlbumsViewMode(v as AlbumViewMode); saveAlbumViewMode(v as AlbumViewMode) }}
+                              title={v === 'small' ? 'Small grid' : v === 'medium' ? 'Medium grid' : 'Large grid'}
+                            ><GridIcon size={v as GridSize} /></button>
+                          ))}
+                        </div>
+                      </div>
+                      {albumsViewMode === 'list' ? (
+                        <div style={s.albumListContainer}>
+                          {col.sets.map(set => (
+                            <button key={set.id} style={s.albumListRow}
+                              onClick={() => openAlbum({ id: set.id, title: set.title, description: set.description, photoCount: 0, videoCount: 0, coverPhotoUrl: set.coverPhotoUrl ?? '' })}
+                            >
+                              <div style={s.albumListThumb}>
+                                {set.coverPhotoUrl
+                                  ? <img src={set.coverPhotoUrl} alt="" style={s.albumListThumbImg} loading="lazy" />
+                                  : <div style={s.albumCoverPlaceholder} />
+                                }
+                              </div>
+                              <div style={s.albumListInfo}>
+                                <span style={s.albumTitle}>{set.title}</span>
+                              </div>
+                              <span style={s.albumListChevron}>›</span>
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <div style={{ ...s.albumGrid, gridTemplateColumns: ALBUM_COLUMNS[albumsViewMode as GridSize] }}>
+                          {col.sets.map(set => (
+                            <div key={set.id} style={s.albumCard}
+                              onClick={() => openAlbum({ id: set.id, title: set.title, description: set.description, photoCount: 0, videoCount: 0, coverPhotoUrl: set.coverPhotoUrl ?? '' })}
+                            >
+                              <div style={s.albumCover}>
+                                {set.coverPhotoUrl
+                                  ? <img src={set.coverPhotoUrl} alt="" style={s.albumCoverImg} loading="lazy" />
+                                  : <div style={s.albumCoverPlaceholder} />
+                                }
+                              </div>
+                              <div style={s.albumInfo}>
+                                <span style={s.albumTitle}>{set.title}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </section>
+                  )}
+                </>
+              )
+            })()}
+          </>
+        )}
       </div>
     )
   }
@@ -1069,6 +1219,50 @@ function ContactCard({ contact, onClick }: { contact: DiscoverContact; onClick: 
       <span style={s.contactName}>{contact.realname || contact.username}</span>
       {contact.realname && <span style={s.contactHandle}>@{contact.username}</span>}
     </div>
+  )
+}
+
+function CollectionStackIcon(): React.JSX.Element {
+  return (
+    <svg width="54" height="44" viewBox="0 0 54 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="14" y="14" width="38" height="28" rx="5" fill="#9e9a93" stroke="rgba(0,0,0,0.12)" strokeWidth="1.5"/>
+      <rect x="8"  y="8"  width="38" height="28" rx="5" fill="#c2bdb6" stroke="rgba(0,0,0,0.10)" strokeWidth="1.5"/>
+      <rect x="2"  y="2"  width="38" height="28" rx="5" fill="#ffffff" stroke="rgba(0,0,0,0.12)" strokeWidth="1.5"/>
+    </svg>
+  )
+}
+
+function DiscoverCollCard({ col, onClick }: { col: FlickrCollection; onClick: () => void }): React.JSX.Element {
+  const [hovered, setHovered] = useState(false)
+  const albumCount = col.sets.length
+  const subCount = col.collections.length
+  const hasCover = col.coverUrls && col.coverUrls.length > 0
+  return (
+    <button
+      style={{ ...s.collectionCard, ...(hovered ? s.collectionCardHover : {}) }}
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <div style={s.collectionIconArea}>
+        {hasCover ? (
+          <div style={s.collectionCollage}>
+            {[0, 1, 2, 3].map(i => col.coverUrls[i % col.coverUrls.length]).map((url, i) => (
+              <img key={i} src={url} alt="" style={s.collectionCollageCell} />
+            ))}
+          </div>
+        ) : (
+          <CollectionStackIcon />
+        )}
+      </div>
+      <div style={s.collectionCardInfo}>
+        <span style={s.collectionCardTitle}>{col.title}</span>
+        <div style={s.collectionChips}>
+          {albumCount > 0 && <span style={s.collectionChip}>{albumCount} album{albumCount !== 1 ? 's' : ''}</span>}
+          {subCount > 0 && <span style={s.collectionChip}>{subCount} sub-collection{subCount !== 1 ? 's' : ''}</span>}
+        </div>
+      </div>
+    </button>
   )
 }
 
@@ -1162,4 +1356,20 @@ const s: Record<string, React.CSSProperties> = {
   loadingState: { textAlign: 'center', color: '#888', fontSize: '14px', paddingTop: '48px' },
   errorState: { textAlign: 'center', color: '#c0392b', fontSize: '14px', paddingTop: '48px' },
   emptyState: { textAlign: 'center', color: '#888', fontSize: '14px', paddingTop: '48px' },
+  // Collections tab
+  collectionGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px', marginBottom: '16px' },
+  collectionCard: { display: 'block', width: '100%', background: '#fff', border: '1px solid #e8e4de', borderRadius: '12px', overflow: 'hidden', cursor: 'pointer', textAlign: 'left' as const, padding: 0 },
+  collectionCardHover: { background: '#faf8f5' },
+  collectionIconArea: { width: '100%', aspectRatio: '1', background: '#f0ede8', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' as const },
+  collectionCollage: { position: 'absolute' as const, inset: 0, display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr' },
+  collectionCollageCell: { width: '100%', height: '100%', objectFit: 'cover' as const, display: 'block' },
+  collectionCardInfo: { padding: '10px 12px', display: 'flex', flexDirection: 'column' as const, gap: '5px' },
+  collectionCardTitle: { fontSize: '13px', fontWeight: 600, color: '#111', whiteSpace: 'nowrap' as const, overflow: 'hidden', textOverflow: 'ellipsis' },
+  collectionChips: { display: 'flex', gap: '5px', flexWrap: 'wrap' as const },
+  collectionChip: { fontSize: '11px', color: '#999', background: '#f5f2ee', borderRadius: '4px', padding: '2px 6px' },
+  collectionSectionLabel: { fontSize: '11px', fontWeight: 600, color: '#aaa', textTransform: 'uppercase' as const, letterSpacing: '0.06em', margin: '0 0 12px 0' },
+  collectionAlbumsHeader: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' },
+  collectionSizerGroup: { display: 'flex', gap: '2px', marginLeft: 'auto' },
+  collectionBreadcrumb: { display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '4px' },
+  collectionBreadcrumbTitle: { fontSize: '14px', color: '#888' },
 }

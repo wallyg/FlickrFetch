@@ -622,6 +622,41 @@ export async function findDiscoverUser(query: string, tokenData: FlickrTokenData
   }
 }
 
+export async function getDiscoverCollectionTree(nsid: string, tokenData: FlickrTokenData): Promise<FlickrCollection[]> {
+  const treeUrl =
+    `${FLICKR_API_BASE}` +
+    `?method=flickr.collections.getTree` +
+    `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
+    `&user_id=${encodeURIComponent(nsid)}` +
+    `&format=json` +
+    `&nojsoncallback=1`
+
+  const authHeader = getOAuthHeader(treeUrl, 'GET', tokenData)
+  const response = await axios.get(treeUrl, {
+    headers: { ...authHeader, 'User-Agent': USER_AGENT }
+  })
+
+  if (response.data.stat !== 'ok') {
+    throw new Error(`Flickr API error: ${response.data.message ?? 'unknown error'}`)
+  }
+
+  const topLevel = (response.data.collections?.collection as Record<string, unknown>[] | undefined) ?? []
+  const tree = topLevel.map(parseCollection)
+
+  try {
+    const first = await getUserPublicAlbums(nsid, tokenData, 1)
+    const allAlbums = [...first.albums]
+    for (let p = 2; p <= first.pages; p++) {
+      const next = await getUserPublicAlbums(nsid, tokenData, p)
+      allAlbums.push(...next.albums)
+    }
+    const coverMap = new Map<string, string>(allAlbums.map((a) => [a.id, a.coverPhotoUrl]))
+    return enrichCollectionCovers(tree, coverMap)
+  } catch {
+    return tree
+  }
+}
+
 export async function getPublicPhotos(nsid: string, tokenData: FlickrTokenData, page: number = 1, sort: string = 'date-posted-desc', search?: PhotoSearchParams): Promise<PhotoPage> {
   let url = `${FLICKR_API_BASE}?method=flickr.photos.search` +
     `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
