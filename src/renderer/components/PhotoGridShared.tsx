@@ -55,7 +55,7 @@ export const DOWNLOAD_FILTER_NEXT: Record<DownloadFilter, DownloadFilter> = {
   'downloaded': 'all',
 }
 export const DOWNLOAD_FILTER_LABEL: Record<DownloadFilter, string> = {
-  'all': 'All',
+  'all': 'Status: All',
   'not-downloaded': 'Not downloaded',
   'downloaded': 'Downloaded',
 }
@@ -114,8 +114,13 @@ export function PhotoListRow({ photo, isDownloaded, isSelected, selectMode, onCl
       {privacyLevel !== 'public' && (
         <span style={{ flexShrink: 0 }}><PrivacyIcon level={privacyLevel} /></span>
       )}
-      <span style={{ fontSize: '13px', color: isDownloaded ? '#22a85d' : '#ddd', flexShrink: 0, width: 16, textAlign: 'center' as const }}>
-        {isDownloaded ? '✓' : '—'}
+      <span style={{ flexShrink: 0, width: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {isDownloaded && (
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M7 1v8M4 6.5l3 3 3-3" stroke="#22a85d" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M2 11.5h10" stroke="#22a85d" strokeWidth="1.8" strokeLinecap="round"/>
+          </svg>
+        )}
       </span>
     </div>
   )
