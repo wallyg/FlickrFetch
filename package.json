@@ -1,12 +1,13 @@
 {
   "name": "flickr-fetch",
   "productName": "FlickrFetch",
-  "version": "2.4.0",
+  "version": "3.0.0",
   "description": "Mac desktop app to download photos from Flickr",
   "main": "out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
-    "build": "rm -rf dist out && electron-vite build && electron-builder",
+    "build": "rm -rf dist out && electron-vite build && electron-builder --publish always",
+    "build:local": "rm -rf dist out && electron-vite build && electron-builder",
     "preview": "electron-vite preview",
     "pack": "electron-builder --dir",
     "clean": "rm -rf out dist"

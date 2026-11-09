@@ -105,22 +105,24 @@ export default function DiscoverGroups(): React.JSX.Element {
   if (view === 'pool' && activeGroup) {
     if (detailIndex !== null && poolPhotos[detailIndex]) {
       return (
-        <PhotoDetail
-          photo={poolPhotos[detailIndex]}
-          index={detailIndex}
-          total={poolPhotos.length}
-          hasMore={poolPage < poolPages}
-          canGoPrev={detailIndex > 0}
-          canGoNext={detailIndex < poolPhotos.length - 1 || poolPage < poolPages}
-          onPrev={() => setDetailIndex(d => (d !== null && d > 0 ? d - 1 : d))}
-          onNext={() => {
-            if (detailIndex < poolPhotos.length - 1) setDetailIndex(detailIndex + 1)
-            else { loadMorePool().then(() => setDetailIndex(di => di !== null ? di + 1 : di)) }
-          }}
-          onClose={() => setDetailIndex(null)}
-          sourceName={activeGroup.name}
-          discoverMode
-        />
+        <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
+          <PhotoDetail
+            photo={poolPhotos[detailIndex]}
+            index={detailIndex}
+            total={poolPhotos.length}
+            hasMore={poolPage < poolPages}
+            canGoPrev={detailIndex > 0}
+            canGoNext={detailIndex < poolPhotos.length - 1 || poolPage < poolPages}
+            onPrev={() => setDetailIndex(d => (d !== null && d > 0 ? d - 1 : d))}
+            onNext={() => {
+              if (detailIndex < poolPhotos.length - 1) setDetailIndex(detailIndex + 1)
+              else { loadMorePool().then(() => setDetailIndex(di => di !== null ? di + 1 : di)) }
+            }}
+            onClose={() => setDetailIndex(null)}
+            sourceName={activeGroup.name}
+            discoverMode
+          />
+        </div>
       )
     }
 

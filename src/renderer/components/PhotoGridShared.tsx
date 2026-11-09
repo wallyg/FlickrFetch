@@ -5,7 +5,7 @@ import type { FlickrPhoto } from '../../shared/types'
 export type MediaFilter = 'all' | 'photo' | 'video'
 export type GridSize = 'small' | 'medium' | 'large'
 export type AlbumViewMode = GridSize | 'list'
-export type PhotoViewMode = GridSize | 'list'
+export type PhotoViewMode = 'justified' | 'list'
 export type DownloadFilter = 'all' | 'not-downloaded' | 'downloaded'
 export type PrivacyFilter = 'all' | 'public' | 'friends' | 'family' | 'friendsFamily' | 'private'
 export type PrivacyLevel = 'public' | 'friends' | 'family' | 'friendsFamily' | 'private'
@@ -41,11 +41,86 @@ export function saveAlbumViewMode(mode: AlbumViewMode): void {
 // ── Photo grid view mode persistence ─────────────────────────────────────────
 const PHOTO_VIEW_KEY = 'ff-photo-view-mode'
 export function loadPhotoViewMode(): PhotoViewMode {
-  try { const v = localStorage.getItem(PHOTO_VIEW_KEY); if (v === 'list' || v === 'small' || v === 'medium' || v === 'large') return v } catch { /* ignore */ }
-  return 'medium'
+  try {
+    const v = localStorage.getItem(PHOTO_VIEW_KEY)
+    if (v === 'list') return 'list'
+    // Migrate old grid-size values to 'justified'
+  } catch { /* ignore */ }
+  return 'justified'
 }
 export function savePhotoViewMode(mode: PhotoViewMode): void {
   try { localStorage.setItem(PHOTO_VIEW_KEY, mode) } catch { /* ignore */ }
+}
+
+// ── Row height persistence (for justified grid) ───────────────────────────────
+const ROW_HEIGHT_KEY = 'ff-justified-row-height'
+export const ROW_HEIGHT_DEFAULT = 180
+export function loadRowHeight(): number {
+  try {
+    const v = localStorage.getItem(ROW_HEIGHT_KEY)
+    if (v) { const n = Number(v); if (!isNaN(n) && n >= 100 && n <= 300) return n }
+  } catch { /* ignore */ }
+  return ROW_HEIGHT_DEFAULT
+}
+export function saveRowHeight(h: number): void {
+  try { localStorage.setItem(ROW_HEIGHT_KEY, String(h)) } catch { /* ignore */ }
+}
+
+// ── Justified grid layout algorithm ──────────────────────────────────────────
+export interface JustifiedRow {
+  photos: FlickrPhoto[]
+  widths: number[]
+  height: number
+}
+
+export function computeJustifiedRows(
+  photos: FlickrPhoto[],
+  containerWidth: number,
+  targetHeight: number,
+  gap: number = 4
+): JustifiedRow[] {
+  if (containerWidth <= 0 || photos.length === 0) return []
+  const rows: JustifiedRow[] = []
+  let rowPhotos: FlickrPhoto[] = []
+  let rowAspects: number[] = []
+  let rowPhotoWidthSum = 0
+
+  for (const photo of photos) {
+    const ar = photo.width_m && photo.height_m && photo.height_m > 0
+      ? photo.width_m / photo.height_m : 1
+    const photoWidth = ar * targetHeight
+    const N = rowPhotos.length
+    const wouldBePhotoWidths = rowPhotoWidthSum + photoWidth
+    const wouldBeGaps = N * gap
+    const wouldBeTotal = wouldBePhotoWidths + wouldBeGaps
+
+    if (N > 0 && wouldBeTotal > containerWidth) {
+      const totalGapWidth = (N - 1) * gap
+      const scale = (containerWidth - totalGapWidth) / rowPhotoWidthSum
+      rows.push({
+        photos: [...rowPhotos],
+        widths: rowAspects.map(a => a * targetHeight * scale),
+        height: targetHeight * scale
+      })
+      rowPhotos = [photo]
+      rowAspects = [ar]
+      rowPhotoWidthSum = photoWidth
+    } else {
+      rowPhotos.push(photo)
+      rowAspects.push(ar)
+      rowPhotoWidthSum += photoWidth
+    }
+  }
+
+  if (rowPhotos.length > 0) {
+    rows.push({
+      photos: rowPhotos,
+      widths: rowAspects.map(a => a * targetHeight),
+      height: targetHeight
+    })
+  }
+
+  return rows
 }
 
 // ── Download filter cycling ───────────────────────────────────────────────────
@@ -134,6 +209,19 @@ export function ListIcon(): React.JSX.Element {
       <rect x="0" y="1.5" width="14" height="2" rx="0.8"/>
       <rect x="0" y="6" width="14" height="2" rx="0.8"/>
       <rect x="0" y="10.5" width="14" height="2" rx="0.8"/>
+    </svg>
+  )
+}
+
+export function JustifiedIcon(): React.JSX.Element {
+  return (
+    <svg width="16" height="14" viewBox="0 0 16 14" fill="currentColor">
+      <rect x="0" y="0" width="9" height="4" rx="0.6"/>
+      <rect x="10" y="0" width="6" height="4" rx="0.6"/>
+      <rect x="0" y="5" width="5" height="4" rx="0.6"/>
+      <rect x="6" y="5" width="10" height="4" rx="0.6"/>
+      <rect x="0" y="10" width="7" height="4" rx="0.6"/>
+      <rect x="8" y="10" width="8" height="4" rx="0.6"/>
     </svg>
   )
 }
@@ -283,9 +371,10 @@ export const sharedStyles: Record<string, React.CSSProperties> = {
   seg: { background: 'none', border: 'none', borderRight: '1px solid #ddd', padding: '5px 10px', fontSize: '12px', color: '#666', cursor: 'pointer', lineHeight: 1 },
   segActive: { backgroundColor: '#111', color: '#fff', fontWeight: '600' },
   sortSelect: { fontSize: '12px', color: '#555', border: '1px solid #ddd', borderRadius: '6px', padding: '5px 8px', background: 'none', cursor: 'pointer' },
-  segGroupDensity: { display: 'flex', gap: '2px', marginLeft: 'auto' },
+  segGroupDensity: { display: 'flex', alignItems: 'center', gap: '2px', marginLeft: 'auto' },
   densityBtn: { background: 'none', border: 'none', padding: '4px 5px', cursor: 'pointer', borderRadius: '5px', display: 'flex', alignItems: 'center', color: '#bbb' },
   densityBtnActive: { backgroundColor: '#ece8e2', color: '#333' },
+  rowHeightSlider: { width: '72px', height: '3px', cursor: 'pointer', accentColor: 'var(--ff-blue)', margin: '0 4px' },
   moreFiltersBtn: { display: 'flex', alignItems: 'center', gap: '4px', background: 'none', border: '1px solid #ddd', borderRadius: '6px', padding: '5px 10px', fontSize: '12px', color: '#555', cursor: 'pointer' },
   moreFiltersBtnActive: { backgroundColor: '#111', color: '#fff', borderColor: '#111' },
   drawerBadge: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--ff-pink)', color: '#fff', borderRadius: '50%', width: '14px', height: '14px', fontSize: '9px', fontWeight: '700' },

@@ -1,6 +1,17 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import React, { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from 'react'
 import type { FlickrPhoto, PhotoPage, SearchOperator, DateRangeField, TagMode } from '../../shared/types'
-import { MediaFilter, GridSize, AlbumViewMode, DownloadFilter, PrivacyFilter, PrivacyLevel, PRIVACY_OPTIONS, PRIVACY_LABELS, GRID_COLUMNS, GridIcon, ListIcon, PrivacyIcon, Chip, Tooltip, PhotoListRow, DownloadFilterSelect, getPrivacyLevel, sharedStyles, DateMode, getPresetDates, formatDateChip, loadAlbumViewMode, saveAlbumViewMode, DOWNLOAD_FILTER_LABEL } from './PhotoGridShared'
+import { MediaFilter, DownloadFilter, PrivacyFilter, PrivacyLevel, PRIVACY_OPTIONS, PRIVACY_LABELS, JustifiedIcon, ListIcon, PrivacyIcon, Chip, Tooltip, PhotoListRow, DownloadFilterSelect, getPrivacyLevel, sharedStyles, DateMode, getPresetDates, formatDateChip, loadRowHeight, saveRowHeight, computeJustifiedRows, DOWNLOAD_FILTER_LABEL } from './PhotoGridShared'
+
+type AlbumPhotoViewMode = 'justified' | 'list'
+
+const ALBUM_PHOTO_VIEW_KEY = 'ff-album-photo-view'
+function loadAlbumPhotoViewMode(): AlbumPhotoViewMode {
+  try { const v = localStorage.getItem(ALBUM_PHOTO_VIEW_KEY); if (v === 'list') return 'list' } catch { /* ignore */ }
+  return 'justified'
+}
+function saveAlbumPhotoViewMode(m: AlbumPhotoViewMode): void {
+  try { localStorage.setItem(ALBUM_PHOTO_VIEW_KEY, m) } catch { /* ignore */ }
+}
 
 type SortOrder = 'album-order' | 'newest-posted' | 'oldest-posted' | 'date-desc' | 'date-asc'
 
@@ -27,13 +38,14 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
 
   const [sort, setSort] = useState<SortOrder>('album-order')
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>('all')
-  const [viewMode, setViewMode] = useState<AlbumViewMode>(loadAlbumViewMode)
+  const [viewMode, setViewMode] = useState<AlbumPhotoViewMode>(loadAlbumPhotoViewMode)
   const [privacyFilter, setPrivacyFilter] = useState<PrivacyFilter>('all')
   const [downloadFilter, setDownloadFilter] = useState<DownloadFilter>('all')
   const [downloadRecords, setDownloadRecords] = useState<Record<string, true>>({})
   const [drawerOpen, setDrawerOpen] = useState(false)
-
-  const gridSize: GridSize = viewMode === 'list' ? 'medium' : viewMode
+  const [rowHeight, setRowHeight] = useState<number>(loadRowHeight)
+  const [containerWidth, setContainerWidth] = useState(0)
+  const gridContainerRef = useRef<HTMLDivElement>(null)
 
   // All filters are client-side — album API doesn't support server-side search
   const [titleQuery, setTitleQuery] = useState('')
@@ -204,6 +216,27 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
     }
   }, [mediaFilter, privacyFilter, downloadFilter, activeTitleQuery, activeTagQuery, activeDateMin, activeDateMax, photos.length, pageInfo?.page, pageInfo?.pages, loadingMore, loading, handleLoadMore])
 
+  useLayoutEffect(() => {
+    if (gridContainerRef.current) {
+      setContainerWidth(Math.round(gridContainerRef.current.getBoundingClientRect().width))
+    }
+  }, [])
+
+  useEffect(() => {
+    const el = gridContainerRef.current
+    if (!el) return
+    const obs = new ResizeObserver(([entry]) => {
+      setContainerWidth(Math.round(entry.contentRect.width))
+    })
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+
+  const justifiedRows = useMemo(() => {
+    if (viewMode === 'list' || containerWidth === 0) return null
+    return computeJustifiedRows(filteredPhotos, containerWidth, rowHeight)
+  }, [filteredPhotos, containerWidth, rowHeight, viewMode])
+
   const hasAnyFilter = mediaFilter !== 'all' || privacyFilter !== 'all' || downloadFilter !== 'all' || !!activeTitleQuery || !!activeTagQuery || !!activeDateMin || !!activeDateMax
   const drawerBadgeCount = (privacyFilter !== 'all' ? 1 : 0) + (activeTagQuery ? 1 : 0) + ((activeDateMin || activeDateMax) ? 1 : 0) + (downloadFilter !== 'all' ? 1 : 0)
   const showDateInputs = dateMode === 'since' || dateMode === 'between'
@@ -215,6 +248,7 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
 
   return (
     <div style={styles.container}>
+      <style>{`@keyframes ff-pop { 0% { transform: scale(0.5); opacity: 0 } 65% { transform: scale(1.2) } 100% { transform: scale(1); opacity: 1 } }`}</style>
       {selectMode && (mediaFilter !== 'all' || privacyFilter !== 'all' || downloadFilter !== 'all' || !!activeTitleQuery || !!activeTagQuery || !!activeDateMin || !!activeDateMax) && (
         <div style={styles.selectModeCount}>
           {filteredPhotos.length.toLocaleString()} matching · {photos.length.toLocaleString()} of {pageInfo?.total.toLocaleString() ?? '?'} loaded
@@ -276,14 +310,21 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
             </button>
 
             <div style={styles.segGroupDensity}>
-              <button style={{ ...styles.densityBtn, ...(viewMode === 'list' ? styles.densityBtnActive : {}) }} onClick={() => { const m: AlbumViewMode = 'list'; setViewMode(m); saveAlbumViewMode(m) }}>
+              <button style={{ ...styles.densityBtn, ...(viewMode === 'list' ? styles.densityBtnActive : {}) }} onClick={() => { const m: AlbumPhotoViewMode = 'list'; setViewMode(m); saveAlbumPhotoViewMode(m) }}>
                 <ListIcon />
               </button>
-              {(['small', 'medium', 'large'] as GridSize[]).map(v => (
-                <button key={v} style={{ ...styles.densityBtn, ...(viewMode === v ? styles.densityBtnActive : {}) }} onClick={() => { setViewMode(v); saveAlbumViewMode(v) }}>
-                  <GridIcon size={v} />
-                </button>
-              ))}
+              <button style={{ ...styles.densityBtn, ...(viewMode === 'justified' ? styles.densityBtnActive : {}) }} onClick={() => { const m: AlbumPhotoViewMode = 'justified'; setViewMode(m); saveAlbumPhotoViewMode(m) }}>
+                <JustifiedIcon />
+              </button>
+              {viewMode === 'justified' && (
+                <input
+                  type="range" min={100} max={300} step={5}
+                  value={rowHeight}
+                  onChange={e => { const v = Number(e.target.value); setRowHeight(v); saveRowHeight(v) }}
+                  style={styles.rowHeightSlider}
+                  title={`Row height: ${rowHeight}px`}
+                />
+              )}
             </div>
 
             <select style={styles.sortSelect} value={sort} onChange={e => setSort(e.target.value as SortOrder)}>
@@ -440,64 +481,77 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
           ))}
         </div>
       ) : (
-        <div style={{ ...styles.grid, gridTemplateColumns: GRID_COLUMNS[gridSize] }}>
-          {filteredPhotos.map((photo) => {
-            const isSelected = selectMode && (selectedIds?.has(photo.id) ?? false)
-            const privacyLevel = getPrivacyLevel(photo)
-            return (
-              <div
-                key={photo.id}
-                style={{
-                  ...styles.tile,
-                  ...(isSelected ? { outline: '3px solid var(--ff-pink)', outlineOffset: '-3px', zIndex: 1 } : {}),
-                  ...(selectMode && !isSelected ? { opacity: 0.75 } : {})
-                }}
-                onClick={(e) => selectMode ? onToggleSelect?.(photo, e.shiftKey) : onPhotoSelect(photo)}
-                onMouseEnter={() => setHoveredId(photo.id)}
-                onMouseLeave={() => setHoveredId(null)}
-              >
-                <img src={photo.thumbnailUrl} alt={photo.title} style={styles.thumb} loading="lazy" />
-                {photo.media === 'video' && (
-                  <div style={styles.videoOverlay}>
-                    <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
-                      <circle cx="15" cy="15" r="15" fill="rgba(0,0,0,0.52)"/>
-                      <polygon points="12,9 23,15 12,21" fill="white"/>
-                    </svg>
+        <div ref={gridContainerRef} style={styles.justifiedContainer}>
+          {justifiedRows && justifiedRows.map((row, ri) => (
+            <div key={ri} style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
+              {row.photos.map((photo, pi) => {
+                const isSelected = selectMode && (selectedIds?.has(photo.id) ?? false)
+                const privacyLevel = getPrivacyLevel(photo)
+                return (
+                  <div
+                    key={photo.id}
+                    style={{
+                      position: 'relative',
+                      width: `${row.widths[pi]}px`,
+                      height: `${row.height}px`,
+                      flexShrink: 0,
+                      overflow: 'hidden',
+                      borderRadius: '2px',
+                      cursor: 'pointer',
+                      transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                      ...(isSelected ? { outline: '3px solid var(--ff-pink)', outlineOffset: '-3px', zIndex: 1 } : {}),
+                      ...(selectMode && !isSelected ? { opacity: 0.75 } : {}),
+                      ...(!selectMode && hoveredId === photo.id ? { transform: 'scale(1.015)', boxShadow: '0 4px 16px rgba(0,0,0,0.18)', zIndex: 2 } : {})
+                    }}
+                    onClick={(e) => selectMode ? onToggleSelect?.(photo, e.shiftKey) : onPhotoSelect(photo)}
+                    onMouseEnter={() => setHoveredId(photo.id)}
+                    onMouseLeave={() => setHoveredId(null)}
+                  >
+                    <img
+                      src={photo.url_m || photo.thumbnailUrl}
+                      alt={photo.title}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                      loading="lazy"
+                    />
+                    {photo.media === 'video' && (
+                      <div style={styles.videoOverlay}>
+                        <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
+                          <circle cx="15" cy="15" r="15" fill="rgba(0,0,0,0.52)"/>
+                          <polygon points="12,9 23,15 12,21" fill="white"/>
+                        </svg>
+                      </div>
+                    )}
+                    {privacyLevel !== 'public' && (
+                      <div style={styles.privacyBadge}>
+                        <PrivacyIcon level={privacyLevel} />
+                      </div>
+                    )}
+                    {!selectMode && downloadRecords[photo.id] && (
+                      <div style={styles.downloadBadge}>
+                        <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M1.5 5.5l2.5 2.5 4.5-4.5"/>
+                        </svg>
+                      </div>
+                    )}
+                    {!selectMode && (
+                      <div style={{ ...styles.overlay, opacity: hoveredId === photo.id ? 1 : 0, background: hoveredId === photo.id ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0)' }}>
+                        <span style={styles.overlayTitle}>{photo.title}</span>
+                      </div>
+                    )}
+                    {selectMode && (
+                      <div style={{
+                        ...styles.selectBadge,
+                        backgroundColor: isSelected ? 'var(--ff-pink)' : 'rgba(255,255,255,0.75)',
+                        border: isSelected ? '2px solid var(--ff-pink)' : '2px solid rgba(255,255,255,0.9)'
+                      }}>
+                        {isSelected && <span style={{ ...styles.selectCheck, animation: 'ff-pop 0.18s ease-out' }}>✓</span>}
+                      </div>
+                    )}
                   </div>
-                )}
-                {privacyLevel !== 'public' && (
-                  <div style={styles.privacyBadge}>
-                    <PrivacyIcon level={privacyLevel} />
-                  </div>
-                )}
-                {!selectMode && downloadRecords[photo.id] && (
-                  <div style={styles.downloadBadge}>
-                    <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M1.5 5.5l2.5 2.5 4.5-4.5"/>
-                    </svg>
-                  </div>
-                )}
-                {!selectMode && (
-                  <div style={{
-                    ...styles.overlay,
-                    opacity: hoveredId === photo.id ? 1 : 0,
-                    background: hoveredId === photo.id ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0)'
-                  }}>
-                    <span style={styles.overlayTitle}>{photo.title}</span>
-                  </div>
-                )}
-                {selectMode && (
-                  <div style={{
-                    ...styles.selectBadge,
-                    backgroundColor: isSelected ? 'var(--ff-pink)' : 'rgba(255,255,255,0.75)',
-                    border: isSelected ? '2px solid var(--ff-pink)' : '2px solid rgba(255,255,255,0.9)'
-                  }}>
-                    {isSelected && <span style={styles.selectCheck}>✓</span>}
-                  </div>
-                )}
-              </div>
-            )
-          })}
+                )
+              })}
+            </div>
+          ))}
         </div>
       )}
 
@@ -517,10 +571,11 @@ const styles: Record<string, React.CSSProperties> = {
   // Album-specific
   container: { height: '100%', overflowY: 'auto', display: 'flex', flexDirection: 'column' },
   grid: { display: 'grid', gap: '4px', padding: '4px' },
+  justifiedContainer: { padding: '4px' },
   // Album tile uses opacity transition for hover overlay; PhotoGrid conditionally renders its overlay instead
   overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'flex-end', padding: '8px', opacity: 0, transition: 'opacity 0.15s' },
   overlayTitle: { color: '#fff', fontSize: '12px', fontWeight: '500', textShadow: '0 1px 3px rgba(0,0,0,0.8)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', width: '100%' } as React.CSSProperties,
-  downloadBadge: { position: 'absolute', top: '5px', right: '5px', width: '18px', height: '18px', borderRadius: '50%', backgroundColor: 'rgba(34,168,93,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 },
+  downloadBadge: { position: 'absolute', bottom: '6px', right: '6px', width: '16px', height: '16px', borderRadius: '50%', backgroundColor: 'rgba(34,168,93,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2, boxShadow: '0 0 0 1.5px rgba(255,255,255,0.9), 0 1px 4px rgba(0,0,0,0.12)' },
   loadMore: { padding: '16px', textAlign: 'center' },
   loadMoreBtn: { background: 'transparent', border: '1px solid #ccc', borderRadius: '6px', padding: '8px 20px', fontSize: '13px', color: '#555', cursor: 'pointer' },
 }

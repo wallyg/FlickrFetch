@@ -247,7 +247,7 @@ export async function getPublicAlbumPhotos(albumId: string, ownerNsid: string, t
     `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
     `&photoset_id=${encodeURIComponent(albumId)}` +
     `&user_id=${encodeURIComponent(ownerNsid)}` +
-    `&extras=${encodeURIComponent('url_q,date_taken,date_upload,last_update,media,tags,license')}` +
+    `&extras=${encodeURIComponent('url_q,url_m,date_taken,date_upload,last_update,media,tags,license')}` +
     `&per_page=100` +
     `&page=${page}` +
     `&format=json` +
@@ -267,6 +267,9 @@ export async function getPublicAlbumPhotos(albumId: string, ownerNsid: string, t
     id: p.id,
     title: p.title || 'Untitled',
     thumbnailUrl: p.url_q || '',
+    url_m: p.url_m || undefined,
+    width_m: p.width_m ? Number(p.width_m) : undefined,
+    height_m: p.height_m ? Number(p.height_m) : undefined,
     dateTaken: p.datetaken || '',
     media: (p.media === 'video' ? 'video' : 'photo') as 'photo' | 'video',
     tags: p.tags ? (p.tags as string).split(' ').filter(Boolean) : [],
@@ -284,7 +287,7 @@ export async function getAlbumPhotos(albumId: string, tokenData: FlickrTokenData
     `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
     `&photoset_id=${encodeURIComponent(albumId)}` +
     `&user_id=${encodeURIComponent(tokenData.nsid)}` +
-    `&extras=${encodeURIComponent('url_q,date_taken,date_upload,last_update,media,ispublic,isfriend,isfamily,tags,license')}` +
+    `&extras=${encodeURIComponent('url_q,url_m,date_taken,date_upload,last_update,media,ispublic,isfriend,isfamily,tags,license')}` +
     `&per_page=100` +
     `&page=${page}` +
     `${mediaParam}` +
@@ -305,6 +308,9 @@ export async function getAlbumPhotos(albumId: string, tokenData: FlickrTokenData
     id: p.id,
     title: p.title || 'Untitled',
     thumbnailUrl: p.url_q || '',
+    url_m: p.url_m || undefined,
+    width_m: p.width_m ? Number(p.width_m) : undefined,
+    height_m: p.height_m ? Number(p.height_m) : undefined,
     dateTaken: p.datetaken || '',
     media: (p.media === 'video' ? 'video' : 'photo') as 'photo' | 'video',
     datePosted: p.dateupload || undefined,
@@ -429,7 +435,7 @@ export async function getPhotos(tokenData: FlickrTokenData, page: number = 1, so
       `?method=flickr.photos.search` +
       `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
       `&user_id=${encodeURIComponent(tokenData.nsid)}` +
-      `&extras=${encodeURIComponent('url_q,date_taken,date_upload,last_update,media,ispublic,isfriend,isfamily,license')}` +
+      `&extras=${encodeURIComponent('url_q,url_m,date_taken,date_upload,last_update,media,ispublic,isfriend,isfamily,license')}` +
       `&sort=${encodeURIComponent(sort)}` +
       `&per_page=100` +
       `&page=${page}` +
@@ -461,7 +467,7 @@ export async function getPhotos(tokenData: FlickrTokenData, page: number = 1, so
       `?method=flickr.people.getPhotos` +
       `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
       `&user_id=${encodeURIComponent(tokenData.nsid)}` +
-      `&extras=${encodeURIComponent('url_q,date_taken,date_upload,last_update,media,ispublic,isfriend,isfamily,license')}` +
+      `&extras=${encodeURIComponent('url_q,url_m,date_taken,date_upload,last_update,media,ispublic,isfriend,isfamily,license')}` +
       `&sort=${encodeURIComponent(sort)}` +
       `&per_page=100` +
       `&page=${page}` +
@@ -483,6 +489,9 @@ export async function getPhotos(tokenData: FlickrTokenData, page: number = 1, so
     id: p.id,
     title: p.title || 'Untitled',
     thumbnailUrl: p.url_q || '',
+    url_m: p.url_m || undefined,
+    width_m: p.width_m ? Number(p.width_m) : undefined,
+    height_m: p.height_m ? Number(p.height_m) : undefined,
     dateTaken: p.datetaken || '',
     media: (p.media === 'video' ? 'video' : 'photo') as 'photo' | 'video',
     datePosted: p.dateupload || undefined,

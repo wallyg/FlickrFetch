@@ -7,6 +7,19 @@ export interface Release {
 
 const changelog: Release[] = [
   {
+    version: '3.0',
+    date: 'November 2026',
+    milestone: 'FlickrFetch 3.0 — justified photo grid with real aspect ratios, plus polish throughout',
+    highlights: [
+      'Justified photo grid — photos now display at their true aspect ratios instead of uniform square crops; a row height slider (100–300px) lets you dial in how dense or spacious the grid feels',
+      'Downloaded badge — a green checkmark badge appears in the top-right corner of tiles you\'ve already saved, so you can see at a glance what\'s in your library without opening every photo',
+      'Queue bar redesigned — the status area is now two lines: count and status on top, album name below; long names truncate gracefully instead of crowding the important info',
+      'Clearer queue controls — a "Clear completed" button appears whenever batches finish stacking, replacing the per-item dismiss buttons',
+      '"Reset records" now confirms in-app — tapping the overflow menu (⋯) on an album brings up an in-app modal instead of a system dialog, consistent with how every other confirmation works',
+      'Sign out now requires a confirmation step — a quick in-app check before disconnecting your Flickr account',
+    ]
+  },
+  {
     version: '2.4',
     date: 'November 2026',
     highlights: [

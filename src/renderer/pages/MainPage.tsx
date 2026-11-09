@@ -15,20 +15,21 @@ import SmartDownloadButton from '../components/SmartDownloadButton'
 import DiscoverPage from './DiscoverPage'
 
 
-function IconBtn({ label, onClick, children, badge }: { label: string; onClick: () => void; children: React.ReactNode; badge?: boolean }) {
+function IconBtn({ label, onClick, children, badge, showLabel }: { label: string; onClick: () => void; children: React.ReactNode; badge?: boolean; showLabel?: boolean }) {
   const [hovered, setHovered] = React.useState(false)
   return (
     <div style={{ position: 'relative' }}>
       <button
-        style={styles.iconButton}
+        style={{ ...styles.iconButton, ...(showLabel ? styles.iconButtonLabeled : {}) }}
         onClick={onClick}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
         {children}
+        {showLabel && <span style={styles.iconButtonLabel}>{label}</span>}
       </button>
       {badge && <span style={styles.updateBadge} />}
-      {hovered && (
+      {hovered && !showLabel && (
         <div style={styles.iconTooltip}>{label}</div>
       )}
     </div>
@@ -45,8 +46,7 @@ interface MainPageProps {
 export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.Element {
   const displayName = user.realname || user.username
   const [appMode, setAppMode] = useState<'you' | 'discover'>('you')
-  const [youHovered, setYouHovered] = useState(false)
-  const [discoverHovered, setDiscoverHovered] = useState(false)
+  const [showAvatarPopover, setShowAvatarPopover] = useState(false)
   const [view, setView] = useState<MainView>('photostream')
   const [selectedAlbum, setSelectedAlbum] = useState<FlickrAlbum | null>(null)
   const [photoDetailIndex, setPhotoDetailIndex] = useState<number | null>(null)
@@ -101,7 +101,10 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
 
   const handleBatchDismiss = useCallback(() => setBatchProgress(null), [])
   const handleStackedDismiss = useCallback((idx: number) => setCompletedBatches(prev => prev.filter((_, i) => i !== idx)), [])
-  const handleDismissAll = useCallback(() => { setBatchProgress(null); setCompletedBatches([]) }, [])
+  const handleDismissAll = useCallback(() => {
+    setCompletedBatches([])
+    setBatchProgress(prev => (prev?.status === 'done' || prev?.status === 'cancelled') ? null : prev)
+  }, [])
   const [photostreamRefreshKey, setPhotostreamRefreshKey] = useState(0)
   const [showAlbumOverflow, setShowAlbumOverflow] = useState(false)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
@@ -110,7 +113,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
     const unsubscribe = window.flickrAPI.onBatchProgress((p) => {
       const prev = prevProgressRef.current
       if (prev && prev.status === 'done' && p.status === 'running') {
-        setCompletedBatches(old => [prev, ...old])
+        setCompletedBatches(old => [{ ...prev, completedAt: Date.now() }, ...old])
       }
       prevProgressRef.current = p
       setBatchProgress(p)
@@ -374,59 +377,32 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
 
   return (
     <div style={styles.container}>
-<header style={styles.header}>
-        <span style={styles.wordmark}>
-          <span style={{ color: '#0063DC' }}>Flickr</span><span style={{ color: '#FF0084' }}>Fetch</span>
-        </span>
-        <div style={styles.userInfo}>
-          <img
-            src={user.avatarUrl}
-            alt={displayName}
-            style={styles.avatar}
-            onError={(e) => {
-              e.currentTarget.src = 'https://www.flickr.com/images/buddyicon.gif'
-            }}
-          />
-          <div style={styles.userText}>
-            <div style={styles.userNameRow}>
-              <span style={styles.userName}>{displayName}</span>
-              {user.isPro && <span style={styles.proBadge}>PRO</span>}
-            </div>
-            <span style={styles.userHandle}>
-              @{user.username} · Flickring since {user.memberSince} ·{' '}
-              <button style={styles.signOutLink} onClick={() => setShowSignOutConfirm(true)}>Sign out</button>
-            </span>
-          </div>
-        </div>
-        <div style={styles.modePill}>
-          <div style={{ position: 'relative' }}>
+      <header style={styles.header}>
+        <div style={styles.headerLeft}>
+          <span style={styles.wordmark}>
+            <span style={{ color: '#0063DC' }}>Flickr</span><span style={{ color: '#FF0084' }}>Fetch</span>
+          </span>
+          <div style={styles.headerDivider} />
+          <div style={styles.modeTabs}>
             <button
-              style={{ ...styles.modePillBtn, ...(appMode === 'you' ? styles.modePillActive : {}) }}
+              style={{ ...styles.modeTab, ...(appMode === 'you' ? styles.modeTabActive : {}) }}
               onClick={() => setAppMode('you')}
-              onMouseEnter={() => setYouHovered(true)}
-              onMouseLeave={() => setYouHovered(false)}
-            >You</button>
-            {youHovered && <div style={styles.pillTooltip}>Your Flickr photos, albums & collections</div>}
-          </div>
-          <div style={{ position: 'relative' }}>
+            >My Flickr</button>
             <button
-              style={{ ...styles.modePillBtn, ...(appMode === 'discover' ? styles.modePillActive : {}) }}
+              style={{ ...styles.modeTab, ...(appMode === 'discover' ? styles.modeTabActive : {}) }}
               onClick={() => setAppMode('discover')}
-              onMouseEnter={() => setDiscoverHovered(true)}
-              onMouseLeave={() => setDiscoverHovered(false)}
             >Discover</button>
-            {discoverHovered && <div style={styles.pillTooltip}>Browse photos from other users, groups & trending</div>}
           </div>
         </div>
         <div style={styles.headerActions}>
-          <IconBtn label="Download History" onClick={() => setShowHistory(true)}>
+          <IconBtn label="History" onClick={() => setShowHistory(true)} showLabel>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" strokeWidth="1.5" fill="currentColor" fillOpacity="0.1"/>
               <circle cx="12" cy="12" r="1.8" fill="currentColor" strokeWidth="0"/>
               <polyline points="12 7 12 12 15.5 14" strokeWidth="2"/>
             </svg>
           </IconBtn>
-          <IconBtn label="Settings" onClick={() => setShowSettings(true)} badge={!!updateVersion}>
+          <IconBtn label="Settings" onClick={() => setShowSettings(true)} badge={!!updateVersion} showLabel>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <line x1="4" y1="6" x2="20" y2="6"/>
               <line x1="4" y1="12" x2="20" y2="12"/>
@@ -436,6 +412,47 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
               <circle cx="10" cy="18" r="2.2" fill="white" strokeWidth="1.8"/>
             </svg>
           </IconBtn>
+          <div style={{ position: 'relative' }}>
+            <button style={styles.avatarBtn} onClick={() => setShowAvatarPopover(o => !o)}>
+              <img
+                src={user.avatarUrl}
+                alt={displayName}
+                style={styles.avatarBtnImg}
+                onError={(e) => { e.currentTarget.src = 'https://www.flickr.com/images/buddyicon.gif' }}
+              />
+              <svg width="9" height="6" viewBox="0 0 9 6" fill="none" style={{ flexShrink: 0 }}>
+                <path d="M1 1l3.5 3.5L8 1" stroke="#aaa" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            {showAvatarPopover && (
+              <>
+                <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setShowAvatarPopover(false)} />
+                <div style={styles.avatarPopover}>
+                  <div style={styles.avatarPopoverUser}>
+                    <img
+                      src={user.avatarUrl}
+                      alt={displayName}
+                      style={styles.avatarPopoverImg}
+                      onError={(e) => { e.currentTarget.src = 'https://www.flickr.com/images/buddyicon.gif' }}
+                    />
+                    <div>
+                      <div style={styles.avatarPopoverName}>
+                        {displayName}
+                        {user.isPro && <span style={styles.proBadge}>PRO</span>}
+                      </div>
+                      <div style={styles.avatarPopoverHandle}>@{user.username}</div>
+                      <div style={styles.avatarPopoverSince}>Flickring since {user.memberSince}</div>
+                    </div>
+                  </div>
+                  <div style={styles.avatarPopoverDivider} />
+                  <button
+                    style={styles.avatarPopoverSignOut}
+                    onClick={() => { setShowAvatarPopover(false); setShowSignOutConfirm(true) }}
+                  >Sign out</button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </header>
 
@@ -757,11 +774,15 @@ const styles: Record<string, React.CSSProperties> = {
   },
   header: {
     display: 'flex',
-    alignItems: 'center',
+    alignItems: 'stretch',
     justifyContent: 'space-between',
-    padding: '12px 24px',
     backgroundColor: 'var(--ff-cream)',
-    borderBottom: '1px solid #e8e4de'
+    borderBottom: '1px solid #e8e4de',
+    minHeight: '52px',
+  },
+  headerLeft: {
+    display: 'flex',
+    alignItems: 'stretch',
   },
   wordmark: {
     fontSize: '22px',
@@ -769,33 +790,36 @@ const styles: Record<string, React.CSSProperties> = {
     letterSpacing: '-0.02em',
     lineHeight: 1,
     flexShrink: 0,
-  },
-  userInfo: {
     display: 'flex',
     alignItems: 'center',
-    gap: '12px'
+    padding: '0 20px',
   },
-  avatar: {
-    width: '40px',
-    height: '40px',
-    borderRadius: '50%',
-    objectFit: 'cover',
-    border: '2px solid #e0e0e0'
+  headerDivider: {
+    width: '1px',
+    backgroundColor: '#e8e4de',
+    margin: '8px 0',
   },
-  userText: {
+  modeTabs: {
     display: 'flex',
-    flexDirection: 'column',
-    gap: '1px'
+    alignItems: 'stretch',
   },
-  userNameRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px'
-  },
-  userName: {
+  modeTab: {
+    background: 'none',
+    border: 'none',
+    borderBottom: '3px solid transparent',
+    padding: '0 20px',
     fontSize: '15px',
     fontWeight: '600',
-    color: '#111'
+    color: '#bbb',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    whiteSpace: 'nowrap' as const,
+    letterSpacing: '-0.01em',
+  },
+  modeTabActive: {
+    color: '#0063DC',
+    borderBottom: '3px solid #0063DC',
   },
   proBadge: {
     fontSize: '9px',
@@ -808,16 +832,80 @@ const styles: Record<string, React.CSSProperties> = {
     letterSpacing: '0.06em',
     lineHeight: '1.4'
   },
-  userHandle: {
-    fontSize: '12px',
-    color: '#888'
+  avatarBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '5px',
+    borderRadius: '20px',
+    overflow: 'visible',
+    cursor: 'pointer',
+    border: '1px solid #ccc',
+    background: 'none',
+    padding: '3px 8px 3px 3px',
+    flexShrink: 0,
   },
-  signOutLink: {
+  avatarBtnImg: {
+    width: '26px',
+    height: '26px',
+    borderRadius: '50%',
+    objectFit: 'cover' as const,
+    display: 'block',
+    flexShrink: 0,
+  },
+  avatarPopover: {
+    position: 'absolute' as const,
+    top: 'calc(100% + 8px)',
+    right: 0,
+    backgroundColor: '#fff',
+    border: '1px solid #e0dcd8',
+    borderRadius: '10px',
+    boxShadow: '0 4px 20px rgba(0,0,0,.14)',
+    zIndex: 100,
+    minWidth: '220px',
+    padding: '14px',
+  },
+  avatarPopoverUser: {
+    display: 'flex',
+    gap: '10px',
+    alignItems: 'flex-start',
+  },
+  avatarPopoverImg: {
+    width: '44px',
+    height: '44px',
+    borderRadius: '50%',
+    objectFit: 'cover' as const,
+    flexShrink: 0,
+    border: '1.5px solid #e0dcd8',
+  },
+  avatarPopoverName: {
+    fontSize: '14px',
+    fontWeight: '600',
+    color: '#111',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '5px',
+    marginBottom: '2px',
+  },
+  avatarPopoverHandle: {
+    fontSize: '12px',
+    color: '#888',
+    marginBottom: '2px',
+  },
+  avatarPopoverSince: {
+    fontSize: '11px',
+    color: '#bbb',
+  },
+  avatarPopoverDivider: {
+    height: '1px',
+    backgroundColor: '#f0ede8',
+    margin: '10px 0',
+  },
+  avatarPopoverSignOut: {
     background: 'none',
     border: 'none',
-    padding: 0,
-    fontSize: '12px',
-    color: '#aaa',
+    padding: '0',
+    fontSize: '13px',
+    color: '#888',
     cursor: 'pointer',
     textDecoration: 'underline',
     textDecorationStyle: 'dotted' as const,
@@ -890,7 +978,8 @@ const styles: Record<string, React.CSSProperties> = {
   headerActions: {
     display: 'flex',
     alignItems: 'center',
-    gap: '8px'
+    gap: '8px',
+    padding: '0 16px',
   },
   iconButton: {
     backgroundColor: 'transparent',
@@ -903,6 +992,17 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'center',
   },
+  iconButtonLabeled: {
+    gap: '5px',
+    padding: '6px 10px',
+  },
+  iconButtonLabel: {
+    fontSize: '12px',
+    fontWeight: '500',
+    color: '#666',
+    letterSpacing: '-0.01em',
+    lineHeight: 1,
+  },
   updateBadge: {
     position: 'absolute' as const,
     top: '1px', right: '1px',
@@ -914,20 +1014,6 @@ const styles: Record<string, React.CSSProperties> = {
     position: 'absolute' as const,
     top: 'calc(100% + 6px)',
     right: 0,
-    backgroundColor: '#1a1a1a',
-    color: '#fff',
-    fontSize: '12px',
-    padding: '4px 8px',
-    borderRadius: '5px',
-    whiteSpace: 'nowrap' as const,
-    pointerEvents: 'none' as const,
-    zIndex: 999,
-  },
-  pillTooltip: {
-    position: 'absolute' as const,
-    top: 'calc(100% + 6px)',
-    left: '50%',
-    transform: 'translateX(-50%)',
     backgroundColor: '#1a1a1a',
     color: '#fff',
     fontSize: '12px',
@@ -1015,19 +1101,6 @@ const styles: Record<string, React.CSSProperties> = {
     inset: 0,
     overflow: 'hidden',
     display: 'none'
-  },
-  modePill: {
-    display: 'flex', alignItems: 'center', gap: '1px',
-    background: '#f0ede8', borderRadius: '8px', padding: '3px',
-  },
-  modePillBtn: {
-    background: 'none', border: 'none', borderRadius: '6px',
-    padding: '5px 14px', cursor: 'pointer', fontSize: '13px',
-    fontWeight: 500, color: '#888',
-  },
-  modePillActive: {
-    background: '#fff', color: '#1a1a1a',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
   },
   overflowBtn: {
     background: 'none', border: '1px solid #ccc', borderRadius: '6px',

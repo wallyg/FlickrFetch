@@ -486,27 +486,29 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
     const hasMore = view === 'album-photos' ? albumPhotosPage < albumPhotosPages : photosPage < photosPages
     const sourceName = view === 'album-photos' ? (activeAlbum?.title ?? '') : (foundUser ? (foundUser.realname || foundUser.username) : '')
     return (
-      <PhotoDetail
-        photo={currentPhotos[detailIndex]}
-        index={detailIndex}
-        total={currentPhotos.length}
-        hasMore={hasMore}
-        canGoPrev={detailIndex > 0}
-        canGoNext={detailIndex < currentPhotos.length - 1 || hasMore}
-        onPrev={() => setDetailIndex(d => (d !== null && d > 0 ? d - 1 : d))}
-        onNext={() => {
-          if (detailIndex < currentPhotos.length - 1) {
-            setDetailIndex(detailIndex + 1)
-          } else if (view === 'album-photos') {
-            loadMoreAlbumPhotos().then(() => setDetailIndex(di => di !== null ? di + 1 : di))
-          } else {
-            loadMorePhotos().then(() => setDetailIndex(di => di !== null ? di + 1 : di))
-          }
-        }}
-        onClose={() => setDetailIndex(null)}
-        sourceName={sourceName}
-        discoverMode
-      />
+      <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
+        <PhotoDetail
+          photo={currentPhotos[detailIndex]}
+          index={detailIndex}
+          total={currentPhotos.length}
+          hasMore={hasMore}
+          canGoPrev={detailIndex > 0}
+          canGoNext={detailIndex < currentPhotos.length - 1 || hasMore}
+          onPrev={() => setDetailIndex(d => (d !== null && d > 0 ? d - 1 : d))}
+          onNext={() => {
+            if (detailIndex < currentPhotos.length - 1) {
+              setDetailIndex(detailIndex + 1)
+            } else if (view === 'album-photos') {
+              loadMoreAlbumPhotos().then(() => setDetailIndex(di => di !== null ? di + 1 : di))
+            } else {
+              loadMorePhotos().then(() => setDetailIndex(di => di !== null ? di + 1 : di))
+            }
+          }}
+          onClose={() => setDetailIndex(null)}
+          sourceName={sourceName}
+          discoverMode
+        />
+      </div>
     )
   }
 

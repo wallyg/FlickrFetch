@@ -356,10 +356,13 @@ export default function PhotoDetail({
 
   return (
     <div style={styles.container}>
-      <style>{`@keyframes ff-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+      <style>{`@keyframes ff-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } } @keyframes ff-pop { 0% { transform: scale(0.5); opacity: 0 } 65% { transform: scale(1.2) } 100% { transform: scale(1); opacity: 1 } }`}</style>
       {/* Left: dark image panel */}
       <div style={styles.imagePanel}>
-        <button style={styles.backBtnOverlay} onClick={onClose}>← {sourceName}</button>
+        <button style={styles.backBtnOverlay} onClick={onClose}>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '5px', flexShrink: 0 }}><path d="M7.5 1.5L3 6l4.5 4.5"/></svg>
+          {sourceName}
+        </button>
 
         {videoPlaying && videoStreamUrl ? (
           <video
@@ -397,10 +400,14 @@ export default function PhotoDetail({
         )}
 
         {canGoPrev && (
-          <button style={{ ...styles.navArrow, left: '12px' }} onClick={onPrev} title="Previous (←)">‹</button>
+          <button style={{ ...styles.navArrow, left: '12px' }} onClick={onPrev} title="Previous (←)">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M8.5 1.5L4 6.5l4.5 5"/></svg>
+          </button>
         )}
         {canGoNext && (
-          <button style={{ ...styles.navArrow, right: '12px' }} onClick={onNext} title="Next (→)">›</button>
+          <button style={{ ...styles.navArrow, right: '12px' }} onClick={onNext} title="Next (→)">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M4.5 1.5L9 6.5l-4.5 5"/></svg>
+          </button>
         )}
 
         <div style={styles.counter}>
@@ -579,29 +586,6 @@ export default function PhotoDetail({
             </select>
           )}
 
-          {lastDownloadedAt != null && downloadState === 'idle' && (
-            <div>
-              <div style={styles.lastDownloadedRow}>
-                <p style={styles.lastDownloaded}>
-                  Last downloaded {formatDownloadDateTime(lastDownloadedAt)}
-                </p>
-                <button style={styles.resetRecordBtn} onClick={handleResetRecord} title="Clear download record for this photo">
-                  Reset
-                </button>
-              </div>
-              {photo.lastUpdate != null && photo.lastUpdate > 0 && photo.lastUpdate * 1000 > lastDownloadedAt && (
-                <div style={styles.stalenessWarning}>
-                  <span style={styles.stalenessIcon}>⚠</span>
-                  <span>Updated on Flickr since your last download</span>
-                </div>
-              )}
-            </div>
-          )}
-
-          {downloadState === 'idle' && (
-            <button style={styles.downloadBtn} onClick={handleDownload}>Download</button>
-          )}
-
           {downloadState === 'idle' && (
             <label style={styles.trackLabel}>
               <input
@@ -612,6 +596,28 @@ export default function PhotoDetail({
               />
               Track this download
             </label>
+          )}
+
+          {downloadState === 'idle' && (
+            <button style={styles.downloadBtn} onClick={handleDownload}>Download</button>
+          )}
+
+          {lastDownloadedAt != null && downloadState === 'idle' && (
+            <div style={{ marginTop: '10px' }}>
+              {photo.lastUpdate != null && photo.lastUpdate > 0 && photo.lastUpdate * 1000 > lastDownloadedAt && (
+                <div style={styles.stalenessWarning}>
+                  <span style={styles.stalenessIcon}>⚠</span>
+                  <span>Updated on Flickr since your last download</span>
+                </div>
+              )}
+              <p style={styles.lastDownloaded}>Last Downloaded</p>
+              <div style={styles.lastDownloadedRow}>
+                <p style={styles.lastDownloadedDate}>{formatDownloadDateTime(lastDownloadedAt)}</p>
+                <button style={styles.resetRecordBtn} onClick={handleResetRecord} title="Clear download record for this photo">
+                  Reset
+                </button>
+              </div>
+            </div>
           )}
 
           {downloadState === 'downloading' && (
@@ -628,7 +634,7 @@ export default function PhotoDetail({
 
           {downloadState === 'done' && savedPath && (
             <div>
-              <p style={styles.successText}>✓ {savedPath.split('/').pop()}</p>
+              <p style={{ ...styles.successText, animation: 'ff-pop 0.2s ease-out' }}>✓ {savedPath.split('/').pop()}</p>
               <div style={styles.successBtns}>
                 <button style={styles.finderBtn} onClick={() => window.flickrAPI.showInFinder(savedPath)}>
                   Show in Finder
@@ -738,7 +744,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   infoPanel: {
     flexShrink: 0,
-    backgroundColor: '#fff',
+    backgroundColor: 'var(--ff-cream)',
     display: 'flex',
     flexDirection: 'column',
     overflow: 'hidden',
@@ -750,11 +756,13 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundColor: 'rgba(0,0,0,0.5)',
     border: 'none',
     color: '#fff',
-    borderRadius: '7px',
+    borderRadius: '20px',
     fontSize: '13px',
     padding: '7px 13px',
     cursor: 'pointer',
     zIndex: 2,
+    display: 'flex',
+    alignItems: 'center',
   },
   scrollArea: {
     flex: 1,
@@ -810,8 +818,8 @@ const styles: Record<string, React.CSSProperties> = {
     margin: '0 0 4px',
   },
   section: {
-    marginTop: '14px',
-    paddingTop: '14px',
+    marginTop: '18px',
+    paddingTop: '18px',
     borderTop: '1px solid #f0ece6',
   },
   fieldLabel: {
@@ -867,7 +875,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '12px 16px 14px',
     borderTop: '1px solid #e8e4de',
     flexShrink: 0,
-    backgroundColor: '#fff',
+    backgroundColor: 'var(--ff-cream)',
   },
   sizeSelect: {
     width: '100%',
@@ -875,7 +883,7 @@ const styles: Record<string, React.CSSProperties> = {
     border: '1px solid #ddd',
     borderRadius: '6px',
     fontSize: '12px',
-    marginBottom: '8px',
+    marginBottom: '10px',
     backgroundColor: '#fff',
     color: '#333',
   },
@@ -990,24 +998,30 @@ const styles: Record<string, React.CSSProperties> = {
   lastDownloadedRow: {
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     gap: 8,
-    marginBottom: 2,
   },
   lastDownloaded: {
+    fontSize: '10px',
+    color: '#888',
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.06em',
+    fontWeight: '600',
+    margin: '0 0 3px',
+  },
+  lastDownloadedDate: {
     fontSize: '12px',
-    color: 'var(--ff-text-secondary)',
+    color: '#555',
     margin: 0,
   },
   resetRecordBtn: {
     background: 'none',
     border: 'none',
-    padding: 0,
+    padding: '2px 6px',
     fontSize: '11px',
-    color: '#94a3b8',
+    color: '#bbb',
     cursor: 'pointer',
-    textDecoration: 'underline',
-    textDecorationStyle: 'dotted' as const,
+    flexShrink: 0,
   },
   stalenessWarning: {
     display: 'flex',
@@ -1030,10 +1044,11 @@ const styles: Record<string, React.CSSProperties> = {
   trackLabel: {
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '11px',
+    justifyContent: 'flex-start',
+    fontSize: '12px',
     color: '#9ca3af',
-    marginTop: '8px',
+    marginTop: '6px',
+    marginBottom: '10px',
     cursor: 'pointer',
   },
   noGeoText: {
@@ -1059,7 +1074,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   scrollFade: {
     height: '36px',
-    background: 'linear-gradient(to top, #fff 50%, transparent)',
+    background: 'linear-gradient(to top, #FCFAF6 50%, transparent)',
     marginTop: '-36px',
     position: 'relative',
     zIndex: 1,

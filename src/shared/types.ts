@@ -21,6 +21,9 @@ export interface FlickrPhoto {
   id: string
   title: string
   thumbnailUrl: string
+  url_m?: string         // medium-size URL (240px longest side); used for justified grid
+  width_m?: number       // pixel width at medium size; used for justified aspect ratio
+  height_m?: number      // pixel height at medium size; used for justified aspect ratio
   dateTaken: string
   media?: 'photo' | 'video'
   datePosted?: string    // Unix timestamp string from Flickr date_upload extra
@@ -82,6 +85,7 @@ export interface BatchProgress {
   discoverFolder?: string    // set on done events from Discover batch runners, used for retry routing
   smartFilteredCount?: number // photos excluded by smart filter (Never Downloaded / Download Updated)
   paused?: boolean
+  completedAt?: number  // ms epoch, set when stacked into completedBatches
 }
 
 export interface BatchLogEntry {

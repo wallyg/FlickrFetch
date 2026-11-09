@@ -63,19 +63,21 @@ export default function DiscoverExplore({ onDownload }: Props): React.JSX.Elemen
   if (detailIndex !== null && photos[detailIndex]) {
     const detailPhoto = photos[detailIndex]
     return (
-      <PhotoDetail
-        photo={detailPhoto}
-        index={detailIndex}
-        total={photos.length}
-        hasMore={page < pages}
-        canGoPrev={detailIndex > 0}
-        canGoNext={detailIndex < photos.length - 1 || page < pages}
-        onPrev={handlePrev}
-        onNext={handleNext}
-        onClose={() => setDetailIndex(null)}
-        sourceName="Explore"
-        discoverMode
-      />
+      <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
+        <PhotoDetail
+          photo={detailPhoto}
+          index={detailIndex}
+          total={photos.length}
+          hasMore={page < pages}
+          canGoPrev={detailIndex > 0}
+          canGoNext={detailIndex < photos.length - 1 || page < pages}
+          onPrev={handlePrev}
+          onNext={handleNext}
+          onClose={() => setDetailIndex(null)}
+          sourceName="Explore"
+          discoverMode
+        />
+      </div>
     )
   }
 

@@ -102,7 +102,7 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
     : doneWithIssues ? '#ff8c00'
     : isDone ? '#4caf50'
     : isCancelled ? '#cc6600'
-    : completedBatches.length > 0 ? (completedBatches.some(b => ((b.skippedCount ?? 0) + (b.skippedSizeUnavailableCount ?? 0) + (b.failedCount ?? 0)) > 0) ? '#ff8c00' : '#4caf50')
+    : completedBatches.length > 0 ? (((completedBatches[0].skippedCount ?? 0) + (completedBatches[0].skippedSizeUnavailableCount ?? 0) + (completedBatches[0].failedCount ?? 0)) > 0 ? '#ff8c00' : '#4caf50')
     : 'transparent'
 
   const handleCancel = (): void => {
@@ -119,7 +119,7 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
   }
 
   return (
-    <div style={{ ...styles.wrapper, borderLeft: `4px solid ${borderColor}` }}>
+    <div style={styles.wrapper}>
 
       {/* Toast: brief confirmation when a batch is queued */}
       {toastMsg && (
@@ -130,112 +130,27 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
       {expanded && (
         <div style={styles.panel}>
 
-          {/* Current / most recent batch */}
-          <div style={styles.batchRow}>
-            <span style={isRunning ? styles.dotActive : isDone ? styles.dotDone : styles.dotCancelled}>
-              {isDone ? '✓' : isCancelled ? '✕' : '→'}
-            </span>
-            <div style={styles.batchInfo}>
-              <div style={styles.batchTitleRow}>
-                <span style={styles.batchTitle}>{albumTitle}</span>
-                {folderPath && (
-                  <button
-                    style={styles.finderLink}
-                    onClick={() => window.flickrAPI.showInFinder(folderPath)}
-                  >
-                    Show in Finder
-                  </button>
-                )}
-              </div>
-              <span style={styles.batchMeta}>
-                {isRunning && `${current.toLocaleString()} of ${total.toLocaleString()}`}
-                {isDone && (() => {
-                  const parts: string[] = [`${downloaded.toLocaleString()} saved`]
-                  if (skipped > 0) parts.push(`${skipped.toLocaleString()} skipped`)
-                  if (sizeUnavailable > 0) parts.push(`${sizeUnavailable.toLocaleString()} size unavailable`)
-                  if (failed > 0) parts.push(`${failed.toLocaleString()} failed`)
-                  if (smartFiltered > 0) parts.push(`${smartFiltered.toLocaleString()} already downloaded`)
-                  return parts.join(' · ')
-                })()}
-                {isCancelled && `${current.toLocaleString()} of ${total.toLocaleString()} before cancel`}
-              </span>
-              {/* Live filename ticker */}
-              {isRunning && activeTitle && (
-                <span style={styles.activeTicker}>↓ {activeTitle}</span>
-              )}
-              {/* Failure list for current batch (shown after done) */}
-              {isDone && (progress?.failedPhotos ?? []).length > 0 && (
-                <>
-                  <button style={styles.failureToggle} onClick={() => toggleFailures('current')}>
-                    {expandedFailures.has('current') ? '▾' : '▸'} See {progress!.failedPhotos!.length} failed
-                  </button>
-                  {expandedFailures.has('current') && (
-                    <div style={styles.failureList}>
-                      {progress!.failedPhotos!.map((p, i) => (
-                        <div key={i} style={styles.failureItem}>✗ {p.title}</div>
-                      ))}
-                    </div>
-                  )}
-                  <button
-                    style={styles.retryBtn}
-                    onClick={() => progress!.discoverFolder
-                      ? window.flickrAPI.retryDiscoverSelectedBatch(progress!.failedPhotos!, `Retry: ${albumTitle}`, progress!.discoverFolder)
-                      : window.flickrAPI.startSelectedBatch(progress!.failedPhotos!, `Retry: ${albumTitle}`)
-                    }
-                  >
-                    Retry {progress!.failedPhotos!.length} failed
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Queued batches */}
-          {(progress?.queuedAlbums ?? []).length > 0 && (
-            <>
-              <div style={styles.divider} />
-              {(progress?.queuedAlbums ?? []).map((album, i) => {
-                const parts: string[] = []
-                if (album.photoCount) parts.push(`${album.photoCount.toLocaleString()} photo${album.photoCount !== 1 ? 's' : ''}`)
-                if (album.videoCount) parts.push(`${album.videoCount.toLocaleString()} video${album.videoCount !== 1 ? 's' : ''}`)
-                return (
-                  <div key={i} style={styles.batchRow}>
-                    <span style={styles.dotQueued}>○</span>
-                    <div style={styles.batchInfo}>
-                      <span style={styles.batchTitleQueued}>{album.title}</span>
-                      {parts.length > 0 && <span style={styles.batchMeta}>{parts.join(' · ')}</span>}
-                    </div>
-                    <button
-                      style={styles.removeQueueBtn}
-                      title="Remove from queue"
-                      onClick={() => window.flickrAPI.removeFromQueue(album.id)}
-                    >✕</button>
-                  </div>
-                )
-              })}
-            </>
-          )}
-
-          {/* Stacked completed batches */}
+          {/* Completed/failed batches (top — history) */}
           {completedBatches.length > 0 && (
             <>
-              <div style={styles.divider} />
-              {completedBatches.map((b, i) => {
+              {[...completedBatches].reverse().map((b, reversedIdx) => {
+                const i = completedBatches.length - 1 - reversedIdx
                 const bSkipped = b.skippedCount ?? 0
                 const bSizeUnavailable = b.skippedSizeUnavailableCount ?? 0
                 const bFailed = b.failedCount ?? 0
                 const bSmartFiltered = b.smartFilteredCount ?? 0
                 const bDownloaded = (b.total ?? 0) - bSkipped - bSizeUnavailable - bFailed
-                const bHasIssues = bSkipped > 0 || bSizeUnavailable > 0 || bFailed > 0 || bSmartFiltered > 0
+                const bHasIssues = bSkipped > 0 || bSizeUnavailable > 0 || bFailed > 0
                 const bFolder = b.latestFilePath ? b.latestFilePath.substring(0, b.latestFilePath.lastIndexOf('/')) : null
                 const bParts = [`${bDownloaded.toLocaleString()} saved`]
                 if (bSkipped > 0) bParts.push(`${bSkipped.toLocaleString()} skipped`)
                 if (bSizeUnavailable > 0) bParts.push(`${bSizeUnavailable.toLocaleString()} size unavailable`)
                 if (bFailed > 0) bParts.push(`${bFailed.toLocaleString()} failed`)
                 if (bSmartFiltered > 0) bParts.push(`${bSmartFiltered.toLocaleString()} already downloaded`)
+                if (b.completedAt) bParts.push(new Date(b.completedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }))
                 return (
                   <div key={i} style={styles.batchRow}>
-                    <span style={bHasIssues ? styles.dotSkipped : styles.dotDone}>✓</span>
+                    <span style={bHasIssues && bDownloaded === 0 ? styles.dotFailed : bHasIssues ? styles.dotSkipped : styles.dotDone}>{bHasIssues ? '⚠' : '✓'}</span>
                     <div style={styles.batchInfo}>
                       <div style={styles.batchTitleRow}>
                         <span style={styles.batchTitle}>{b.albumTitle}</span>
@@ -274,13 +189,106 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
                   </div>
                 )
               })}
+              {((progress?.queuedAlbums ?? []).length > 0 || progress !== null) && <div style={styles.divider} />}
             </>
+          )}
+
+          {/* Queued batches (middle — up next) */}
+          {(progress?.queuedAlbums ?? []).length > 0 && (
+            <>
+              {(progress?.queuedAlbums ?? []).map((album, i) => {
+                const parts: string[] = []
+                if (album.photoCount) parts.push(`${album.photoCount.toLocaleString()} photo${album.photoCount !== 1 ? 's' : ''}`)
+                if (album.videoCount) parts.push(`${album.videoCount.toLocaleString()} video${album.videoCount !== 1 ? 's' : ''}`)
+                return (
+                  <div key={i} style={styles.batchRow}>
+                    <span style={styles.dotQueued}>○</span>
+                    <div style={styles.batchInfo}>
+                      <span style={styles.batchTitleQueued}>{album.title}</span>
+                      {parts.length > 0 && <span style={styles.batchMeta}>{parts.join(' · ')}</span>}
+                    </div>
+                    <button
+                      style={styles.removeQueueBtn}
+                      title="Remove from queue"
+                      onClick={() => window.flickrAPI.removeFromQueue(album.id)}
+                    >✕</button>
+                  </div>
+                )
+              })}
+              {progress !== null && <div style={styles.divider} />}
+            </>
+          )}
+
+          {/* Active batch (bottom — closest to status bar) */}
+          {progress !== null && (
+            <div style={styles.batchRow}>
+              <span style={isRunning ? styles.dotActive : (isDone && doneWithIssues && downloaded === 0) ? styles.dotFailed : (isDone && doneWithIssues) ? styles.dotSkipped : isDone ? styles.dotDone : styles.dotCancelled}>
+                {(isDone && doneWithIssues) ? '⚠' : isDone ? '✓' : isCancelled ? '✕' : '→'}
+              </span>
+              <div style={styles.batchInfo}>
+
+                <div style={styles.batchTitleRow}>
+                  <span style={styles.batchTitle}>{albumTitle}</span>
+                  {folderPath && (
+                    <button
+                      style={styles.finderLink}
+                      onClick={() => window.flickrAPI.showInFinder(folderPath)}
+                    >
+                      Show in Finder
+                    </button>
+                  )}
+                </div>
+                <span style={styles.batchMeta}>
+                  {isRunning && `${current.toLocaleString()} of ${total.toLocaleString()}`}
+                  {isDone && (() => {
+                    const parts: string[] = [`${downloaded.toLocaleString()} saved`]
+                    if (skipped > 0) parts.push(`${skipped.toLocaleString()} skipped`)
+                    if (sizeUnavailable > 0) parts.push(`${sizeUnavailable.toLocaleString()} size unavailable`)
+                    if (failed > 0) parts.push(`${failed.toLocaleString()} failed`)
+                    if (smartFiltered > 0) parts.push(`${smartFiltered.toLocaleString()} already downloaded`)
+                    return parts.join(' · ')
+                  })()}
+                  {isCancelled && `${current.toLocaleString()} of ${total.toLocaleString()} before cancel`}
+                </span>
+                {/* Live filename ticker */}
+                {isRunning && activeTitle && (
+                  <span style={styles.activeTicker}>↓ {activeTitle}</span>
+                )}
+                {/* Failure list for current batch (shown after done) */}
+                {isDone && (progress?.failedPhotos ?? []).length > 0 && (
+                  <>
+                    <button style={styles.failureToggle} onClick={() => toggleFailures('current')}>
+                      {expandedFailures.has('current') ? '▾' : '▸'} See {progress!.failedPhotos!.length} failed
+                    </button>
+                    {expandedFailures.has('current') && (
+                      <div style={styles.failureList}>
+                        {progress!.failedPhotos!.map((p, i) => (
+                          <div key={i} style={styles.failureItem}>✗ {p.title}</div>
+                        ))}
+                      </div>
+                    )}
+                    <button
+                      style={styles.retryBtn}
+                      onClick={() => progress!.discoverFolder
+                        ? window.flickrAPI.retryDiscoverSelectedBatch(progress!.failedPhotos!, `Retry: ${albumTitle}`, progress!.discoverFolder)
+                        : window.flickrAPI.startSelectedBatch(progress!.failedPhotos!, `Retry: ${albumTitle}`)
+                      }
+                    >
+                      Retry {progress!.failedPhotos!.length} failed
+                    </button>
+                  </>
+                )}
+              </div>
+              {(isDone || isCancelled) && !cancelling && (
+                <button style={styles.removeQueueBtn} title="Dismiss" onClick={handleDismiss}>✕</button>
+              )}
+            </div>
           )}
         </div>
       )}
 
       {/* Bottom bar */}
-      <div style={styles.bar}>
+      <div style={{ ...styles.bar, borderLeft: `4px solid ${borderColor}` }}>
         <div style={styles.left}>
           <button style={styles.expandBtn} onClick={() => setExpanded((v) => !v)} title={expanded ? 'Collapse' : 'Expand'}>
             {expanded ? '▾' : '▸'}
@@ -335,7 +343,7 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
           )}
           {isRunning && !cancelling && (progress?.queuedCount ?? 0) > 0 && (
             <button style={styles.skipBtn} onClick={() => window.flickrAPI.skipBatch()}>
-              Skip
+              Skip to next
             </button>
           )}
           {(isRunning || cancelling) && (
@@ -348,11 +356,8 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
               Show in Finder
             </button>
           )}
-          {!progress && completedBatches.length > 0 && (
+          {completedBatches.length > 0 && (
             <button style={styles.dismissAllBtn} onClick={onDismissAll}>Clear completed</button>
-          )}
-          {(isDone || isCancelled) && !cancelling && (
-            <button style={styles.dismissBtn} onClick={handleDismiss} title="Dismiss">✕</button>
           )}
         </div>
       </div>
@@ -471,10 +476,10 @@ const styles: Record<string, React.CSSProperties> = {
   },
   cancelBtn: {
     background: 'none',
-    border: '1px solid #ccc',
+    border: '1px solid #e57373',
     borderRadius: '6px',
     fontSize: '12px',
-    color: '#666',
+    color: '#c0392b',
     cursor: 'pointer',
     padding: '4px 12px'
   },
@@ -521,6 +526,12 @@ const styles: Record<string, React.CSSProperties> = {
   dotSkipped: {
     fontSize: '13px',
     color: '#ff8c00',
+    flexShrink: 0,
+    marginTop: '2px'
+  },
+  dotFailed: {
+    fontSize: '13px',
+    color: '#c0392b',
     flexShrink: 0,
     marginTop: '2px'
   },
