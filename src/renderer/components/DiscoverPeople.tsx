@@ -3,7 +3,7 @@ import type { FlickrPhoto, FlickrAlbum, FlickrCollection, DiscoverUser, Discover
 import PhotoDetail from './PhotoDetail'
 import { AttributionNotice, DiscoverTile, DiscoverSelectBar } from './DiscoverExplore'
 import SmartDownloadButton from './SmartDownloadButton'
-import { GridIcon, ListIcon, JustifiedIcon, sharedStyles as ss, type MediaFilter, type GridSize, type AlbumViewMode, type PhotoViewMode, type DownloadFilter, type DateMode, getPresetDates, formatDateChip, Chip, PhotoListRow, DownloadFilterSelect, loadAlbumViewMode, saveAlbumViewMode, loadPhotoViewMode, savePhotoViewMode, loadRowHeight, saveRowHeight, computeJustifiedRows } from './PhotoGridShared'
+import { GridIcon, ListIcon, JustifiedIcon, ChevronLeftIcon, sharedStyles as ss, type MediaFilter, type GridSize, type AlbumViewMode, type PhotoViewMode, type DownloadFilter, type DateMode, getPresetDates, formatDateChip, Chip, PhotoListRow, DownloadFilterSelect, loadAlbumViewMode, saveAlbumViewMode, loadPhotoViewMode, savePhotoViewMode, loadRowHeight, saveRowHeight, computeJustifiedRows } from './PhotoGridShared'
 
 const ALBUM_COLUMNS: Record<GridSize, string> = {
   small: 'repeat(auto-fill, minmax(130px, 1fr))',
@@ -565,7 +565,7 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
         <div style={s.stickyHeader}>
           {/* User profile row */}
           <div style={s.headerRow}>
-            <button style={s.backBtn} onClick={() => { setView('home'); setFoundUser(null) }}>← Back</button>
+            <button style={s.backBtn} onClick={() => { setView('home'); setFoundUser(null) }}><ChevronLeftIcon />Back</button>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
               <img src={foundUser.avatarUrl} alt={foundUser.username} style={s.userAvatar}
                 onError={(e) => { e.currentTarget.src = 'https://www.flickr.com/images/buddyicon.gif' }} />
@@ -587,7 +587,7 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
           <div style={s.headerRow}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <button style={s.backBtn} onClick={() => { setView('user-photos'); setUserTab(activeDiscoverCollection !== null ? 'collections' : 'albums'); setActiveAlbum(null) }}>
-                ← {activeDiscoverCollection !== null ? 'Collections' : 'Albums'}
+                <ChevronLeftIcon />{activeDiscoverCollection !== null ? 'Collections' : 'Albums'}
               </button>
               <div>
                 <h2 style={s.heading}>{activeAlbum.title}</h2>
@@ -816,7 +816,7 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
       <div style={s.container}>
         <div style={s.stickyHeader}>
           <div style={s.headerRow}>
-            <button style={s.backBtn} onClick={() => { setView('home'); setFoundUser(null) }}>← Back</button>
+            <button style={s.backBtn} onClick={() => { setView('home'); setFoundUser(null) }}><ChevronLeftIcon />Back</button>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
               <img
                 src={foundUser.avatarUrl}
@@ -1297,7 +1297,7 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
                     setActiveDiscoverCollection(prev)
                   }
                 }}>
-                  ← {collectionNavStack.length === 0 ? 'Collections' : collectionNavStack[collectionNavStack.length - 1].title}
+                  <ChevronLeftIcon />{collectionNavStack.length === 0 ? 'Collections' : collectionNavStack[collectionNavStack.length - 1].title}
                 </button>
                 <span style={s.collectionBreadcrumbTitle}>{activeDiscoverCollection.title}</span>
               </div>
@@ -1524,7 +1524,7 @@ const s: Record<string, React.CSSProperties> = {
   headerRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', paddingTop: '20px', paddingBottom: '8px' },
   heading: { margin: 0, fontSize: '18px', fontWeight: 600, color: '#1a1a1a' },
   subheading: { margin: '4px 0 0', fontSize: '13px', color: '#888' },
-  backBtn: { background: 'none', border: 'none', color: '#0063DC', cursor: 'pointer', fontSize: '14px', padding: '4px 0', flexShrink: 0 },
+  backBtn: { background: 'none', border: 'none', color: '#0063DC', cursor: 'pointer', fontSize: '14px', padding: '4px 0', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '4px' },
   selectBtn: { background: 'none', border: '1px solid #ccc', borderRadius: '6px', padding: '5px 12px', fontSize: '13px', color: '#555', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px' },
   searchForm: { display: 'flex', gap: '8px' },
   searchInput: {

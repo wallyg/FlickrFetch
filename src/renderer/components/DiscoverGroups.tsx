@@ -3,7 +3,7 @@ import type { FlickrPhoto, DiscoverGroup } from '../../shared/types'
 import PhotoDetail from './PhotoDetail'
 import { AttributionNotice, DiscoverTile, DiscoverSelectBar } from './DiscoverExplore'
 import SmartDownloadButton from './SmartDownloadButton'
-import { GridIcon, ListIcon, JustifiedIcon, sharedStyles as ss, type PhotoViewMode, PhotoListRow, loadPhotoViewMode, savePhotoViewMode, loadRowHeight, saveRowHeight, computeJustifiedRows } from './PhotoGridShared'
+import { GridIcon, ListIcon, JustifiedIcon, ChevronLeftIcon, ChevronRightIcon, sharedStyles as ss, type PhotoViewMode, PhotoListRow, loadPhotoViewMode, savePhotoViewMode, loadRowHeight, saveRowHeight, computeJustifiedRows } from './PhotoGridShared'
 
 type GroupView = 'list' | 'pool'
 
@@ -156,7 +156,7 @@ export default function DiscoverGroups(): React.JSX.Element {
         <div style={s.stickyHeader}>
           <div style={s.headerRow}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <button style={s.backBtn} onClick={handleBack}>← My Groups</button>
+              <button style={s.backBtn} onClick={handleBack}><ChevronLeftIcon />My Groups</button>
               {activeGroup.iconUrl && (
                 <img src={activeGroup.iconUrl} alt="" style={s.groupIcon} loading="lazy"
                   onError={(e) => { e.currentTarget.style.display = 'none' }} />
@@ -363,7 +363,7 @@ export default function DiscoverGroups(): React.JSX.Element {
                   {g.photoCount != null ? `${g.photoCount.toLocaleString()} photos` : ''}
                 </span>
               </div>
-              <span style={s.chevron}>›</span>
+              <ChevronRightIcon />
             </div>
           ))}
         </div>
@@ -378,7 +378,7 @@ const s: Record<string, React.CSSProperties> = {
   headerRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '20px' },
   heading: { margin: 0, fontSize: '18px', fontWeight: 600, color: '#1a1a1a' },
   subheading: { margin: '4px 0 0', fontSize: '13px', color: '#888' },
-  backBtn: { background: 'none', border: 'none', color: '#0063DC', cursor: 'pointer', fontSize: '14px', padding: '4px 0', flexShrink: 0 },
+  backBtn: { background: 'none', border: 'none', color: '#0063DC', cursor: 'pointer', fontSize: '14px', padding: '4px 0', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '4px' },
   selectBtn: { padding: '6px 14px', borderRadius: '8px', border: '1px solid #ddd', background: '#fff', cursor: 'pointer', fontSize: '13px', color: '#444', flexShrink: 0 },
   filterInput: {
     height: '36px', borderRadius: '8px', border: '1px solid #ddd',
@@ -399,7 +399,7 @@ const s: Record<string, React.CSSProperties> = {
   groupInfo: { flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' },
   groupName: { fontSize: '14px', fontWeight: 500, color: '#1a1a1a' },
   groupMeta: { fontSize: '12px', color: '#888' },
-  chevron: { color: '#ccc', fontSize: '20px' },
+  chevron: { color: '#ccc' },
   groupIcon: { width: '36px', height: '36px', borderRadius: '6px', objectFit: 'cover' },
   grid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px' },
   justifiedContainer: { padding: '0' },

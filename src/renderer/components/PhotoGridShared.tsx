@@ -227,7 +227,23 @@ export function JustifiedIcon(): React.JSX.Element {
   )
 }
 
-export function GridIcon({ size }: { size: GridSize }): React.JSX.Element {
+export function ChevronLeftIcon(): React.JSX.Element {
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+      <path d="M7.5 1.5L3 6l4.5 4.5"/>
+    </svg>
+  )
+}
+
+export function ChevronRightIcon(): React.JSX.Element {
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+      <path d="M4.5 1.5L9 6l-4.5 4.5"/>
+    </svg>
+  )
+}
+
+export function GridIcon({ size }: { size?: GridSize }): React.JSX.Element {
   if (size === 'small') return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
       {[0, 3.5, 7, 10.5].flatMap(x => [0, 3.5, 7, 10.5].map(y =>
