@@ -772,7 +772,7 @@ export async function getGroupPhotos(groupId: string, tokenData: FlickrTokenData
   const url = `${FLICKR_API_BASE}?method=flickr.groups.pools.getPhotos` +
     `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
     `&group_id=${encodeURIComponent(groupId)}` +
-    `&extras=${encodeURIComponent('url_q,date_taken,date_upload,last_update,media,ownername')}` +
+    `&extras=${encodeURIComponent('url_q,url_m,date_taken,date_upload,last_update,media,ownername')}` +
     `&per_page=100&page=${page}&format=json&nojsoncallback=1`
   const authHeader = getOAuthHeader(url, 'GET', tokenData)
   const response = await axios.get(url, { headers: { ...authHeader, 'User-Agent': USER_AGENT } })
@@ -784,7 +784,7 @@ export async function getGroupPhotos(groupId: string, tokenData: FlickrTokenData
 export async function getInterestingness(tokenData: FlickrTokenData, page: number = 1): Promise<PhotoPage> {
   const url = `${FLICKR_API_BASE}?method=flickr.interestingness.getList` +
     `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
-    `&extras=${encodeURIComponent('url_q,date_taken,date_upload,last_update,media,ownername')}` +
+    `&extras=${encodeURIComponent('url_q,url_m,date_taken,date_upload,last_update,media,ownername')}` +
     `&per_page=100&page=${page}&format=json&nojsoncallback=1`
   const authHeader = getOAuthHeader(url, 'GET', tokenData)
   const response = await axios.get(url, { headers: { ...authHeader, 'User-Agent': USER_AGENT } })

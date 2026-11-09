@@ -262,9 +262,8 @@ export default function DiscoverGroups(): React.JSX.Element {
                   let gIdx = 0
                   return poolJustifiedRows.map((row, ri) => (
                     <div key={ri} style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
-                      {row.photos.map((photo) => {
+                      {row.photos.map((photo, pi) => {
                         const photoIdx = gIdx++
-                        const pi = row.photos.indexOf(photo)
                         const isSelected = selectMode && selectedIds.has(photo.id)
                         return (
                           <div key={photo.id} style={{

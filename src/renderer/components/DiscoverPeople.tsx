@@ -756,8 +756,7 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
                   let gIdx = 0
                   return albumPhotosJustifiedRows.map((row, ri) => (
                     <div key={ri} style={{ display: 'flex', gap: '4px', marginBottom: '4px', height: `${row.height}px` }}>
-                      {row.photos.map((photo) => {
-                        const pi = row.photos.indexOf(photo)
+                      {row.photos.map((photo, pi) => {
                         const photoIdx = gIdx++
                         const isSelected = albumSelectMode ? albumSelectedIds.has(photo.id) : false
                         return (
@@ -1159,8 +1158,7 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
                       let gIdx = 0
                       return userPhotosJustifiedRows.map((row, ri) => (
                         <div key={ri} style={{ display: 'flex', gap: '4px', marginBottom: '4px', height: `${row.height}px` }}>
-                          {row.photos.map((photo) => {
-                            const pi = row.photos.indexOf(photo)
+                          {row.photos.map((photo, pi) => {
                             const photoIdx = gIdx++
                             const isSelected = userSelectMode ? userSelectedIds.has(photo.id) : false
                             return (
