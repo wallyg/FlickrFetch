@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import type { FlickrPhoto, PhotoSearchParams, SearchOperator, DateRangeField, TagMode } from '../../shared/types'
-import { MediaFilter, PhotoViewMode, DownloadFilter, PrivacyFilter, PrivacyLevel, PRIVACY_OPTIONS, PRIVACY_LABELS, GRID_COLUMNS, JustifiedIcon, ListIcon, PrivacyIcon, Tooltip, Chip, PhotoListRow, DownloadFilterSelect, getPrivacyLevel, sharedStyles, DateMode, getPresetDates, formatDateChip, loadPhotoViewMode, savePhotoViewMode, loadRowHeight, saveRowHeight, computeJustifiedRows, DOWNLOAD_FILTER_LABEL } from './PhotoGridShared'
+import { MediaFilter, PhotoViewMode, DownloadFilter, PrivacyFilter, PrivacyLevel, PRIVACY_OPTIONS, PRIVACY_LABELS, GRID_COLUMNS, JustifiedIcon, GridIcon, ListIcon, PrivacyIcon, Tooltip, Chip, PhotoListRow, DownloadFilterSelect, getPrivacyLevel, sharedStyles, DateMode, getPresetDates, formatDateChip, loadPhotoViewMode, savePhotoViewMode, loadRowHeight, saveRowHeight, computeJustifiedRows, DOWNLOAD_FILTER_LABEL } from './PhotoGridShared'
 
 type SortOrder = 'date-posted-desc' | 'date-posted-asc' | 'date-taken-desc' | 'date-taken-asc'
 
@@ -240,12 +240,14 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
   }, [photos])
 
   useLayoutEffect(() => {
+    if (loading) return
     if (gridContainerRef.current) {
       setContainerWidth(Math.round(gridContainerRef.current.getBoundingClientRect().width))
     }
-  }, [])
+  }, [loading, viewMode])
 
   useEffect(() => {
+    if (loading) return
     const el = gridContainerRef.current
     if (!el) return
     const obs = new ResizeObserver(([entry]) => {
@@ -253,10 +255,10 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
     })
     obs.observe(el)
     return () => obs.disconnect()
-  }, [])
+  }, [loading, viewMode])
 
   const justifiedRows = useMemo(() => {
-    if (viewMode === 'list' || containerWidth === 0) return null
+    if (viewMode !== 'justified' || containerWidth === 0) return null
     return computeJustifiedRows(filteredPhotos, containerWidth, rowHeight)
   }, [filteredPhotos, containerWidth, rowHeight, viewMode])
 
@@ -395,16 +397,19 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
               <button style={{ ...styles.densityBtn, ...(viewMode === 'list' ? styles.densityBtnActive : {}) }} onClick={() => { const m: PhotoViewMode = 'list'; setViewMode(m); savePhotoViewMode(m) }}>
                 <ListIcon />
               </button>
+              <button style={{ ...styles.densityBtn, ...(viewMode === 'grid' ? styles.densityBtnActive : {}) }} onClick={() => { const m: PhotoViewMode = 'grid'; setViewMode(m); savePhotoViewMode(m) }}>
+                <GridIcon size="medium" />
+              </button>
               <button style={{ ...styles.densityBtn, ...(viewMode === 'justified' ? styles.densityBtnActive : {}) }} onClick={() => { const m: PhotoViewMode = 'justified'; setViewMode(m); savePhotoViewMode(m) }}>
                 <JustifiedIcon />
               </button>
-              {viewMode === 'justified' && (
+              {viewMode !== 'list' && (
                 <input
                   type="range" min={100} max={300} step={5}
                   value={rowHeight}
                   onChange={e => { const v = Number(e.target.value); setRowHeight(v); saveRowHeight(v) }}
                   style={styles.rowHeightSlider}
-                  title={`Row height: ${rowHeight}px`}
+                  title={viewMode === 'justified' ? `Row height: ${rowHeight}px` : `Tile size: ${rowHeight}px`}
                 />
               )}
             </div>
@@ -614,6 +619,74 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
             />
           ))}
         </div>
+      ) : viewMode === 'grid' ? (
+        <div style={{ ...styles.gridContainer, gridTemplateColumns: `repeat(auto-fill, minmax(${rowHeight}px, 1fr))` }}>
+          {filteredPhotos.map(photo => {
+            const isSelected = selectMode && (selectedIds?.has(photo.id) ?? false)
+            const privacyLevel = getPrivacyLevel(photo)
+            return (
+              <div
+                key={photo.id}
+                style={{
+                  position: 'relative',
+                  aspectRatio: '1',
+                  overflow: 'hidden',
+                  borderRadius: '2px',
+                  cursor: 'pointer',
+                  backgroundColor: '#e8e8e8',
+                  transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                  ...(isSelected ? { outline: '3px solid var(--ff-pink)', outlineOffset: '-3px', zIndex: 1 } : {}),
+                  ...(selectMode && !isSelected ? { opacity: 0.75 } : {}),
+                  ...(!selectMode && hoveredId === photo.id ? { transform: 'scale(1.015)', boxShadow: '0 4px 16px rgba(0,0,0,0.18)', zIndex: 2 } : {})
+                }}
+                onMouseEnter={() => setHoveredId(photo.id)}
+                onMouseLeave={() => setHoveredId(null)}
+                onClick={(e) => selectMode ? onToggleSelect?.(photo, e.shiftKey) : onPhotoSelect(photo)}
+              >
+                <img
+                  src={photo.url_m || photo.thumbnailUrl}
+                  alt={photo.title}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  loading="lazy"
+                />
+                {photo.media === 'video' && (
+                  <div style={styles.videoOverlay}>
+                    <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
+                      <circle cx="15" cy="15" r="15" fill="rgba(0,0,0,0.52)"/>
+                      <polygon points="12,9 23,15 12,21" fill="white"/>
+                    </svg>
+                  </div>
+                )}
+                {privacyLevel !== 'public' && (
+                  <div style={styles.privacyBadge}>
+                    <PrivacyIcon level={privacyLevel} />
+                  </div>
+                )}
+                {!selectMode && downloadRecords[photo.id] && (
+                  <div style={styles.downloadBadge}>
+                    <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1.5 5.5l2.5 2.5 4.5-4.5"/>
+                    </svg>
+                  </div>
+                )}
+                {!selectMode && (
+                  <div style={{ ...styles.overlay, opacity: hoveredId === photo.id ? 1 : 0 }}>
+                    <span style={styles.overlayTitle}>{photo.title}</span>
+                  </div>
+                )}
+                {selectMode && (
+                  <div style={{
+                    ...styles.selectBadge,
+                    backgroundColor: isSelected ? 'var(--ff-pink)' : 'rgba(255,255,255,0.75)',
+                    border: isSelected ? '2px solid var(--ff-pink)' : '2px solid rgba(255,255,255,0.9)'
+                  }}>
+                    {isSelected && <span style={{ ...styles.selectCheck, animation: 'ff-pop 0.18s ease-out' }}>✓</span>}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
       ) : (
         <div ref={gridContainerRef} style={styles.justifiedContainer}>
           {justifiedRows && justifiedRows.map((row, ri) => (
@@ -710,6 +783,7 @@ const styles: Record<string, React.CSSProperties> = {
   wrapper: { padding: '0', overflowY: 'auto', height: '100%', boxSizing: 'border-box' },
   grid: { display: 'grid', gap: '4px', padding: '4px 16px 16px' },
   justifiedContainer: { padding: '4px 16px 16px' },
+  gridContainer: { display: 'grid', gap: '4px', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', padding: '4px 16px 16px' },
   thumbPlaceholder: { width: '100%', height: '100%', backgroundColor: '#d0d0d0' },
   overlay: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.65)', padding: '6px 8px', display: 'flex', alignItems: 'flex-start', gap: '6px', opacity: 0, transition: 'opacity 0.15s ease' },
   overlayTitle: { flex: 1, color: '#fff', fontSize: '12px', lineHeight: '1.3', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as React.CSSProperties,

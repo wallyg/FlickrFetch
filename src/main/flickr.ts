@@ -579,6 +579,9 @@ function mapPublicPhotos(photos: Record<string, string>[]): FlickrPhoto[] {
     id: p.id,
     title: p.title || 'Untitled',
     thumbnailUrl: p.url_q || '',
+    url_m: p.url_m || undefined,
+    width_m: p.width_m ? Number(p.width_m) : undefined,
+    height_m: p.height_m ? Number(p.height_m) : undefined,
     dateTaken: p.datetaken || '',
     media: (p.media === 'video' ? 'video' : 'photo') as 'photo' | 'video',
     datePosted: p.dateupload || undefined,
@@ -670,7 +673,7 @@ export async function getPublicPhotos(nsid: string, tokenData: FlickrTokenData, 
   let url = `${FLICKR_API_BASE}?method=flickr.photos.search` +
     `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
     `&user_id=${encodeURIComponent(nsid)}` +
-    `&extras=${encodeURIComponent('url_q,date_taken,date_upload,last_update,media')}` +
+    `&extras=${encodeURIComponent('url_q,url_m,date_taken,date_upload,last_update,media')}` +
     `&sort=${encodeURIComponent(sort)}` +
     `&per_page=100&page=${page}&format=json&nojsoncallback=1`
 

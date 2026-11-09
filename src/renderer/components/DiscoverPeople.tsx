@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import React, { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo } from 'react'
 import type { FlickrPhoto, FlickrAlbum, FlickrCollection, DiscoverUser, DiscoverContact, PhotoSearchParams, SearchOperator, DateRangeField, TagMode } from '../../shared/types'
 import PhotoDetail from './PhotoDetail'
 import { AttributionNotice, DiscoverTile, DiscoverSelectBar } from './DiscoverExplore'
 import SmartDownloadButton from './SmartDownloadButton'
-import { GridIcon, ListIcon, GRID_COLUMNS, sharedStyles as ss, type MediaFilter, type GridSize, type AlbumViewMode, type PhotoViewMode, type DownloadFilter, type DateMode, getPresetDates, formatDateChip, Chip, PhotoListRow, DownloadFilterSelect, loadAlbumViewMode, saveAlbumViewMode, loadPhotoViewMode, savePhotoViewMode } from './PhotoGridShared'
+import { GridIcon, ListIcon, JustifiedIcon, sharedStyles as ss, type MediaFilter, type GridSize, type AlbumViewMode, type PhotoViewMode, type DownloadFilter, type DateMode, getPresetDates, formatDateChip, Chip, PhotoListRow, DownloadFilterSelect, loadAlbumViewMode, saveAlbumViewMode, loadPhotoViewMode, savePhotoViewMode, loadRowHeight, saveRowHeight, computeJustifiedRows } from './PhotoGridShared'
 
 const ALBUM_COLUMNS: Record<GridSize, string> = {
   small: 'repeat(auto-fill, minmax(130px, 1fr))',
@@ -88,7 +88,7 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
   const [albumsViewMode, setAlbumsViewMode] = useState<AlbumViewMode>(loadAlbumViewMode)
 
   // Toolbar state (album photos view)
-  const [albumPhotosViewMode, setAlbumPhotosViewMode] = useState<AlbumViewMode>(loadAlbumViewMode)
+  const [albumPhotosViewMode, setAlbumPhotosViewMode] = useState<PhotoViewMode>(loadPhotoViewMode)
   const [albumPhotosDownloadFilter, setAlbumPhotosDownloadFilter] = useState<DownloadFilter>('all')
   const [albumPhotosDownloadRecords, setAlbumPhotosDownloadRecords] = useState<Record<string, true>>({})
   const [albumPhotosMediaFilter, setAlbumPhotosMediaFilter] = useState<MediaFilter>('all')
@@ -103,8 +103,12 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
   const [albumPhotosActiveDateMax, setAlbumPhotosActiveDateMax] = useState('')
   const [albumPhotosActiveDateField, setAlbumPhotosActiveDateField] = useState<DateRangeField>('taken')
 
-  const userPhotosGridSize: GridSize = userPhotosViewMode === 'list' ? 'medium' : userPhotosViewMode
-  const albumPhotosGridSize: GridSize = albumPhotosViewMode === 'list' ? 'medium' : albumPhotosViewMode
+  const [rowHeight, setRowHeight] = useState<number>(loadRowHeight)
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
+  const [userPhotosContainerWidth, setUserPhotosContainerWidth] = useState(0)
+  const [albumPhotosContainerWidth, setAlbumPhotosContainerWidth] = useState(0)
+  const userPhotosGridRef = useRef<HTMLDivElement>(null)
+  const albumPhotosGridRef = useRef<HTMLDivElement>(null)
 
   const loadedContactsRef = useRef(false)
 
@@ -457,6 +461,16 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
     return (albumPhotosActiveDateMin || albumPhotosActiveDateMax ? 1 : 0) + (albumPhotosDownloadFilter !== 'all' ? 1 : 0)
   }, [albumPhotosActiveDateMin, albumPhotosActiveDateMax, albumPhotosDownloadFilter])
 
+  const userPhotosJustifiedRows = useMemo(() => {
+    if (userPhotosViewMode !== 'justified' || userPhotosContainerWidth === 0) return null
+    return computeJustifiedRows(filteredPhotos, userPhotosContainerWidth, rowHeight)
+  }, [filteredPhotos, userPhotosViewMode, userPhotosContainerWidth, rowHeight])
+
+  const albumPhotosJustifiedRows = useMemo(() => {
+    if (albumPhotosViewMode !== 'justified' || albumPhotosContainerWidth === 0) return null
+    return computeJustifiedRows(filteredAlbumPhotos, albumPhotosContainerWidth, rowHeight)
+  }, [filteredAlbumPhotos, albumPhotosViewMode, albumPhotosContainerWidth, rowHeight])
+
   useEffect(() => {
     if (userPhotos.length === 0) return
     window.flickrAPI.getDiscoverRecordsBatch(userPhotos.map(p => p.id))
@@ -478,6 +492,38 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
       })
       .catch(() => {})
   }, [albumPhotos])
+
+  useLayoutEffect(() => {
+    if (photosLoading) return
+    if (userPhotosGridRef.current) {
+      setUserPhotosContainerWidth(Math.round(userPhotosGridRef.current.getBoundingClientRect().width))
+    }
+  }, [photosLoading, userPhotosViewMode])
+
+  useEffect(() => {
+    if (photosLoading) return
+    const el = userPhotosGridRef.current
+    if (!el) return
+    const obs = new ResizeObserver(([entry]) => setUserPhotosContainerWidth(Math.round(entry.contentRect.width)))
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [photosLoading, userPhotosViewMode])
+
+  useLayoutEffect(() => {
+    if (albumPhotosLoading) return
+    if (albumPhotosGridRef.current) {
+      setAlbumPhotosContainerWidth(Math.round(albumPhotosGridRef.current.getBoundingClientRect().width))
+    }
+  }, [albumPhotosLoading, albumPhotosViewMode])
+
+  useEffect(() => {
+    if (albumPhotosLoading) return
+    const el = albumPhotosGridRef.current
+    if (!el) return
+    const obs = new ResizeObserver(([entry]) => setAlbumPhotosContainerWidth(Math.round(entry.contentRect.width)))
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [albumPhotosLoading, albumPhotosViewMode])
 
   // ── Photo detail view
   if (detailIndex !== null) {
@@ -517,10 +563,31 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
     return (
       <div style={s.container}>
         <div style={s.stickyHeader}>
+          {/* User profile row */}
+          <div style={s.headerRow}>
+            <button style={s.backBtn} onClick={() => { setView('home'); setFoundUser(null) }}>← Back</button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+              <img src={foundUser.avatarUrl} alt={foundUser.username} style={s.userAvatar}
+                onError={(e) => { e.currentTarget.src = 'https://www.flickr.com/images/buddyicon.gif' }} />
+              <div>
+                <span style={s.userName}>{foundUser.realname || foundUser.username}</span>
+                {foundUser.realname && <div style={s.userHandle}>@{foundUser.username}</div>}
+              </div>
+            </div>
+          </div>
+          {/* Tab bar */}
+          <div style={s.userTabBar}>
+            <button style={s.userTabBtn} onClick={() => { setView('user-photos'); setUserTab('photos'); setActiveAlbum(null) }}>Photos</button>
+            <button style={{ ...s.userTabBtn, ...(activeDiscoverCollection === null ? s.userTabActive : {}) }}
+              onClick={() => { setView('user-photos'); setUserTab('albums'); setActiveAlbum(null) }}>Albums</button>
+            <button style={{ ...s.userTabBtn, ...(activeDiscoverCollection !== null ? s.userTabActive : {}) }}
+              onClick={() => { setView('user-photos'); setUserTab('collections'); setActiveAlbum(null) }}>Collections</button>
+          </div>
+          {/* Album header */}
           <div style={s.headerRow}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <button style={s.backBtn} onClick={() => { setView('user-photos'); setUserTab(activeDiscoverCollection !== null ? 'collections' : 'albums'); setActiveAlbum(null) }}>
-                ← {foundUser.realname || foundUser.username}
+                ← {activeDiscoverCollection !== null ? 'Collections' : 'Albums'}
               </button>
               <div>
                 <h2 style={s.heading}>{activeAlbum.title}</h2>
@@ -596,14 +663,19 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
             </button>
             <div style={{ flex: 1 }} />
             <div style={ss.segGroupDensity}>
-              <button style={{ ...ss.densityBtn, ...(albumPhotosViewMode === 'list' ? ss.densityBtnActive : {}) }} onClick={() => { const m: AlbumViewMode = 'list'; setAlbumPhotosViewMode(m); saveAlbumViewMode(m) }}>
+              <button style={{ ...ss.densityBtn, ...(albumPhotosViewMode === 'list' ? ss.densityBtnActive : {}) }} onClick={() => { setAlbumPhotosViewMode('list'); savePhotoViewMode('list') }}>
                 <ListIcon />
               </button>
-              {(['small', 'medium', 'large'] as GridSize[]).map(g => (
-                <button key={g} style={{ ...ss.densityBtn, ...(albumPhotosViewMode === g ? ss.densityBtnActive : {}) }} onClick={() => { setAlbumPhotosViewMode(g); saveAlbumViewMode(g) }}>
-                  <GridIcon size={g} />
-                </button>
-              ))}
+              <button style={{ ...ss.densityBtn, ...(albumPhotosViewMode === 'grid' ? ss.densityBtnActive : {}) }} onClick={() => { setAlbumPhotosViewMode('grid'); savePhotoViewMode('grid') }}>
+                <GridIcon />
+              </button>
+              <button style={{ ...ss.densityBtn, ...(albumPhotosViewMode === 'justified' ? ss.densityBtnActive : {}) }} onClick={() => { setAlbumPhotosViewMode('justified'); savePhotoViewMode('justified') }}>
+                <JustifiedIcon />
+              </button>
+              {albumPhotosViewMode !== 'list' && (
+                <input type="range" min={80} max={300} value={rowHeight} style={ss.rowHeightSlider}
+                  onChange={e => { const v = Number(e.target.value); setRowHeight(v); saveRowHeight(v) }} />
+              )}
             </div>
             <select style={ss.sortSelect} value={albumPhotosSort} onChange={e => setAlbumPhotosSort(e.target.value)}>
               <option value="default">Album order</option>
@@ -665,8 +737,8 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
                   />
                 ))}
               </div>
-            ) : (
-              <div style={{ ...s.grid, gridTemplateColumns: GRID_COLUMNS[albumPhotosGridSize] }}>
+            ) : albumPhotosViewMode === 'grid' ? (
+              <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, minmax(${rowHeight}px, 1fr))`, gap: '4px', padding: '0' }}>
                 {filteredAlbumPhotos.map((photo, idx) => (
                   <DiscoverTile
                     key={photo.id}
@@ -677,6 +749,52 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
                     onSelect={() => toggleAlbumSelect(photo.id)}
                   />
                 ))}
+              </div>
+            ) : (
+              <div ref={albumPhotosGridRef} style={{ padding: '0' }}>
+                {albumPhotosJustifiedRows && (() => {
+                  let gIdx = 0
+                  return albumPhotosJustifiedRows.map((row, ri) => (
+                    <div key={ri} style={{ display: 'flex', gap: '4px', marginBottom: '4px', height: `${row.height}px` }}>
+                      {row.photos.map((photo) => {
+                        const pi = row.photos.indexOf(photo)
+                        const photoIdx = gIdx++
+                        const isSelected = albumSelectMode ? albumSelectedIds.has(photo.id) : false
+                        return (
+                          <div key={photo.id} style={{ position: 'relative', width: `${row.widths[pi]}px`, flexShrink: 0, cursor: 'pointer', overflow: 'hidden', borderRadius: '2px' }}
+                            onClick={() => albumSelectMode ? toggleAlbumSelect(photo.id) : setDetailIndex(photoIdx)}
+                            onMouseEnter={() => setHoveredId(photo.id)}
+                            onMouseLeave={() => setHoveredId(null)}>
+                            <img src={photo.url_m || photo.thumbnailUrl} alt={photo.title}
+                              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                            {photo.media === 'video' && (
+                              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+                                <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                  <svg width="10" height="12" viewBox="0 0 10 12" fill="white"><path d="M1 1l8 5-8 5V1z"/></svg>
+                                </div>
+                              </div>
+                            )}
+                            {hoveredId === photo.id && (
+                              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(transparent, rgba(0,0,0,0.6))', padding: '12px 6px 4px', pointerEvents: 'none' }}>
+                                <div style={{ color: '#fff', fontSize: '11px', fontWeight: 500, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{photo.title}</div>
+                              </div>
+                            )}
+                            {albumSelectMode && (
+                              <div style={{ position: 'absolute', top: 4, right: 4, width: 18, height: 18, borderRadius: '50%', border: '2px solid #fff', background: isSelected ? 'var(--ff-blue)' : 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                {isSelected && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                              </div>
+                            )}
+                            {albumPhotosDownloadRecords[photo.id] && !albumSelectMode && (
+                              <div style={{ position: 'absolute', bottom: 4, left: 4, width: 16, height: 16, borderRadius: '50%', background: 'var(--ff-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3l2 2 4-4" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  ))
+                })()}
               </div>
             )}
             {albumPhotosPage < albumPhotosPages && (
@@ -824,18 +942,19 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
 
                 {/* Grid density + list toggle */}
                 <div style={ss.segGroupDensity}>
-                  <button style={{ ...ss.densityBtn, ...(userPhotosViewMode === 'list' ? ss.densityBtnActive : {}) }} onClick={() => { const m: PhotoViewMode = 'list'; setUserPhotosViewMode(m); savePhotoViewMode(m) }}>
+                  <button style={{ ...ss.densityBtn, ...(userPhotosViewMode === 'list' ? ss.densityBtnActive : {}) }} onClick={() => { setUserPhotosViewMode('list'); savePhotoViewMode('list') }}>
                     <ListIcon />
                   </button>
-                  {(['small', 'medium', 'large'] as GridSize[]).map(g => (
-                    <button
-                      key={g}
-                      style={{ ...ss.densityBtn, ...(userPhotosViewMode === g ? ss.densityBtnActive : {}) }}
-                      onClick={() => { setUserPhotosViewMode(g); savePhotoViewMode(g) }}
-                    >
-                      <GridIcon size={g} />
-                    </button>
-                  ))}
+                  <button style={{ ...ss.densityBtn, ...(userPhotosViewMode === 'grid' ? ss.densityBtnActive : {}) }} onClick={() => { setUserPhotosViewMode('grid'); savePhotoViewMode('grid') }}>
+                    <GridIcon />
+                  </button>
+                  <button style={{ ...ss.densityBtn, ...(userPhotosViewMode === 'justified' ? ss.densityBtnActive : {}) }} onClick={() => { setUserPhotosViewMode('justified'); savePhotoViewMode('justified') }}>
+                    <JustifiedIcon />
+                  </button>
+                  {userPhotosViewMode !== 'list' && (
+                    <input type="range" min={80} max={300} value={rowHeight} style={ss.rowHeightSlider}
+                      onChange={e => { const v = Number(e.target.value); setRowHeight(v); saveRowHeight(v) }} />
+                  )}
                 </div>
 
                 {/* Sort */}
@@ -1021,8 +1140,8 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
                       />
                     ))}
                   </div>
-                ) : (
-                  <div style={{ ...s.grid, gridTemplateColumns: GRID_COLUMNS[userPhotosGridSize] }}>
+                ) : userPhotosViewMode === 'grid' ? (
+                  <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, minmax(${rowHeight}px, 1fr))`, gap: '4px', padding: '0' }}>
                     {filteredPhotos.map((photo, idx) => (
                       <DiscoverTile
                         key={photo.id}
@@ -1033,6 +1152,52 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
                         onSelect={() => toggleUserSelect(photo.id)}
                       />
                     ))}
+                  </div>
+                ) : (
+                  <div ref={userPhotosGridRef} style={{ padding: '0' }}>
+                    {userPhotosJustifiedRows && (() => {
+                      let gIdx = 0
+                      return userPhotosJustifiedRows.map((row, ri) => (
+                        <div key={ri} style={{ display: 'flex', gap: '4px', marginBottom: '4px', height: `${row.height}px` }}>
+                          {row.photos.map((photo) => {
+                            const pi = row.photos.indexOf(photo)
+                            const photoIdx = gIdx++
+                            const isSelected = userSelectMode ? userSelectedIds.has(photo.id) : false
+                            return (
+                              <div key={photo.id} style={{ position: 'relative', width: `${row.widths[pi]}px`, flexShrink: 0, cursor: 'pointer', overflow: 'hidden', borderRadius: '2px' }}
+                                onClick={() => userSelectMode ? toggleUserSelect(photo.id) : setDetailIndex(photoIdx)}
+                                onMouseEnter={() => setHoveredId(photo.id)}
+                                onMouseLeave={() => setHoveredId(null)}>
+                                <img src={photo.url_m || photo.thumbnailUrl} alt={photo.title}
+                                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                                {photo.media === 'video' && (
+                                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+                                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                      <svg width="10" height="12" viewBox="0 0 10 12" fill="white"><path d="M1 1l8 5-8 5V1z"/></svg>
+                                    </div>
+                                  </div>
+                                )}
+                                {hoveredId === photo.id && (
+                                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(transparent, rgba(0,0,0,0.6))', padding: '12px 6px 4px', pointerEvents: 'none' }}>
+                                    <div style={{ color: '#fff', fontSize: '11px', fontWeight: 500, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{photo.title}</div>
+                                  </div>
+                                )}
+                                {userSelectMode && (
+                                  <div style={{ position: 'absolute', top: 4, right: 4, width: 18, height: 18, borderRadius: '50%', border: '2px solid #fff', background: isSelected ? 'var(--ff-blue)' : 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    {isSelected && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                                  </div>
+                                )}
+                                {userDownloadRecords[photo.id] && !userSelectMode && (
+                                  <div style={{ position: 'absolute', bottom: 4, left: 4, width: 16, height: 16, borderRadius: '50%', background: 'var(--ff-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3l2 2 4-4" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      ))
+                    })()}
                   </div>
                 )}
                 {photosPage < photosPages && searchOperator !== 'photo-id' && (

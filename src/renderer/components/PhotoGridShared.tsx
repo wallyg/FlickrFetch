@@ -5,7 +5,7 @@ import type { FlickrPhoto } from '../../shared/types'
 export type MediaFilter = 'all' | 'photo' | 'video'
 export type GridSize = 'small' | 'medium' | 'large'
 export type AlbumViewMode = GridSize | 'list'
-export type PhotoViewMode = 'justified' | 'list'
+export type PhotoViewMode = 'list' | 'grid' | 'justified'
 export type DownloadFilter = 'all' | 'not-downloaded' | 'downloaded'
 export type PrivacyFilter = 'all' | 'public' | 'friends' | 'family' | 'friendsFamily' | 'private'
 export type PrivacyLevel = 'public' | 'friends' | 'family' | 'friendsFamily' | 'private'
@@ -44,7 +44,8 @@ export function loadPhotoViewMode(): PhotoViewMode {
   try {
     const v = localStorage.getItem(PHOTO_VIEW_KEY)
     if (v === 'list') return 'list'
-    // Migrate old grid-size values to 'justified'
+    if (v === 'grid') return 'grid'
+    if (v === 'small' || v === 'medium' || v === 'large') return 'grid'
   } catch { /* ignore */ }
   return 'justified'
 }

@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo } from 'react'
 import type { FlickrPhoto, DiscoverGroup } from '../../shared/types'
 import PhotoDetail from './PhotoDetail'
 import { AttributionNotice, DiscoverTile, DiscoverSelectBar } from './DiscoverExplore'
 import SmartDownloadButton from './SmartDownloadButton'
-import { GridIcon, ListIcon, GRID_COLUMNS, sharedStyles as ss, type GridSize, type AlbumViewMode, PhotoListRow, loadAlbumViewMode, saveAlbumViewMode } from './PhotoGridShared'
+import { GridIcon, ListIcon, JustifiedIcon, sharedStyles as ss, type PhotoViewMode, PhotoListRow, loadPhotoViewMode, savePhotoViewMode, loadRowHeight, saveRowHeight, computeJustifiedRows } from './PhotoGridShared'
 
 type GroupView = 'list' | 'pool'
 
@@ -24,10 +24,12 @@ export default function DiscoverGroups(): React.JSX.Element {
   const [selectMode, setSelectMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [downloading, setDownloading] = useState(false)
-  const [poolViewMode, setPoolViewMode] = useState<AlbumViewMode>(loadAlbumViewMode)
+  const [poolViewMode, setPoolViewMode] = useState<PhotoViewMode>(loadPhotoViewMode)
+  const [rowHeight, setRowHeight] = useState<number>(loadRowHeight)
+  const [containerWidth, setContainerWidth] = useState(0)
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
   const loadedRef = useRef(false)
-
-  const poolGridSize: GridSize = poolViewMode === 'list' ? 'medium' : poolViewMode
+  const gridContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (loadedRef.current) return
@@ -75,6 +77,29 @@ export default function DiscoverGroups(): React.JSX.Element {
     } catch { /* ignore */ }
     finally { setPoolLoadingMore(false) }
   }, [activeGroup, poolLoadingMore, poolPage, poolPages])
+
+  useLayoutEffect(() => {
+    if (poolLoading) return
+    if (gridContainerRef.current) {
+      setContainerWidth(Math.round(gridContainerRef.current.getBoundingClientRect().width))
+    }
+  }, [poolLoading, poolViewMode])
+
+  useEffect(() => {
+    if (poolLoading) return
+    const el = gridContainerRef.current
+    if (!el) return
+    const obs = new ResizeObserver(([entry]) => {
+      setContainerWidth(Math.round(entry.contentRect.width))
+    })
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [poolLoading, poolViewMode])
+
+  const poolJustifiedRows = useMemo(() => {
+    if (poolViewMode !== 'justified' || containerWidth === 0) return null
+    return computeJustifiedRows(poolPhotos, containerWidth, rowHeight)
+  }, [poolPhotos, poolViewMode, containerWidth, rowHeight])
 
   const handleBack = (): void => {
     setView('list')
@@ -175,14 +200,22 @@ export default function DiscoverGroups(): React.JSX.Element {
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', paddingTop: '6px' }}>
               <div style={{ flex: 1 }} />
               <div style={ss.segGroupDensity}>
-                <button style={{ ...ss.densityBtn, ...(poolViewMode === 'list' ? ss.densityBtnActive : {}) }} onClick={() => { const m: AlbumViewMode = 'list'; setPoolViewMode(m); saveAlbumViewMode(m) }}>
+                <button style={{ ...ss.densityBtn, ...(poolViewMode === 'list' ? ss.densityBtnActive : {}) }} onClick={() => { const m: PhotoViewMode = 'list'; setPoolViewMode(m); savePhotoViewMode(m) }}>
                   <ListIcon />
                 </button>
-                {(['small', 'medium', 'large'] as GridSize[]).map(g => (
-                  <button key={g} style={{ ...ss.densityBtn, ...(poolViewMode === g ? ss.densityBtnActive : {}) }} onClick={() => { setPoolViewMode(g); saveAlbumViewMode(g) }}>
-                    <GridIcon size={g} />
-                  </button>
-                ))}
+                <button style={{ ...ss.densityBtn, ...(poolViewMode === 'grid' ? ss.densityBtnActive : {}) }} onClick={() => { const m: PhotoViewMode = 'grid'; setPoolViewMode(m); savePhotoViewMode(m) }}>
+                  <GridIcon size="medium" />
+                </button>
+                <button style={{ ...ss.densityBtn, ...(poolViewMode === 'justified' ? ss.densityBtnActive : {}) }} onClick={() => { const m: PhotoViewMode = 'justified'; setPoolViewMode(m); savePhotoViewMode(m) }}>
+                  <JustifiedIcon />
+                </button>
+                {poolViewMode !== 'list' && (
+                  <input type="range" min={100} max={300} step={5} value={rowHeight}
+                    onChange={e => { const v = Number(e.target.value); setRowHeight(v); saveRowHeight(v) }}
+                    style={ss.rowHeightSlider}
+                    title={poolViewMode === 'justified' ? `Row height: ${rowHeight}px` : `Tile size: ${rowHeight}px`}
+                  />
+                )}
               </div>
             </div>
           )}
@@ -210,8 +243,8 @@ export default function DiscoverGroups(): React.JSX.Element {
                   />
                 ))}
               </div>
-            ) : (
-              <div style={{ ...s.grid, gridTemplateColumns: GRID_COLUMNS[poolGridSize] }}>
+            ) : poolViewMode === 'grid' ? (
+              <div style={{ display: 'grid', gap: '4px', gridTemplateColumns: `repeat(auto-fill, minmax(${rowHeight}px, 1fr))` }}>
                 {poolPhotos.map((photo, idx) => (
                   <DiscoverTile
                     key={photo.id}
@@ -222,6 +255,53 @@ export default function DiscoverGroups(): React.JSX.Element {
                     onSelect={() => toggleSelect(photo.id)}
                   />
                 ))}
+              </div>
+            ) : (
+              <div ref={gridContainerRef} style={s.justifiedContainer}>
+                {poolJustifiedRows && (() => {
+                  let gIdx = 0
+                  return poolJustifiedRows.map((row, ri) => (
+                    <div key={ri} style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
+                      {row.photos.map((photo) => {
+                        const photoIdx = gIdx++
+                        const pi = row.photos.indexOf(photo)
+                        const isSelected = selectMode && selectedIds.has(photo.id)
+                        return (
+                          <div key={photo.id} style={{
+                            position: 'relative', width: `${row.widths[pi]}px`, height: `${row.height}px`,
+                            flexShrink: 0, overflow: 'hidden', borderRadius: '2px', cursor: 'pointer',
+                            transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                            ...(isSelected ? { outline: '3px solid var(--ff-pink)', outlineOffset: '-3px', zIndex: 1 } : {}),
+                            ...(selectMode && !isSelected ? { opacity: 0.75 } : {}),
+                            ...(!selectMode && hoveredId === photo.id ? { transform: 'scale(1.015)', boxShadow: '0 4px 16px rgba(0,0,0,0.18)', zIndex: 2 } : {})
+                          }}
+                            onMouseEnter={() => setHoveredId(photo.id)}
+                            onMouseLeave={() => setHoveredId(null)}
+                            onClick={() => selectMode ? toggleSelect(photo.id) : setDetailIndex(photoIdx)}
+                          >
+                            <img src={photo.url_m || photo.thumbnailUrl} alt={photo.title}
+                              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} loading="lazy" />
+                            {photo.media === 'video' && (
+                              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+                                <svg width="30" height="30" viewBox="0 0 30 30" fill="none"><circle cx="15" cy="15" r="15" fill="rgba(0,0,0,0.52)"/><polygon points="12,9 23,15 12,21" fill="white"/></svg>
+                              </div>
+                            )}
+                            {!selectMode && (
+                              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.65)', padding: '6px 8px', opacity: hoveredId === photo.id ? 1 : 0, transition: 'opacity 0.15s ease' }}>
+                                <span style={{ color: '#fff', fontSize: '12px', lineHeight: '1.3', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as React.CSSProperties}>{photo.title}</span>
+                              </div>
+                            )}
+                            {selectMode && (
+                              <div style={{ position: 'absolute', top: '6px', right: '6px', width: '20px', height: '20px', borderRadius: '50%', border: `2px solid ${isSelected ? 'var(--ff-pink)' : 'rgba(255,255,255,0.9)'}`, backgroundColor: isSelected ? 'var(--ff-pink)' : 'rgba(255,255,255,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                {isSelected && <span style={{ color: '#fff', fontSize: '11px', fontWeight: 700 }}>✓</span>}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  ))
+                })()}
               </div>
             )}
             {poolPage < poolPages && (
@@ -322,6 +402,7 @@ const s: Record<string, React.CSSProperties> = {
   chevron: { color: '#ccc', fontSize: '20px' },
   groupIcon: { width: '36px', height: '36px', borderRadius: '6px', objectFit: 'cover' },
   grid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px' },
+  justifiedContainer: { padding: '0' },
   loadMoreRow: { display: 'flex', justifyContent: 'center', paddingTop: '8px' },
   loadMoreBtn: { padding: '8px 24px', borderRadius: '8px', border: '1px solid #ddd', background: '#fff', cursor: 'pointer', fontSize: '13px', color: '#444' },
   loadingState: { textAlign: 'center', color: '#888', fontSize: '14px', paddingTop: '48px' },

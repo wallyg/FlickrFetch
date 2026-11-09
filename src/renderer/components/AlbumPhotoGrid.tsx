@@ -1,12 +1,16 @@
 import React, { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from 'react'
 import type { FlickrPhoto, PhotoPage, SearchOperator, DateRangeField, TagMode } from '../../shared/types'
-import { MediaFilter, DownloadFilter, PrivacyFilter, PrivacyLevel, PRIVACY_OPTIONS, PRIVACY_LABELS, JustifiedIcon, ListIcon, PrivacyIcon, Chip, Tooltip, PhotoListRow, DownloadFilterSelect, getPrivacyLevel, sharedStyles, DateMode, getPresetDates, formatDateChip, loadRowHeight, saveRowHeight, computeJustifiedRows, DOWNLOAD_FILTER_LABEL } from './PhotoGridShared'
+import { MediaFilter, DownloadFilter, PrivacyFilter, PrivacyLevel, PRIVACY_OPTIONS, PRIVACY_LABELS, JustifiedIcon, GridIcon, ListIcon, PrivacyIcon, Chip, Tooltip, PhotoListRow, DownloadFilterSelect, getPrivacyLevel, sharedStyles, DateMode, getPresetDates, formatDateChip, loadRowHeight, saveRowHeight, computeJustifiedRows, DOWNLOAD_FILTER_LABEL } from './PhotoGridShared'
 
-type AlbumPhotoViewMode = 'justified' | 'list'
+type AlbumPhotoViewMode = 'list' | 'grid' | 'justified'
 
 const ALBUM_PHOTO_VIEW_KEY = 'ff-album-photo-view'
 function loadAlbumPhotoViewMode(): AlbumPhotoViewMode {
-  try { const v = localStorage.getItem(ALBUM_PHOTO_VIEW_KEY); if (v === 'list') return 'list' } catch { /* ignore */ }
+  try {
+    const v = localStorage.getItem(ALBUM_PHOTO_VIEW_KEY)
+    if (v === 'list') return 'list'
+    if (v === 'grid') return 'grid'
+  } catch { /* ignore */ }
   return 'justified'
 }
 function saveAlbumPhotoViewMode(m: AlbumPhotoViewMode): void {
@@ -217,12 +221,14 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
   }, [mediaFilter, privacyFilter, downloadFilter, activeTitleQuery, activeTagQuery, activeDateMin, activeDateMax, photos.length, pageInfo?.page, pageInfo?.pages, loadingMore, loading, handleLoadMore])
 
   useLayoutEffect(() => {
+    if (loading) return
     if (gridContainerRef.current) {
       setContainerWidth(Math.round(gridContainerRef.current.getBoundingClientRect().width))
     }
-  }, [])
+  }, [loading, viewMode])
 
   useEffect(() => {
+    if (loading) return
     const el = gridContainerRef.current
     if (!el) return
     const obs = new ResizeObserver(([entry]) => {
@@ -230,10 +236,10 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
     })
     obs.observe(el)
     return () => obs.disconnect()
-  }, [])
+  }, [loading, viewMode])
 
   const justifiedRows = useMemo(() => {
-    if (viewMode === 'list' || containerWidth === 0) return null
+    if (viewMode !== 'justified' || containerWidth === 0) return null
     return computeJustifiedRows(filteredPhotos, containerWidth, rowHeight)
   }, [filteredPhotos, containerWidth, rowHeight, viewMode])
 
@@ -313,16 +319,19 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
               <button style={{ ...styles.densityBtn, ...(viewMode === 'list' ? styles.densityBtnActive : {}) }} onClick={() => { const m: AlbumPhotoViewMode = 'list'; setViewMode(m); saveAlbumPhotoViewMode(m) }}>
                 <ListIcon />
               </button>
+              <button style={{ ...styles.densityBtn, ...(viewMode === 'grid' ? styles.densityBtnActive : {}) }} onClick={() => { const m: AlbumPhotoViewMode = 'grid'; setViewMode(m); saveAlbumPhotoViewMode(m) }}>
+                <GridIcon size="medium" />
+              </button>
               <button style={{ ...styles.densityBtn, ...(viewMode === 'justified' ? styles.densityBtnActive : {}) }} onClick={() => { const m: AlbumPhotoViewMode = 'justified'; setViewMode(m); saveAlbumPhotoViewMode(m) }}>
                 <JustifiedIcon />
               </button>
-              {viewMode === 'justified' && (
+              {viewMode !== 'list' && (
                 <input
                   type="range" min={100} max={300} step={5}
                   value={rowHeight}
                   onChange={e => { const v = Number(e.target.value); setRowHeight(v); saveRowHeight(v) }}
                   style={styles.rowHeightSlider}
-                  title={`Row height: ${rowHeight}px`}
+                  title={viewMode === 'justified' ? `Row height: ${rowHeight}px` : `Tile size: ${rowHeight}px`}
                 />
               )}
             </div>
@@ -480,6 +489,74 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
             />
           ))}
         </div>
+      ) : viewMode === 'grid' ? (
+        <div style={{ ...styles.gridContainer, gridTemplateColumns: `repeat(auto-fill, minmax(${rowHeight}px, 1fr))` }}>
+          {filteredPhotos.map(photo => {
+            const isSelected = selectMode && (selectedIds?.has(photo.id) ?? false)
+            const privacyLevel = getPrivacyLevel(photo)
+            return (
+              <div
+                key={photo.id}
+                style={{
+                  position: 'relative',
+                  aspectRatio: '1',
+                  overflow: 'hidden',
+                  borderRadius: '2px',
+                  cursor: 'pointer',
+                  backgroundColor: '#e8e8e8',
+                  transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                  ...(isSelected ? { outline: '3px solid var(--ff-pink)', outlineOffset: '-3px', zIndex: 1 } : {}),
+                  ...(selectMode && !isSelected ? { opacity: 0.75 } : {}),
+                  ...(!selectMode && hoveredId === photo.id ? { transform: 'scale(1.015)', boxShadow: '0 4px 16px rgba(0,0,0,0.18)', zIndex: 2 } : {})
+                }}
+                onClick={(e) => selectMode ? onToggleSelect?.(photo, e.shiftKey) : onPhotoSelect(photo)}
+                onMouseEnter={() => setHoveredId(photo.id)}
+                onMouseLeave={() => setHoveredId(null)}
+              >
+                <img
+                  src={photo.url_m || photo.thumbnailUrl}
+                  alt={photo.title}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  loading="lazy"
+                />
+                {photo.media === 'video' && (
+                  <div style={styles.videoOverlay}>
+                    <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
+                      <circle cx="15" cy="15" r="15" fill="rgba(0,0,0,0.52)"/>
+                      <polygon points="12,9 23,15 12,21" fill="white"/>
+                    </svg>
+                  </div>
+                )}
+                {privacyLevel !== 'public' && (
+                  <div style={styles.privacyBadge}>
+                    <PrivacyIcon level={privacyLevel} />
+                  </div>
+                )}
+                {!selectMode && downloadRecords[photo.id] && (
+                  <div style={styles.downloadBadge}>
+                    <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1.5 5.5l2.5 2.5 4.5-4.5"/>
+                    </svg>
+                  </div>
+                )}
+                {!selectMode && (
+                  <div style={{ ...styles.overlay, opacity: hoveredId === photo.id ? 1 : 0, background: hoveredId === photo.id ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0)' }}>
+                    <span style={styles.overlayTitle}>{photo.title}</span>
+                  </div>
+                )}
+                {selectMode && (
+                  <div style={{
+                    ...styles.selectBadge,
+                    backgroundColor: isSelected ? 'var(--ff-pink)' : 'rgba(255,255,255,0.75)',
+                    border: isSelected ? '2px solid var(--ff-pink)' : '2px solid rgba(255,255,255,0.9)'
+                  }}>
+                    {isSelected && <span style={{ ...styles.selectCheck, animation: 'ff-pop 0.18s ease-out' }}>✓</span>}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
       ) : (
         <div ref={gridContainerRef} style={styles.justifiedContainer}>
           {justifiedRows && justifiedRows.map((row, ri) => (
@@ -572,6 +649,7 @@ const styles: Record<string, React.CSSProperties> = {
   container: { height: '100%', overflowY: 'auto', display: 'flex', flexDirection: 'column' },
   grid: { display: 'grid', gap: '4px', padding: '4px' },
   justifiedContainer: { padding: '4px' },
+  gridContainer: { display: 'grid', gap: '4px', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', padding: '4px' },
   // Album tile uses opacity transition for hover overlay; PhotoGrid conditionally renders its overlay instead
   overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'flex-end', padding: '8px', opacity: 0, transition: 'opacity 0.15s' },
   overlayTitle: { color: '#fff', fontSize: '12px', fontWeight: '500', textShadow: '0 1px 3px rgba(0,0,0,0.8)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', width: '100%' } as React.CSSProperties,
