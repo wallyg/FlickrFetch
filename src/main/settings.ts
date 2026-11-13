@@ -27,6 +27,7 @@ const DEFAULT_METADATA: MetadataSettings = {
   embedLicense: true,
   embedPhotoUrl: true,
   embedPhotoId: true,
+  writeSidecarJson: false,
 }
 
 const defaults: AppSettings = {

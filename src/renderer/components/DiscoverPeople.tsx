@@ -3,7 +3,7 @@ import type { FlickrPhoto, FlickrAlbum, FlickrCollection, DiscoverUser, Discover
 import PhotoDetail from './PhotoDetail'
 import { AttributionNotice, DiscoverTile, DiscoverSelectBar } from './DiscoverExplore'
 import SmartDownloadButton from './SmartDownloadButton'
-import { GridIcon, ListIcon, JustifiedIcon, ChevronLeftIcon, sharedStyles as ss, type MediaFilter, type GridSize, type AlbumViewMode, type PhotoViewMode, type DownloadFilter, type DateMode, getPresetDates, formatDateChip, Chip, PhotoListRow, DownloadFilterSelect, loadAlbumViewMode, saveAlbumViewMode, loadPhotoViewMode, savePhotoViewMode, loadRowHeight, saveRowHeight, computeJustifiedRows } from './PhotoGridShared'
+import { GridIcon, ListIcon, JustifiedIcon, ChevronLeftIcon, sharedStyles as ss, type MediaFilter, type GridSize, type AlbumViewMode, type PhotoViewMode, type DownloadFilter, type LicenseFilter, type DateMode, getPresetDates, formatDateChip, Chip, PhotoListRow, DownloadFilterSelect, LicenseFilterSelect, matchesLicenseFilter, loadAlbumViewMode, saveAlbumViewMode, loadPhotoViewMode, savePhotoViewMode, loadRowHeight, saveRowHeight, computeJustifiedRows } from './PhotoGridShared'
 
 const ALBUM_COLUMNS: Record<GridSize, string> = {
   small: 'repeat(auto-fill, minmax(130px, 1fr))',
@@ -70,6 +70,7 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
   // Toolbar state (user photos view)
   const [userPhotosViewMode, setUserPhotosViewMode] = useState<PhotoViewMode>(loadPhotoViewMode)
   const [userDownloadFilter, setUserDownloadFilter] = useState<DownloadFilter>('all')
+  const [userLicenseFilter, setUserLicenseFilter] = useState<LicenseFilter>('all')
   const [userDownloadRecords, setUserDownloadRecords] = useState<Record<string, true>>({})
   const [sort, setSort] = useState('date-posted-desc')
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>('all')
@@ -172,6 +173,7 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
     setSort('date-posted-desc')
     setMediaFilter('all')
     setUserDownloadFilter('all')
+    setUserLicenseFilter('all')
     setUserDownloadRecords({})
     setSearchOperator('contains')
     setPhotoSearchInput('')
@@ -397,6 +399,8 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
     setDateMode('all')
     setDateCustomMin('')
     setDateCustomMax('')
+    setUserDownloadFilter('all')
+    setUserLicenseFilter('all')
     void applySearch(undefined, newSearch)
     setDrawerOpen(false)
   }
@@ -411,16 +415,20 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
     if (userDownloadFilter !== 'all') {
       result = result.filter(p => userDownloadFilter === 'downloaded' ? !!userDownloadRecords[p.id] : !userDownloadRecords[p.id])
     }
+    if (userLicenseFilter !== 'all') {
+      result = result.filter(p => matchesLicenseFilter(p.license, userLicenseFilter))
+    }
     return result
-  }, [userPhotos, mediaFilter, searchOperator, photoSearchInput, userDownloadFilter, userDownloadRecords])
+  }, [userPhotos, mediaFilter, searchOperator, photoSearchInput, userDownloadFilter, userLicenseFilter, userDownloadRecords])
 
   const activeFilterCount = useMemo(() => {
     let count = 0
     if (activeSearch.tagQuery) count++
     if (activeSearch.dateMin || activeSearch.dateMax) count++
     if (userDownloadFilter !== 'all') count++
+    if (userLicenseFilter !== 'all') count++
     return count
-  }, [activeSearch, userDownloadFilter])
+  }, [activeSearch, userDownloadFilter, userLicenseFilter])
 
   const filteredAlbumPhotos = useMemo(() => {
     let result = albumPhotos
@@ -977,6 +985,11 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
                   <div style={ss.drawerRow}>
                     <span style={ss.drawerLabel}>Downloaded</span>
                     <DownloadFilterSelect value={userDownloadFilter} onChange={setUserDownloadFilter} />
+                  </div>
+                  {/* License */}
+                  <div style={ss.drawerRow}>
+                    <span style={ss.drawerLabel}>License</span>
+                    <LicenseFilterSelect value={userLicenseFilter} onChange={setUserLicenseFilter} />
                   </div>
                   {/* Tags row */}
                   <div style={ss.drawerRow}>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import type { FlickrPhoto } from '../../shared/types'
+import type { FlickrPhoto, LicenseFilter } from '../../shared/types'
+export type { LicenseFilter }
 
 // ── Shared types ──────────────────────────────────────────────────────────────
 export type MediaFilter = 'all' | 'photo' | 'video'
@@ -327,6 +328,42 @@ export function DownloadFilterSelect({ value, onChange }: { value: DownloadFilte
       <option value="all">All photos</option>
       <option value="not-downloaded">Not downloaded</option>
       <option value="downloaded">Downloaded</option>
+    </select>
+  )
+}
+
+const LICENSE_FILTER_OPTIONS: { value: LicenseFilter; label: string }[] = [
+  { value: 'all',    label: 'All licenses' },
+  { value: 'cc',     label: 'Creative Commons' },
+  { value: 'public', label: 'Public Domain' },
+  { value: 'gov',    label: 'US Government' },
+  { value: 'arr',    label: 'All Rights Reserved' },
+]
+
+export const LICENSE_FILTER_IDS: Record<LicenseFilter, string[]> = {
+  all:    [],
+  cc:     ['1', '2', '3', '4', '5', '6'],
+  public: ['7', '9', '10'],
+  gov:    ['8'],
+  arr:    ['0'],
+}
+
+export function matchesLicenseFilter(license: string | undefined, filter: LicenseFilter): boolean {
+  if (filter === 'all') return true
+  const ids = LICENSE_FILTER_IDS[filter]
+  return ids.includes(license ?? '0')
+}
+
+export function LicenseFilterSelect({ value, onChange }: { value: LicenseFilter; onChange: (v: LicenseFilter) => void }): React.JSX.Element {
+  return (
+    <select
+      style={sharedStyles.sortSelect}
+      value={value}
+      onChange={e => onChange(e.target.value as LicenseFilter)}
+    >
+      {LICENSE_FILTER_OPTIONS.map(o => (
+        <option key={o.value} value={o.value}>{o.label}</option>
+      ))}
     </select>
   )
 }

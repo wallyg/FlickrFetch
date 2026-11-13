@@ -32,6 +32,7 @@ export interface FlickrPhoto {
   isfamily?: number
   tags?: string[]        // populated when extras=tags is requested (album view)
   lastUpdate?: number    // Flickr last_update unix timestamp (seconds); used for Smart Download Updated
+  license?: string       // Flickr license id string ('0'=ARR, '1'-'6'=CC, '7','9','10'=PD, '8'=US Gov)
 }
 
 export type FileNamingCore = 'title' | 'id' | 'id-title' | 'title-id'
@@ -133,7 +134,10 @@ export interface MetadataSettings {
   embedLicense: boolean
   embedPhotoUrl: boolean
   embedPhotoId: boolean
+  writeSidecarJson: boolean
 }
+
+export type LicenseFilter = 'all' | 'cc' | 'public' | 'gov' | 'arr'
 
 export interface PhotoInfo {
   id: string

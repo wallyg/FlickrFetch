@@ -3,7 +3,7 @@ import type { FlickrPhoto, DiscoverGroup, TagMode } from '../../shared/types'
 import PhotoDetail from './PhotoDetail'
 import { AttributionNotice, DiscoverTile, DiscoverSelectBar } from './DiscoverExplore'
 import SmartDownloadButton from './SmartDownloadButton'
-import { GridIcon, ListIcon, JustifiedIcon, ChevronLeftIcon, ChevronRightIcon, sharedStyles as ss, type PhotoViewMode, type MediaFilter, type DownloadFilter, PhotoListRow, DownloadFilterSelect, Chip, loadPhotoViewMode, savePhotoViewMode, loadRowHeight, saveRowHeight, computeJustifiedRows } from './PhotoGridShared'
+import { GridIcon, ListIcon, JustifiedIcon, ChevronLeftIcon, ChevronRightIcon, sharedStyles as ss, type PhotoViewMode, type MediaFilter, type DownloadFilter, type LicenseFilter, PhotoListRow, DownloadFilterSelect, LicenseFilterSelect, matchesLicenseFilter, Chip, loadPhotoViewMode, savePhotoViewMode, loadRowHeight, saveRowHeight, computeJustifiedRows } from './PhotoGridShared'
 
 type GroupView = 'list' | 'pool'
 
@@ -42,8 +42,10 @@ export default function DiscoverGroups(): React.JSX.Element {
   const [poolPendingDatePreset, setPoolPendingDatePreset] = useState('all')
   const [poolPendingDateFrom, setPoolPendingDateFrom] = useState('')
   const [poolPendingDateTo, setPoolPendingDateTo] = useState('')
+  const [poolPendingLicenseFilter, setPoolPendingLicenseFilter] = useState<LicenseFilter>('all')
   // Drawer applied state (what actually filters)
   const [poolAppliedDownloadFilter, setPoolAppliedDownloadFilter] = useState<DownloadFilter>('all')
+  const [poolAppliedLicenseFilter, setPoolAppliedLicenseFilter] = useState<LicenseFilter>('all')
   const [poolAppliedTagInput, setPoolAppliedTagInput] = useState('')
   const [poolAppliedTagMode, setPoolAppliedTagMode] = useState<TagMode>('any')
   const [poolAppliedDateField, setPoolAppliedDateField] = useState<'taken' | 'posted'>('posted')
@@ -83,9 +85,9 @@ export default function DiscoverGroups(): React.JSX.Element {
     setPoolSort('date-posted-desc')
     setPoolSearchInput('')
     setPoolDrawerOpen(false)
-    setPoolPendingDownloadFilter('all'); setPoolPendingTagInput(''); setPoolPendingTagMode('any')
+    setPoolPendingDownloadFilter('all'); setPoolPendingLicenseFilter('all'); setPoolPendingTagInput(''); setPoolPendingTagMode('any')
     setPoolPendingDateField('posted'); setPoolPendingDatePreset('all'); setPoolPendingDateFrom(''); setPoolPendingDateTo('')
-    setPoolAppliedDownloadFilter('all'); setPoolAppliedTagInput(''); setPoolAppliedTagMode('any')
+    setPoolAppliedDownloadFilter('all'); setPoolAppliedLicenseFilter('all'); setPoolAppliedTagInput(''); setPoolAppliedTagMode('any')
     setPoolAppliedDateField('posted'); setPoolAppliedDatePreset('all'); setPoolAppliedDateFrom(''); setPoolAppliedDateTo('')
     setGroupDownloadWarning(null)
     setPoolLoading(true)
@@ -119,6 +121,7 @@ export default function DiscoverGroups(): React.JSX.Element {
     if (poolMediaFilter !== 'all') result = result.filter(p => p.media === poolMediaFilter)
     if (poolAppliedDownloadFilter === 'downloaded') result = result.filter(p => !!poolDownloadRecords[p.id])
     if (poolAppliedDownloadFilter === 'not-downloaded') result = result.filter(p => !poolDownloadRecords[p.id])
+    if (poolAppliedLicenseFilter !== 'all') result = result.filter(p => matchesLicenseFilter(p.license, poolAppliedLicenseFilter))
     if (poolSearchInput.trim()) {
       const q = poolSearchInput.trim().toLowerCase()
       result = result.filter(p => p.title.toLowerCase().includes(q))
@@ -165,12 +168,13 @@ export default function DiscoverGroups(): React.JSX.Element {
     else if (poolSort === 'date-taken-desc') result.sort((a, b) => (b.dateTaken > a.dateTaken ? 1 : -1))
     else if (poolSort === 'date-taken-asc') result.sort((a, b) => (a.dateTaken > b.dateTaken ? 1 : -1))
     return result
-  }, [poolPhotos, poolMediaFilter, poolAppliedDownloadFilter, poolDownloadRecords, poolSearchInput, poolAppliedTagInput, poolAppliedTagMode, poolAppliedDateField, poolAppliedDatePreset, poolAppliedDateFrom, poolAppliedDateTo, poolSort])
+  }, [poolPhotos, poolMediaFilter, poolAppliedDownloadFilter, poolAppliedLicenseFilter, poolDownloadRecords, poolSearchInput, poolAppliedTagInput, poolAppliedTagMode, poolAppliedDateField, poolAppliedDatePreset, poolAppliedDateFrom, poolAppliedDateTo, poolSort])
 
   const hasFilteredPhotos = filteredPoolPhotos.length > 0
 
   const poolActiveFilterCount = [
     poolAppliedDownloadFilter !== 'all',
+    poolAppliedLicenseFilter !== 'all',
     poolAppliedTagInput.trim().length > 0,
     poolAppliedDatePreset !== 'all' || poolAppliedDateFrom !== '' || poolAppliedDateTo !== '',
   ].filter(Boolean).length
@@ -220,9 +224,9 @@ export default function DiscoverGroups(): React.JSX.Element {
     setPoolSort('date-posted-desc')
     setPoolSearchInput('')
     setPoolDrawerOpen(false)
-    setPoolPendingDownloadFilter('all'); setPoolPendingTagInput(''); setPoolPendingTagMode('any')
+    setPoolPendingDownloadFilter('all'); setPoolPendingLicenseFilter('all'); setPoolPendingTagInput(''); setPoolPendingTagMode('any')
     setPoolPendingDateField('posted'); setPoolPendingDatePreset('all'); setPoolPendingDateFrom(''); setPoolPendingDateTo('')
-    setPoolAppliedDownloadFilter('all'); setPoolAppliedTagInput(''); setPoolAppliedTagMode('any')
+    setPoolAppliedDownloadFilter('all'); setPoolAppliedLicenseFilter('all'); setPoolAppliedTagInput(''); setPoolAppliedTagMode('any')
     setPoolAppliedDateField('posted'); setPoolAppliedDatePreset('all'); setPoolAppliedDateFrom(''); setPoolAppliedDateTo('')
     setGroupDownloadWarning(null)
   }
@@ -416,6 +420,10 @@ export default function DiscoverGroups(): React.JSX.Element {
                     <DownloadFilterSelect value={poolPendingDownloadFilter} onChange={setPoolPendingDownloadFilter} />
                   </div>
                   <div style={ss.drawerRow}>
+                    <span style={ss.drawerLabel}>License</span>
+                    <LicenseFilterSelect value={poolPendingLicenseFilter} onChange={setPoolPendingLicenseFilter} />
+                  </div>
+                  <div style={ss.drawerRow}>
                     <span style={ss.drawerLabel}>Tags</span>
                     <input
                       style={{ ...ss.searchInput, border: '1px solid #ddd', borderRadius: '6px', padding: '5px 8px' }}
@@ -472,15 +480,16 @@ export default function DiscoverGroups(): React.JSX.Element {
                   )}
                   <div style={{ ...ss.drawerRow, justifyContent: 'flex-end', gap: '10px' }}>
                     <button style={ss.clearFiltersLink} onClick={() => {
-                      setPoolPendingDownloadFilter('all'); setPoolPendingTagInput(''); setPoolPendingTagMode('any')
+                      setPoolPendingDownloadFilter('all'); setPoolPendingLicenseFilter('all'); setPoolPendingTagInput(''); setPoolPendingTagMode('any')
                       setPoolPendingDateField('posted'); setPoolPendingDatePreset('all'); setPoolPendingDateFrom(''); setPoolPendingDateTo('')
-                      setPoolAppliedDownloadFilter('all'); setPoolAppliedTagInput(''); setPoolAppliedTagMode('any')
+                      setPoolAppliedDownloadFilter('all'); setPoolAppliedLicenseFilter('all'); setPoolAppliedTagInput(''); setPoolAppliedTagMode('any')
                       setPoolAppliedDateField('posted'); setPoolAppliedDatePreset('all'); setPoolAppliedDateFrom(''); setPoolAppliedDateTo('')
                     }}>
                       Clear filters
                     </button>
                     <button style={ss.applyBtn} onClick={() => {
                       setPoolAppliedDownloadFilter(poolPendingDownloadFilter)
+                      setPoolAppliedLicenseFilter(poolPendingLicenseFilter)
                       setPoolAppliedTagInput(poolPendingTagInput)
                       setPoolAppliedTagMode(poolPendingTagMode)
                       setPoolAppliedDateField(poolPendingDateField)

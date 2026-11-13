@@ -587,6 +587,7 @@ function mapPublicPhotos(photos: Record<string, string>[]): FlickrPhoto[] {
     datePosted: p.dateupload || undefined,
     lastUpdate: p.lastupdate ? Number(p.lastupdate) : undefined,
     tags: p.tags ? (p.tags as string).split(' ').filter(Boolean) : [],
+    license: p.license ?? undefined,
   }))
 }
 
@@ -773,7 +774,7 @@ export async function getGroupPhotos(groupId: string, tokenData: FlickrTokenData
   const url = `${FLICKR_API_BASE}?method=flickr.groups.pools.getPhotos` +
     `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
     `&group_id=${encodeURIComponent(groupId)}` +
-    `&extras=${encodeURIComponent('url_q,url_m,date_taken,date_upload,last_update,media,ownername,tags')}` +
+    `&extras=${encodeURIComponent('url_q,url_m,date_taken,date_upload,last_update,media,ownername,tags,license')}` +
     `&per_page=100&page=${page}&format=json&nojsoncallback=1`
   const authHeader = getOAuthHeader(url, 'GET', tokenData)
   const response = await axios.get(url, { headers: { ...authHeader, 'User-Agent': USER_AGENT } })

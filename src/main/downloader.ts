@@ -1,5 +1,5 @@
 import { dialog, BrowserWindow } from 'electron'
-import { createWriteStream, unlinkSync, existsSync } from 'fs'
+import { createWriteStream, unlinkSync, existsSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { pipeline } from 'stream/promises'
 import axios from 'axios'
@@ -183,6 +183,15 @@ export async function downloadToFolder(
       await embedMetadata(filePath, photoInfo, metadataSettings)
     } catch (err) {
       process.stderr.write(`[flickrfetch] ExifTool batch embed failed: ${err}\n`)
+    }
+    if (metadataSettings.writeSidecarJson) {
+      try {
+        const lastDot = filePath.lastIndexOf('.')
+        const jsonPath = (lastDot >= 0 ? filePath.slice(0, lastDot) : filePath) + '.json'
+        writeFileSync(jsonPath, JSON.stringify(photoInfo, null, 2), 'utf-8')
+      } catch (err) {
+        process.stderr.write(`[flickrfetch] Sidecar JSON write failed: ${err}\n`)
+      }
     }
   }
 

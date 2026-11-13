@@ -98,6 +98,7 @@ export default function SettingsModal({ onClose, updateVersion }: { onClose: () 
   const [embedLicense, setEmbedLicense] = useState(true)
   const [embedPhotoUrl, setEmbedPhotoUrl] = useState(true)
   const [embedPhotoId, setEmbedPhotoId] = useState(true)
+  const [writeSidecarJson, setWriteSidecarJson] = useState(false)
 
   // Naming tab
   const [core, setCore] = useState<FileNamingCore>('title')
@@ -168,6 +169,7 @@ export default function SettingsModal({ onClose, updateVersion }: { onClose: () 
       setEmbedLicense(m.embedLicense ?? true)
       setEmbedPhotoUrl(m.embedPhotoUrl ?? true)
       setEmbedPhotoId(m.embedPhotoId ?? true)
+      setWriteSidecarJson(m.writeSidecarJson ?? false)
     }
   }, [])
 
@@ -202,7 +204,8 @@ export default function SettingsModal({ onClose, updateVersion }: { onClose: () 
       }
       const metadata: MetadataSettings = {
         embedTitle, embedDescription, embedTags, embedDateTaken, embedCreator,
-        embedGps, stripGpsFromPrivate, embedLicense, embedPhotoUrl, embedPhotoId
+        embedGps, stripGpsFromPrivate, embedLicense, embedPhotoUrl, embedPhotoId,
+        writeSidecarJson
       }
       window.flickrAPI.setSettings({
         fileNaming, downloadFolder, showDockProgress, notifyOnComplete,
@@ -217,7 +220,7 @@ export default function SettingsModal({ onClose, updateVersion }: { onClose: () 
     conflictBehavior, downloadSize, openFinderOnComplete,
     embedTitle, embedDescription, embedTags,
     embedDateTaken, embedCreator, embedGps, stripGpsFromPrivate,
-    embedLicense, embedPhotoUrl, embedPhotoId
+    embedLicense, embedPhotoUrl, embedPhotoId, writeSidecarJson
   ])
 
   const previewTitle = 'NYC Highline (2024)'
@@ -687,6 +690,20 @@ export default function SettingsModal({ onClose, updateVersion }: { onClose: () 
                     </div>
                   )
                 })}
+              </div>
+
+              <div style={s.section}>
+                <div style={s.sectionLabel}>Output files</div>
+                <div style={s.optRow}>
+                  <div style={s.optLabelGroup}>
+                    <span style={s.optName}>Sidecar JSON</span>
+                    <InfoTip text="Write a companion .json file alongside each downloaded photo and video containing Flickr metadata (title, tags, date, GPS, license, etc.)." />
+                  </div>
+                  <div style={s.posGroup}>
+                    <button style={{ ...s.posBtn, ...(!writeSidecarJson ? s.posBtnActive : {}) }} onClick={() => { setWriteSidecarJson(false) }}>Off</button>
+                    <button style={{ ...s.posBtn, borderRight: 'none', ...(writeSidecarJson ? s.posBtnActive : {}) }} onClick={() => { setWriteSidecarJson(true) }}>On</button>
+                  </div>
+                </div>
               </div>
             </>
           )}
