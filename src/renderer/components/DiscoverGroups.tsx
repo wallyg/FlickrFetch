@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo } from 'react'
-import type { FlickrPhoto, DiscoverGroup } from '../../shared/types'
+import type { FlickrPhoto, DiscoverGroup, TagMode } from '../../shared/types'
 import PhotoDetail from './PhotoDetail'
 import { AttributionNotice, DiscoverTile, DiscoverSelectBar } from './DiscoverExplore'
 import SmartDownloadButton from './SmartDownloadButton'
-import { GridIcon, ListIcon, JustifiedIcon, ChevronLeftIcon, ChevronRightIcon, sharedStyles as ss, type PhotoViewMode, PhotoListRow, loadPhotoViewMode, savePhotoViewMode, loadRowHeight, saveRowHeight, computeJustifiedRows } from './PhotoGridShared'
+import { GridIcon, ListIcon, JustifiedIcon, ChevronLeftIcon, ChevronRightIcon, sharedStyles as ss, type PhotoViewMode, type MediaFilter, type DownloadFilter, PhotoListRow, DownloadFilterSelect, Chip, loadPhotoViewMode, savePhotoViewMode, loadRowHeight, saveRowHeight, computeJustifiedRows } from './PhotoGridShared'
 
 type GroupView = 'list' | 'pool'
 
@@ -28,6 +28,30 @@ export default function DiscoverGroups(): React.JSX.Element {
   const [rowHeight, setRowHeight] = useState<number>(loadRowHeight)
   const [containerWidth, setContainerWidth] = useState(0)
   const [hoveredId, setHoveredId] = useState<string | null>(null)
+  // Pool toolbar state
+  const [poolMediaFilter, setPoolMediaFilter] = useState<MediaFilter>('all')
+  const [poolDownloadRecords, setPoolDownloadRecords] = useState<Record<string, true>>({})
+  const [poolSort, setPoolSort] = useState('date-posted-desc')
+  const [poolSearchInput, setPoolSearchInput] = useState('')
+  const [poolDrawerOpen, setPoolDrawerOpen] = useState(false)
+  // Drawer pending state (staged, not applied until Apply is clicked)
+  const [poolPendingDownloadFilter, setPoolPendingDownloadFilter] = useState<DownloadFilter>('all')
+  const [poolPendingTagInput, setPoolPendingTagInput] = useState('')
+  const [poolPendingTagMode, setPoolPendingTagMode] = useState<TagMode>('any')
+  const [poolPendingDateField, setPoolPendingDateField] = useState<'taken' | 'posted'>('posted')
+  const [poolPendingDatePreset, setPoolPendingDatePreset] = useState('all')
+  const [poolPendingDateFrom, setPoolPendingDateFrom] = useState('')
+  const [poolPendingDateTo, setPoolPendingDateTo] = useState('')
+  // Drawer applied state (what actually filters)
+  const [poolAppliedDownloadFilter, setPoolAppliedDownloadFilter] = useState<DownloadFilter>('all')
+  const [poolAppliedTagInput, setPoolAppliedTagInput] = useState('')
+  const [poolAppliedTagMode, setPoolAppliedTagMode] = useState<TagMode>('any')
+  const [poolAppliedDateField, setPoolAppliedDateField] = useState<'taken' | 'posted'>('posted')
+  const [poolAppliedDatePreset, setPoolAppliedDatePreset] = useState('all')
+  const [poolAppliedDateFrom, setPoolAppliedDateFrom] = useState('')
+  const [poolAppliedDateTo, setPoolAppliedDateTo] = useState('')
+  // Large-group download warning
+  const [groupDownloadWarning, setGroupDownloadWarning] = useState<{ photoCount: number } | null>(null)
   const loadedRef = useRef(false)
   const gridContainerRef = useRef<HTMLDivElement>(null)
 
@@ -54,6 +78,16 @@ export default function DiscoverGroups(): React.JSX.Element {
     setDetailIndex(null)
     setSelectMode(false)
     setSelectedIds(new Set())
+    setPoolMediaFilter('all')
+    setPoolDownloadRecords({})
+    setPoolSort('date-posted-desc')
+    setPoolSearchInput('')
+    setPoolDrawerOpen(false)
+    setPoolPendingDownloadFilter('all'); setPoolPendingTagInput(''); setPoolPendingTagMode('any')
+    setPoolPendingDateField('posted'); setPoolPendingDatePreset('all'); setPoolPendingDateFrom(''); setPoolPendingDateTo('')
+    setPoolAppliedDownloadFilter('all'); setPoolAppliedTagInput(''); setPoolAppliedTagMode('any')
+    setPoolAppliedDateField('posted'); setPoolAppliedDatePreset('all'); setPoolAppliedDateFrom(''); setPoolAppliedDateTo('')
+    setGroupDownloadWarning(null)
     setPoolLoading(true)
     try {
       const result = await window.flickrAPI.discoverGetGroupPhotos(group.id, 1)
@@ -78,12 +112,75 @@ export default function DiscoverGroups(): React.JSX.Element {
     finally { setPoolLoadingMore(false) }
   }, [activeGroup, poolLoadingMore, poolPage, poolPages])
 
+  // Computed before effects so hasFilteredPhotos can be used as a dep to re-attach
+  // the ResizeObserver when the justified grid container remounts after filtering empties it
+  const filteredPoolPhotos = useMemo(() => {
+    let result = [...poolPhotos]
+    if (poolMediaFilter !== 'all') result = result.filter(p => p.media === poolMediaFilter)
+    if (poolAppliedDownloadFilter === 'downloaded') result = result.filter(p => !!poolDownloadRecords[p.id])
+    if (poolAppliedDownloadFilter === 'not-downloaded') result = result.filter(p => !poolDownloadRecords[p.id])
+    if (poolSearchInput.trim()) {
+      const q = poolSearchInput.trim().toLowerCase()
+      result = result.filter(p => p.title.toLowerCase().includes(q))
+    }
+    if (poolAppliedTagInput.trim()) {
+      const tags = poolAppliedTagInput.trim().toLowerCase().split(/\s+/).filter(Boolean)
+      result = result.filter(p => {
+        if (!p.tags || p.tags.length === 0) return false
+        const photoTags = p.tags.map(t => t.toLowerCase())
+        return poolAppliedTagMode === 'all'
+          ? tags.every(t => photoTags.includes(t))
+          : tags.some(t => photoTags.includes(t))
+      })
+    }
+    if (poolAppliedDatePreset !== 'all' || poolAppliedDateFrom || poolAppliedDateTo) {
+      const now = new Date()
+      let fromDate: Date | null = null
+      let toDate: Date | null = null
+      if (poolAppliedDatePreset === 'last7') { fromDate = new Date(now.getTime() - 7 * 86400000); toDate = now }
+      else if (poolAppliedDatePreset === 'last30') { fromDate = new Date(now.getTime() - 30 * 86400000); toDate = now }
+      else if (poolAppliedDatePreset === 'thisYear') { fromDate = new Date(now.getFullYear(), 0, 1); toDate = now }
+      else if (poolAppliedDatePreset === 'lastYear') { fromDate = new Date(now.getFullYear() - 1, 0, 1); toDate = new Date(now.getFullYear(), 0, 1) }
+      else if (poolAppliedDatePreset === 'custom') {
+        if (poolAppliedDateFrom) fromDate = new Date(poolAppliedDateFrom)
+        if (poolAppliedDateTo) toDate = new Date(poolAppliedDateTo + 'T23:59:59')
+      }
+      if (fromDate || toDate) {
+        result = result.filter(p => {
+          let d: Date | null = null
+          if (poolAppliedDateField === 'taken') {
+            d = p.dateTaken ? new Date(p.dateTaken.slice(0, 10)) : null
+          } else {
+            d = p.datePosted ? new Date(Number(p.datePosted) * 1000) : null
+          }
+          if (!d) return false
+          if (fromDate && d < fromDate) return false
+          if (toDate && d > toDate) return false
+          return true
+        })
+      }
+    }
+    if (poolSort === 'date-posted-desc') result.sort((a, b) => Number(b.datePosted ?? 0) - Number(a.datePosted ?? 0))
+    else if (poolSort === 'date-posted-asc') result.sort((a, b) => Number(a.datePosted ?? 0) - Number(b.datePosted ?? 0))
+    else if (poolSort === 'date-taken-desc') result.sort((a, b) => (b.dateTaken > a.dateTaken ? 1 : -1))
+    else if (poolSort === 'date-taken-asc') result.sort((a, b) => (a.dateTaken > b.dateTaken ? 1 : -1))
+    return result
+  }, [poolPhotos, poolMediaFilter, poolAppliedDownloadFilter, poolDownloadRecords, poolSearchInput, poolAppliedTagInput, poolAppliedTagMode, poolAppliedDateField, poolAppliedDatePreset, poolAppliedDateFrom, poolAppliedDateTo, poolSort])
+
+  const hasFilteredPhotos = filteredPoolPhotos.length > 0
+
+  const poolActiveFilterCount = [
+    poolAppliedDownloadFilter !== 'all',
+    poolAppliedTagInput.trim().length > 0,
+    poolAppliedDatePreset !== 'all' || poolAppliedDateFrom !== '' || poolAppliedDateTo !== '',
+  ].filter(Boolean).length
+
   useLayoutEffect(() => {
     if (poolLoading) return
     if (gridContainerRef.current) {
       setContainerWidth(Math.round(gridContainerRef.current.getBoundingClientRect().width))
     }
-  }, [poolLoading, poolViewMode])
+  }, [poolLoading, poolViewMode, hasFilteredPhotos])
 
   useEffect(() => {
     if (poolLoading) return
@@ -94,12 +191,23 @@ export default function DiscoverGroups(): React.JSX.Element {
     })
     obs.observe(el)
     return () => obs.disconnect()
-  }, [poolLoading, poolViewMode])
+  }, [poolLoading, poolViewMode, hasFilteredPhotos])
+
+  useEffect(() => {
+    if (poolPhotos.length === 0) return
+    window.flickrAPI.getDiscoverRecordsBatch(poolPhotos.map(p => p.id))
+      .then(records => {
+        const map: Record<string, true> = {}
+        Object.keys(records).forEach(id => { map[id] = true })
+        setPoolDownloadRecords(map)
+      })
+      .catch(() => {})
+  }, [poolPhotos])
 
   const poolJustifiedRows = useMemo(() => {
     if (poolViewMode !== 'justified' || containerWidth === 0) return null
-    return computeJustifiedRows(poolPhotos, containerWidth, rowHeight)
-  }, [poolPhotos, poolViewMode, containerWidth, rowHeight])
+    return computeJustifiedRows(filteredPoolPhotos, containerWidth, rowHeight)
+  }, [filteredPoolPhotos, poolViewMode, containerWidth, rowHeight])
 
   const handleBack = (): void => {
     setView('list')
@@ -107,6 +215,16 @@ export default function DiscoverGroups(): React.JSX.Element {
     setDetailIndex(null)
     setSelectMode(false)
     setSelectedIds(new Set())
+    setPoolMediaFilter('all')
+    setPoolDownloadRecords({})
+    setPoolSort('date-posted-desc')
+    setPoolSearchInput('')
+    setPoolDrawerOpen(false)
+    setPoolPendingDownloadFilter('all'); setPoolPendingTagInput(''); setPoolPendingTagMode('any')
+    setPoolPendingDateField('posted'); setPoolPendingDatePreset('all'); setPoolPendingDateFrom(''); setPoolPendingDateTo('')
+    setPoolAppliedDownloadFilter('all'); setPoolAppliedTagInput(''); setPoolAppliedTagMode('any')
+    setPoolAppliedDateField('posted'); setPoolAppliedDatePreset('all'); setPoolAppliedDateFrom(''); setPoolAppliedDateTo('')
+    setGroupDownloadWarning(null)
   }
 
   const toggleSelect = (id: string): void => {
@@ -128,19 +246,19 @@ export default function DiscoverGroups(): React.JSX.Element {
   }
 
   if (view === 'pool' && activeGroup) {
-    if (detailIndex !== null && poolPhotos[detailIndex]) {
+    if (detailIndex !== null && filteredPoolPhotos[detailIndex]) {
       return (
         <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
           <PhotoDetail
-            photo={poolPhotos[detailIndex]}
+            photo={filteredPoolPhotos[detailIndex]}
             index={detailIndex}
-            total={poolPhotos.length}
+            total={filteredPoolPhotos.length}
             hasMore={poolPage < poolPages}
             canGoPrev={detailIndex > 0}
-            canGoNext={detailIndex < poolPhotos.length - 1 || poolPage < poolPages}
+            canGoNext={detailIndex < filteredPoolPhotos.length - 1 || poolPage < poolPages}
             onPrev={() => setDetailIndex(d => (d !== null && d > 0 ? d - 1 : d))}
             onNext={() => {
-              if (detailIndex < poolPhotos.length - 1) setDetailIndex(detailIndex + 1)
+              if (detailIndex < filteredPoolPhotos.length - 1) setDetailIndex(detailIndex + 1)
               else { loadMorePool().then(() => setDetailIndex(di => di !== null ? di + 1 : di)) }
             }}
             onClose={() => setDetailIndex(null)}
@@ -173,6 +291,10 @@ export default function DiscoverGroups(): React.JSX.Element {
                 <SmartDownloadButton
                   label="Download Group"
                   onDownload={(mode) => {
+                    if (mode === 'all' && activeGroup.photoCount != null && activeGroup.photoCount > 500) {
+                      setGroupDownloadWarning({ photoCount: activeGroup.photoCount })
+                      return
+                    }
                     const smartMode = mode === 'all' ? undefined : mode
                     void window.flickrAPI.startDiscoverGroupBatch(activeGroup.id, activeGroup.name, `↓ ${activeGroup.name}`, true, smartMode)
                   }}
@@ -196,27 +318,200 @@ export default function DiscoverGroups(): React.JSX.Element {
               downloading={downloading}
             />
           )}
+          {groupDownloadWarning && (
+            <div style={{ padding: '8px 16px', backgroundColor: 'rgba(240,165,51,0.1)', borderBottom: '1px solid rgba(240,165,51,0.25)', display: 'flex', alignItems: 'center', gap: '12px', fontSize: '13px' }}>
+              <span style={{ color: '#f0a533', fontSize: '15px', flexShrink: 0 }}>⚠</span>
+              <span style={{ flex: 1 }}>
+                This group has {groupDownloadWarning.photoCount.toLocaleString()} photos. Downloading all may take a while to start.
+              </span>
+              <button
+                style={{ background: 'none', border: '1px solid rgba(240,165,51,0.5)', borderRadius: '5px', padding: '4px 10px', fontSize: '12px', color: '#f0a533', cursor: 'pointer', flexShrink: 0 }}
+                onClick={() => {
+                  setGroupDownloadWarning(null)
+                  void window.flickrAPI.startDiscoverGroupBatch(activeGroup.id, activeGroup.name, `↓ ${activeGroup.name}`, true, undefined)
+                }}
+              >
+                Download anyway
+              </button>
+              <button
+                style={{ background: 'none', border: 'none', fontSize: '16px', color: '#999', cursor: 'pointer', lineHeight: 1, flexShrink: 0 }}
+                onClick={() => setGroupDownloadWarning(null)}
+              >✕</button>
+            </div>
+          )}
           {!selectMode && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', paddingTop: '6px' }}>
-              <div style={{ flex: 1 }} />
-              <div style={ss.segGroupDensity}>
-                <button style={{ ...ss.densityBtn, ...(poolViewMode === 'list' ? ss.densityBtnActive : {}) }} onClick={() => { const m: PhotoViewMode = 'list'; setPoolViewMode(m); savePhotoViewMode(m) }}>
-                  <ListIcon />
-                </button>
-                <button style={{ ...ss.densityBtn, ...(poolViewMode === 'grid' ? ss.densityBtnActive : {}) }} onClick={() => { const m: PhotoViewMode = 'grid'; setPoolViewMode(m); savePhotoViewMode(m) }}>
-                  <GridIcon size="medium" />
-                </button>
-                <button style={{ ...ss.densityBtn, ...(poolViewMode === 'justified' ? ss.densityBtnActive : {}) }} onClick={() => { const m: PhotoViewMode = 'justified'; setPoolViewMode(m); savePhotoViewMode(m) }}>
-                  <JustifiedIcon />
-                </button>
-                {poolViewMode !== 'list' && (
-                  <input type="range" min={100} max={300} step={5} value={rowHeight}
-                    onChange={e => { const v = Number(e.target.value); setRowHeight(v); saveRowHeight(v) }}
-                    style={ss.rowHeightSlider}
-                    title={poolViewMode === 'justified' ? `Row height: ${rowHeight}px` : `Tile size: ${rowHeight}px`}
+            <div style={ss.toolbarWrap}>
+              <div style={ss.toolbar}>
+                {/* Media filter */}
+                <div style={ss.segGroup}>
+                  {(['all', 'photo', 'video'] as MediaFilter[]).map(f => (
+                    <button key={f}
+                      style={{ ...ss.seg, ...(poolMediaFilter === f ? ss.segActive : {}) }}
+                      onClick={() => setPoolMediaFilter(f)}
+                    >
+                      {f === 'all' ? 'All' : f === 'photo' ? 'Photos' : 'Videos'}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Keyword search */}
+                <div style={ss.searchGroup}>
+                  <span style={ss.searchIcon}>
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.5"/><path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                  </span>
+                  <input
+                    style={ss.searchInput}
+                    placeholder="Search titles…"
+                    value={poolSearchInput}
+                    onChange={e => setPoolSearchInput(e.target.value)}
                   />
-                )}
+                  {poolSearchInput && (
+                    <button style={ss.searchClearBtn} onClick={() => setPoolSearchInput('')}>✕</button>
+                  )}
+                </div>
+
+                {/* More filters toggle */}
+                <button
+                  style={{ ...ss.moreFiltersBtn, ...(poolDrawerOpen || poolActiveFilterCount > 0 ? ss.moreFiltersBtnActive : {}) }}
+                  onClick={() => setPoolDrawerOpen(d => !d)}
+                >
+                  Filters
+                  {poolActiveFilterCount > 0 && <span style={ss.drawerBadge}>{poolActiveFilterCount}</span>}
+                </button>
+
+                {/* Density + height */}
+                <div style={ss.segGroupDensity}>
+                  <button style={{ ...ss.densityBtn, ...(poolViewMode === 'list' ? ss.densityBtnActive : {}) }} onClick={() => { const m: PhotoViewMode = 'list'; setPoolViewMode(m); savePhotoViewMode(m) }}>
+                    <ListIcon />
+                  </button>
+                  <button style={{ ...ss.densityBtn, ...(poolViewMode === 'grid' ? ss.densityBtnActive : {}) }} onClick={() => { const m: PhotoViewMode = 'grid'; setPoolViewMode(m); savePhotoViewMode(m) }}>
+                    <GridIcon size="medium" />
+                  </button>
+                  <button style={{ ...ss.densityBtn, ...(poolViewMode === 'justified' ? ss.densityBtnActive : {}) }} onClick={() => { const m: PhotoViewMode = 'justified'; setPoolViewMode(m); savePhotoViewMode(m) }}>
+                    <JustifiedIcon />
+                  </button>
+                  {poolViewMode !== 'list' && (
+                    <input type="range" min={100} max={300} step={5} value={rowHeight}
+                      onChange={e => { const v = Number(e.target.value); setRowHeight(v); saveRowHeight(v) }}
+                      style={ss.rowHeightSlider}
+                      title={poolViewMode === 'justified' ? `Row height: ${rowHeight}px` : `Tile size: ${rowHeight}px`}
+                    />
+                  )}
+                </div>
+
+                {/* Sort */}
+                <select style={ss.sortSelect} value={poolSort} onChange={e => setPoolSort(e.target.value)}>
+                  <option value="date-posted-desc">Newest posted</option>
+                  <option value="date-posted-asc">Oldest posted</option>
+                  <option value="date-taken-desc">Date taken (newest)</option>
+                  <option value="date-taken-asc">Date taken (oldest)</option>
+                </select>
               </div>
+
+              {/* Filter drawer */}
+              {poolDrawerOpen && (
+                <div style={ss.drawer}>
+                  <div style={ss.drawerRow}>
+                    <span style={ss.drawerLabel}>Downloaded</span>
+                    <DownloadFilterSelect value={poolPendingDownloadFilter} onChange={setPoolPendingDownloadFilter} />
+                  </div>
+                  <div style={ss.drawerRow}>
+                    <span style={ss.drawerLabel}>Tags</span>
+                    <input
+                      style={{ ...ss.searchInput, border: '1px solid #ddd', borderRadius: '6px', padding: '5px 8px' }}
+                      placeholder="tag1 tag2…"
+                      value={poolPendingTagInput}
+                      onChange={e => setPoolPendingTagInput(e.target.value)}
+                    />
+                    <div style={ss.segGroup}>
+                      {(['any', 'all'] as TagMode[]).map(m => (
+                        <button key={m}
+                          style={{ ...ss.seg, ...(poolPendingTagMode === m ? ss.segActive : {}) }}
+                          onClick={() => setPoolPendingTagMode(m)}
+                        >
+                          {m === 'any' ? 'Any' : 'All'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div style={ss.drawerRow}>
+                    <span style={ss.drawerLabel}>Date</span>
+                    <div style={ss.segGroup}>
+                      {(['taken', 'posted'] as Array<'taken' | 'posted'>).map(f => (
+                        <button key={f}
+                          style={{ ...ss.seg, ...(poolPendingDateField === f ? ss.segActive : {}) }}
+                          onClick={() => setPoolPendingDateField(f)}
+                        >
+                          {f === 'taken' ? 'Taken' : 'Posted'}
+                        </button>
+                      ))}
+                    </div>
+                    <select
+                      style={{ ...ss.sortSelect, fontSize: '12px' }}
+                      value={poolPendingDatePreset}
+                      onChange={e => { setPoolPendingDatePreset(e.target.value); setPoolPendingDateFrom(''); setPoolPendingDateTo('') }}
+                    >
+                      <option value="all">All time</option>
+                      <option value="last7">Last 7 days</option>
+                      <option value="last30">Last 30 days</option>
+                      <option value="thisYear">This year</option>
+                      <option value="lastYear">Last year</option>
+                      <option value="custom">Custom range</option>
+                    </select>
+                  </div>
+                  {poolPendingDatePreset === 'custom' && (
+                    <div style={{ ...ss.drawerRow, paddingLeft: '64px', gap: '6px' }}>
+                      <input type="date"
+                        style={{ ...ss.searchInput, border: '1px solid #ddd', borderRadius: '6px', padding: '4px 8px', fontSize: '12px' }}
+                        value={poolPendingDateFrom} onChange={e => setPoolPendingDateFrom(e.target.value)} />
+                      <span style={{ color: '#999', fontSize: '12px' }}>–</span>
+                      <input type="date"
+                        style={{ ...ss.searchInput, border: '1px solid #ddd', borderRadius: '6px', padding: '4px 8px', fontSize: '12px' }}
+                        value={poolPendingDateTo} onChange={e => setPoolPendingDateTo(e.target.value)} />
+                    </div>
+                  )}
+                  <div style={{ ...ss.drawerRow, justifyContent: 'flex-end', gap: '10px' }}>
+                    <button style={ss.clearFiltersLink} onClick={() => {
+                      setPoolPendingDownloadFilter('all'); setPoolPendingTagInput(''); setPoolPendingTagMode('any')
+                      setPoolPendingDateField('posted'); setPoolPendingDatePreset('all'); setPoolPendingDateFrom(''); setPoolPendingDateTo('')
+                      setPoolAppliedDownloadFilter('all'); setPoolAppliedTagInput(''); setPoolAppliedTagMode('any')
+                      setPoolAppliedDateField('posted'); setPoolAppliedDatePreset('all'); setPoolAppliedDateFrom(''); setPoolAppliedDateTo('')
+                    }}>
+                      Clear filters
+                    </button>
+                    <button style={ss.applyBtn} onClick={() => {
+                      setPoolAppliedDownloadFilter(poolPendingDownloadFilter)
+                      setPoolAppliedTagInput(poolPendingTagInput)
+                      setPoolAppliedTagMode(poolPendingTagMode)
+                      setPoolAppliedDateField(poolPendingDateField)
+                      setPoolAppliedDatePreset(poolPendingDatePreset)
+                      setPoolAppliedDateFrom(poolPendingDateFrom)
+                      setPoolAppliedDateTo(poolPendingDateTo)
+                      setPoolDrawerOpen(false)
+                    }}>
+                      Apply
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Active filter chips */}
+              {poolAppliedTagInput.trim() && (
+                <div style={ss.chipRow}>
+                  <Chip label={`tags: ${poolAppliedTagInput.trim()}`} onDismiss={() => { setPoolPendingTagInput(''); setPoolAppliedTagInput('') }} />
+                </div>
+              )}
+              {(poolAppliedDatePreset !== 'all' || poolAppliedDateFrom || poolAppliedDateTo) && (
+                <div style={ss.chipRow}>
+                  <Chip
+                    label={`date: ${poolAppliedDatePreset === 'last7' ? 'Last 7 days' : poolAppliedDatePreset === 'last30' ? 'Last 30 days' : poolAppliedDatePreset === 'thisYear' ? 'This year' : poolAppliedDatePreset === 'lastYear' ? 'Last year' : poolAppliedDateFrom || poolAppliedDateTo ? `${poolAppliedDateFrom || '…'} – ${poolAppliedDateTo || '…'}` : 'Custom'}`}
+                    onDismiss={() => {
+                      setPoolPendingDatePreset('all'); setPoolPendingDateFrom(''); setPoolPendingDateTo('')
+                      setPoolAppliedDatePreset('all'); setPoolAppliedDateFrom(''); setPoolAppliedDateTo('')
+                    }}
+                  />
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -228,15 +523,18 @@ export default function DiscoverGroups(): React.JSX.Element {
         {!poolLoading && !poolError && poolPhotos.length === 0 && (
           <div style={s.emptyState}>No public photos in this group pool.</div>
         )}
-        {poolPhotos.length > 0 && (
+        {!poolLoading && !poolError && poolPhotos.length > 0 && filteredPoolPhotos.length === 0 && (
+          <div style={s.emptyState}>No photos match the current filters.</div>
+        )}
+        {filteredPoolPhotos.length > 0 && (
           <>
             {poolViewMode === 'list' ? (
               <div style={ss.listContainer}>
-                {poolPhotos.map((photo, idx) => (
+                {filteredPoolPhotos.map((photo, idx) => (
                   <PhotoListRow
                     key={photo.id}
                     photo={photo}
-                    isDownloaded={false}
+                    isDownloaded={!!poolDownloadRecords[photo.id]}
                     isSelected={selectMode ? selectedIds.has(photo.id) : undefined}
                     selectMode={selectMode}
                     onClick={() => selectMode ? toggleSelect(photo.id) : setDetailIndex(idx)}
@@ -245,7 +543,7 @@ export default function DiscoverGroups(): React.JSX.Element {
               </div>
             ) : poolViewMode === 'grid' ? (
               <div style={{ display: 'grid', gap: '4px', gridTemplateColumns: `repeat(auto-fill, minmax(${rowHeight}px, 1fr))` }}>
-                {poolPhotos.map((photo, idx) => (
+                {filteredPoolPhotos.map((photo, idx) => (
                   <DiscoverTile
                     key={photo.id}
                     photo={photo}
