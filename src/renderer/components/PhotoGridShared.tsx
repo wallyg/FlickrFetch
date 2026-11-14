@@ -357,7 +357,7 @@ export function matchesLicenseFilter(license: string | undefined, filter: Licens
 export function LicenseFilterSelect({ value, onChange }: { value: LicenseFilter; onChange: (v: LicenseFilter) => void }): React.JSX.Element {
   return (
     <select
-      style={sharedStyles.sortSelect}
+      style={{ ...sharedStyles.sortSelect, minWidth: '140px' }}
       value={value}
       onChange={e => onChange(e.target.value as LicenseFilter)}
     >
@@ -411,7 +411,7 @@ export const sharedStyles: Record<string, React.CSSProperties> = {
   toolbar: { display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' as const, padding: '10px 16px 8px' },
   drawer: { display: 'flex', flexDirection: 'column' as const, borderTop: '1px solid #ece8e2', backgroundColor: '#faf9f7' },
   drawerRow: { display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' as const, padding: '7px 16px', borderBottom: '1px solid #f0ede8' },
-  drawerLabel: { fontSize: '11px', fontWeight: '600', color: '#999', textTransform: 'uppercase' as const, letterSpacing: '0.04em', minWidth: '52px' },
+  drawerLabel: { fontSize: '11px', fontWeight: '600', color: '#999', textTransform: 'uppercase' as const, letterSpacing: '0.04em', minWidth: '76px' },
   // Search / filter controls
   searchGroup: { display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '6px', overflow: 'hidden', backgroundColor: '#fff' },
   searchIcon: { display: 'flex', alignItems: 'center', padding: '0 4px 0 8px', color: '#aaa', flexShrink: 0 },

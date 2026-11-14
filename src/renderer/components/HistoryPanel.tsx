@@ -25,6 +25,20 @@ function formatDateShort(ts: number): string {
   })
 }
 
+// ── Color tokens (update here for dark mode; inline styles reference these) ──
+const C = {
+  downloaded:  '#16a34a',  // green  — successful downloads
+  error:       '#dc2626',  // red    — failed photos
+  skipped:     '#6b7280',  // gray   — skipped / cancelled
+  partial:     '#f59e0b',  // amber  — partial success (status dot)
+  complete:    '#22c55e',  // green  — complete (status dot)
+  cancelled:   '#94a3b8',  // slate  — cancelled (status dot)
+  errorDot:    '#ef4444',  // red    — error (status dot)
+  text:        '#111827',  // near-black body text
+  muted:       '#9ca3af',  // muted secondary text
+  subtle:      '#6b7280',  // subtle third-level text
+} as const
+
 // ── Batches tab ──────────────────────────────────────────────────────────────
 
 function sourceLabel(entry: BatchLogEntry): string {
@@ -38,10 +52,10 @@ function sourceLabel(entry: BatchLogEntry): string {
 
 function statusCircleColor(status: BatchLogEntry['status']): string {
   switch (status) {
-    case 'complete': return '#22c55e'
-    case 'partial': return '#f59e0b'
-    case 'cancelled': return '#94a3b8'
-    case 'error': return '#ef4444'
+    case 'complete':  return C.complete
+    case 'partial':   return C.partial
+    case 'cancelled': return C.cancelled
+    case 'error':     return C.errorDot
   }
 }
 
@@ -107,8 +121,13 @@ function BatchesTab({ onClear }: { onClear: () => void }) {
     <>
       <div style={styles.tabBody}>
         {entries.map(entry => {
-          const smartFiltered = entry.total - entry.downloaded - entry.skippedCollision - entry.failed
+          // smartFiltered is only meaningful on complete batches; on cancelled/error
+          // the residual just means "not yet processed", not "already downloaded".
+          const smartFiltered = entry.status === 'complete'
+            ? entry.total - entry.downloaded - entry.skippedCollision - entry.failed
+            : 0
           const isPartial = entry.downloaded > 0 && entry.failed > 0
+          const hasNoPills = entry.downloaded === 0 && entry.failed === 0 && entry.skippedCollision === 0 && smartFiltered === 0
           return (
             <div key={entry.id} style={styles.row}>
               <div style={styles.rowTop}>
@@ -118,22 +137,25 @@ function BatchesTab({ onClear }: { onClear: () => void }) {
               </div>
               <div style={styles.rowCounts}>
                 {entry.downloaded > 0 && (
-                  <CountPill label={`✓ ${entry.downloaded} downloaded`} color="#16a34a" />
+                  <CountPill label={`✓ ${entry.downloaded} downloaded`} color={C.downloaded} />
                 )}
                 {entry.failed > 0 && (
-                  <CountPill label={`✕ ${entry.failed} errors`} color="#dc2626" />
+                  <CountPill label={`✕ ${entry.failed} errors`} color={C.error} />
                 )}
                 {entry.skippedCollision > 0 && (
-                  <CountPill label={`— ${entry.skippedCollision} skipped`} color="#6b7280" />
+                  <CountPill label={`— ${entry.skippedCollision} skipped`} color={C.skipped} />
                 )}
                 {smartFiltered > 0 && (
-                  <CountPill label={`— ${smartFiltered} already downloaded`} color="#6b7280" />
+                  <CountPill label={`— ${smartFiltered} already downloaded`} color={C.skipped} />
+                )}
+                {hasNoPills && (
+                  <CountPill label={entry.status === 'cancelled' ? '— cancelled' : '— no downloads'} color={C.skipped} />
                 )}
               </div>
               {entry.failedPhotos && entry.failedPhotos.length > 0 && (
                 <ExpandableSection
                   label={`${entry.failed} failed — show details`}
-                  color="#dc2626"
+                  color={C.error}
                   defaultExpanded={isPartial}
                 >
                   <ul style={styles.expandableList}>
@@ -143,15 +165,15 @@ function BatchesTab({ onClear }: { onClear: () => void }) {
                   </ul>
                 </ExpandableSection>
               )}
-              {entry.skippedCollision > 0 && entry.status !== 'complete' && (
+              {entry.skippedCollision > 0 && (
                 <ExpandableSection
-                  label={`${entry.skippedCollision} skipped (already exist)`}
-                  color="#6b7280"
+                  label={`${entry.skippedCollision} skipped — files already in folder`}
+                  color={C.skipped}
                   defaultExpanded={false}
                 >
-                  <span style={{ fontSize: '12px', color: '#6b7280' }}>
-                    These files were skipped because they already exist in your download folder.
-                  </span>
+                  <ul style={styles.expandableList}>
+                    <li style={styles.expandableItem}>These files were not downloaded because they already exist in your download folder. Change conflict behavior in Settings to overwrite or rename instead.</li>
+                  </ul>
                 </ExpandableSection>
               )}
             </div>
@@ -767,11 +789,11 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4,
   },
   source: {
-    flex: 1, fontSize: 13, fontWeight: 500, color: '#111827',
+    flex: 1, fontSize: 13, fontWeight: 500, color: C.text,
     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
   },
   date: {
-    fontSize: 11, color: '#9ca3af', flexShrink: 0,
+    fontSize: 11, color: C.muted, flexShrink: 0,
   },
   rowCounts: {
     display: 'flex', flexWrap: 'wrap' as const, gap: 6, paddingLeft: 18, marginTop: 4,
@@ -792,7 +814,7 @@ const styles: Record<string, React.CSSProperties> = {
     margin: '2px 0 0 0', padding: 0,
     listStyle: 'disc', listStylePosition: 'inside' as const,
   },
-  expandableItem: { fontSize: 12, color: '#666', padding: '1px 0' },
+  expandableItem: { fontSize: 12, color: C.subtle, padding: '1px 0' },
   // Photos tab search bar
   photoSearchBar: {
     padding: '12px 16px 10px',
