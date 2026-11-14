@@ -3,7 +3,7 @@ import { createWriteStream, unlinkSync, existsSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { pipeline } from 'stream/promises'
 import axios from 'axios'
-import { embedMetadata } from './exiftool'
+import { embedMetadata, shouldSkipGps } from './exiftool'
 import type { PhotoSize, PhotoInfo, DownloadSize, ConflictBehavior, MetadataSettings } from '../shared/types'
 
 const USER_AGENT = 'FlickrFetch/0.1.0 (Electron desktop app; https://github.com/flickrfetch)'
@@ -39,6 +39,19 @@ function pickSize(sizes: PhotoSize[], downloadSize: DownloadSize): PhotoSize | u
     case 'original':
     default:
       return find('Original', 'Large 2048') ?? photoSizes[photoSizes.length - 1]
+  }
+}
+
+// Named "<file>.<ext>.json" so a photo and video sharing a base name get separate sidecars.
+function writeSidecar(filePath: string, info: PhotoInfo, settings: MetadataSettings): void {
+  if (!settings.writeSidecarJson) return
+  try {
+    const record = shouldSkipGps(info, settings)
+      ? { ...info, latitude: null, longitude: null, locationName: undefined }
+      : info
+    writeFileSync(`${filePath}.json`, JSON.stringify(record, null, 2), 'utf-8')
+  } catch (err) {
+    process.stderr.write(`[flickrfetch] Sidecar JSON write failed: ${err}\n`)
   }
 }
 
@@ -133,6 +146,7 @@ export async function downloadPhoto(
     } catch (err) {
       process.stderr.write(`[flickrfetch] ExifTool embedding failed: ${err}\n`)
     }
+    writeSidecar(filePath, photoInfo, metadataSettings)
   }
 
   win.webContents.send('download:progress', { percent: 100 })
@@ -184,15 +198,7 @@ export async function downloadToFolder(
     } catch (err) {
       process.stderr.write(`[flickrfetch] ExifTool batch embed failed: ${err}\n`)
     }
-    if (metadataSettings.writeSidecarJson) {
-      try {
-        const lastDot = filePath.lastIndexOf('.')
-        const jsonPath = (lastDot >= 0 ? filePath.slice(0, lastDot) : filePath) + '.json'
-        writeFileSync(jsonPath, JSON.stringify(photoInfo, null, 2), 'utf-8')
-      } catch (err) {
-        process.stderr.write(`[flickrfetch] Sidecar JSON write failed: ${err}\n`)
-      }
-    }
+    writeSidecar(filePath, photoInfo, metadataSettings)
   }
 
   return { status: 'downloaded', filePath }

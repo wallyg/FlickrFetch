@@ -121,9 +121,9 @@ function BatchesTab({ onClear }: { onClear: () => void }) {
     <>
       <div style={styles.tabBody}>
         {entries.map(entry => {
-          // smartFiltered is only meaningful on complete batches; on cancelled/error
-          // the residual just means "not yet processed", not "already downloaded".
-          const smartFiltered = entry.status === 'complete'
+          // smartFiltered is only meaningful on batches that ran to the end (complete or partial);
+          // on cancelled/error the residual just means "not yet processed".
+          const smartFiltered = entry.status === 'complete' || entry.status === 'partial'
             ? entry.total - entry.downloaded - entry.skippedCollision - entry.failed
             : 0
           const isPartial = entry.downloaded > 0 && entry.failed > 0

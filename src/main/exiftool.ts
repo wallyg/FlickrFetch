@@ -25,6 +25,10 @@ const LICENSE_MAP: Record<string, { name: string; url: string }> = {
 }
 
 // ExifTool is bundled — always available
+export function shouldSkipGps(info: PhotoInfo, settings: MetadataSettings): boolean {
+  return !settings.embedGps || (settings.stripGpsFromPrivate && info.isPrivate)
+}
+
 export function isExifToolAvailable(): boolean {
   return true
 }
@@ -67,8 +71,7 @@ export async function embedMetadata(filePath: string, info: PhotoInfo, settings:
     tags['IPTC:By-line'] = info.ownerName
   }
 
-  const skipGps = !settings.embedGps || (settings.stripGpsFromPrivate && info.isPrivate)
-  if (!skipGps && info.latitude !== null && info.longitude !== null) {
+  if (!shouldSkipGps(info, settings) && info.latitude !== null && info.longitude !== null) {
     if (isVideo) {
       tags['QuickTime:GPSCoordinates'] = `${info.latitude} ${info.longitude}`
     } else {

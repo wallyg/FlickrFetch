@@ -3,7 +3,7 @@ import type { FlickrPhoto, DiscoverGroup, TagMode } from '../../shared/types'
 import PhotoDetail from './PhotoDetail'
 import { AttributionNotice, DiscoverTile, DiscoverSelectBar } from './DiscoverExplore'
 import SmartDownloadButton from './SmartDownloadButton'
-import { GridIcon, ListIcon, JustifiedIcon, ChevronLeftIcon, ChevronRightIcon, sharedStyles as ss, type PhotoViewMode, type MediaFilter, type DownloadFilter, type LicenseFilter, PhotoListRow, DownloadFilterSelect, LicenseFilterSelect, matchesLicenseFilter, Chip, loadPhotoViewMode, savePhotoViewMode, loadRowHeight, saveRowHeight, computeJustifiedRows } from './PhotoGridShared'
+import { GridIcon, ListIcon, JustifiedIcon, ChevronLeftIcon, ChevronRightIcon, sharedStyles as ss, type PhotoViewMode, type MediaFilter, type DownloadFilter, type LicenseFilter, PhotoListRow, DownloadFilterSelect, LicenseFilterSelect, matchesLicenseFilter, DRAWER_LABEL_WIDTH, Chip, loadPhotoViewMode, savePhotoViewMode, loadRowHeight, saveRowHeight, computeJustifiedRows } from './PhotoGridShared'
 
 type GroupView = 'list' | 'pool'
 
@@ -56,6 +56,8 @@ export default function DiscoverGroups(): React.JSX.Element {
   const [groupDownloadWarning, setGroupDownloadWarning] = useState<{ photoCount: number } | null>(null)
   const loadedRef = useRef(false)
   const gridContainerRef = useRef<HTMLDivElement>(null)
+  // Set when the detail viewer asks for "next" past the last loaded match; resolved once a page brings a new match
+  const advanceFromRef = useRef<number | null>(null)
 
   useEffect(() => {
     if (loadedRef.current) return
@@ -90,6 +92,7 @@ export default function DiscoverGroups(): React.JSX.Element {
     setPoolAppliedDownloadFilter('all'); setPoolAppliedLicenseFilter('all'); setPoolAppliedTagInput(''); setPoolAppliedTagMode('any')
     setPoolAppliedDateField('posted'); setPoolAppliedDatePreset('all'); setPoolAppliedDateFrom(''); setPoolAppliedDateTo('')
     setGroupDownloadWarning(null)
+    advanceFromRef.current = null
     setPoolLoading(true)
     try {
       const result = await window.flickrAPI.discoverGetGroupPhotos(group.id, 1)
@@ -110,7 +113,7 @@ export default function DiscoverGroups(): React.JSX.Element {
       const result = await window.flickrAPI.discoverGetGroupPhotos(activeGroup.id, poolPage + 1)
       setPoolPhotos(prev => [...prev, ...result.photos])
       setPoolPage(result.page)
-    } catch { /* ignore */ }
+    } catch { advanceFromRef.current = null }
     finally { setPoolLoadingMore(false) }
   }, [activeGroup, poolLoadingMore, poolPage, poolPages])
 
@@ -172,12 +175,27 @@ export default function DiscoverGroups(): React.JSX.Element {
 
   const hasFilteredPhotos = filteredPoolPhotos.length > 0
 
+  const visibleSelectedIds = useMemo(
+    () => new Set(filteredPoolPhotos.filter(p => selectedIds.has(p.id)).map(p => p.id)),
+    [filteredPoolPhotos, selectedIds]
+  )
+
+  useEffect(() => {
+    const from = advanceFromRef.current
+    if (from === null || poolLoadingMore) return
+    if (filteredPoolPhotos.length > from) { setDetailIndex(from); advanceFromRef.current = null }
+    else if (poolPage < poolPages) void loadMorePool()
+    else advanceFromRef.current = null
+  }, [filteredPoolPhotos.length, poolLoadingMore, poolPage, poolPages, loadMorePool])
+
   const poolActiveFilterCount = [
     poolAppliedDownloadFilter !== 'all',
     poolAppliedLicenseFilter !== 'all',
     poolAppliedTagInput.trim().length > 0,
     poolAppliedDatePreset !== 'all' || poolAppliedDateFrom !== '' || poolAppliedDateTo !== '',
   ].filter(Boolean).length
+
+  const filtersActive = poolActiveFilterCount > 0 || poolMediaFilter !== 'all' || poolSearchInput.trim().length > 0
 
   useLayoutEffect(() => {
     if (poolLoading) return
@@ -229,6 +247,7 @@ export default function DiscoverGroups(): React.JSX.Element {
     setPoolAppliedDownloadFilter('all'); setPoolAppliedLicenseFilter('all'); setPoolAppliedTagInput(''); setPoolAppliedTagMode('any')
     setPoolAppliedDateField('posted'); setPoolAppliedDatePreset('all'); setPoolAppliedDateFrom(''); setPoolAppliedDateTo('')
     setGroupDownloadWarning(null)
+    advanceFromRef.current = null
   }
 
   const toggleSelect = (id: string): void => {
@@ -237,7 +256,7 @@ export default function DiscoverGroups(): React.JSX.Element {
 
   const handleDownloadSelected = async (): Promise<void> => {
     if (!activeGroup) return
-    const selected = poolPhotos.filter(p => selectedIds.has(p.id)).map(p => ({ id: p.id, title: p.title }))
+    const selected = filteredPoolPhotos.filter(p => selectedIds.has(p.id)).map(p => ({ id: p.id, title: p.title }))
     if (!selected.length) return
     setDownloading(true)
     try {
@@ -246,6 +265,20 @@ export default function DiscoverGroups(): React.JSX.Element {
       setDownloading(false)
       setSelectMode(false)
       setSelectedIds(new Set())
+    }
+  }
+
+  const handleDownloadShown = async (): Promise<void> => {
+    if (!activeGroup || !filteredPoolPhotos.length) return
+    setDownloading(true)
+    try {
+      await window.flickrAPI.startDiscoverSelectedBatch(
+        filteredPoolPhotos.map(p => ({ id: p.id, title: p.title })),
+        `Filtered from ${activeGroup.name}`,
+        ['Groups', activeGroup.name]
+      )
+    } finally {
+      setDownloading(false)
     }
   }
 
@@ -263,9 +296,9 @@ export default function DiscoverGroups(): React.JSX.Element {
             onPrev={() => setDetailIndex(d => (d !== null && d > 0 ? d - 1 : d))}
             onNext={() => {
               if (detailIndex < filteredPoolPhotos.length - 1) setDetailIndex(detailIndex + 1)
-              else { loadMorePool().then(() => setDetailIndex(di => di !== null ? di + 1 : di)) }
+              else { advanceFromRef.current = filteredPoolPhotos.length; void loadMorePool() }
             }}
-            onClose={() => setDetailIndex(null)}
+            onClose={() => { advanceFromRef.current = null; setDetailIndex(null) }}
             sourceName={activeGroup.name}
             discoverMode
           />
@@ -291,7 +324,17 @@ export default function DiscoverGroups(): React.JSX.Element {
               </div>
             </div>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              {!selectMode && (
+              {!selectMode && filtersActive && (
+                <button
+                  style={{ ...s.selectBtn, borderColor: 'var(--ff-pink)', color: 'var(--ff-pink-action)' }}
+                  disabled={downloading || filteredPoolPhotos.length === 0}
+                  title="Filters are on, so only the photos shown below are downloaded. Clear filters to download the whole group."
+                  onClick={handleDownloadShown}
+                >
+                  {downloading ? 'Starting…' : `Download ${filteredPoolPhotos.length.toLocaleString()} shown`}
+                </button>
+              )}
+              {!selectMode && !filtersActive && (
                 <SmartDownloadButton
                   label="Download Group"
                   onDownload={(mode) => {
@@ -314,8 +357,8 @@ export default function DiscoverGroups(): React.JSX.Element {
           </div>
           {selectMode && (
             <DiscoverSelectBar
-              count={selectedIds.size}
-              total={poolPhotos.length}
+              count={visibleSelectedIds.size}
+              total={filteredPoolPhotos.length}
               onDownload={handleDownloadSelected}
               onClearSelection={() => setSelectedIds(new Set())}
               onCancel={() => { setSelectMode(false); setSelectedIds(new Set()) }}
@@ -468,7 +511,7 @@ export default function DiscoverGroups(): React.JSX.Element {
                     </select>
                   </div>
                   {poolPendingDatePreset === 'custom' && (
-                    <div style={{ ...ss.drawerRow, paddingLeft: '64px', gap: '6px' }}>
+                    <div style={{ ...ss.drawerRow, paddingLeft: `${16 + DRAWER_LABEL_WIDTH + 8}px`, gap: '6px' }}>
                       <input type="date"
                         style={{ ...ss.searchInput, border: '1px solid #ddd', borderRadius: '6px', padding: '4px 8px', fontSize: '12px' }}
                         value={poolPendingDateFrom} onChange={e => setPoolPendingDateFrom(e.target.value)} />
@@ -533,7 +576,16 @@ export default function DiscoverGroups(): React.JSX.Element {
           <div style={s.emptyState}>No public photos in this group pool.</div>
         )}
         {!poolLoading && !poolError && poolPhotos.length > 0 && filteredPoolPhotos.length === 0 && (
-          <div style={s.emptyState}>No photos match the current filters.</div>
+          <div style={s.emptyState}>
+            No photos match the current filters{poolPage < poolPages ? ' in the photos loaded so far.' : '.'}
+            {poolPage < poolPages && (
+              <div style={s.loadMoreRow}>
+                <button style={s.loadMoreBtn} disabled={poolLoadingMore} onClick={loadMorePool}>
+                  {poolLoadingMore ? 'Loading…' : 'Load more'}
+                </button>
+              </div>
+            )}
+          </div>
         )}
         {filteredPoolPhotos.length > 0 && (
           <>
