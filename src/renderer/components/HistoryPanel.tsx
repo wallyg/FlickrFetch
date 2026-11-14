@@ -25,18 +25,18 @@ function formatDateShort(ts: number): string {
   })
 }
 
-// ── Color tokens (update here for dark mode; inline styles reference these) ──
+// Semantic aliases onto the brand tokens defined in index.html
 const C = {
-  downloaded:  '#16a34a',  // green  — successful downloads
-  error:       '#dc2626',  // red    — failed photos
-  skipped:     '#6b7280',  // gray   — skipped / cancelled
-  partial:     '#f59e0b',  // amber  — partial success (status dot)
-  complete:    '#22c55e',  // green  — complete (status dot)
-  cancelled:   '#94a3b8',  // slate  — cancelled (status dot)
-  errorDot:    '#ef4444',  // red    — error (status dot)
-  text:        '#111827',  // near-black body text
-  muted:       '#9ca3af',  // muted secondary text
-  subtle:      '#6b7280',  // subtle third-level text
+  downloaded:  'var(--ff-success)',
+  error:       'var(--ff-error)',
+  skipped:     'var(--ff-text-secondary)',
+  partial:     'var(--ff-warning)',
+  complete:    'var(--ff-success)',
+  cancelled:   'var(--ff-slate)',
+  errorDot:    'var(--ff-error)',
+  text:        'var(--ff-text)',
+  muted:       'var(--ff-text-muted)',
+  subtle:      'var(--ff-text-secondary)',
 } as const
 
 // ── Batches tab ──────────────────────────────────────────────────────────────
@@ -63,14 +63,14 @@ function StatusCircle({ status }: { status: BatchLogEntry['status'] }): React.JS
   const color = statusCircleColor(status)
   return (
     <svg width="10" height="10" viewBox="0 0 10 10" style={{ flexShrink: 0 }}>
-      <circle cx="5" cy="5" r="5" fill={color} />
+      <circle cx="5" cy="5" r="5" style={{ fill: color }} />
     </svg>
   )
 }
 
 function CountPill({ label, color }: { label: string; color: string }): React.JSX.Element {
   return (
-    <span style={{ ...styles.pill, color, borderColor: color, background: color + '18' }}>
+    <span style={{ ...styles.pill, color, borderColor: color, background: `color-mix(in srgb, ${color} 10%, transparent)` }}>
       {label}
     </span>
   )

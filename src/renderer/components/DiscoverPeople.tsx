@@ -1535,7 +1535,7 @@ const s: Record<string, React.CSSProperties> = {
   headerRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', paddingTop: '20px', paddingBottom: '8px' },
   heading: { margin: 0, fontSize: '18px', fontWeight: 600, color: '#1a1a1a' },
   subheading: { margin: '4px 0 0', fontSize: '13px', color: '#888' },
-  backBtn: { background: 'none', border: 'none', color: '#0063DC', cursor: 'pointer', fontSize: '14px', padding: '4px 0', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '4px' },
+  backBtn: { background: 'none', border: 'none', color: 'var(--ff-blue)', cursor: 'pointer', fontSize: '14px', padding: '4px 0', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '4px' },
   selectBtn: { background: 'none', border: '1px solid #ccc', borderRadius: '6px', padding: '5px 12px', fontSize: '13px', color: '#555', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px' },
   searchForm: { display: 'flex', gap: '8px' },
   searchInput: {
@@ -1544,10 +1544,10 @@ const s: Record<string, React.CSSProperties> = {
   },
   searchBtn: {
     height: '36px', padding: '0 20px', borderRadius: '8px',
-    background: '#0063DC', color: '#fff', border: 'none', cursor: 'pointer',
+    background: 'var(--ff-blue)', color: '#fff', border: 'none', cursor: 'pointer',
     fontSize: '14px', fontWeight: 500, flexShrink: 0,
   },
-  searchError: { color: '#c0392b', fontSize: '13px' },
+  searchError: { color: 'var(--ff-error)', fontSize: '13px' },
   contactsSection: { display: 'flex', flexDirection: 'column', gap: '12px' },
   contactsLabel: { fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#aaa' },
   contactsGrid: {
@@ -1570,7 +1570,7 @@ const s: Record<string, React.CSSProperties> = {
     padding: '8px 16px', cursor: 'pointer', fontSize: '14px', fontWeight: 500,
     color: '#888', marginBottom: '-1px', outline: 'none',
   },
-  userTabActive: { borderBottom: '2px solid #FF0084', color: '#FF0084' },
+  userTabActive: { borderBottom: '2px solid var(--ff-pink)', color: 'var(--ff-pink)' },
   userAvatar: { width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 },
   userName: { fontSize: '16px', fontWeight: 600, color: '#1a1a1a' },
   userHandle: { fontSize: '12px', color: '#888' },
@@ -1592,7 +1592,7 @@ const s: Record<string, React.CSSProperties> = {
   dateSep: { fontSize: '12px', color: '#888' },
   applyBtn: {
     padding: '5px 14px', borderRadius: '6px', border: 'none',
-    background: '#0063DC', color: '#fff', fontSize: '12px',
+    background: 'var(--ff-blue)', color: '#fff', fontSize: '12px',
     fontWeight: 600, cursor: 'pointer',
   },
   grid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px' },
@@ -1617,7 +1617,7 @@ const s: Record<string, React.CSSProperties> = {
   loadMoreRow: { display: 'flex', justifyContent: 'center', paddingTop: '8px' },
   loadMoreBtn: { padding: '8px 24px', borderRadius: '8px', border: '1px solid #ddd', background: '#fff', cursor: 'pointer', fontSize: '13px', color: '#444' },
   loadingState: { textAlign: 'center', color: '#888', fontSize: '14px', paddingTop: '48px' },
-  errorState: { textAlign: 'center', color: '#c0392b', fontSize: '14px', paddingTop: '48px' },
+  errorState: { textAlign: 'center', color: 'var(--ff-error)', fontSize: '14px', paddingTop: '48px' },
   emptyState: { textAlign: 'center', color: '#888', fontSize: '14px', paddingTop: '48px' },
   // Collections tab
   collectionGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px', marginBottom: '16px' },

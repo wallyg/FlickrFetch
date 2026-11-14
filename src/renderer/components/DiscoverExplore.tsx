@@ -398,13 +398,13 @@ const s: Record<string, React.CSSProperties> = {
     cursor: 'pointer', borderRadius: '4px', background: '#f0f0f0',
   },
   tileHover: { opacity: 0.9 },
-  tileSelected: { outline: '3px solid #FF0084', outlineOffset: '-3px' },
+  tileSelected: { outline: '3px solid var(--ff-pink)', outlineOffset: '-3px' },
   checkOverlay: {
     position: 'absolute', inset: 0, background: 'rgba(255,0,132,0.25)',
     display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', padding: '6px',
   },
   check: {
-    width: '20px', height: '20px', borderRadius: '50%', background: '#FF0084',
+    width: '20px', height: '20px', borderRadius: '50%', background: 'var(--ff-pink)',
     color: '#fff', fontSize: '11px', fontWeight: 700,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
   },
@@ -423,7 +423,7 @@ const s: Record<string, React.CSSProperties> = {
     background: '#fff', cursor: 'pointer', fontSize: '13px', color: '#444'
   },
   loadingState: { textAlign: 'center', color: '#888', fontSize: '14px', paddingTop: '48px' },
-  errorState: { textAlign: 'center', color: '#c0392b', fontSize: '14px', paddingTop: '48px' },
+  errorState: { textAlign: 'center', color: 'var(--ff-error)', fontSize: '14px', paddingTop: '48px' },
   emptyState: { textAlign: 'center', color: '#888', fontSize: '14px', paddingTop: '48px' },
   selectToggleBtn: { padding: '6px 14px', borderRadius: '8px', border: '1px solid #ddd', background: '#fff', cursor: 'pointer', fontSize: '13px', color: '#444', flexShrink: 0 },
 }

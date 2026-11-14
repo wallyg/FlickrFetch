@@ -380,7 +380,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
       <header style={styles.header}>
         <div style={styles.headerLeft}>
           <span style={styles.wordmark}>
-            <span style={{ color: '#0063DC' }}>Flickr</span><span style={{ color: '#FF0084' }}>Fetch</span>
+            <span style={{ color: 'var(--ff-blue)' }}>Flickr</span><span style={{ color: 'var(--ff-pink)' }}>Fetch</span>
           </span>
           <div style={styles.headerDivider} />
           <div style={styles.modeTabs}>
@@ -818,8 +818,8 @@ const styles: Record<string, React.CSSProperties> = {
     letterSpacing: '-0.01em',
   },
   modeTabActive: {
-    color: '#0063DC',
-    borderBottom: '3px solid #0063DC',
+    color: 'var(--ff-blue)',
+    borderBottom: '3px solid var(--ff-blue)',
   },
   proBadge: {
     fontSize: '9px',
@@ -1114,7 +1114,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   overflowMenuItemDestructive: {
     display: 'block', width: '100%', textAlign: 'left' as const, background: 'none', border: 'none',
-    padding: '8px 12px', fontSize: '13px', color: '#c0392b', cursor: 'pointer', borderRadius: '5px',
+    padding: '8px 12px', fontSize: '13px', color: 'var(--ff-error)', cursor: 'pointer', borderRadius: '5px',
   },
   confirmOverlay: {
     position: 'fixed' as const, inset: 0, backgroundColor: 'rgba(0,0,0,0.4)',
@@ -1132,7 +1132,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '8px 18px', fontSize: '14px', color: '#555', cursor: 'pointer',
   },
   confirmDestructive: {
-    background: '#c0392b', border: 'none', borderRadius: '8px',
+    background: 'var(--ff-error)', border: 'none', borderRadius: '8px',
     padding: '8px 18px', fontSize: '14px', fontWeight: '600' as const, color: '#fff', cursor: 'pointer',
   },
 }

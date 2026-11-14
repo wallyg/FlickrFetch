@@ -100,9 +100,9 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
   const borderColor = isPaused ? '#f59e0b'
     : isRunning ? 'var(--ff-pink)'
     : doneWithIssues ? '#ff8c00'
-    : isDone ? '#4caf50'
+    : isDone ? 'var(--ff-success)'
     : isCancelled ? '#cc6600'
-    : completedBatches.length > 0 ? (((completedBatches[0].skippedCount ?? 0) + (completedBatches[0].skippedSizeUnavailableCount ?? 0) + (completedBatches[0].failedCount ?? 0)) > 0 ? '#ff8c00' : '#4caf50')
+    : completedBatches.length > 0 ? (((completedBatches[0].skippedCount ?? 0) + (completedBatches[0].skippedSizeUnavailableCount ?? 0) + (completedBatches[0].failedCount ?? 0)) > 0 ? '#ff8c00' : 'var(--ff-success)')
     : 'transparent'
 
   const handleCancel = (): void => {
@@ -479,7 +479,7 @@ const styles: Record<string, React.CSSProperties> = {
     border: '1px solid #e57373',
     borderRadius: '6px',
     fontSize: '12px',
-    color: '#c0392b',
+    color: 'var(--ff-error)',
     cursor: 'pointer',
     padding: '4px 12px'
   },
@@ -513,7 +513,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   dotDone: {
     fontSize: '13px',
-    color: '#4caf50',
+    color: 'var(--ff-success)',
     flexShrink: 0,
     marginTop: '2px'
   },
@@ -531,7 +531,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   dotFailed: {
     fontSize: '13px',
-    color: '#c0392b',
+    color: 'var(--ff-error)',
     flexShrink: 0,
     marginTop: '2px'
   },

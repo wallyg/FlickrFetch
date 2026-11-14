@@ -113,12 +113,12 @@ function formatDownloadDateTime(ms: number): string {
 }
 
 function getPrivacyBadge(photo: FlickrPhoto): { label: string; bg: string; color: string } {
-  if (photo.ispublic === 1) return { label: 'Public', bg: '#e8f8ea', color: '#27ae60' }
+  if (photo.ispublic === 1) return { label: 'Public', bg: 'var(--ff-success-bg)', color: 'var(--ff-success)' }
   if (photo.ispublic === undefined) return { label: 'Unknown', bg: '#f5f5f5', color: '#999' }
   if (photo.isfriend === 1 && photo.isfamily === 1) return { label: 'Friends & Family', bg: '#fff3e0', color: '#e67e22' }
   if (photo.isfriend === 1) return { label: 'Friends', bg: '#e8f4fd', color: '#2980b9' }
   if (photo.isfamily === 1) return { label: 'Family', bg: '#f0e8fd', color: '#8e44ad' }
-  return { label: 'Private', bg: '#fce8e8', color: '#c0392b' }
+  return { label: 'Private', bg: 'var(--ff-error-bg)', color: 'var(--ff-error)' }
 }
 
 function CopyButton({ text }: { text: string }): React.JSX.Element {
@@ -320,7 +320,7 @@ export default function PhotoDetail({
   }
 
   const privacyBadge = discoverMode
-    ? { label: 'Public', bg: '#e8f8ea', color: '#27ae60' }
+    ? { label: 'Public', bg: 'var(--ff-success-bg)', color: 'var(--ff-success)' }
     : getPrivacyBadge(photo)
   const originalSize = sizes.find(s => s.label === 'Original') ?? sizes.filter(s => s.media === 'photo').at(-1)
 

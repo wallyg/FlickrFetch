@@ -684,7 +684,7 @@ const s: Record<string, React.CSSProperties> = {
   headerRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '20px' },
   heading: { margin: 0, fontSize: '18px', fontWeight: 600, color: '#1a1a1a' },
   subheading: { margin: '4px 0 0', fontSize: '13px', color: '#888' },
-  backBtn: { background: 'none', border: 'none', color: '#0063DC', cursor: 'pointer', fontSize: '14px', padding: '4px 0', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '4px' },
+  backBtn: { background: 'none', border: 'none', color: 'var(--ff-blue)', cursor: 'pointer', fontSize: '14px', padding: '4px 0', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '4px' },
   selectBtn: { padding: '6px 14px', borderRadius: '8px', border: '1px solid #ddd', background: '#fff', cursor: 'pointer', fontSize: '13px', color: '#444', flexShrink: 0 },
   filterInput: {
     height: '36px', borderRadius: '8px', border: '1px solid #ddd',
@@ -699,7 +699,7 @@ const s: Record<string, React.CSSProperties> = {
   groupAvatar: { width: '44px', height: '44px', borderRadius: '8px', objectFit: 'cover' },
   groupAvatarFallback: {
     width: '44px', height: '44px', borderRadius: '8px',
-    background: '#0063DC', color: '#fff', display: 'flex', alignItems: 'center',
+    background: 'var(--ff-blue)', color: '#fff', display: 'flex', alignItems: 'center',
     justifyContent: 'center', fontSize: '18px', fontWeight: 700
   },
   groupInfo: { flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' },
@@ -712,6 +712,6 @@ const s: Record<string, React.CSSProperties> = {
   loadMoreRow: { display: 'flex', justifyContent: 'center', paddingTop: '8px' },
   loadMoreBtn: { padding: '8px 24px', borderRadius: '8px', border: '1px solid #ddd', background: '#fff', cursor: 'pointer', fontSize: '13px', color: '#444' },
   loadingState: { textAlign: 'center', color: '#888', fontSize: '14px', paddingTop: '48px' },
-  errorState: { textAlign: 'center', color: '#c0392b', fontSize: '14px', paddingTop: '48px' },
+  errorState: { textAlign: 'center', color: 'var(--ff-error)', fontSize: '14px', paddingTop: '48px' },
   emptyState: { textAlign: 'center', color: '#888', fontSize: '14px', paddingTop: '48px' },
 }
