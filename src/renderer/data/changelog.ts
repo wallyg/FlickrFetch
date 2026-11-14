@@ -7,6 +7,29 @@ export interface Release {
 
 const changelog: Release[] = [
   {
+    version: '3.2',
+    date: 'November 2026',
+    highlights: [
+      'License filter — filter group and People photos by Creative Commons, Public Domain, US Government, or All Rights Reserved, so you can find photos you\'re free to reuse',
+      'Sidecar JSON files — an opt-in setting (Settings → Metadata → Output files) that saves a companion .json file next to each downloaded photo with its title, tags, date, location, and license',
+      'Clearer download history — each batch now shows a colored status dot and badges for downloaded, errors, and skipped, with expandable details; failed photos open by default when a batch partly succeeded',
+      'Lato throughout — the brand typeface now appears across the whole app, not just the sign-in screen',
+      'Brand color cleanup — buttons, badges, and status messages now use one consistent set of brand colors',
+      'Branded installer — the Mac installer window now has the FlickrFetch look',
+      'Smaller app — the logo image is a third of its previous size',
+    ]
+  },
+  {
+    version: '3.1',
+    date: 'November 2026',
+    highlights: [
+      'Group photo date filter — narrow a group\'s photos by when they were taken or posted, using presets or a custom range',
+      'Filters now apply when you say so — the Groups filter drawer has an Apply button, so changing several filters no longer reloads the grid after each one',
+      'Large group warning — downloading all photos from a very large group now asks you to confirm first, since it can take a while to start',
+      'Fixed the grid going blank when filters emptied the results and then cleared',
+    ]
+  },
+  {
     version: '3.0',
     date: 'November 2026',
     milestone: 'FlickrFetch 3.0 — justified photo grid with real aspect ratios, plus polish throughout',
