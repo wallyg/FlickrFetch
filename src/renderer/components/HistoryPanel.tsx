@@ -772,10 +772,6 @@ const styles: Record<string, React.CSSProperties> = {
   empty: {
     padding: '24px 20px', color: '#9ca3af', fontSize: 13, lineHeight: 1.5, margin: 0,
   },
-  emptyFilter: {
-    display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: '12px',
-    padding: '40px 24px', textAlign: 'center' as const,
-  },
   clearFiltersBtn: {
     background: 'none', border: '1px solid #d1d5db', borderRadius: '6px',
     padding: '6px 16px', fontSize: 13, color: '#555', cursor: 'pointer',

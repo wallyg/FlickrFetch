@@ -5,7 +5,7 @@ import { AttributionNotice, DiscoverTile, DiscoverSelectBar } from './DiscoverEx
 import SmartDownloadButton from './SmartDownloadButton'
 import { GridIcon, ListIcon, JustifiedIcon, ChevronLeftIcon, ChevronRightIcon, sharedStyles as ss, type PhotoViewMode, type MediaFilter, type DownloadFilter, type LicenseFilter, PhotoListRow, DownloadFilterSelect, LicenseFilterSelect, matchesLicenseFilter, DOWNLOAD_FILTER_LABEL, LICENSE_FILTER_LABEL, DRAWER_LABEL_WIDTH, Chip, loadPhotoViewMode, savePhotoViewMode, loadRowHeight, saveRowHeight, computeJustifiedRows } from './PhotoGridShared'
 import EmptyState from './EmptyState'
-import WaveHeader from './WaveHeader'
+import WaveHeader, { DISCOVER_GUTTER } from './WaveHeader'
 
 type GroupView = 'list' | 'pool'
 
@@ -204,11 +204,14 @@ export default function DiscoverGroups(): React.JSX.Element {
     else advanceFromRef.current = null
   }, [filteredPoolPhotos.length, poolLoadingMore, poolPage, poolPages, loadMorePool])
 
+  // 'Custom range' with no dates entered isn't a filter yet
+  const poolDateFilterActive = (poolAppliedDatePreset !== 'all' && poolAppliedDatePreset !== 'custom') || poolAppliedDateFrom !== '' || poolAppliedDateTo !== ''
+
   const poolActiveFilterCount = [
     poolAppliedDownloadFilter !== 'all',
     poolAppliedLicenseFilter !== 'all',
     poolAppliedTagInput.trim().length > 0,
-    poolAppliedDatePreset !== 'all' || poolAppliedDateFrom !== '' || poolAppliedDateTo !== '',
+    poolDateFilterActive,
   ].filter(Boolean).length
 
   const filtersActive = poolActiveFilterCount > 0 || poolMediaFilter !== 'all' || poolSearchInput.trim().length > 0
@@ -567,7 +570,7 @@ export default function DiscoverGroups(): React.JSX.Element {
                   <Chip label={`tags: ${poolAppliedTagInput.trim()}`} onDismiss={() => { setPoolPendingTagInput(''); setPoolAppliedTagInput('') }} />
                 </div>
               )}
-              {(poolAppliedDatePreset !== 'all' || poolAppliedDateFrom || poolAppliedDateTo) && (
+              {poolDateFilterActive && (
                 <div style={ss.chipRow}>
                   <Chip
                     label={`date: ${poolAppliedDatePreset === 'last7' ? 'Last 7 days' : poolAppliedDatePreset === 'last30' ? 'Last 30 days' : poolAppliedDatePreset === 'thisYear' ? 'This year' : poolAppliedDatePreset === 'lastYear' ? 'Last year' : poolAppliedDateFrom || poolAppliedDateTo ? `${poolAppliedDateFrom || '…'} – ${poolAppliedDateTo || '…'}` : 'Custom'}`}
@@ -747,7 +750,7 @@ export default function DiscoverGroups(): React.JSX.Element {
 }
 
 const s: Record<string, React.CSSProperties> = {
-  container: { display: 'flex', flexDirection: 'column', gap: '16px', padding: '0 20px 32px' },
+  container: { display: 'flex', flexDirection: 'column', gap: '16px', padding: `0 ${DISCOVER_GUTTER}px 32px` },
   stickyHeader: { position: 'sticky' as const, top: 0, zIndex: 10, background: '#fff', paddingBottom: '8px' },
   headerRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '20px' },
   heading: { margin: 0, fontSize: '18px', fontWeight: 600, color: '#1a1a1a' },

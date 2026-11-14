@@ -3,6 +3,7 @@ import type { FlickrPhoto, PhotoPage } from '../../shared/types'
 import PhotoDetail from './PhotoDetail'
 import { GridIcon, ListIcon, JustifiedIcon, sharedStyles as ss, type PhotoViewMode, PhotoListRow, loadPhotoViewMode, savePhotoViewMode, loadRowHeight, saveRowHeight, computeJustifiedRows } from './PhotoGridShared'
 import EmptyState from './EmptyState'
+import { DISCOVER_GUTTER } from './WaveHeader'
 
 interface Props {
   onDownload?: (photo: FlickrPhoto) => void
@@ -381,7 +382,7 @@ const sb: Record<string, React.CSSProperties> = {
 }
 
 const s: Record<string, React.CSSProperties> = {
-  container: { display: 'flex', flexDirection: 'column', gap: '16px', padding: '0 20px 32px' },
+  container: { display: 'flex', flexDirection: 'column', gap: '16px', padding: `0 ${DISCOVER_GUTTER}px 32px` },
   stickyHeader: { position: 'sticky' as const, top: 0, zIndex: 10, background: '#fff', paddingBottom: '8px' },
   headerRow: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', paddingTop: '20px' },
   heading: { margin: 0, fontSize: '18px', fontWeight: 600, color: '#1a1a1a' },
@@ -425,6 +426,5 @@ const s: Record<string, React.CSSProperties> = {
   },
   loadingState: { textAlign: 'center', color: '#888', fontSize: '14px', paddingTop: '48px' },
   errorState: { textAlign: 'center', color: 'var(--ff-error)', fontSize: '14px', paddingTop: '48px' },
-  emptyState: { textAlign: 'center', color: '#888', fontSize: '14px', paddingTop: '48px' },
   selectToggleBtn: { padding: '6px 14px', borderRadius: '8px', border: '1px solid #ddd', background: '#fff', cursor: 'pointer', fontSize: '13px', color: '#444', flexShrink: 0 },
 }

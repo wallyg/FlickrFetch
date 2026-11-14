@@ -83,6 +83,8 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
   const [albumFilteredPhotos, setAlbumFilteredPhotos] = useState<FlickrPhoto[]>([])
   const [photostreamFilteredPhotos, setPhotostreamFilteredPhotos] = useState<FlickrPhoto[]>([])
   const [albumMediaFilter, setAlbumMediaFilter] = useState<'all' | 'photo' | 'video'>('all')
+  const [albumExtraFilters, setAlbumExtraFilters] = useState(false)
+  const [photostreamFiltersActive, setPhotostreamFiltersActive] = useState(false)
   const [albumPrivacyFilter, setAlbumPrivacyFilter] = useState<'all' | 'public' | 'friends' | 'family' | 'private'>('all')
   const handleResetRecords = useCallback(async () => {
     if (!selectedAlbum) return
@@ -165,9 +167,9 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
   }, [])
 
   const handleSelectAll = useCallback((): void => {
-    const source = albumFilteredPhotos.length > 0 ? albumFilteredPhotos : loadedAlbumPhotos
-    setAlbumSelectedIds(new Set(source.map((p) => p.id)))
-  }, [albumFilteredPhotos, loadedAlbumPhotos])
+    // Only what's visible: photos hidden by a filter are never selected
+    setAlbumSelectedIds(new Set(albumFilteredPhotos.map((p) => p.id)))
+  }, [albumFilteredPhotos])
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent): void => {
@@ -180,22 +182,21 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
         if (albumSelectMode) { e.preventDefault(); handleSelectAll() }
         else if (photostreamSelectMode) {
           e.preventDefault()
-          const source = photostreamFilteredPhotos.length > 0 ? photostreamFilteredPhotos : loadedPhotostreamPhotos
-          setPhotostreamSelectedIds(new Set(source.map(p => p.id)))
+          setPhotostreamSelectedIds(new Set(photostreamFilteredPhotos.map(p => p.id)))
         }
       }
     }
     document.addEventListener('keydown', handleKey)
     return () => document.removeEventListener('keydown', handleKey)
-  }, [albumSelectMode, photostreamSelectMode, exitAlbumSelect, exitPhotostreamSelect, handleSelectAll, loadedPhotostreamPhotos, photostreamFilteredPhotos])
+  }, [albumSelectMode, photostreamSelectMode, exitAlbumSelect, exitPhotostreamSelect, handleSelectAll, photostreamFilteredPhotos])
 
   const handleAlbumToggleSelect = (photo: FlickrPhoto, shiftKey: boolean): void => {
     if (shiftKey && albumLastClickedId) {
-      const fromIdx = loadedAlbumPhotos.findIndex((p) => p.id === albumLastClickedId)
-      const toIdx = loadedAlbumPhotos.findIndex((p) => p.id === photo.id)
+      const fromIdx = albumFilteredPhotos.findIndex((p) => p.id === albumLastClickedId)
+      const toIdx = albumFilteredPhotos.findIndex((p) => p.id === photo.id)
       if (fromIdx !== -1 && toIdx !== -1) {
         const [start, end] = fromIdx < toIdx ? [fromIdx, toIdx] : [toIdx, fromIdx]
-        const rangeIds = loadedAlbumPhotos.slice(start, end + 1).map((p) => p.id)
+        const rangeIds = albumFilteredPhotos.slice(start, end + 1).map((p) => p.id)
         setAlbumSelectedIds((prev) => new Set([...prev, ...rangeIds]))
       }
     } else {
@@ -211,11 +212,11 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
 
   const handlePhotostreamToggleSelect = (photo: FlickrPhoto, shiftKey: boolean): void => {
     if (shiftKey && photostreamLastClickedId) {
-      const fromIdx = loadedPhotostreamPhotos.findIndex((p) => p.id === photostreamLastClickedId)
-      const toIdx = loadedPhotostreamPhotos.findIndex((p) => p.id === photo.id)
+      const fromIdx = photostreamFilteredPhotos.findIndex((p) => p.id === photostreamLastClickedId)
+      const toIdx = photostreamFilteredPhotos.findIndex((p) => p.id === photo.id)
       if (fromIdx !== -1 && toIdx !== -1) {
         const [start, end] = fromIdx < toIdx ? [fromIdx, toIdx] : [toIdx, fromIdx]
-        const rangeIds = loadedPhotostreamPhotos.slice(start, end + 1).map((p) => p.id)
+        const rangeIds = photostreamFilteredPhotos.slice(start, end + 1).map((p) => p.id)
         setPhotostreamSelectedIds((prev) => new Set([...prev, ...rangeIds]))
       }
     } else {
@@ -229,8 +230,25 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
     }
   }
 
+  // Filters are on: download exactly the photos visible in the grid instead of the whole album/photostream
+  const startShownDownload = (shown: FlickrPhoto[], where: string, displayTitle: string): void => {
+    if (shown.length === 0) return
+    const photoCount = shown.filter(p => p.media !== 'video').length
+    const videoCount = shown.filter(p => p.media === 'video').length
+    const photos = shown.map(p => ({ id: p.id, title: p.title }))
+    setPendingDownload({
+      title: `↓ Download ${shown.length.toLocaleString()} shown from ${where}`,
+      photoCount,
+      videoCount,
+      note: 'Only the photos matching your filters are downloaded',
+      onConfirm: (track, exportFormat) => {
+        window.flickrAPI.startSelectedBatch(photos, `${displayTitle} (${photos.length} shown)`, track, exportFormat === 'zip')
+      },
+    })
+  }
+
   const handleDownloadAlbumSelected = (): void => {
-    const selected = loadedAlbumPhotos.filter((p) => albumSelectedIds.has(p.id))
+    const selected = albumFilteredPhotos.filter((p) => albumSelectedIds.has(p.id))
     if (selected.length === 0) return
     const albumTitle = selectedAlbum?.title ?? ''
     const photoCount = selected.filter(p => p.media !== 'video').length
@@ -248,7 +266,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
   }
 
   const handleDownloadPhotostreamSelected = (): void => {
-    const selected = loadedPhotostreamPhotos.filter((p) => photostreamSelectedIds.has(p.id))
+    const selected = photostreamFilteredPhotos.filter((p) => photostreamSelectedIds.has(p.id))
     if (selected.length === 0) return
     const photoCount = selected.filter(p => p.media !== 'video').length
     const videoCount = selected.filter(p => p.media === 'video').length
@@ -493,24 +511,35 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
                 <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
               </svg>
             </button>
-            <SmartDownloadButton
-              label="Download All"
-              onDownload={(mode) => {
-                const smartMode = mode === 'all' ? undefined : mode
-                const photoCount = loadedPhotostreamPhotos.filter(p => p.media !== 'video').length
-                const videoCount = loadedPhotostreamPhotos.filter(p => p.media === 'video').length
-                const modeTitle = mode === 'updated' ? '↓ Download Updated (Photostream)' : mode === 'never-downloaded' ? '↓ Download Never Downloaded (Photostream)' : '↓ Download Photostream'
-                setPendingDownload({
-                  title: modeTitle,
-                  photoCount,
-                  videoCount,
-                  note: `${(photoCount + videoCount).toLocaleString()} loaded — batch downloads your full photostream`,
-                  onConfirm: (track, exportFormat) => {
-                    window.flickrAPI.startPhotostreamBatch('Photostream', track, smartMode, undefined, photostreamSort, exportFormat === 'zip')
-                  },
-                })
-              }}
-            />
+            {photostreamFiltersActive ? (
+              <button
+                style={{ ...styles.selectButton, borderColor: 'var(--ff-pink)', color: 'var(--ff-pink-action)' }}
+                disabled={photostreamFilteredPhotos.length === 0}
+                title="Filters are on, so only the photos shown below are downloaded. Clear filters to download the whole photostream."
+                onClick={() => startShownDownload(photostreamFilteredPhotos, 'Photostream', 'Photostream')}
+              >
+                {`Download ${photostreamFilteredPhotos.length.toLocaleString()} shown`}
+              </button>
+            ) : (
+              <SmartDownloadButton
+                label="Download All"
+                onDownload={(mode) => {
+                  const smartMode = mode === 'all' ? undefined : mode
+                  const photoCount = loadedPhotostreamPhotos.filter(p => p.media !== 'video').length
+                  const videoCount = loadedPhotostreamPhotos.filter(p => p.media === 'video').length
+                  const modeTitle = mode === 'updated' ? '↓ Download Updated (Photostream)' : mode === 'never-downloaded' ? '↓ Download Never Downloaded (Photostream)' : '↓ Download Photostream'
+                  setPendingDownload({
+                    title: modeTitle,
+                    photoCount,
+                    videoCount,
+                    note: `${(photoCount + videoCount).toLocaleString()} loaded — batch downloads your full photostream`,
+                    onConfirm: (track, exportFormat) => {
+                      window.flickrAPI.startPhotostreamBatch('Photostream', track, smartMode, undefined, photostreamSort, exportFormat === 'zip')
+                    },
+                  })
+                }}
+              />
+            )}
             <button style={styles.selectButton} onClick={() => setPhotostreamSelectMode(true)}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                 <rect x="2" y="3" width="7" height="7" rx="1"/><rect x="13" y="3" width="7" height="7" rx="1"/><rect x="2" y="14" width="7" height="7" rx="1"/><path d="M14 17l2 2 4-4"/>
@@ -536,33 +565,44 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
           <div style={{ flex: 1 }} />
           {!albumSelectMode ? (
             <>
-              <SmartDownloadButton
-                label="Download Album"
-                onDownload={(mode) => {
-                  const mt = albumMediaFilter !== 'all' ? albumMediaFilter : undefined
-                  const pf = albumPrivacyFilter !== 'all' ? albumPrivacyFilter : undefined
-                  const photoCount = mt === 'video' ? 0 : selectedAlbum.photoCount
-                  const videoCount = mt === 'photo' ? 0 : selectedAlbum.videoCount
-                  const smartMode = mode === 'all' ? undefined : mode
-                  const modeTitle = mode === 'updated' ? `↓ Download Updated: "${selectedAlbum.title}"` : mode === 'never-downloaded' ? `↓ Download Never Downloaded: "${selectedAlbum.title}"` : `↓ Download Album: "${selectedAlbum.title}"`
-                  setPendingDownload({
-                    title: modeTitle,
-                    photoCount,
-                    videoCount,
-                    onConfirm: async (track, exportFormat) => {
-                      const zipMode = exportFormat === 'zip'
-                      const result = await window.flickrAPI.startBatch(selectedAlbum.id, selectedAlbum.title, selectedAlbum.photoCount, selectedAlbum.videoCount, false, mt, pf, track, smartMode, zipMode)
-                      if (result.alreadyQueued) {
-                        const ok = await window.flickrAPI.confirm(
-                          `"${selectedAlbum.title}" is already downloading or queued.`,
-                          'Do you want to add it to the queue again?'
-                        )
-                        if (ok) window.flickrAPI.startBatch(selectedAlbum.id, selectedAlbum.title, selectedAlbum.photoCount, selectedAlbum.videoCount, true, mt, pf, track, smartMode, zipMode)
-                      }
-                    },
-                  })
-                }}
-              />
+              {albumExtraFilters ? (
+                <button
+                  style={{ ...styles.selectButton, borderColor: 'var(--ff-pink)', color: 'var(--ff-pink-action)' }}
+                  disabled={albumFilteredPhotos.length === 0}
+                  title="Filters are on, so only the photos shown below are downloaded. Clear filters to download the whole album."
+                  onClick={() => startShownDownload(albumFilteredPhotos, `"${selectedAlbum.title}"`, selectedAlbum.title)}
+                >
+                  {`Download ${albumFilteredPhotos.length.toLocaleString()} shown`}
+                </button>
+              ) : (
+                <SmartDownloadButton
+                  label="Download Album"
+                  onDownload={(mode) => {
+                    const mt = albumMediaFilter !== 'all' ? albumMediaFilter : undefined
+                    const pf = albumPrivacyFilter !== 'all' ? albumPrivacyFilter : undefined
+                    const photoCount = mt === 'video' ? 0 : selectedAlbum.photoCount
+                    const videoCount = mt === 'photo' ? 0 : selectedAlbum.videoCount
+                    const smartMode = mode === 'all' ? undefined : mode
+                    const modeTitle = mode === 'updated' ? `↓ Download Updated: "${selectedAlbum.title}"` : mode === 'never-downloaded' ? `↓ Download Never Downloaded: "${selectedAlbum.title}"` : `↓ Download Album: "${selectedAlbum.title}"`
+                    setPendingDownload({
+                      title: modeTitle,
+                      photoCount,
+                      videoCount,
+                      onConfirm: async (track, exportFormat) => {
+                        const zipMode = exportFormat === 'zip'
+                        const result = await window.flickrAPI.startBatch(selectedAlbum.id, selectedAlbum.title, selectedAlbum.photoCount, selectedAlbum.videoCount, false, mt, pf, track, smartMode, zipMode)
+                        if (result.alreadyQueued) {
+                          const ok = await window.flickrAPI.confirm(
+                            `"${selectedAlbum.title}" is already downloading or queued.`,
+                            'Do you want to add it to the queue again?'
+                          )
+                          if (ok) window.flickrAPI.startBatch(selectedAlbum.id, selectedAlbum.title, selectedAlbum.photoCount, selectedAlbum.videoCount, true, mt, pf, track, smartMode, zipMode)
+                        }
+                      },
+                    })
+                  }}
+                />
+              )}
               <button style={styles.selectButton} onClick={() => setAlbumSelectMode(true)}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                   <rect x="2" y="3" width="7" height="7" rx="1"/><rect x="13" y="3" width="7" height="7" rx="1"/><rect x="2" y="14" width="7" height="7" rx="1"/><path d="M14 17l2 2 4-4"/>
@@ -658,6 +698,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             onPageInfo={(page, pages) => setPhotostreamPageInfo({ page, pages })}
             onSortChange={sort => setPhotostreamSort(sort)}
             onFilteredPhotosChange={setPhotostreamFilteredPhotos}
+            onFiltersActiveChange={setPhotostreamFiltersActive}
           />
         </div>
         {albumsVisited && (
@@ -690,6 +731,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
               onPhotosLoaded={setLoadedAlbumPhotos}
               onPageInfo={(page, pages) => setAlbumPageInfo({ page, pages })}
               onFilteredPhotosChange={setAlbumFilteredPhotos}
+              onExtraFiltersChange={setAlbumExtraFilters}
               onMediaFilterChange={setAlbumMediaFilter}
               onPrivacyFilterChange={setAlbumPrivacyFilter}
             />

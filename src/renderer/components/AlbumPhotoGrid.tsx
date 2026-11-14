@@ -31,9 +31,11 @@ interface AlbumPhotoGridProps {
   onFilteredPhotosChange?: (photos: FlickrPhoto[]) => void
   onMediaFilterChange?: (filter: 'all' | 'photo' | 'video') => void
   onPrivacyFilterChange?: (filter: PrivacyFilter) => void
+  // True when any filter other than media/privacy is on (those two are applied server-side by the album download)
+  onExtraFiltersChange?: (active: boolean) => void
 }
 
-export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, selectedIds, onToggleSelect, onPhotosLoaded, onPageInfo, onFilteredPhotosChange, onMediaFilterChange, onPrivacyFilterChange }: AlbumPhotoGridProps): React.JSX.Element {
+export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, selectedIds, onToggleSelect, onPhotosLoaded, onPageInfo, onFilteredPhotosChange, onMediaFilterChange, onPrivacyFilterChange, onExtraFiltersChange }: AlbumPhotoGridProps): React.JSX.Element {
   const [photos, setPhotos] = useState<FlickrPhoto[]>([])
   const [pageInfo, setPageInfo] = useState<Pick<PhotoPage, 'page' | 'pages' | 'total'> | null>(null)
   const [loading, setLoading] = useState(true)
@@ -270,6 +272,8 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
 
   const hasAnyFilter = mediaFilter !== 'all' || privacyFilter !== 'all' || downloadFilter !== 'all' || licenseFilter !== 'all' || !!activeTitleQuery || !!activeTagQuery || !!activeDateMin || !!activeDateMax
   const drawerBadgeCount = (privacyFilter !== 'all' ? 1 : 0) + (activeTagQuery ? 1 : 0) + ((activeDateMin || activeDateMax) ? 1 : 0) + (downloadFilter !== 'all' ? 1 : 0) + (licenseFilter !== 'all' ? 1 : 0)
+  const extraFiltersActive = downloadFilter !== 'all' || licenseFilter !== 'all' || !!activeTitleQuery || !!activeTagQuery || !!activeDateMin || !!activeDateMax
+  useEffect(() => { onExtraFiltersChange?.(extraFiltersActive) }, [extraFiltersActive, onExtraFiltersChange])
   const showDateInputs = dateMode === 'since' || dateMode === 'between'
   const hasMore = pageInfo ? pageInfo.page < pageInfo.pages : false
 

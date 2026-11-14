@@ -5,7 +5,7 @@ import { AttributionNotice, DiscoverTile, DiscoverSelectBar } from './DiscoverEx
 import SmartDownloadButton from './SmartDownloadButton'
 import { GridIcon, ListIcon, JustifiedIcon, ChevronLeftIcon, sharedStyles as ss, type MediaFilter, type GridSize, type AlbumViewMode, type PhotoViewMode, type DownloadFilter, type LicenseFilter, type DateMode, getPresetDates, formatDateChip, Chip, PhotoListRow, DownloadFilterSelect, LicenseFilterSelect, matchesLicenseFilter, sameSearchParams, loadAlbumViewMode, saveAlbumViewMode, loadPhotoViewMode, savePhotoViewMode, loadRowHeight, saveRowHeight, computeJustifiedRows } from './PhotoGridShared'
 import EmptyState from './EmptyState'
-import WaveHeader from './WaveHeader'
+import WaveHeader, { DISCOVER_GUTTER } from './WaveHeader'
 
 const ALBUM_COLUMNS: Record<GridSize, string> = {
   small: 'repeat(auto-fill, minmax(130px, 1fr))',
@@ -150,6 +150,9 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
     }
   }, [searchQuery]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Numbered so a slow earlier search can't overwrite the results of a newer one.
+  const searchReqRef = useRef(0)
+
   const openUser = useCallback(async (user: DiscoverUser): Promise<void> => {
     setFoundUser(user)
     setView('user-photos')
@@ -188,15 +191,19 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
     setDateCustomMax('')
     setDrawerOpen(false)
     setActiveSearch({})
+    // Invalidates any search still in flight for the previous person
+    const reqId = ++searchReqRef.current
     try {
       const result = await window.flickrAPI.discoverGetPublicPhotos(user.nsid, 1, 'date-posted-desc', {})
+      if (reqId !== searchReqRef.current) return
       setUserPhotos(result.photos)
       setPhotosPage(result.page)
       setPhotosPages(result.pages)
     } catch (e) {
+      if (reqId !== searchReqRef.current) return
       setPhotosError(e instanceof Error ? e.message : 'Failed to load photos')
     } finally {
-      setPhotosLoading(false)
+      if (reqId === searchReqRef.current) setPhotosLoading(false)
     }
   }, [])
 
@@ -209,9 +216,6 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
     }
     openUser(user)
   }, [openUser])
-
-  // Numbered so a slow earlier search can't overwrite the results of a newer one.
-  const searchReqRef = useRef(0)
 
   const applySearch = useCallback(async (newSort?: string, newSearch?: PhotoSearchParams): Promise<void> => {
     if (!foundUser) return
@@ -232,6 +236,8 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
       setPhotosPages(result.pages)
     } catch (e) {
       if (reqId !== searchReqRef.current) return
+      // Don't leave the previous (unfiltered) photos on screen looking like the search result
+      setUserPhotos([])
       setPhotosError(e instanceof Error ? e.message : 'Failed to load photos')
     } finally {
       if (reqId === searchReqRef.current) setPhotosLoading(false)
@@ -1053,7 +1059,15 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
                     <select
                       style={ss.sortSelect}
                       value={dateMode}
-                      onChange={e => setDateMode(e.target.value as DateMode)}
+                      onChange={e => {
+                        const next = e.target.value as DateMode
+                        // Switching a preset to a custom range starts from that preset's dates instead of dropping the filter
+                        if (next === 'between' && dateMode !== 'between' && dateMode !== 'all') {
+                          const { min, max } = getPresetDates(dateMode)
+                          setDateCustomMin(min); setDateCustomMax(max)
+                        }
+                        setDateMode(next)
+                      }}
                     >
                       <option value="all">All time</option>
                       <option value="last7">Last 7 days</option>
@@ -1556,7 +1570,7 @@ function DiscoverCollCard({ col, onClick }: { col: FlickrCollection; onClick: ()
 }
 
 const s: Record<string, React.CSSProperties> = {
-  container: { display: 'flex', flexDirection: 'column', gap: '16px', padding: '0 20px 32px' },
+  container: { display: 'flex', flexDirection: 'column', gap: '16px', padding: `0 ${DISCOVER_GUTTER}px 32px` },
   stickyHeader: { position: 'sticky' as const, top: 0, zIndex: 10, background: '#fff', display: 'flex', flexDirection: 'column' as const },
   headerRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', paddingTop: '20px', paddingBottom: '8px' },
   heading: { margin: 0, fontSize: '18px', fontWeight: 600, color: '#1a1a1a' },
@@ -1616,11 +1630,6 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: '12px', outline: 'none', cursor: 'pointer',
   },
   dateSep: { fontSize: '12px', color: '#888' },
-  applyBtn: {
-    padding: '5px 14px', borderRadius: '6px', border: 'none',
-    background: 'var(--ff-blue)', color: '#fff', fontSize: '12px',
-    fontWeight: 600, cursor: 'pointer',
-  },
   grid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px' },
   albumGrid: {
     display: 'grid',

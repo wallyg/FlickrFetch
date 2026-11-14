@@ -15,9 +15,10 @@ interface PhotoGridProps {
   onPageInfo?: (page: number, pages: number) => void
   onSortChange?: (sort: string) => void
   onFilteredPhotosChange?: (photos: FlickrPhoto[]) => void
+  onFiltersActiveChange?: (active: boolean) => void
 }
 
-export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onToggleSelect, onPhotosLoaded, onPageInfo, onSortChange, onFilteredPhotosChange }: PhotoGridProps): React.JSX.Element {
+export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onToggleSelect, onPhotosLoaded, onPageInfo, onSortChange, onFilteredPhotosChange, onFiltersActiveChange }: PhotoGridProps): React.JSX.Element {
   const [photos, setPhotos] = useState<FlickrPhoto[]>([])
   const [page, setPage] = useState(1)
   const [pages, setPages] = useState(1)
@@ -150,7 +151,9 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
       delete params.dateMin; delete params.dateMax; delete params.dateField
       applySearch(params)
     } else if (mode === 'since' || mode === 'between') {
-      setDateCustomMin(''); setDateCustomMax('')
+      // Keep the dates already applied so switching to a custom range doesn't drop the filter
+      // (and trigger an unfiltered reload) before the user has picked new dates.
+      if (mode === 'since') setDateCustomMax('')
     } else {
       const { min, max } = getPresetDates(mode)
       setDateCustomMin(min); setDateCustomMax(max)
@@ -299,6 +302,7 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
   const hasServerSearch = !!(activeSearch.query || activeSearch.tagQuery || activeSearch.dateMin || activeSearch.dateMax)
   const hasClientFilter = mediaFilter !== 'all' || privacyFilter !== 'all' || downloadFilter !== 'all' || licenseFilter !== 'all'
   const hasAnyFilter = hasServerSearch || hasClientFilter
+  useEffect(() => { onFiltersActiveChange?.(hasAnyFilter) }, [hasAnyFilter, onFiltersActiveChange])
   const drawerBadgeCount =
     (privacyFilter !== 'all' ? 1 : 0) +
     (activeSearch.tagQuery ? 1 : 0) +

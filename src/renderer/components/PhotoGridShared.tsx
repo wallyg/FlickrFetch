@@ -466,7 +466,6 @@ export const sharedStyles: Record<string, React.CSSProperties> = {
   dateInputsInline: { display: 'flex', alignItems: 'center', gap: '5px' },
   dateInput: { border: '1px solid #ddd', borderRadius: '5px', padding: '4px 6px', fontSize: '12px', color: '#444', background: '#fff' },
   dateToLabel: { fontSize: '12px', color: '#888' },
-  applyBtn: { backgroundColor: '#111', border: 'none', borderRadius: '5px', padding: '4px 10px', fontSize: '12px', color: '#fff', cursor: 'pointer' },
   comingSoon: { fontSize: '12px', color: '#bbb' },
   downloadFilterBtn: { background: 'none', border: '1px solid #ddd', borderRadius: '6px', padding: '5px 10px', fontSize: '12px', color: '#555', cursor: 'pointer', whiteSpace: 'nowrap' as const },
   downloadFilterBtnActive: { backgroundColor: '#111', color: '#fff', borderColor: '#111' },
@@ -475,7 +474,5 @@ export const sharedStyles: Record<string, React.CSSProperties> = {
   // Empty / error states
   centered: { display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', height: '100%', gap: '12px' },
   mutedText: { color: '#888', fontSize: '15px', margin: 0 },
-  emptyFilter: { display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', gap: '12px', padding: '48px 24px', textAlign: 'center' as const },
-  emptyFilterMsg: { color: '#888', fontSize: '14px', margin: 0 },
   clearFiltersBtn: { background: 'none', border: '1px solid #ccc', borderRadius: '6px', padding: '6px 16px', fontSize: '13px', color: '#555', cursor: 'pointer' },
 }
