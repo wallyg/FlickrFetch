@@ -697,7 +697,7 @@ export default function SettingsModal({ onClose, updateVersion }: { onClose: () 
                 <div style={s.optRow}>
                   <div style={s.optLabelGroup}>
                     <span style={s.optName}>Sidecar JSON</span>
-                    <InfoTip text="Write a companion .json file alongside each downloaded photo and video containing Flickr metadata (title, tags, date, GPS, license, etc.)." />
+                    <InfoTip direction="up" text="Write a companion .json file alongside each downloaded photo and video containing Flickr metadata (title, tags, date, GPS, license, etc.)." />
                   </div>
                   <div style={s.posGroup}>
                     <button style={{ ...s.posBtn, ...(!writeSidecarJson ? s.posBtnActive : {}) }} onClick={() => { setWriteSidecarJson(false) }}>Off</button>

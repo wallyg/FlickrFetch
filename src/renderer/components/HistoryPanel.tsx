@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import type { BatchLogEntry, PhotoDownloadRecord, DiscoverDownloadRecord, FlickrAlbum } from '../../shared/types'
+import EmptyState from './EmptyState'
 
 interface HistoryPanelProps {
   onClose: () => void
@@ -114,7 +115,7 @@ function BatchesTab({ onClear }: { onClear: () => void }) {
   if (loading) return <p style={styles.empty}>Loading…</p>
 
   if (entries.length === 0) return (
-    <p style={styles.empty}>No batch download history yet. Batches are tracked for 90 days.</p>
+    <EmptyState title="Your history starts here" body="Every batch you download shows up here, with what was saved and what was skipped. Batches are kept for 90 days." />
   )
 
   return (
@@ -513,14 +514,13 @@ function PhotosTab() {
         {loading ? (
           <p style={styles.empty}>Loading records…</p>
         ) : allRecords.length === 0 ? (
-          <p style={styles.empty}>No download records yet. Photos are tracked when you download them.</p>
+          <EmptyState title="No downloads recorded yet" body="Photos are tracked here as you download them." />
         ) : albumFilterLoading ? (
           <p style={styles.empty}>Loading album photos…</p>
         ) : filteredRecords.length === 0 ? (
-          <div style={styles.emptyFilter}>
-            <p style={styles.empty}>No records match your filters.</p>
-            <button style={styles.clearFiltersBtn} onClick={handleClearAllPhotoFilters}>Clear Filters</button>
-          </div>
+          <EmptyState title="No records match these filters" body="Try removing a filter.">
+            <button style={styles.clearFiltersBtn} onClick={handleClearAllPhotoFilters}>Clear filters</button>
+          </EmptyState>
         ) : (
           filteredRecords.map(r => (
             <div key={r.photoId} style={styles.photoRow}>
@@ -653,7 +653,7 @@ function DiscoverTab() {
   if (loading) return <p style={styles.empty}>Loading…</p>
 
   if (records.length === 0) return (
-    <p style={styles.empty}>No Discover download history yet. Individual photos downloaded from People, Groups, and Explore appear here.</p>
+    <EmptyState title="No Discover downloads yet" body="Photos you download from People, Groups, and Explore will appear here." />
   )
 
   return (

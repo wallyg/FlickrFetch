@@ -10,7 +10,10 @@ const changelog: Release[] = [
     version: '3.2',
     date: 'November 2026',
     highlights: [
-      'License filter — filter group and People photos by Creative Commons, Public Domain, US Government, or All Rights Reserved, so you can find photos you\'re free to reuse',
+      'License filter — filter photos in your photostream and albums, Groups, and People by Creative Commons, Public Domain, US Government, or All Rights Reserved, so you can find photos you\'re free to reuse',
+      'Filters respond as you go — the Apply buttons are gone; dropdowns and buttons take effect instantly, typed searches run when you pause, and your photos stay on screen (dimmed) while new results load instead of flashing blank',
+      'Brand waves — the soft FlickrFetch wave pattern now appears in the About window and behind the People and My Groups headers',
+      'Friendlier empty screens — "nothing here" messages now say what\'s going on and what to try next',
       'Sidecar JSON files — an opt-in setting (Settings → Metadata → Output files) that saves a companion .json file next to each downloaded photo with its title, tags, date, location, and license',
       'Clearer download history — each batch now shows a colored status dot and badges for downloaded, errors, and skipped, with expandable details; failed photos open by default when a batch partly succeeded',
       'Lato throughout — the brand typeface now appears across the whole app, not just the sign-in screen',

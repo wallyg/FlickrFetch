@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from 'react'
-import type { FlickrPhoto, PhotoPage, SearchOperator, DateRangeField, TagMode } from '../../shared/types'
-import { MediaFilter, DownloadFilter, PrivacyFilter, PrivacyLevel, PRIVACY_OPTIONS, PRIVACY_LABELS, JustifiedIcon, GridIcon, ListIcon, PrivacyIcon, Chip, Tooltip, PhotoListRow, DownloadFilterSelect, getPrivacyLevel, sharedStyles, DateMode, getPresetDates, formatDateChip, loadRowHeight, saveRowHeight, computeJustifiedRows, DOWNLOAD_FILTER_LABEL } from './PhotoGridShared'
+import type { FlickrPhoto, PhotoPage, SearchOperator, DateRangeField, TagMode, LicenseFilter } from '../../shared/types'
+import { MediaFilter, DownloadFilter, PrivacyFilter, PrivacyLevel, PRIVACY_OPTIONS, PRIVACY_LABELS, JustifiedIcon, GridIcon, ListIcon, PrivacyIcon, Chip, Tooltip, PhotoListRow, DownloadFilterSelect, LicenseFilterSelect, matchesLicenseFilter, LICENSE_FILTER_LABEL, getPrivacyLevel, sharedStyles, DateMode, getPresetDates, formatDateChip, loadRowHeight, saveRowHeight, computeJustifiedRows, DOWNLOAD_FILTER_LABEL } from './PhotoGridShared'
+import EmptyState from './EmptyState'
 
 type AlbumPhotoViewMode = 'list' | 'grid' | 'justified'
 
@@ -45,6 +46,7 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
   const [viewMode, setViewMode] = useState<AlbumPhotoViewMode>(loadAlbumPhotoViewMode)
   const [privacyFilter, setPrivacyFilter] = useState<PrivacyFilter>('all')
   const [downloadFilter, setDownloadFilter] = useState<DownloadFilter>('all')
+  const [licenseFilter, setLicenseFilter] = useState<LicenseFilter>('all')
   const [downloadRecords, setDownloadRecords] = useState<Record<string, true>>({})
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [rowHeight, setRowHeight] = useState<number>(loadRowHeight)
@@ -138,8 +140,28 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
     setActiveDateMin(''); setActiveDateMax('')
   }
 
+  // Filters apply as you go. Albums are filtered on the photos already loaded, so a short
+  // pause after typing is enough — no Apply button needed.
+  useEffect(() => {
+    const t = setTimeout(() => { setActiveTitleQuery(titleQuery.trim()); setActiveTitleOperator(titleOperator) }, 250)
+    return () => clearTimeout(t)
+  }, [titleQuery, titleOperator])
+
+  useEffect(() => {
+    const t = setTimeout(() => { setActiveTagQuery(tagQuery.trim()); setActiveTagMode(tagMode) }, 250)
+    return () => clearTimeout(t)
+  }, [tagQuery, tagMode])
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (dateMode === 'all') { setActiveDateMin(''); setActiveDateMax(''); return }
+      setActiveDateMin(dateCustomMin); setActiveDateMax(dateCustomMax); setActiveDateField(dateField)
+    }, 150)
+    return () => clearTimeout(t)
+  }, [dateMode, dateField, dateCustomMin, dateCustomMax])
+
   const clearAllFilters = (): void => {
-    setMediaFilter('all'); setPrivacyFilter('all'); setDownloadFilter('all')
+    setMediaFilter('all'); setPrivacyFilter('all'); setDownloadFilter('all'); setLicenseFilter('all')
     setTitleQuery(''); setActiveTitleQuery('')
     setTagQuery(''); setActiveTagQuery('')
     setDateMode('all'); setDateCustomMin(''); setDateCustomMax('')
@@ -194,8 +216,11 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
     if (downloadFilter !== 'all') {
       result = result.filter(p => downloadFilter === 'downloaded' ? !!downloadRecords[p.id] : !downloadRecords[p.id])
     }
+    if (licenseFilter !== 'all') {
+      result = result.filter(p => matchesLicenseFilter(p.license, licenseFilter))
+    }
     return result
-  }, [sortedPhotos, activeTitleQuery, activeTitleOperator, activeTagQuery, activeTagMode, activeDateMin, activeDateMax, activeDateField, mediaFilter, privacyFilter, downloadFilter, downloadRecords])
+  }, [licenseFilter, sortedPhotos, activeTitleQuery, activeTitleOperator, activeTagQuery, activeTagMode, activeDateMin, activeDateMax, activeDateField, mediaFilter, privacyFilter, downloadFilter, downloadRecords])
 
   useEffect(() => { onFilteredPhotosChange?.(filteredPhotos) }, [filteredPhotos, onFilteredPhotosChange])
   useEffect(() => { onMediaFilterChange?.(mediaFilter) }, [mediaFilter, onMediaFilterChange])
@@ -214,11 +239,11 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
 
   // Auto-load remaining pages when any filter is active (albums are finite — no page cap)
   useEffect(() => {
-    const filterActive = mediaFilter !== 'all' || privacyFilter !== 'all' || downloadFilter !== 'all' || !!activeTitleQuery || !!activeTagQuery || !!activeDateMin || !!activeDateMax
+    const filterActive = mediaFilter !== 'all' || privacyFilter !== 'all' || downloadFilter !== 'all' || licenseFilter !== 'all' || !!activeTitleQuery || !!activeTagQuery || !!activeDateMin || !!activeDateMax
     if (filterActive && photos.length > 0 && pageInfo && pageInfo.page < pageInfo.pages && !loadingMore && !loading) {
       handleLoadMore()
     }
-  }, [mediaFilter, privacyFilter, downloadFilter, activeTitleQuery, activeTagQuery, activeDateMin, activeDateMax, photos.length, pageInfo?.page, pageInfo?.pages, loadingMore, loading, handleLoadMore])
+  }, [mediaFilter, privacyFilter, downloadFilter, licenseFilter, activeTitleQuery, activeTagQuery, activeDateMin, activeDateMax, photos.length, pageInfo?.page, pageInfo?.pages, loadingMore, loading, handleLoadMore])
 
   useLayoutEffect(() => {
     if (loading) return
@@ -243,19 +268,19 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
     return computeJustifiedRows(filteredPhotos, containerWidth, rowHeight)
   }, [filteredPhotos, containerWidth, rowHeight, viewMode])
 
-  const hasAnyFilter = mediaFilter !== 'all' || privacyFilter !== 'all' || downloadFilter !== 'all' || !!activeTitleQuery || !!activeTagQuery || !!activeDateMin || !!activeDateMax
-  const drawerBadgeCount = (privacyFilter !== 'all' ? 1 : 0) + (activeTagQuery ? 1 : 0) + ((activeDateMin || activeDateMax) ? 1 : 0) + (downloadFilter !== 'all' ? 1 : 0)
+  const hasAnyFilter = mediaFilter !== 'all' || privacyFilter !== 'all' || downloadFilter !== 'all' || licenseFilter !== 'all' || !!activeTitleQuery || !!activeTagQuery || !!activeDateMin || !!activeDateMax
+  const drawerBadgeCount = (privacyFilter !== 'all' ? 1 : 0) + (activeTagQuery ? 1 : 0) + ((activeDateMin || activeDateMax) ? 1 : 0) + (downloadFilter !== 'all' ? 1 : 0) + (licenseFilter !== 'all' ? 1 : 0)
   const showDateInputs = dateMode === 'since' || dateMode === 'between'
   const hasMore = pageInfo ? pageInfo.page < pageInfo.pages : false
 
   if (loading) return <div style={styles.centered}><p style={styles.mutedText}>Loading photos…</p></div>
   if (error) return <div style={styles.centered}><p style={styles.mutedText}>{error}</p></div>
-  if (photos.length === 0) return <div style={styles.centered}><p style={styles.mutedText}>No photos in this album.</p></div>
+  if (photos.length === 0) return <EmptyState title="This album is empty" body="Photos added to it on Flickr will show up here." />
 
   return (
     <div style={styles.container}>
       <style>{`@keyframes ff-pop { 0% { transform: scale(0.5); opacity: 0 } 65% { transform: scale(1.2) } 100% { transform: scale(1); opacity: 1 } }`}</style>
-      {selectMode && (mediaFilter !== 'all' || privacyFilter !== 'all' || downloadFilter !== 'all' || !!activeTitleQuery || !!activeTagQuery || !!activeDateMin || !!activeDateMax) && (
+      {selectMode && (mediaFilter !== 'all' || privacyFilter !== 'all' || downloadFilter !== 'all' || licenseFilter !== 'all' || !!activeTitleQuery || !!activeTagQuery || !!activeDateMin || !!activeDateMax) && (
         <div style={styles.selectModeCount}>
           {filteredPhotos.length.toLocaleString()} matching · {photos.length.toLocaleString()} of {pageInfo?.total.toLocaleString() ?? '?'} loaded
         </div>
@@ -357,6 +382,11 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
               </div>
 
               <div style={styles.drawerRow}>
+                <span style={styles.drawerLabel}>License</span>
+                <LicenseFilterSelect value={licenseFilter} onChange={setLicenseFilter} />
+              </div>
+
+              <div style={styles.drawerRow}>
                 <span style={styles.drawerLabel}>Privacy</span>
                 <div style={styles.segGroup}>
                   {PRIVACY_OPTIONS.map(v => (
@@ -392,9 +422,6 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
                 <Tooltip text="Separate multiple tags with commas. 'Any' finds photos with at least one tag; 'All' requires every tag.">
                   <span style={styles.tagHint}>?</span>
                 </Tooltip>
-                {tagQuery !== activeTagQuery && tagQuery && (
-                  <button style={styles.applyBtn} onClick={applyTagSearch}>Apply</button>
-                )}
               </div>
 
               <div style={styles.drawerRow}>
@@ -426,7 +453,6 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
                       <><span style={styles.dateToLabel}>to</span>
                       <input type="date" style={styles.dateInput} value={dateCustomMax} onChange={e => setDateCustomMax(e.target.value)} onKeyDown={e => e.key === 'Enter' && applyDateFilter()} /></>
                     )}
-                    <button style={styles.applyBtn} onClick={applyDateFilter}>Apply</button>
                   </div>
                 )}
               </div>
@@ -455,6 +481,9 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
               {downloadFilter !== 'all' && (
                 <Chip label={DOWNLOAD_FILTER_LABEL[downloadFilter]} onDismiss={() => setDownloadFilter('all')} />
               )}
+              {licenseFilter !== 'all' && (
+                <Chip label={LICENSE_FILTER_LABEL[licenseFilter]} onDismiss={() => setLicenseFilter('all')} />
+              )}
               <button style={styles.clearFiltersLink} onClick={clearAllFilters}>Clear all</button>
             </div>
           )}
@@ -470,10 +499,9 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
       )}
 
       {filteredPhotos.length === 0 && photos.length > 0 && !loadingMore && !loading && (
-        <div style={styles.emptyFilter}>
-          <p style={styles.emptyFilterMsg}>No {mediaFilter !== 'all' ? mediaFilter + 's' : 'photos'} match the current filters.</p>
-          <button style={styles.clearFiltersBtn} onClick={clearAllFilters}>Clear Filters</button>
-        </div>
+        <EmptyState title="No photos match these filters" body="Try removing a filter.">
+          <button style={styles.clearFiltersBtn} onClick={clearAllFilters}>Clear filters</button>
+        </EmptyState>
       )}
 
       {viewMode === 'list' ? (

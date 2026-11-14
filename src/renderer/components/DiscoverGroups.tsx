@@ -3,7 +3,9 @@ import type { FlickrPhoto, DiscoverGroup, TagMode } from '../../shared/types'
 import PhotoDetail from './PhotoDetail'
 import { AttributionNotice, DiscoverTile, DiscoverSelectBar } from './DiscoverExplore'
 import SmartDownloadButton from './SmartDownloadButton'
-import { GridIcon, ListIcon, JustifiedIcon, ChevronLeftIcon, ChevronRightIcon, sharedStyles as ss, type PhotoViewMode, type MediaFilter, type DownloadFilter, type LicenseFilter, PhotoListRow, DownloadFilterSelect, LicenseFilterSelect, matchesLicenseFilter, DRAWER_LABEL_WIDTH, Chip, loadPhotoViewMode, savePhotoViewMode, loadRowHeight, saveRowHeight, computeJustifiedRows } from './PhotoGridShared'
+import { GridIcon, ListIcon, JustifiedIcon, ChevronLeftIcon, ChevronRightIcon, sharedStyles as ss, type PhotoViewMode, type MediaFilter, type DownloadFilter, type LicenseFilter, PhotoListRow, DownloadFilterSelect, LicenseFilterSelect, matchesLicenseFilter, DOWNLOAD_FILTER_LABEL, LICENSE_FILTER_LABEL, DRAWER_LABEL_WIDTH, Chip, loadPhotoViewMode, savePhotoViewMode, loadRowHeight, saveRowHeight, computeJustifiedRows } from './PhotoGridShared'
+import EmptyState from './EmptyState'
+import WaveHeader from './WaveHeader'
 
 type GroupView = 'list' | 'pool'
 
@@ -34,7 +36,8 @@ export default function DiscoverGroups(): React.JSX.Element {
   const [poolSort, setPoolSort] = useState('date-posted-desc')
   const [poolSearchInput, setPoolSearchInput] = useState('')
   const [poolDrawerOpen, setPoolDrawerOpen] = useState(false)
-  // Drawer pending state (staged, not applied until Apply is clicked)
+  // Drawer controls (what the user has set). These flow into the "applied" values below as soon as
+  // they change — instantly for dropdowns and buttons, after a short typing pause for tags.
   const [poolPendingDownloadFilter, setPoolPendingDownloadFilter] = useState<DownloadFilter>('all')
   const [poolPendingTagInput, setPoolPendingTagInput] = useState('')
   const [poolPendingTagMode, setPoolPendingTagMode] = useState<TagMode>('any')
@@ -52,6 +55,19 @@ export default function DiscoverGroups(): React.JSX.Element {
   const [poolAppliedDatePreset, setPoolAppliedDatePreset] = useState('all')
   const [poolAppliedDateFrom, setPoolAppliedDateFrom] = useState('')
   const [poolAppliedDateTo, setPoolAppliedDateTo] = useState('')
+  useEffect(() => {
+    setPoolAppliedDownloadFilter(poolPendingDownloadFilter)
+    setPoolAppliedLicenseFilter(poolPendingLicenseFilter)
+    setPoolAppliedTagMode(poolPendingTagMode)
+    setPoolAppliedDateField(poolPendingDateField)
+    setPoolAppliedDatePreset(poolPendingDatePreset)
+    setPoolAppliedDateFrom(poolPendingDateFrom)
+    setPoolAppliedDateTo(poolPendingDateTo)
+  }, [poolPendingDownloadFilter, poolPendingLicenseFilter, poolPendingTagMode, poolPendingDateField, poolPendingDatePreset, poolPendingDateFrom, poolPendingDateTo])
+  useEffect(() => {
+    const t = setTimeout(() => setPoolAppliedTagInput(poolPendingTagInput), 200)
+    return () => clearTimeout(t)
+  }, [poolPendingTagInput])
   // Large-group download warning
   const [groupDownloadWarning, setGroupDownloadWarning] = useState<{ photoCount: number } | null>(null)
   const loadedRef = useRef(false)
@@ -521,33 +537,31 @@ export default function DiscoverGroups(): React.JSX.Element {
                         value={poolPendingDateTo} onChange={e => setPoolPendingDateTo(e.target.value)} />
                     </div>
                   )}
-                  <div style={{ ...ss.drawerRow, justifyContent: 'flex-end', gap: '10px' }}>
-                    <button style={ss.clearFiltersLink} onClick={() => {
-                      setPoolPendingDownloadFilter('all'); setPoolPendingLicenseFilter('all'); setPoolPendingTagInput(''); setPoolPendingTagMode('any')
-                      setPoolPendingDateField('posted'); setPoolPendingDatePreset('all'); setPoolPendingDateFrom(''); setPoolPendingDateTo('')
-                      setPoolAppliedDownloadFilter('all'); setPoolAppliedLicenseFilter('all'); setPoolAppliedTagInput(''); setPoolAppliedTagMode('any')
-                      setPoolAppliedDateField('posted'); setPoolAppliedDatePreset('all'); setPoolAppliedDateFrom(''); setPoolAppliedDateTo('')
-                    }}>
-                      Clear filters
-                    </button>
-                    <button style={ss.applyBtn} onClick={() => {
-                      setPoolAppliedDownloadFilter(poolPendingDownloadFilter)
-                      setPoolAppliedLicenseFilter(poolPendingLicenseFilter)
-                      setPoolAppliedTagInput(poolPendingTagInput)
-                      setPoolAppliedTagMode(poolPendingTagMode)
-                      setPoolAppliedDateField(poolPendingDateField)
-                      setPoolAppliedDatePreset(poolPendingDatePreset)
-                      setPoolAppliedDateFrom(poolPendingDateFrom)
-                      setPoolAppliedDateTo(poolPendingDateTo)
-                      setPoolDrawerOpen(false)
-                    }}>
-                      Apply
-                    </button>
-                  </div>
+                  {(poolActiveFilterCount > 0 || poolPendingTagInput.trim() !== '') && (
+                    <div style={{ ...ss.drawerRow, justifyContent: 'flex-end', gap: '10px' }}>
+                      <button style={ss.clearFiltersLink} onClick={() => {
+                        setPoolPendingDownloadFilter('all'); setPoolPendingLicenseFilter('all'); setPoolPendingTagInput(''); setPoolPendingTagMode('any')
+                        setPoolPendingDateField('posted'); setPoolPendingDatePreset('all'); setPoolPendingDateFrom(''); setPoolPendingDateTo('')
+                        setPoolAppliedTagInput('')
+                      }}>
+                        Clear filters
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
               {/* Active filter chips */}
+              {(poolAppliedDownloadFilter !== 'all' || poolAppliedLicenseFilter !== 'all') && (
+                <div style={ss.chipRow}>
+                  {poolAppliedDownloadFilter !== 'all' && (
+                    <Chip label={DOWNLOAD_FILTER_LABEL[poolAppliedDownloadFilter]} onDismiss={() => setPoolPendingDownloadFilter('all')} />
+                  )}
+                  {poolAppliedLicenseFilter !== 'all' && (
+                    <Chip label={LICENSE_FILTER_LABEL[poolAppliedLicenseFilter]} onDismiss={() => setPoolPendingLicenseFilter('all')} />
+                  )}
+                </div>
+              )}
               {poolAppliedTagInput.trim() && (
                 <div style={ss.chipRow}>
                   <Chip label={`tags: ${poolAppliedTagInput.trim()}`} onDismiss={() => { setPoolPendingTagInput(''); setPoolAppliedTagInput('') }} />
@@ -573,19 +587,19 @@ export default function DiscoverGroups(): React.JSX.Element {
         {poolLoading && <div style={s.loadingState}>Loading group pool…</div>}
         {poolError && <div style={s.errorState}>{poolError}</div>}
         {!poolLoading && !poolError && poolPhotos.length === 0 && (
-          <div style={s.emptyState}>No public photos in this group pool.</div>
+          <EmptyState title="This group pool is empty" body="No public photos have been added to it yet." />
         )}
         {!poolLoading && !poolError && poolPhotos.length > 0 && filteredPoolPhotos.length === 0 && (
-          <div style={s.emptyState}>
-            No photos match the current filters{poolPage < poolPages ? ' in the photos loaded so far.' : '.'}
+          <EmptyState
+            title="No photos match these filters"
+            body={poolPage < poolPages ? 'Nothing in the photos loaded so far. Try removing a filter, or load more.' : 'Try removing a filter.'}
+          >
             {poolPage < poolPages && (
-              <div style={s.loadMoreRow}>
-                <button style={s.loadMoreBtn} disabled={poolLoadingMore} onClick={loadMorePool}>
-                  {poolLoadingMore ? 'Loading…' : 'Load more'}
-                </button>
-              </div>
+              <button style={s.loadMoreBtn} disabled={poolLoadingMore} onClick={loadMorePool}>
+                {poolLoadingMore ? 'Loading…' : 'Load more'}
+              </button>
             )}
-          </div>
+          </EmptyState>
         )}
         {filteredPoolPhotos.length > 0 && (
           <>
@@ -677,27 +691,29 @@ export default function DiscoverGroups(): React.JSX.Element {
 
   return (
     <div style={s.container}>
-      <div style={s.headerRow}>
-        <div>
-          <h2 style={s.heading}>My Groups</h2>
-          <p style={s.subheading}>Browse photos from groups you belong to</p>
+      <WaveHeader>
+        <div style={s.headerRow}>
+          <div>
+            <h2 style={s.heading}>My Groups</h2>
+            <p style={s.subheading}>Browse photos from groups you belong to</p>
+          </div>
         </div>
-      </div>
 
-      {!loading && groups.length > 5 && (
-        <input
-          style={s.filterInput}
-          type="text"
-          placeholder="Filter groups…"
-          value={groupFilter}
-          onChange={e => setGroupFilter(e.target.value)}
-        />
-      )}
+        {!loading && groups.length > 5 && (
+          <input
+            style={s.filterInput}
+            type="text"
+            placeholder="Filter groups…"
+            value={groupFilter}
+            onChange={e => setGroupFilter(e.target.value)}
+          />
+        )}
+      </WaveHeader>
 
       {loading && <div style={s.loadingState}>Loading groups…</div>}
       {error && <div style={s.errorState}>{error}</div>}
       {!loading && !error && groups.length === 0 && (
-        <div style={s.emptyState}>You are not a member of any groups.</div>
+        <EmptyState title="No groups yet" body="Join a group on Flickr and it will show up here." />
       )}
       {!loading && !error && filteredGroups.length === 0 && groups.length > 0 && (
         <div style={s.emptyState}>No groups match "{groupFilter}".</div>

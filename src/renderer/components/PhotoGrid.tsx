@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
-import type { FlickrPhoto, PhotoSearchParams, SearchOperator, DateRangeField, TagMode } from '../../shared/types'
-import { MediaFilter, PhotoViewMode, DownloadFilter, PrivacyFilter, PrivacyLevel, PRIVACY_OPTIONS, PRIVACY_LABELS, GRID_COLUMNS, JustifiedIcon, GridIcon, ListIcon, PrivacyIcon, Tooltip, Chip, PhotoListRow, DownloadFilterSelect, getPrivacyLevel, sharedStyles, DateMode, getPresetDates, formatDateChip, loadPhotoViewMode, savePhotoViewMode, loadRowHeight, saveRowHeight, computeJustifiedRows, DOWNLOAD_FILTER_LABEL } from './PhotoGridShared'
+import type { FlickrPhoto, PhotoSearchParams, SearchOperator, DateRangeField, TagMode, LicenseFilter } from '../../shared/types'
+import { MediaFilter, PhotoViewMode, DownloadFilter, PrivacyFilter, PrivacyLevel, PRIVACY_OPTIONS, PRIVACY_LABELS, GRID_COLUMNS, JustifiedIcon, GridIcon, ListIcon, PrivacyIcon, Tooltip, Chip, PhotoListRow, DownloadFilterSelect, LicenseFilterSelect, matchesLicenseFilter, LICENSE_FILTER_LABEL, sameSearchParams, getPrivacyLevel, sharedStyles, DateMode, getPresetDates, formatDateChip, loadPhotoViewMode, savePhotoViewMode, loadRowHeight, saveRowHeight, computeJustifiedRows, DOWNLOAD_FILTER_LABEL } from './PhotoGridShared'
+import EmptyState from './EmptyState'
 
 type SortOrder = 'date-posted-desc' | 'date-posted-asc' | 'date-taken-desc' | 'date-taken-asc'
 
@@ -32,6 +33,7 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
   const [viewMode, setViewMode] = useState<PhotoViewMode>(loadPhotoViewMode)
   const [privacyFilter, setPrivacyFilter] = useState<PrivacyFilter>('all')
   const [downloadFilter, setDownloadFilter] = useState<DownloadFilter>('all')
+  const [licenseFilter, setLicenseFilter] = useState<LicenseFilter>('all')
   const [downloadRecords, setDownloadRecords] = useState<Record<string, true>>({})
 
   const [rowHeight, setRowHeight] = useState<number>(loadRowHeight)
@@ -60,12 +62,21 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
   const [activeSearch, setActiveSearch] = useState<PhotoSearchParams>({})
   const activeSearchRef = useRef<PhotoSearchParams>({})
 
+  // Each load gets a number; if a newer search starts while an older one is still in flight,
+  // the older answer is thrown away so it can't overwrite the newer results.
+  const loadReqRef = useRef(0)
+  const loadedOnceRef = useRef(false)
+
   const loadPage = async (pageNum: number, currentSort: SortOrder = sort, searchParams: PhotoSearchParams = activeSearchRef.current): Promise<void> => {
-    if (pageNum === 1) { setLoading(true); setPhotos([]) }
+    const reqId = ++loadReqRef.current
+    // Page 1 keeps whatever is on screen until the new results arrive (dimmed), so a search or
+    // filter change never flashes to an empty skeleton.
+    if (pageNum === 1) { setLoading(true) }
     else setLoadingMore(true)
     setError(null)
     try {
       const result = await window.flickrAPI.getPhotos(pageNum, currentSort, searchParams)
+      if (reqId !== loadReqRef.current) return
       setPhotos(prev => pageNum === 1 ? result.photos : [...prev, ...result.photos])
       setPage(result.page)
       setPages(result.pages)
@@ -74,10 +85,14 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
       onPageInfo?.(result.page, result.pages)
     } catch (err) {
       const raw = err instanceof Error ? err.message : 'Failed to load photos'
+      if (reqId !== loadReqRef.current) return
       setError(raw.replace(/^Error invoking remote method '[^']+': (Error: )?/, ''))
     } finally {
-      setLoading(false)
-      setLoadingMore(false)
+      if (reqId === loadReqRef.current) {
+        loadedOnceRef.current = true
+        setLoading(false)
+        setLoadingMore(false)
+      }
     }
   }
 
@@ -93,9 +108,9 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
 
   const buildSearchParams = (overrides: Partial<PhotoSearchParams & { dateMin: string; dateMax: string }> = {}): PhotoSearchParams => {
     const params: PhotoSearchParams = {}
-    const q = overrides.query !== undefined ? overrides.query : searchQuery
+    const q = (overrides.query !== undefined ? overrides.query : searchQuery).trim()
     const op = overrides.operator !== undefined ? overrides.operator : searchOperator
-    const tq = overrides.tagQuery !== undefined ? overrides.tagQuery : tagQuery
+    const tq = (overrides.tagQuery !== undefined ? overrides.tagQuery : tagQuery).trim()
     const tm = overrides.tagMode !== undefined ? overrides.tagMode : tagMode
     const df = overrides.dateField !== undefined ? overrides.dateField : dateField
     const dmin = overrides.dateMin !== undefined ? overrides.dateMin : dateCustomMin
@@ -106,7 +121,20 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
     return params
   }
 
-  const triggerSearch = (): void => { applySearch(buildSearchParams()) }
+  const triggerSearch = (): void => {
+    const next = buildSearchParams()
+    if (sameSearchParams(next, activeSearchRef.current)) return
+    applySearch(next)
+  }
+
+  // Searches go to Flickr (one request each), so they run shortly after you stop typing
+  // rather than on every keystroke. Enter runs the search immediately. Dropdowns and
+  // buttons apply right away; this also covers custom dates once they're entered.
+  useEffect(() => {
+    const t = setTimeout(triggerSearch, 600)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery, searchOperator, tagQuery, tagMode, dateField, dateMode, dateCustomMin, dateCustomMax])
 
   const handleSortChange = (newSort: SortOrder): void => {
     setSort(newSort)
@@ -154,7 +182,7 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
   }
 
   const clearAllFilters = (): void => {
-    setMediaFilter('all'); setPrivacyFilter('all'); setDownloadFilter('all')
+    setMediaFilter('all'); setPrivacyFilter('all'); setDownloadFilter('all'); setLicenseFilter('all')
     setSearchQuery(''); setTagQuery('')
     setDateMode('all'); setDateCustomMin(''); setDateCustomMax('')
     applySearch({})
@@ -192,11 +220,14 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
     if (downloadFilter !== 'all') {
       result = result.filter(p => downloadFilter === 'downloaded' ? !!downloadRecords[p.id] : !downloadRecords[p.id])
     }
+    if (licenseFilter !== 'all') {
+      result = result.filter(p => matchesLicenseFilter(p.license, licenseFilter))
+    }
     if (searchMode === 'id' && photoIdQuery.trim()) {
       result = result.filter(p => p.id === photoIdQuery.trim())
     }
     return result
-  }, [photos, mediaFilter, privacyFilter, downloadFilter, downloadRecords, searchMode, photoIdQuery])
+  }, [photos, mediaFilter, privacyFilter, downloadFilter, licenseFilter, downloadRecords, searchMode, photoIdQuery])
 
   useEffect(() => { onFilteredPhotosChange?.(filteredPhotos) }, [filteredPhotos, onFilteredPhotosChange])
 
@@ -205,28 +236,30 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
     setAutoLoadCapped(false)
     setScanAllMode(false)
     setAutoLoadError(false)
-  }, [mediaFilter, privacyFilter])
+  }, [mediaFilter, privacyFilter, licenseFilter])
 
   useEffect(() => {
-    const filterActive = mediaFilter !== 'all' || privacyFilter !== 'all'
+    const filterActive = mediaFilter !== 'all' || privacyFilter !== 'all' || licenseFilter !== 'all'
     if (filterActive && photos.length > 0 && page < pages && !loadingMore && !loading && !autoLoadError) {
       if (scanAllMode || autoLoadCountRef.current < 10) {
         autoLoadCountRef.current++
         const nextPage = page + 1
+        const reqId = loadReqRef.current
         setLoadingMore(true)
         window.flickrAPI.getPhotos(nextPage, sort, activeSearchRef.current)
           .then(result => {
+            if (reqId !== loadReqRef.current) return
             const updated = [...photos, ...result.photos]
             setPhotos(updated); setPage(result.page); setPages(result.pages); setTotal(result.total)
             onPhotosLoaded?.(updated); onPageInfo?.(result.page, result.pages)
           })
-          .catch(() => { setAutoLoadError(true) })
-          .finally(() => setLoadingMore(false))
+          .catch(() => { if (reqId === loadReqRef.current) setAutoLoadError(true) })
+          .finally(() => { if (reqId === loadReqRef.current) setLoadingMore(false) })
       } else {
         setAutoLoadCapped(true)
       }
     }
-  }, [mediaFilter, privacyFilter, photos.length, page, pages, loadingMore, loading, sort, scanAllMode, autoLoadError])
+  }, [mediaFilter, privacyFilter, licenseFilter, photos.length, page, pages, loadingMore, loading, sort, scanAllMode, autoLoadError])
 
   useEffect(() => {
     if (photos.length === 0) return
@@ -264,17 +297,18 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
 
 
   const hasServerSearch = !!(activeSearch.query || activeSearch.tagQuery || activeSearch.dateMin || activeSearch.dateMax)
-  const hasClientFilter = mediaFilter !== 'all' || privacyFilter !== 'all' || downloadFilter !== 'all'
+  const hasClientFilter = mediaFilter !== 'all' || privacyFilter !== 'all' || downloadFilter !== 'all' || licenseFilter !== 'all'
   const hasAnyFilter = hasServerSearch || hasClientFilter
   const drawerBadgeCount =
     (privacyFilter !== 'all' ? 1 : 0) +
     (activeSearch.tagQuery ? 1 : 0) +
     ((activeSearch.dateMin || activeSearch.dateMax) ? 1 : 0) +
-    (downloadFilter !== 'all' ? 1 : 0)
+    (downloadFilter !== 'all' ? 1 : 0) +
+    (licenseFilter !== 'all' ? 1 : 0)
 
   const showDateInputs = dateMode === 'since' || dateMode === 'between'
 
-  if (loading) return (
+  if (loading && !loadedOnceRef.current) return (
     <div style={styles.wrapper}>
       <style>{`@keyframes ff-shimmer { 0%,100% { opacity: 0.55; } 50% { opacity: 1; } }`}</style>
       <div style={{ ...styles.grid, gridTemplateColumns: GRID_COLUMNS['medium'], padding: '16px' }}>
@@ -290,11 +324,11 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
       <button style={styles.retryButton} onClick={() => loadPage(1)}>Try again</button>
     </div>
   )
-  if (photos.length === 0 && !hasServerSearch) return <div style={styles.centered}><p style={styles.mutedText}>No photos found in your photostream.</p></div>
+  if (photos.length === 0 && !hasServerSearch && !loading) return <EmptyState title="Your photostream is empty" body="Photos and videos you upload to Flickr will show up here." />
 
   return (
     <div style={styles.wrapper}>
-      <style>{`@keyframes ff-pop { 0% { transform: scale(0.5); opacity: 0 } 65% { transform: scale(1.2) } 100% { transform: scale(1); opacity: 1 } }`}</style>
+      <style>{`@keyframes ff-pop { 0% { transform: scale(0.5); opacity: 0 } 65% { transform: scale(1.2) } 100% { transform: scale(1); opacity: 1 } } @keyframes ff-shimmer { 0%,100% { opacity: 0.55; } 50% { opacity: 1; } }`}</style>
       {selectMode && hasClientFilter && (
         <div style={styles.selectModeCount}>
           {filteredPhotos.length.toLocaleString()} matching · {total.toLocaleString()} loaded
@@ -433,6 +467,12 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
                 <DownloadFilterSelect value={downloadFilter} onChange={setDownloadFilter} />
               </div>
 
+              {/* License */}
+              <div style={styles.drawerRow}>
+                <span style={styles.drawerLabel}>License</span>
+                <LicenseFilterSelect value={licenseFilter} onChange={setLicenseFilter} />
+              </div>
+
               {/* Privacy */}
               <div style={styles.drawerRow}>
                 <span style={styles.drawerLabel}>Privacy</span>
@@ -471,9 +511,6 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
                 <Tooltip text="Separate multiple tags with commas. 'Any' finds photos with at least one tag; 'All' requires every tag.">
                   <span style={styles.tagHint}>?</span>
                 </Tooltip>
-                {tagQuery !== (activeSearch.tagQuery ?? '') && tagQuery && (
-                  <button style={styles.applyBtn} onClick={triggerSearch}>Apply</button>
-                )}
               </div>
 
               {/* Date */}
@@ -528,7 +565,6 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
                         />
                       </>
                     )}
-                    <button style={styles.applyBtn} onClick={applyDateFilter}>Apply</button>
                   </div>
                 )}
               </div>
@@ -563,12 +599,15 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
               {downloadFilter !== 'all' && (
                 <Chip label={DOWNLOAD_FILTER_LABEL[downloadFilter]} onDismiss={() => setDownloadFilter('all')} />
               )}
+              {licenseFilter !== 'all' && (
+                <Chip label={LICENSE_FILTER_LABEL[licenseFilter]} onDismiss={() => setLicenseFilter('all')} />
+              )}
               <button style={styles.clearFiltersLink} onClick={clearAllFilters}>Clear all</button>
             </div>
           )}
 
           <p style={styles.countLabel}>
-            {hasClientFilter
+            {loading && photos.length > 0 ? 'Updating…' : hasClientFilter
               ? `${filteredPhotos.length.toLocaleString()} matching · ${photos.length.toLocaleString()} of ${total.toLocaleString()} photos scanned${page < pages ? (loadingMore ? '' : ' · Scroll for more') : ''}`
               : `${photos.length.toLocaleString()} of ${total.toLocaleString()} photos loaded${page < pages ? ' · Scroll for more' : ''}`
             }
@@ -582,30 +621,40 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
         </div>
       )}
 
+      {loading && photos.length === 0 && (
+        <div style={{ ...styles.grid, gridTemplateColumns: GRID_COLUMNS['medium'], padding: '16px' }}>
+          {Array.from({ length: 12 }, (_, i) => (
+            <div key={i} style={{ ...styles.tile, background: '#e8e4de', animation: `ff-shimmer 1.4s ease-in-out infinite`, animationDelay: `${(i % 6) * 0.08}s` }} />
+          ))}
+        </div>
+      )}
+
       {filteredPhotos.length === 0 && photos.length > 0 && !loadingMore && !loading && (
-        <div style={styles.emptyFilter}>
-          <p style={styles.emptyFilterMsg}>No {mediaFilter !== 'all' ? mediaFilter + 's' : 'photos'} match the current filters in the {photos.length.toLocaleString()} photos scanned.</p>
+        <EmptyState
+          title="No photos match these filters"
+          body={`Nothing in the ${photos.length.toLocaleString()} photos scanned so far. Try removing a filter${autoLoadCapped && page < pages ? ' or scan further.' : '.'}`}
+        >
           {autoLoadCapped && page < pages && (
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' as const, justifyContent: 'center' }}>
+            <>
               <button style={styles.keepSearchingBtn} onClick={() => { autoLoadCountRef.current = 0; setAutoLoadCapped(false) }}>
                 Scan next 1,000
               </button>
               <button style={styles.keepSearchingBtn} onClick={() => { autoLoadCountRef.current = 0; setAutoLoadCapped(false); setScanAllMode(true) }}>
                 {(() => { const mins = Math.ceil((pages - page) / 60); return `Scan all remaining (est. ~${mins < 1 ? '< 1' : mins} min)` })()}
               </button>
-            </div>
+            </>
           )}
-          <button style={styles.clearFiltersBtn} onClick={clearAllFilters}>Clear Filters</button>
-        </div>
+          <button style={styles.clearFiltersBtn} onClick={clearAllFilters}>Clear filters</button>
+        </EmptyState>
       )}
 
       {photos.length === 0 && hasServerSearch && !loading && (
-        <div style={styles.emptyFilter}>
-          <p style={styles.emptyFilterMsg}>No photos match your search.</p>
+        <EmptyState title="No photos match your search" body="Try different words, or remove a filter.">
           <button style={styles.clearFiltersBtn} onClick={clearAllFilters}>Clear search</button>
-        </div>
+        </EmptyState>
       )}
 
+      <div style={loading && photos.length > 0 ? { opacity: 0.45, pointerEvents: 'none', transition: 'opacity 0.15s' } : { transition: 'opacity 0.15s' }}>
       {viewMode === 'list' ? (
         <div style={styles.listContainer}>
           {filteredPhotos.map(photo => (
@@ -762,7 +811,9 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
         </div>
       )}
 
-      {page < pages && (
+      </div>
+
+      {!loading && page < pages && (
         <div style={styles.loadMoreRow}>
           <button
             style={{ ...styles.loadMoreButton, ...(loadingMore ? styles.disabled : {}) }}

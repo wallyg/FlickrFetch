@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import type { FlickrPhoto, LicenseFilter } from '../../shared/types'
+import type { FlickrPhoto, LicenseFilter, PhotoSearchParams } from '../../shared/types'
 export type { LicenseFilter }
 
 // ── Shared types ──────────────────────────────────────────────────────────────
@@ -334,6 +334,17 @@ export function DownloadFilterSelect({ value, onChange }: { value: DownloadFilte
 
 export const DRAWER_LABEL_WIDTH = 90
 
+// True when two server searches would return the same results (ignores key order and empty values),
+// so a filter change that doesn't alter the search doesn't trigger a pointless reload.
+export function sameSearchParams(a: PhotoSearchParams, b: PhotoSearchParams): boolean {
+  const key = (p: PhotoSearchParams): string => [
+    p.query || '', p.query ? (p.operator || 'contains') : '',
+    p.tagQuery || '', p.tagQuery ? (p.tagMode || 'any') : '',
+    (p.dateMin || p.dateMax) ? (p.dateField || 'taken') : '', p.dateMin || '', p.dateMax || ''
+  ].join('\u0001')
+  return key(a) === key(b)
+}
+
 const LICENSE_FILTER_OPTIONS:{ value: LicenseFilter; label: string }[] = [
   { value: 'all',    label: 'All licenses' },
   { value: 'cc',     label: 'Creative Commons' },
@@ -342,9 +353,13 @@ const LICENSE_FILTER_OPTIONS:{ value: LicenseFilter; label: string }[] = [
   { value: 'arr',    label: 'All Rights Reserved' },
 ]
 
+export const LICENSE_FILTER_LABEL: Record<LicenseFilter, string> = Object.fromEntries(
+  LICENSE_FILTER_OPTIONS.map(o => [o.value, o.label])
+) as Record<LicenseFilter, string>
+
 export const LICENSE_FILTER_IDS: Record<LicenseFilter, string[]> = {
   all:    [],
-  cc:     ['1', '2', '3', '4', '5', '6'],
+  cc:     ['1', '2', '3', '4', '5', '6', '11', '12', '13', '14', '15', '16'],
   public: ['7', '9', '10'],
   gov:    ['8'],
   arr:    ['0'],

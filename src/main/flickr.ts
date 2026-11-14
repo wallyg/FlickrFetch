@@ -274,6 +274,7 @@ export async function getPublicAlbumPhotos(albumId: string, ownerNsid: string, t
     media: (p.media === 'video' ? 'video' : 'photo') as 'photo' | 'video',
     tags: p.tags ? (p.tags as string).split(' ').filter(Boolean) : [],
     lastUpdate: p.lastupdate ? Number(p.lastupdate) : undefined,
+    license: p.license,
   }))
 
   return { photos, page: Number(data.page), pages: Number(data.pages), total: Number(data.total) }
@@ -319,6 +320,7 @@ export async function getAlbumPhotos(albumId: string, tokenData: FlickrTokenData
     isfamily: p.isfamily != null ? Number(p.isfamily) : undefined,
     tags: p.tags ? (p.tags as string).split(' ').filter(Boolean) : [],
     lastUpdate: p.lastupdate ? Number(p.lastupdate) : undefined,
+    license: p.license,
   }))
 
   return {
@@ -499,6 +501,7 @@ export async function getPhotos(tokenData: FlickrTokenData, page: number = 1, so
     isfriend: p.isfriend != null ? Number(p.isfriend) : undefined,
     isfamily: p.isfamily != null ? Number(p.isfamily) : undefined,
     lastUpdate: p.lastupdate ? Number(p.lastupdate) : undefined,
+    license: p.license,
   }))
 
   // Client-side title operator filtering (starts/ends/exact send broader server query, then narrow by title)

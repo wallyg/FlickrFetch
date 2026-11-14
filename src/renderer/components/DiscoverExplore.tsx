@@ -2,6 +2,7 @@ import React, { useState, useEffect, useLayoutEffect, useCallback, useRef, useMe
 import type { FlickrPhoto, PhotoPage } from '../../shared/types'
 import PhotoDetail from './PhotoDetail'
 import { GridIcon, ListIcon, JustifiedIcon, sharedStyles as ss, type PhotoViewMode, PhotoListRow, loadPhotoViewMode, savePhotoViewMode, loadRowHeight, saveRowHeight, computeJustifiedRows } from './PhotoGridShared'
+import EmptyState from './EmptyState'
 
 interface Props {
   onDownload?: (photo: FlickrPhoto) => void
@@ -184,7 +185,7 @@ export default function DiscoverExplore({ onDownload }: Props): React.JSX.Elemen
       )}
 
       {!loading && !error && photos.length === 0 && (
-        <div style={s.emptyState}>No photos found.</div>
+        <EmptyState title="No photos found" body="Try again in a moment." />
       )}
 
       {photos.length > 0 && (

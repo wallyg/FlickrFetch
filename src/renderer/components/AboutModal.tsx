@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import logoTrayImg from '../assets/logo-tray.png'
 import ChangelogModal from './ChangelogModal'
 import ProblemModal from './ProblemModal'
+import WaveBand from './WaveBand'
 
 interface AboutModalProps {
   version: string
@@ -30,13 +31,10 @@ export default function AboutModal({ version, onClose }: AboutModalProps): React
           <div style={styles.body}>
             {/* Left column — identity */}
             <div style={styles.leftCol}>
+              <WaveBand height={130} />
               <img src={logoTrayImg} alt="FlickrFetch" style={styles.logo} />
-              <span style={styles.versionBadge}>Version {version}</span>
-              <a style={styles.whatsNewLink} onClick={() => setShowChangelog(true)}>
-                What's New in v{version} ›
-              </a>
-              <a style={styles.problemLink} onClick={() => setShowProblem(true)}>
-                The Problem FlickrFetch Solves ›
+              <a style={styles.whatsNewPill} onClick={() => setShowChangelog(true)}>
+                Version {version} · What's New ›
               </a>
             </div>
 
@@ -46,6 +44,10 @@ export default function AboutModal({ version, onClose }: AboutModalProps): React
               <p style={styles.subtext}>
                 Download and preserve your Flickr photos and videos in their original quality, with metadata intact and control over your local archive.
               </p>
+
+              <a style={styles.deepLink} onClick={() => setShowProblem(true)}>
+                The Problem FlickrFetch Solves ›
+              </a>
 
               <div style={styles.section}>
                 <div style={styles.iconBadge}>
@@ -163,22 +165,15 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: '24px 20px',
+    padding: '24px 20px 70px',
     borderRight: '1px solid rgba(0,0,0,0.07)',
-    gap: '14px'
+    gap: '14px',
+    position: 'relative',
+    overflow: 'hidden'
   },
   logo: {
     width: '210px',
     objectFit: 'contain' as const
-  },
-  versionBadge: {
-    display: 'inline-block',
-    backgroundColor: 'rgba(0,0,0,0.08)',
-    borderRadius: '20px',
-    padding: '5px 14px',
-    fontSize: '12px',
-    fontWeight: '600',
-    color: '#444'
   },
   rightCol: {
     flex: 1,
@@ -229,23 +224,31 @@ const styles: Record<string, React.CSSProperties> = {
     margin: 0,
     lineHeight: 1.55
   },
-  whatsNewLink: {
+  whatsNewPill: {
+    // Rests on the darkest wave at the bottom of the column
+    position: 'absolute',
+    bottom: '16px',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    whiteSpace: 'nowrap',
+    zIndex: 1,
+    boxShadow: '0 1px 4px rgba(27,41,70,0.2)',
+    backgroundColor: '#fff',
+    border: 'none',
+    borderRadius: '20px',
+    padding: '5px 14px',
     fontSize: '12px',
     fontWeight: '600',
     color: 'var(--ff-blue)',
     cursor: 'pointer',
     textDecoration: 'none'
   } as React.CSSProperties,
-  problemLink: {
-    fontSize: '11px',
+  deepLink: {
+    fontSize: '12px',
     fontWeight: '600',
-    color: 'var(--ff-navy)',
+    color: 'var(--ff-blue)',
     cursor: 'pointer',
-    textDecoration: 'underline',
-    textDecorationStyle: 'dotted',
-    textUnderlineOffset: '3px',
-    opacity: 0.75,
-    textAlign: 'center'
+    textDecoration: 'none'
   } as React.CSSProperties,
   linkRow: {
     display: 'flex',
