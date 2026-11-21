@@ -2,7 +2,7 @@
 
 **Your Flickr. Your Photos. Your Way.**
 
-A Mac app that downloads your Flickr photos and videos at original quality, with your titles, tags, descriptions, dates, location and license written into the files themselves.
+A Mac app that downloads your Flickr photos and videos, with your titles, tags, descriptions, dates, location and license written into the files themselves. Flickr Pro accounts get originals; see [Honest limits](#honest-limits) for what free accounts get.
 
 ![FlickrFetch — original resolution, preserved metadata, your local archive](assets/brand/social-preview.png)
 
@@ -36,7 +36,7 @@ Metadata that lives only on a website disappears when the website does, or when 
 - Full-size detail view with a metadata panel and video playback
 
 **Downloading**
-- Original resolution for photos and videos
+- Original resolution for photos and videos on Flickr Pro accounts, and for Creative Commons photos on any account (Flickr limits free accounts to smaller sizes)
 - Download a whole album, a whole collection (each album into its own subfolder), or a hand-picked selection
 - With filters on, **Download N shown** saves exactly what you're looking at
 - A queue you can pause, resume and retry; failed photos are listed by name
@@ -75,6 +75,7 @@ Metadata that lives only on a website disappears when the website does, or when 
 
 FlickrFetch is a personal project that has grown up. Here's what it doesn't do yet:
 
+- **Free Flickr accounts get smaller photos.** Since May 2025, Flickr restricts original and large downloads on free accounts (Creative Commons photos are exempt). FlickrFetch has only been tested with a Pro account, so on a free account you may get smaller sizes than you asked for, without a warning.
 - **Mac only, Apple Silicon only.** No Intel Mac or Windows build.
 - **Not code-signed**, hence the install step above.
 - **Smart Sync trusts its own history.** It doesn't yet re-check that files are still on disk, so if you move or delete downloads, it may think they're still there.
