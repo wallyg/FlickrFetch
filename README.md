@@ -53,10 +53,10 @@ Metadata that lives only on a website disappears when the website does, or when 
 
 ## Install
 
-1. Download the `.pkg` (or the `.dmg`) from the [latest release](https://github.com/wallyg/FlickrFetch/releases/latest).
-2. Open it and install. If you used the DMG, drag FlickrFetch to Applications.
+1. Download the `.dmg` from the [latest release](https://github.com/wallyg/FlickrFetch/releases/latest).
+2. Open it and drag FlickrFetch to Applications.
 3. **The app isn't code-signed yet**, so macOS will likely stop you the first time. Open **System Settings → Privacy & Security**, scroll down, and click **Open Anyway**.
-4. If macOS still refuses to open a DMG install, run this once in Terminal:
+4. If macOS still refuses to open it, run this once in Terminal:
    ```
    xattr -cr /Applications/FlickrFetch.app
    ```
@@ -92,7 +92,7 @@ npm run dev
 
 `src/main/config.ts` is gitignored. Never commit your API credentials.
 
-`npm run build:local` makes an unsigned DMG and PKG in `dist/`.
+`npm run build:local` makes an unsigned DMG in `dist/`.
 
 **Built with** Electron, React and TypeScript (electron-vite), ExifTool for metadata, SQLite for download history, and electron-builder for packaging.
 
