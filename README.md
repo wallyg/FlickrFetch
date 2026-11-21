@@ -8,9 +8,18 @@ A Mac app that downloads your Flickr photos and videos at original quality, with
 
 [**Download the latest release →**](https://github.com/wallyg/FlickrFetch/releases/latest)
 
-macOS 11 or later · Apple Silicon (M1 and newer) · free
+macOS 11 or later · Apple Silicon (M1 and newer) · free for now
 
-<!-- Screenshots: add 2–3 here (photostream grid, license filter, download history) once they're captured without private content. -->
+## See it
+
+![Your photostream, filtered to public photos, with a button to download exactly what's shown](assets/screenshots/photostream-filters.jpg)
+*Filter your library, then download exactly what you're looking at.*
+
+![Photostream filtered by Creative Commons license](assets/screenshots/license-filter.jpg)
+*Filter by license, privacy, tags and date.*
+
+![Photo detail view with a metadata panel showing title, dates, location and description](assets/screenshots/photo-detail.jpg)
+*Every photo's title, dates, location and description, ready to be written into the file.*
 
 ## Why this exists
 
