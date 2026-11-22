@@ -37,8 +37,7 @@ export default function HealthCheckSettings(): React.JSX.Element {
   useEffect(() => { void window.flickrAPI.getSettings().then(s => setWhen(s.autoUpdateWhen ?? (s.autoUpdate === false ? 'off' : 'daily'))) }, [])
   const change = async (w: When): Promise<void> => {
     setWhen(w)
-    const current = await window.flickrAPI.getSettings()
-    await window.flickrAPI.setSettings({ ...current, autoUpdateWhen: w })
+    await window.flickrAPI.setSettings({ autoUpdateWhen: w })
   }
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 30 }}>

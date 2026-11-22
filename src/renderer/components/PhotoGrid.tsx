@@ -858,7 +858,6 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
               })}
             </div>
           ))}
-          <BackToTop />
         </div>
       )}
 
@@ -875,6 +874,7 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
           </button>
         </div>
       )}
+      <BackToTop />
     </div>
   )
 }

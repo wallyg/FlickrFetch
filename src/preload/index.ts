@@ -61,7 +61,7 @@ contextBridge.exposeInMainWorld('flickrAPI', {
 
   // App settings
   getSettings: (): Promise<AppSettings> => ipcRenderer.invoke('settings:get'),
-  setSettings: (settings: AppSettings): Promise<void> => ipcRenderer.invoke('settings:set', settings),
+  setSettings: (settings: Partial<AppSettings>): Promise<void> => ipcRenderer.invoke('settings:set', settings),
   resetSettings: (): Promise<AppSettings> => ipcRenderer.invoke('settings:reset'),
   resolveVideoUrl: (sourceUrl: string): Promise<string> => ipcRenderer.invoke('video:resolveUrl', sourceUrl),
 

@@ -198,10 +198,15 @@ export function cameraRoll(q: CameraRollQuery): CameraRollView {
   const days: CameraRollDay[] = []
   if (dayRows.length > 0) {
     const lo = dayRows.reduce((a, r) => (r.d < a ? r.d : a), dayRows[0].d), hi = dayRows.reduce((a, r) => (r.d > a ? r.d : a), dayRows[0].d)
-    const rows = db.prepare(`SELECT p.photo_id, p.title, p.thumb_url, p.date_taken, p.privacy FROM photo_meta p WHERE substr(p.date_taken, 1, 4) >= '${MIN_YEAR}' AND substr(p.date_taken, 1, 10) >= ? AND substr(p.date_taken, 1, 10) <= ?${scope} ORDER BY p.date_taken ${dir}, p.photo_id ${dir}`)
+    // At most 600 photos per day come out of SQLite (a day with thousands would otherwise all be loaded for every page)
+    const rows = db.prepare(`SELECT photo_id, title, thumb_url, date_taken, privacy FROM (
+        SELECT p.photo_id, p.title, p.thumb_url, p.date_taken, p.privacy,
+          ROW_NUMBER() OVER (PARTITION BY substr(p.date_taken, 1, 10) ORDER BY p.date_taken ${dir}, p.photo_id ${dir}) AS rn
+        FROM photo_meta p WHERE substr(p.date_taken, 1, 4) >= '${MIN_YEAR}' AND substr(p.date_taken, 1, 10) >= ? AND substr(p.date_taken, 1, 10) <= ?${scope}
+      ) WHERE rn <= 600 ORDER BY date_taken ${dir}, photo_id ${dir}`)
       .all(lo, hi) as Parameters<typeof toPhoto>[0][]
     const byDay = new Map<string, DayPhoto[]>()
-    for (const r of rows) { const d = r.date_taken.slice(0, 10); const a = byDay.get(d) ?? []; if (a.length < 600) a.push(toPhoto(r)); byDay.set(d, a) }
+    for (const r of rows) { const d = r.date_taken.slice(0, 10); const a = byDay.get(d) ?? []; a.push(toPhoto(r)); byDay.set(d, a) }
     for (const r of dayRows) days.push({ date: r.d, count: r.n, photos: byDay.get(r.d) ?? [] })
   }
   return { hasData: totals.n > 0, hasCatalog: catalog, scope: catalog ? q.scope : 'all', totalDays: totals.d, totalPhotos: totals.n, days }

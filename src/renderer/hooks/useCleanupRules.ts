@@ -19,8 +19,7 @@ export function useCleanupRules(reloadKey = 0): {
   const setState = useCallback(async (id: string, state: CleanupRuleState): Promise<void> => {
     const next = { ...rules, [id]: state }
     setRules(next)
-    const current = await window.flickrAPI.getSettings()
-    await window.flickrAPI.setSettings({ ...current, cleanupRules: next })
+    await window.flickrAPI.setSettings({ cleanupRules: next })
     setVersion(v => v + 1)
   }, [rules])
   return { stateOf, setState, version }

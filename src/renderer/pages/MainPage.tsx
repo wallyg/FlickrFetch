@@ -820,7 +820,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
         {timelineVisited && (
           <div style={view === 'timeline' ? styles.tabPane : styles.tabPaneHidden}>
             <TimelinePanel
-              active={view === 'timeline'}
+              active={view === 'timeline' && !showSettings && !showHistory && !aboutVersion && !pendingDownload && !showResetConfirm && !showSignOutConfirm}
               refreshKey={dataKey}
               onOpenRange={(from, to, publicOnly) => openDateRange(from, to, publicOnly, 'timeline')}
               onDownload={startDateDownload}

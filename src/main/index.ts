@@ -318,7 +318,7 @@ ipcMain.handle('collections:getTree', async () => {
 // Settings
 ipcMain.handle('settings:get', () => loadSettings())
 // Merged with what is saved, so a panel that only knows some settings (the Settings window) cannot erase the others
-ipcMain.handle('settings:set', (_event, settings: AppSettings) => saveSettings({ ...loadSettings(), ...settings }))
+ipcMain.handle('settings:set', (_event, settings: Partial<AppSettings>) => saveSettings({ ...loadSettings(), ...settings }))
 ipcMain.handle('settings:reset', () => resetSettings())
 ipcMain.handle('video:resolveUrl', (_event, sourceUrl: string) => resolveVideoUrl(sourceUrl))
 

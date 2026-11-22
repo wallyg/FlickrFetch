@@ -59,7 +59,8 @@ export function addPhotoMetaColumns(db: Database.Database): void {
 
 // 0 public, 1 friends, 2 family, 3 friends and family, 4 private
 function privacyOf(p: RawPhoto): number {
-  if (Number(p.ispublic ?? 1) === 1) return 0
+  if (p.ispublic === undefined || p.ispublic === null) return 4   // unknown counts as private, so a missing field never makes a photo look public
+  if (Number(p.ispublic) === 1) return 0
   const friend = Number(p.isfriend ?? 0) === 1, family = Number(p.isfamily ?? 0) === 1
   return friend && family ? 3 : friend ? 1 : family ? 2 : 4
 }
@@ -357,11 +358,15 @@ async function runRefresh(db: Database.Database, tokenData: FlickrTokenData, sen
 
 // True while an automatic (background) Update is running: it sends no progress and the UI does not show it as a scan
 let quiet = false
+let runningMode: 'full' | 'refresh' = 'refresh'   // what the running scan is, so a different request is not mistaken for it
 
 export function startTagScan(mode: 'full' | 'refresh', getWindow: () => BrowserWindow | null, silent = false): { started: boolean } {
   if (scanning) {
     // The user pressed Update or Rebuild while the quiet one was running: let them see it from here on
-    if (quiet && !silent) { quiet = false; return { started: true } }
+    if (quiet && !silent) {
+      if (mode !== runningMode) throw new Error('An automatic update is running in the background. Try again in a minute.')
+      quiet = false; return { started: true }
+    }
     return { started: false }
   }
   const tokenData = loadToken()
@@ -372,6 +377,7 @@ export function startTagScan(mode: 'full' | 'refresh', getWindow: () => BrowserW
 
   scanning = true
   quiet = silent
+  runningMode = mode
   cancelRequested = false
   const run = mode === 'full' ? runFullScan : runRefresh
   run(db, tokenData, send)

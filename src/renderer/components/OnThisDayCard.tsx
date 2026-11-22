@@ -37,8 +37,7 @@ export default function OnThisDayCard({ refreshKey, onOpen }: { refreshKey: numb
   if (!s || !s.cardEnabled || hidden || s.total === 0) return null
 
   const notifyOn = async (): Promise<void> => {
-    const current = await window.flickrAPI.getSettings()
-    await window.flickrAPI.setSettings({ ...current, onThisDayNotify: true })
+    await window.flickrAPI.setSettings({ onThisDayNotify: true })
     setJustTurnedOn(true)
     load()
   }

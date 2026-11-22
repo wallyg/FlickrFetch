@@ -59,7 +59,7 @@ declare global {
       saveShareImage: (dataUrl: string, defaultName: string) => Promise<string | null>
       copyShareImage: (dataUrl: string) => Promise<boolean>
       getSettings: () => Promise<AppSettings>
-      setSettings: (settings: AppSettings) => Promise<void>
+      setSettings: (settings: Partial<AppSettings>) => Promise<void>
       resetSettings: () => Promise<AppSettings>
       resolveVideoUrl: (sourceUrl: string) => Promise<string>
       pickFolder: () => Promise<string | null>

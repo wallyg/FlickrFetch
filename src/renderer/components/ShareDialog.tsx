@@ -501,9 +501,10 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
   const dataUrl = async (): Promise<string> => {
     if (resolution === 'large') {
       setNote('Getting sharper pictures from Flickr…')
-      const src = await sharpPictures()
-      setNote('')
-      return compose(2, src)?.toDataURL('image/png') ?? ''
+      try {
+        const src = await sharpPictures()
+        return compose(2, src)?.toDataURL('image/png') ?? ''
+      } finally { setNote('') }
     }
     return compose(1)?.toDataURL('image/png') ?? ''
   }

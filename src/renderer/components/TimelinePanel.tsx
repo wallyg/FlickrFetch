@@ -24,6 +24,11 @@ type Period = { year: number; month: number; day?: number }
 type Hover = { year: number; month: number; n: number } | null
 
 const lastDay = (y: number, m: number): number => new Date(y, m, 0).getDate()
+// On This Day leaves out today's own year (a photo from today is not a memory), so there is nothing to jump to
+const isTodayThisYear = (p: { year: number; month: number; day?: number }): boolean => {
+  const n = new Date()
+  return p.year === n.getFullYear() && p.month === n.getMonth() + 1 && p.day === n.getDate()
+}
 const monthKey = (y: number, m: number): number => y * 12 + (m - 1)
 
 export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownload, onOpenDay, onFullRescan }: Props): React.JSX.Element {
@@ -58,8 +63,10 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
       if (roll) setRoll(null)
       else if (drill) setDrill(null)
     }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    // Capture phase: it runs before a dialog's own Esc handling. Otherwise a dialog that closes on this same key press
+    // makes `active` true again before the event reaches the window, and the Timeline would also step back.
+    window.addEventListener('keydown', onKey, true)
+    return () => window.removeEventListener('keydown', onKey, true)
   }, [active, drill, roll])
 
   const grid = useMemo(() => {
@@ -141,7 +148,6 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
     return { label, onClick: () => void go() }
   }
 
-  const rollRange = rangeOf   // same ranges; kept as its own name where the camera roll uses it
   const monthTitle = (y: number, m: number): string => `${MONTHS[m - 1]} ${y}`
 
   return (
@@ -155,18 +161,18 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
       {roll ? (
         <div style={{ marginTop: 10 }}>
           <CameraRoll
-            from={rollRange(roll).from}
-            to={rollRange(roll).to}
-            title={rollRange(roll).label}
+            from={rangeOf(roll).from}
+            to={rangeOf(roll).to}
+            title={rangeOf(roll).label}
             scope={scope}
             onOpenRange={onOpenRange}
             onDownload={onDownload}
-            onSeeOnThisDay={roll.day ? () => onOpenDay(roll.month, roll.day as number, roll.year) : null}
+            onSeeOnThisDay={roll.day && !isTodayThisYear(roll) ? () => onOpenDay(roll.month, roll.day as number, roll.year) : null}
             heading={
               <TimelineNav
                 backLabel={monthTitle(roll.year, roll.month)}
                 onBack={() => setRoll(null)}
-                title={rollRange(roll).label}
+                title={rangeOf(roll).label}
                 prev={roll.day ? dayStep(roll, -1) : monthRollStep(roll.year, roll.month, -1)}
                 next={roll.day ? dayStep(roll, 1) : monthRollStep(roll.year, roll.month, 1)}
               />
