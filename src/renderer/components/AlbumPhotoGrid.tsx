@@ -33,9 +33,13 @@ interface AlbumPhotoGridProps {
   onPrivacyFilterChange?: (filter: PrivacyFilter) => void
   // True when any filter other than media/privacy is on (those two are applied server-side by the album download)
   onExtraFiltersChange?: (active: boolean) => void
+  // From a tag clicked in the photo detail panel: filter this album to that tag (replaces other filters)
+  tagFilterRequest?: { tag: string; nonce: number } | null
+  // Lets the tag chip offer 'Search whole photostream' for the same tag
+  onSearchWholePhotostream?: (tag: string) => void
 }
 
-export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, selectedIds, onToggleSelect, onPhotosLoaded, onPageInfo, onFilteredPhotosChange, onMediaFilterChange, onPrivacyFilterChange, onExtraFiltersChange }: AlbumPhotoGridProps): React.JSX.Element {
+export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, selectedIds, onToggleSelect, onPhotosLoaded, onPageInfo, onFilteredPhotosChange, onMediaFilterChange, onPrivacyFilterChange, onExtraFiltersChange, tagFilterRequest, onSearchWholePhotostream }: AlbumPhotoGridProps): React.JSX.Element {
   const [photos, setPhotos] = useState<FlickrPhoto[]>([])
   const [pageInfo, setPageInfo] = useState<Pick<PhotoPage, 'page' | 'pages' | 'total'> | null>(null)
   const [loading, setLoading] = useState(true)
@@ -162,6 +166,18 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
     return () => clearTimeout(t)
   }, [dateMode, dateField, dateCustomMin, dateCustomMax])
 
+  // A tag clicked in the detail panel: start over with just that tag
+  useEffect(() => {
+    if (!tagFilterRequest) return
+    setMediaFilter('all'); setPrivacyFilter('all'); setDownloadFilter('all'); setLicenseFilter('all')
+    setTitleQuery(''); setActiveTitleQuery('')
+    setDateMode('all'); setDateCustomMin(''); setDateCustomMax('')
+    setActiveDateMin(''); setActiveDateMax('')
+    setTagMode('any'); setTagQuery(tagFilterRequest.tag)
+    setActiveTagQuery(tagFilterRequest.tag); setActiveTagMode('any')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tagFilterRequest?.nonce])
+
   const clearAllFilters = (): void => {
     setMediaFilter('all'); setPrivacyFilter('all'); setDownloadFilter('all'); setLicenseFilter('all')
     setTitleQuery(''); setActiveTitleQuery('')
@@ -185,7 +201,9 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
   }, [photos, sort])
 
   const filteredPhotos = useMemo(() => {
-    const tagList = activeTagQuery ? activeTagQuery.split(',').map(t => t.trim().toLowerCase()).filter(Boolean) : []
+    // Flickr's own tag form: lower case, no spaces or punctuation, so "New York" matches "newyork"
+    const norm = (t: string): string => t.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '')
+    const tagList = activeTagQuery ? activeTagQuery.split(',').map(norm).filter(Boolean) : []
     let result = sortedPhotos
       .filter(p => {
         if (!activeTitleQuery) return true
@@ -198,7 +216,7 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
       })
       .filter(p => {
         if (!tagList.length) return true
-        const photoTags = (p.tags ?? []).map(t => t.toLowerCase())
+        const photoTags = (p.tags ?? []).map(norm)
         return activeTagMode === 'all'
           ? tagList.every(t => photoTags.includes(t))
           : tagList.some(t => photoTags.includes(t))
@@ -423,7 +441,7 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
                     </button>
                   ))}
                 </div>
-                <Tooltip text="Separate multiple tags with commas. 'Any' finds photos with at least one tag; 'All' requires every tag.">
+                <Tooltip text={"Separate multiple tags with commas.\n\nAny: photos with at least one of the tags.\nAll: photos with every tag."}>
                   <span style={styles.tagHint}>?</span>
                 </Tooltip>
               </div>
@@ -471,7 +489,15 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
                 <Chip label={`"${activeTitleQuery}"`} onDismiss={dismissTitleSearch} />
               )}
               {activeTagQuery && (
-                <Chip label={`Tags (${activeTagMode}): ${activeTagQuery}`} onDismiss={dismissTagSearch} />
+                <>
+                  <Chip
+                    label={`Tags (${activeTagMode}): ${activeTagQuery} · in this album (${filteredPhotos.length.toLocaleString()}${hasMore ? '+' : ''})`}
+                    onDismiss={dismissTagSearch}
+                  />
+                  {onSearchWholePhotostream && (
+                    <button style={styles.clearFiltersLink} onClick={() => onSearchWholePhotostream(activeTagQuery)}>Search whole photostream</button>
+                  )}
+                </>
               )}
               {(activeDateMin || activeDateMax) && (
                 <Chip label={formatDateChip(activeDateMin, activeDateMax, activeDateField)} onDismiss={dismissDateFilter} />
@@ -518,6 +544,7 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
               isSelected={selectMode ? (selectedIds?.has(photo.id) ?? false) : undefined}
               selectMode={selectMode}
               onClick={(e) => selectMode ? onToggleSelect?.(photo, e.shiftKey) : onPhotoSelect(photo)}
+              onContextMenu={() => window.flickrAPI.showPhotoMenu(photo.id)}
             />
           ))}
         </div>
@@ -542,6 +569,7 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
                   ...(!selectMode && hoveredId === photo.id ? { transform: 'scale(1.015)', boxShadow: '0 4px 16px rgba(0,0,0,0.18)', zIndex: 2 } : {})
                 }}
                 onClick={(e) => selectMode ? onToggleSelect?.(photo, e.shiftKey) : onPhotoSelect(photo)}
+                onContextMenu={() => window.flickrAPI.showPhotoMenu(photo.id)}
                 onMouseEnter={() => setHoveredId(photo.id)}
                 onMouseLeave={() => setHoveredId(null)}
               >
@@ -613,6 +641,7 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
                       ...(!selectMode && hoveredId === photo.id ? { transform: 'scale(1.015)', boxShadow: '0 4px 16px rgba(0,0,0,0.18)', zIndex: 2 } : {})
                     }}
                     onClick={(e) => selectMode ? onToggleSelect?.(photo, e.shiftKey) : onPhotoSelect(photo)}
+                    onContextMenu={() => window.flickrAPI.showPhotoMenu(photo.id)}
                     onMouseEnter={() => setHoveredId(photo.id)}
                     onMouseLeave={() => setHoveredId(null)}
                   >

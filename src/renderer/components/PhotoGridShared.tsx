@@ -150,9 +150,10 @@ interface PhotoListRowProps {
   isSelected?: boolean
   selectMode?: boolean
   onClick: (e: React.MouseEvent) => void
+  onContextMenu?: () => void
 }
 
-export function PhotoListRow({ photo, isDownloaded, isSelected, selectMode, onClick }: PhotoListRowProps): React.JSX.Element {
+export function PhotoListRow({ photo, isDownloaded, isSelected, selectMode, onClick, onContextMenu }: PhotoListRowProps): React.JSX.Element {
   const privacyLevel = getPrivacyLevel(photo)
   return (
     <div
@@ -163,6 +164,7 @@ export function PhotoListRow({ photo, isDownloaded, isSelected, selectMode, onCl
         background: isSelected ? 'rgba(255,0,132,0.06)' : 'transparent',
       }}
       onClick={onClick}
+      onContextMenu={onContextMenu}
     >
       {selectMode && (
         <div style={{
@@ -288,16 +290,17 @@ export function PrivacyIcon({ level }: { level: PrivacyLevel }): React.JSX.Eleme
   )
 }
 
-export function Tooltip({ text, children }: { text: string; children: React.ReactNode }): React.JSX.Element {
+export function Tooltip({ text, children, align = 'center' }: { text: string; children: React.ReactNode; align?: 'center' | 'right' }): React.JSX.Element {
   const [visible, setVisible] = useState(false)
   return (
     <span style={{ position: 'relative', display: 'inline-flex' }} onMouseEnter={() => setVisible(true)} onMouseLeave={() => setVisible(false)}>
       {children}
       {visible && (
         <span style={{
-          position: 'absolute', bottom: 'calc(100% + 6px)', left: '50%', transform: 'translateX(-50%)',
+          position: 'absolute', bottom: 'calc(100% + 6px)',
+          ...(align === 'right' ? { right: 0 } : { left: '50%', transform: 'translateX(-50%)' }),
           backgroundColor: '#333', color: '#fff', fontSize: '11px', lineHeight: '1.5',
-          padding: '5px 9px', borderRadius: '5px', maxWidth: '220px', whiteSpace: 'normal',
+          padding: '5px 9px', borderRadius: '5px', maxWidth: '220px', width: 'max-content', whiteSpace: 'pre-line',
           zIndex: 100, pointerEvents: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
           textAlign: 'left' as const
         }}>

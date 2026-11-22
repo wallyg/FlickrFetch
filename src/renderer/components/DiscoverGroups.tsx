@@ -347,7 +347,7 @@ export default function DiscoverGroups(): React.JSX.Element {
                 <button
                   style={{ ...s.selectBtn, borderColor: 'var(--ff-pink)', color: 'var(--ff-pink-action)' }}
                   disabled={downloading || filteredPoolPhotos.length === 0}
-                  title="Filters are on, so only the photos shown below are downloaded. Clear filters to download the whole group."
+                  title={"Filters are on, so only the photos shown below are downloaded.\n\nClear the filters to download the whole group."}
                   onClick={handleDownloadShown}
                 >
                   {downloading ? 'Starting…' : `Download ${filteredPoolPhotos.length.toLocaleString()} shown`}

@@ -16,9 +16,11 @@ interface PhotoGridProps {
   onSortChange?: (sort: string) => void
   onFilteredPhotosChange?: (photos: FlickrPhoto[]) => void
   onFiltersActiveChange?: (active: boolean) => void
+  // From the Tags tab: show only photos with these tags (replaces any search or filters in place)
+  tagSearchRequest?: { tags: string[]; mode: TagMode; nonce: number } | null
 }
 
-export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onToggleSelect, onPhotosLoaded, onPageInfo, onSortChange, onFilteredPhotosChange, onFiltersActiveChange }: PhotoGridProps): React.JSX.Element {
+export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onToggleSelect, onPhotosLoaded, onPageInfo, onSortChange, onFilteredPhotosChange, onFiltersActiveChange, tagSearchRequest }: PhotoGridProps): React.JSX.Element {
   const [photos, setPhotos] = useState<FlickrPhoto[]>([])
   const [page, setPage] = useState(1)
   const [pages, setPages] = useState(1)
@@ -136,6 +138,17 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
     return () => clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, searchOperator, tagQuery, tagMode, dateField, dateMode, dateCustomMin, dateCustomMax])
+
+  // 'View photos' in the Tags tab: start over with just that tag search
+  useEffect(() => {
+    if (!tagSearchRequest) return
+    const tq = tagSearchRequest.tags.join(', ')
+    setMediaFilter('all'); setPrivacyFilter('all'); setDownloadFilter('all'); setLicenseFilter('all')
+    setSearchQuery(''); setDateMode('all'); setDateCustomMin(''); setDateCustomMax('')
+    setTagQuery(tq); setTagMode(tagSearchRequest.mode)
+    applySearch({ tagQuery: tq, tagMode: tagSearchRequest.mode })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tagSearchRequest?.nonce])
 
   const handleSortChange = (newSort: SortOrder): void => {
     setSort(newSort)
@@ -512,7 +525,7 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
                     </button>
                   ))}
                 </div>
-                <Tooltip text="Separate multiple tags with commas. 'Any' finds photos with at least one tag; 'All' requires every tag.">
+                <Tooltip text={"Separate multiple tags with commas.\n\nAny: photos with at least one of the tags.\nAll: photos with every tag."}>
                   <span style={styles.tagHint}>?</span>
                 </Tooltip>
               </div>
@@ -669,6 +682,7 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
               isSelected={selectMode ? (selectedIds?.has(photo.id) ?? false) : undefined}
               selectMode={selectMode}
               onClick={(e) => selectMode ? onToggleSelect?.(photo, e.shiftKey) : onPhotoSelect(photo)}
+              onContextMenu={() => window.flickrAPI.showPhotoMenu(photo.id)}
             />
           ))}
         </div>
@@ -695,6 +709,7 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
                 onMouseEnter={() => setHoveredId(photo.id)}
                 onMouseLeave={() => setHoveredId(null)}
                 onClick={(e) => selectMode ? onToggleSelect?.(photo, e.shiftKey) : onPhotoSelect(photo)}
+                onContextMenu={() => window.flickrAPI.showPhotoMenu(photo.id)}
               >
                 <img
                   src={photo.url_m || photo.thumbnailUrl}
@@ -766,6 +781,7 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
                     onMouseEnter={() => setHoveredId(photo.id)}
                     onMouseLeave={() => setHoveredId(null)}
                     onClick={(e) => selectMode ? onToggleSelect?.(photo, e.shiftKey) : onPhotoSelect(photo)}
+                    onContextMenu={() => window.flickrAPI.showPhotoMenu(photo.id)}
                   >
                     <img
                       src={photo.url_m || photo.thumbnailUrl}

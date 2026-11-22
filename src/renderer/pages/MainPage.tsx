@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import type { FlickrUser, FlickrPhoto, FlickrAlbum, FlickrCollection, FlickrSet, BatchProgress } from '../../shared/types'
+import type { FlickrUser, FlickrPhoto, FlickrAlbum, FlickrCollection, FlickrSet, BatchProgress, TagMode } from '../../shared/types'
 import PhotoGrid from '../components/PhotoGrid'
 import PhotoDetail from '../components/PhotoDetail'
 import SettingsModal from '../components/SettingsModal'
@@ -7,6 +7,7 @@ import AlbumList from '../components/AlbumList'
 import AlbumPhotoGrid from '../components/AlbumPhotoGrid'
 import CollectionList from '../components/CollectionList'
 import CollectionDetail from '../components/CollectionDetail'
+import TagsPanel from '../components/TagsPanel'
 import DownloadQueueBar from '../components/DownloadQueueBar'
 import AboutModal from '../components/AboutModal'
 import DownloadConfirmModal, { type PendingDownload } from '../components/DownloadConfirmModal'
@@ -36,7 +37,7 @@ function IconBtn({ label, onClick, children, badge, showLabel }: { label: string
   )
 }
 
-type MainView = 'photostream' | 'albums' | 'album-detail' | 'collections' | 'collection-detail' | 'photo-detail'
+type MainView = 'photostream' | 'tags' | 'albums' | 'album-detail' | 'collections' | 'collection-detail' | 'photo-detail'
 
 interface MainPageProps {
   user: FlickrUser
@@ -62,6 +63,11 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
   const [updateVersion, setUpdateVersion] = useState<string | null>(null)
   const [albumsVisited, setAlbumsVisited] = useState(false)
   const [collectionsVisited, setCollectionsVisited] = useState(false)
+  const [tagsVisited, setTagsVisited] = useState(false)
+  // Set when a tag is clicked in the photo detail while viewing an album; the album grid filters itself to it
+  const [albumTagRequest, setAlbumTagRequest] = useState<{ tag: string; nonce: number } | null>(null)
+  // Set when 'View photos' is pressed in the Tags tab; the photostream applies it as a tag search
+  const [tagSearchRequest, setTagSearchRequest] = useState<{ tags: string[]; mode: TagMode; nonce: number } | null>(null)
   const [collectionPath, setCollectionPath] = useState<FlickrCollection[]>([])
   const [albumDetailOrigin, setAlbumDetailOrigin] = useState<'albums' | 'collections'>('albums')
   const [batchProgress, setBatchProgress] = useState<BatchProgress | null>(null)
@@ -347,6 +353,25 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
     }
   }, [photoDetailIndex, photoDetailSource, loadedPhotostreamPhotos, loadedAlbumPhotos, fetchMoreForDetail])
 
+  // A tag clicked in the photo detail panel: inside an album it filters that album, otherwise it
+  // searches the whole photostream. Commas would split one tag into two in Flickr's search.
+  const showPhotostreamTag = useCallback((tag: string): void => {
+    exitPhotostreamSelect()
+    setTagSearchRequest({ tags: [tag.replace(/,/g, ' ').trim()], mode: 'any', nonce: Date.now() })
+    setPhotoDetailIndex(null)
+    setView('photostream')
+  }, [exitPhotostreamSelect])
+
+  const handleDetailTagClick = useCallback((tag: string): void => {
+    if (photoDetailSource === 'album' && selectedAlbum) {
+      setAlbumTagRequest({ tag: tag.replace(/,/g, ' ').trim(), nonce: Date.now() })
+      setPhotoDetailIndex(null)
+      setView(photoDetailReturnView)
+    } else {
+      showPhotostreamTag(tag)
+    }
+  }, [photoDetailSource, selectedAlbum, photoDetailReturnView, showPhotostreamTag])
+
   const handleAlbumSelect = (album: FlickrAlbum): void => {
     setSelectedAlbum(album)
     setAlbumDetailOrigin('albums')
@@ -494,6 +519,12 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
           >
             Collections
           </button>
+          <button
+            style={{ ...styles.tab, ...(view === 'tags' ? styles.tabActive : {}) }}
+            onClick={() => { setTagsVisited(true); setView('tags') }}
+          >
+            Tags
+          </button>
         </div>
         {view === 'photostream' && !photostreamSelectMode && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -515,7 +546,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
               <button
                 style={{ ...styles.selectButton, borderColor: 'var(--ff-pink)', color: 'var(--ff-pink-action)' }}
                 disabled={photostreamFilteredPhotos.length === 0}
-                title="Filters are on, so only the photos shown below are downloaded. Clear filters to download the whole photostream."
+                title={"Filters are on, so only the photos shown below are downloaded.\n\nClear the filters to download the whole photostream."}
                 onClick={() => startShownDownload(photostreamFilteredPhotos, 'Photostream', 'Photostream')}
               >
                 {`Download ${photostreamFilteredPhotos.length.toLocaleString()} shown`}
@@ -569,7 +600,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
                 <button
                   style={{ ...styles.selectButton, borderColor: 'var(--ff-pink)', color: 'var(--ff-pink-action)' }}
                   disabled={albumFilteredPhotos.length === 0}
-                  title="Filters are on, so only the photos shown below are downloaded. Clear filters to download the whole album."
+                  title={"Filters are on, so only the photos shown below are downloaded.\n\nClear the filters to download the whole album."}
                   onClick={() => startShownDownload(albumFilteredPhotos, `"${selectedAlbum.title}"`, selectedAlbum.title)}
                 >
                   {`Download ${albumFilteredPhotos.length.toLocaleString()} shown`}
@@ -699,8 +730,21 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             onSortChange={sort => setPhotostreamSort(sort)}
             onFilteredPhotosChange={setPhotostreamFilteredPhotos}
             onFiltersActiveChange={setPhotostreamFiltersActive}
+            tagSearchRequest={tagSearchRequest}
           />
         </div>
+        {tagsVisited && (
+          <div style={view === 'tags' ? styles.tabPane : styles.tabPaneHidden}>
+            <TagsPanel
+              active={view === 'tags'}
+              onViewPhotos={(tags, mode) => {
+                exitPhotostreamSelect()
+                setTagSearchRequest({ tags: tags.map(t => t.replace(/,/g, ' ').trim()), mode, nonce: Date.now() })
+                setView('photostream')
+              }}
+            />
+          </div>
+        )}
         {albumsVisited && (
           <div style={view === 'albums' ? styles.tabPane : styles.tabPaneHidden}>
             <AlbumList onAlbumSelect={handleAlbumSelect} />
@@ -734,6 +778,8 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
               onExtraFiltersChange={setAlbumExtraFilters}
               onMediaFilterChange={setAlbumMediaFilter}
               onPrivacyFilterChange={setAlbumPrivacyFilter}
+              tagFilterRequest={albumTagRequest}
+              onSearchWholePhotostream={showPhotostreamTag}
             />
           </div>
         )}
@@ -750,6 +796,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
               onNext={handleNextPhoto}
               onClose={handleClosePhotoDetail}
               sourceName={detailSourceName}
+              onTagClick={handleDetailTagClick}
             />
           </div>
         )}
@@ -760,7 +807,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
           <div style={styles.confirmCard}>
             <p style={styles.confirmTitle}>Reset download records?</p>
             <p style={styles.confirmBody}>
-              This will remove the download record for all {((selectedAlbum.photoCount ?? 0) + (selectedAlbum.videoCount ?? 0)).toLocaleString()} items in &ldquo;{selectedAlbum.title}&rdquo;. Smart Download will treat them as never downloaded.
+              This will remove the download record for all {((selectedAlbum.photoCount ?? 0) + (selectedAlbum.videoCount ?? 0)).toLocaleString()} items in &ldquo;{selectedAlbum.title}&rdquo;.<br /><br />Smart Download will treat them as never downloaded.
             </p>
             <div style={styles.confirmActions}>
               <button style={styles.confirmCancel} onClick={() => setShowResetConfirm(false)}>Cancel</button>

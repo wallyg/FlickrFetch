@@ -427,67 +427,129 @@ export async function getCollectionTree(tokenData: FlickrTokenData): Promise<Fli
   }
 }
 
+// Flickr's tag search cannot find tags typed with some accented letters (é, ã, ñ, ç…) when it is
+// given the accented spelling: "québec" returns nothing while "quebec" finds the photos. Tags with
+// macrons (ō) or non-Latin letters (日本) are found as typed. So a tag search that comes back empty
+// is retried once with the accents removed, and the spelling that worked is remembered for the
+// following pages. The plain-letter search also returns photos tagged with the plain spelling
+// ("Montreal" as well as "Montréal"), so those results are asked to include their tags and the extras
+// are dropped again here, leaving exactly the photos that carry the tag that was asked for.
+const foldedTagQueries = new Map<string, string>()
+const droppedExtras = new Map<string, number>()
+
+function foldAccents(s: string): string {
+  return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').normalize('NFC')
+}
+
+// Flickr's own tag form: lower case, no spaces or punctuation
+function cleanTag(s: string): string {
+  return s.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '')
+}
+
+async function signedGet(url: string, tokenData: FlickrTokenData): Promise<{ data: Record<string, any> }> { // eslint-disable-line @typescript-eslint/no-explicit-any
+  const authHeader = getOAuthHeader(url, 'GET', tokenData)
+  return axios.get(url, { headers: { ...authHeader, 'User-Agent': USER_AGENT } })
+}
+
+interface TagSearchResult { response: { data: Record<string, any> }; folded: boolean } // eslint-disable-line @typescript-eslint/no-explicit-any
+
+// buildUrl(tags, withTags): withTags asks Flickr to include each photo's tags (needed to trim extras)
+async function searchWithTagFallback(
+  tokenData: FlickrTokenData, tagQuery: string | undefined, page: number, buildUrl: (tags: string | undefined, withTags: boolean) => string
+): Promise<TagSearchResult> {
+  const remembered = tagQuery ? foldedTagQueries.get(tagQuery) : undefined
+  if (remembered) return { response: await signedGet(buildUrl(remembered, true), tokenData), folded: true }
+  const first = await signedGet(buildUrl(tagQuery, false), tokenData)
+  if (!tagQuery || page !== 1 || first.data.stat !== 'ok' || Number(first.data.photos?.total) > 0) return { response: first, folded: false }
+  const folded = foldAccents(tagQuery)
+  if (folded === tagQuery) return { response: first, folded: false }
+  const retry = await signedGet(buildUrl(folded, true), tokenData)
+  if (retry.data.stat === 'ok' && Number(retry.data.photos?.total) > 0) {
+    foldedTagQueries.set(tagQuery, folded)
+    return { response: retry, folded: true }
+  }
+  return { response: first, folded: false }
+}
+
+// Keep only photos that really carry the requested tag(s); returns the total Flickr should be
+// reported with, which settles on the exact figure once every page has been read.
+function trimToRequestedTags<T extends Record<string, string>>(
+  records: T[], search: PhotoSearchParams | undefined, sort: string, page: number, flickrTotal: number, folded: boolean
+): { records: T[]; total: number } {
+  if (!folded || !search?.tagQuery) return { records, total: flickrTotal }
+  const wanted = search.tagQuery.split(',').map(cleanTag).filter(Boolean)
+  const kept = records.filter(r => {
+    const have = new Set((r.tags ?? '').split(' ').filter(Boolean).map(cleanTag))
+    return search.tagMode === 'all' ? wanted.every(t => have.has(t)) : wanted.some(t => have.has(t))
+  })
+  const key = JSON.stringify([search, sort])
+  const dropped = (page === 1 ? 0 : droppedExtras.get(key) ?? 0) + (records.length - kept.length)
+  droppedExtras.set(key, dropped)
+  return { records: kept, total: Math.max(flickrTotal - dropped, kept.length) }
+}
+
 export async function getPhotos(tokenData: FlickrTokenData, page: number = 1, sort: string = 'date-posted-desc', search?: PhotoSearchParams): Promise<PhotoPage> {
   const useSearch = !!(search?.query || search?.tagQuery || search?.dateMin || search?.dateMax)
 
-  let url: string
-  if (useSearch) {
-    url =
-      `${FLICKR_API_BASE}` +
-      `?method=flickr.photos.search` +
-      `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
-      `&user_id=${encodeURIComponent(tokenData.nsid)}` +
-      `&extras=${encodeURIComponent('url_q,url_m,date_taken,date_upload,last_update,media,ispublic,isfriend,isfamily,license')}` +
-      `&sort=${encodeURIComponent(sort)}` +
-      `&per_page=100` +
-      `&page=${page}` +
-      `&format=json` +
-      `&nojsoncallback=1`
+  const buildUrl = (tagQuery: string | undefined, withTags: boolean): string => {
+    let url: string
+    if (useSearch) {
+      url =
+        `${FLICKR_API_BASE}` +
+        `?method=flickr.photos.search` +
+        `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
+        `&user_id=${encodeURIComponent(tokenData.nsid)}` +
+        `&extras=${encodeURIComponent('url_q,url_m,date_taken,date_upload,last_update,media,ispublic,isfriend,isfamily,license' + (withTags ? ',tags' : ''))}` +
+        `&sort=${encodeURIComponent(sort)}` +
+        `&per_page=100` +
+        `&page=${page}` +
+        `&format=json` +
+        `&nojsoncallback=1`
 
-    if (search?.query) {
-      url += `&text=${encodeURIComponent(search.query)}`
-    }
-    if (search?.tagQuery) {
-      url += `&tags=${encodeURIComponent(search.tagQuery)}&tag_mode=${search.tagMode ?? 'any'}`
-    }
-    if (search?.dateField === 'taken') {
-      if (search?.dateMin) url += `&min_taken_date=${encodeURIComponent(search.dateMin)}`
-      if (search?.dateMax) url += `&max_taken_date=${encodeURIComponent(search.dateMax + ' 23:59:59')}`
-    } else if (search?.dateField === 'posted') {
-      if (search?.dateMin) {
-        const ts = Math.floor(new Date(search.dateMin).getTime() / 1000)
-        url += `&min_upload_date=${ts}`
+      if (search?.query) {
+        url += `&text=${encodeURIComponent(search.query)}`
       }
-      if (search?.dateMax) {
-        const ts = Math.floor(new Date(search.dateMax + 'T23:59:59').getTime() / 1000)
-        url += `&max_upload_date=${ts}`
+      if (tagQuery) {
+        url += `&tags=${encodeURIComponent(tagQuery)}&tag_mode=${search?.tagMode ?? 'any'}`
       }
+      if (search?.dateField === 'taken') {
+        if (search?.dateMin) url += `&min_taken_date=${encodeURIComponent(search.dateMin)}`
+        if (search?.dateMax) url += `&max_taken_date=${encodeURIComponent(search.dateMax + ' 23:59:59')}`
+      } else if (search?.dateField === 'posted') {
+        if (search?.dateMin) {
+          const ts = Math.floor(new Date(search.dateMin).getTime() / 1000)
+          url += `&min_upload_date=${ts}`
+        }
+        if (search?.dateMax) {
+          const ts = Math.floor(new Date(search.dateMax + 'T23:59:59').getTime() / 1000)
+          url += `&max_upload_date=${ts}`
+        }
+      }
+    } else {
+      url =
+        `${FLICKR_API_BASE}` +
+        `?method=flickr.people.getPhotos` +
+        `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
+        `&user_id=${encodeURIComponent(tokenData.nsid)}` +
+        `&extras=${encodeURIComponent('url_q,url_m,date_taken,date_upload,last_update,media,ispublic,isfriend,isfamily,license')}` +
+        `&sort=${encodeURIComponent(sort)}` +
+        `&per_page=100` +
+        `&page=${page}` +
+        `&format=json` +
+        `&nojsoncallback=1`
     }
-  } else {
-    url =
-      `${FLICKR_API_BASE}` +
-      `?method=flickr.people.getPhotos` +
-      `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
-      `&user_id=${encodeURIComponent(tokenData.nsid)}` +
-      `&extras=${encodeURIComponent('url_q,url_m,date_taken,date_upload,last_update,media,ispublic,isfriend,isfamily,license')}` +
-      `&sort=${encodeURIComponent(sort)}` +
-      `&per_page=100` +
-      `&page=${page}` +
-      `&format=json` +
-      `&nojsoncallback=1`
+    return url
   }
 
-  const authHeader = getOAuthHeader(url, 'GET', tokenData)
-  const response = await axios.get(url, {
-    headers: { ...authHeader, 'User-Agent': USER_AGENT }
-  })
+  const { response, folded } = await searchWithTagFallback(tokenData, search?.tagQuery, page, buildUrl)
 
   if (response.data.stat !== 'ok') {
     throw new Error(`Flickr API error: ${response.data.message ?? 'unknown error'}`)
   }
 
   const data = response.data.photos
-  let photos: FlickrPhoto[] = (data.photo as Record<string, string>[]).map((p) => ({
+  const trimmed = trimToRequestedTags(data.photo as Record<string, string>[], search, sort, page, Number(data.total), folded)
+  let photos: FlickrPhoto[] = trimmed.records.map((p) => ({
     id: p.id,
     title: p.title || 'Untitled',
     thumbnailUrl: p.url_q || '',
@@ -520,7 +582,7 @@ export async function getPhotos(tokenData: FlickrTokenData, page: number = 1, so
     photos,
     page: Number(data.page),
     pages: Number(data.pages),
-    total: Number(data.total)
+    total: trimmed.total
   }
 }
 
@@ -675,28 +737,31 @@ export async function getDiscoverCollectionTree(nsid: string, tokenData: FlickrT
 }
 
 export async function getPublicPhotos(nsid: string, tokenData: FlickrTokenData, page: number = 1, sort: string = 'date-posted-desc', search?: PhotoSearchParams): Promise<PhotoPage> {
-  let url = `${FLICKR_API_BASE}?method=flickr.photos.search` +
-    `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
-    `&user_id=${encodeURIComponent(nsid)}` +
-    `&extras=${encodeURIComponent('url_q,url_m,date_taken,date_upload,last_update,media,license')}` +
-    `&sort=${encodeURIComponent(sort)}` +
-    `&per_page=100&page=${page}&format=json&nojsoncallback=1`
+  const buildUrl = (tagQuery: string | undefined, withTags: boolean): string => {
+    let url = `${FLICKR_API_BASE}?method=flickr.photos.search` +
+      `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
+      `&user_id=${encodeURIComponent(nsid)}` +
+      `&extras=${encodeURIComponent('url_q,url_m,date_taken,date_upload,last_update,media,license' + (withTags ? ',tags' : ''))}` +
+      `&sort=${encodeURIComponent(sort)}` +
+      `&per_page=100&page=${page}&format=json&nojsoncallback=1`
 
-  if (search?.query) url += `&text=${encodeURIComponent(search.query)}`
-  if (search?.tagQuery) url += `&tags=${encodeURIComponent(search.tagQuery)}&tag_mode=${search.tagMode ?? 'any'}`
-  if (search?.dateField === 'taken') {
-    if (search?.dateMin) url += `&min_taken_date=${encodeURIComponent(search.dateMin)}`
-    if (search?.dateMax) url += `&max_taken_date=${encodeURIComponent(search.dateMax + ' 23:59:59')}`
-  } else if (search?.dateField === 'posted') {
-    if (search?.dateMin) url += `&min_upload_date=${Math.floor(new Date(search.dateMin + 'T00:00:00').getTime() / 1000)}`
-    if (search?.dateMax) url += `&max_upload_date=${Math.floor(new Date(search.dateMax + 'T23:59:59').getTime() / 1000)}`
+    if (search?.query) url += `&text=${encodeURIComponent(search.query)}`
+    if (tagQuery) url += `&tags=${encodeURIComponent(tagQuery)}&tag_mode=${search?.tagMode ?? 'any'}`
+    if (search?.dateField === 'taken') {
+      if (search?.dateMin) url += `&min_taken_date=${encodeURIComponent(search.dateMin)}`
+      if (search?.dateMax) url += `&max_taken_date=${encodeURIComponent(search.dateMax + ' 23:59:59')}`
+    } else if (search?.dateField === 'posted') {
+      if (search?.dateMin) url += `&min_upload_date=${Math.floor(new Date(search.dateMin + 'T00:00:00').getTime() / 1000)}`
+      if (search?.dateMax) url += `&max_upload_date=${Math.floor(new Date(search.dateMax + 'T23:59:59').getTime() / 1000)}`
+    }
+    return url
   }
 
-  const authHeader = getOAuthHeader(url, 'GET', tokenData)
-  const response = await axios.get(url, { headers: { ...authHeader, 'User-Agent': USER_AGENT } })
+  const { response, folded } = await searchWithTagFallback(tokenData, search?.tagQuery, page, buildUrl)
   if (response.data.stat !== 'ok') throw new Error(response.data.message ?? 'unknown error')
   const data = response.data.photos
-  let photos = mapPublicPhotos(data.photo)
+  const trimmed = trimToRequestedTags(data.photo as Record<string, string>[], search, sort, page, Number(data.total), folded)
+  let photos = mapPublicPhotos(trimmed.records)
 
   if (search?.query && search.operator && search.operator !== 'contains') {
     const q = search.query.toLowerCase()
@@ -714,7 +779,7 @@ export async function getPublicPhotos(nsid: string, tokenData: FlickrTokenData, 
     photos,
     page: Number(data.page),
     pages: operatorFiltered ? 1 : Number(data.pages),
-    total: operatorFiltered ? photos.length : Number(data.total),
+    total: operatorFiltered ? photos.length : trimmed.total,
   }
 }
 

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, shell, dialog, Menu, Notification } from 'electron'
+import { app, BrowserWindow, ipcMain, shell, dialog, Menu, Notification, clipboard } from 'electron'
 import { autoUpdater } from 'electron-updater'
 import { join, basename } from 'path'
 import { tmpdir } from 'os'
@@ -9,6 +9,7 @@ import { getUserInfo, getPhotos, getPhotoSizes, getPhotoInfo, getPhotoExif, getA
 import { downloadPhoto, downloadToFolder } from './downloader'
 import { endExifTool } from './exiftool'
 import { loadSettings, saveSettings, resetSettings, ensureDownloadFolder } from './settings'
+import { registerTagIpc } from './tagIndex'
 import { openDatabase, closeDatabase, writeBatchLog, writePhotoRecord, getPhotoRecord, getPhotoRecordsBatch, getBatchLog, clearBatchLog, clearAllHistory, searchPhotoRecords, deletePhotoRecord, deletePhotoRecords, clearPhotoRecords, writeDiscoverRecord, getDiscoverRecordsBatch, searchDiscoverRecords, deleteDiscoverRecord, deleteDiscoverRecords, clearDiscoverRecords } from './database'
 import type { AppSettings, FileNamingConfig, PhotoInfo, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams, MetadataSettings, DiscoverUser, DiscoverContact, DiscoverGroup } from '../shared/types'
 
@@ -313,6 +314,9 @@ ipcMain.handle('settings:get', () => loadSettings())
 ipcMain.handle('settings:set', (_event, settings: AppSettings) => saveSettings(settings))
 ipcMain.handle('settings:reset', () => resetSettings())
 ipcMain.handle('video:resolveUrl', (_event, sourceUrl: string) => resolveVideoUrl(sourceUrl))
+
+// Tags tab: local tag index (scan, browse, count)
+registerTagIpc(() => mainWindow)
 
 // Folder picker dialog
 ipcMain.handle('shell:pickFolder', async () => {
@@ -1267,7 +1271,19 @@ ipcMain.on('shell:showInFinder', (_event, filePath: string) => {
 
 // Open an external URL (mailto, https, etc.) in the default app
 ipcMain.on('shell:openExternal', (_event, url: string) => {
+  if (!/^(https?:\/\/|mailto:)/i.test(url)) return   // web and email addresses only
   shell.openExternal(url)
+})
+
+// Right-click menu on one of your own photos in a grid
+ipcMain.on('photo:contextMenu', (_event, photoId: string) => {
+  if (!mainWindow || !/^\d+$/.test(photoId)) return
+  const nsid = loadToken()?.nsid
+  const url = nsid ? `https://www.flickr.com/photos/${nsid}/${photoId}` : `https://www.flickr.com/photo.gne?id=${photoId}`
+  Menu.buildFromTemplate([
+    { label: 'Open on Flickr', click: () => { void shell.openExternal(url) } },
+    { label: 'Copy Flickr link', click: () => clipboard.writeText(url) }
+  ]).popup({ window: mainWindow })
 })
 
 // Native confirmation dialog

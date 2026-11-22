@@ -1,4 +1,4 @@
-import type { FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery, DiscoverDownloadRecord, DiscoverUser, DiscoverContact, DiscoverGroup } from '../shared/types'
+import type { FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery, DiscoverDownloadRecord, DiscoverUser, DiscoverContact, DiscoverGroup, TagIndexStatus, TagLetterGroup, TagListQuery, TagListPage, TagScanProgress } from '../shared/types'
 
 declare module '*.png' {
   const src: string
@@ -20,11 +20,19 @@ declare global {
       onDownloadProgress: (callback: (percent: number) => void) => () => void
       showInFinder: (filePath: string) => void
       openExternal: (url: string) => void
+      showPhotoMenu: (photoId: string) => void
       cancelDownload: () => void
       getAlbums: (page: number) => Promise<AlbumPage>
       getAlbumPhotos: (albumId: string, page: number) => Promise<PhotoPage>
       getCollectionTree: () => Promise<FlickrCollection[]>
       startCollectionBatch: (collection: FlickrCollection) => Promise<{ queued: number }>
+      getTagIndexStatus: () => Promise<TagIndexStatus>
+      startTagScan: (mode: 'full' | 'refresh') => Promise<{ started: boolean }>
+      cancelTagScan: () => void
+      getTagGroups: (prefix: string, includeMachine: boolean) => Promise<TagLetterGroup[]>
+      listTags: (query: TagListQuery) => Promise<TagListPage>
+      countTagPhotos: (names: string[], mode: 'any' | 'all') => Promise<number>
+      onTagScanProgress: (callback: (progress: TagScanProgress) => void) => () => void
       getSettings: () => Promise<AppSettings>
       setSettings: (settings: AppSettings) => Promise<void>
       resetSettings: () => Promise<AppSettings>

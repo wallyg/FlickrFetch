@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { IpcRendererEvent } from 'electron'
-import type { FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery, DiscoverDownloadRecord, DiscoverUser, DiscoverContact, DiscoverGroup } from '../shared/types'
+import type { FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery, DiscoverDownloadRecord, DiscoverUser, DiscoverContact, DiscoverGroup, TagIndexStatus, TagLetterGroup, TagListQuery, TagListPage, TagScanProgress } from '../shared/types'
 
 // Expose a safe, limited API surface to the renderer process.
 // The renderer cannot access Node.js or Electron directly — only these methods.
@@ -44,6 +44,7 @@ contextBridge.exposeInMainWorld('flickrAPI', {
 
   // Open an external URL in the default browser/mail app
   openExternal: (url: string): void => ipcRenderer.send('shell:openExternal', url),
+  showPhotoMenu: (photoId: string): void => ipcRenderer.send('photo:contextMenu', photoId),
 
   // Cancel an in-progress download
   cancelDownload: (): void => ipcRenderer.send('photos:cancelDownload'),
@@ -66,6 +67,19 @@ contextBridge.exposeInMainWorld('flickrAPI', {
 
   // Folder picker
   pickFolder: (): Promise<string | null> => ipcRenderer.invoke('shell:pickFolder'),
+
+  // Tags tab: local tag index
+  getTagIndexStatus: (): Promise<TagIndexStatus> => ipcRenderer.invoke('tags:getStatus'),
+  startTagScan: (mode: 'full' | 'refresh'): Promise<{ started: boolean }> => ipcRenderer.invoke('tags:startScan', mode),
+  cancelTagScan: (): void => ipcRenderer.send('tags:cancelScan'),
+  getTagGroups: (prefix: string, includeMachine: boolean): Promise<TagLetterGroup[]> => ipcRenderer.invoke('tags:getGroups', prefix, includeMachine),
+  listTags: (query: TagListQuery): Promise<TagListPage> => ipcRenderer.invoke('tags:list', query),
+  countTagPhotos: (names: string[], mode: 'any' | 'all'): Promise<number> => ipcRenderer.invoke('tags:countPhotos', names, mode),
+  onTagScanProgress: (cb: (progress: TagScanProgress) => void): (() => void) => {
+    const handler = (_evt: IpcRendererEvent, data: TagScanProgress) => cb(data)
+    ipcRenderer.on('tags:scanProgress', handler)
+    return () => ipcRenderer.removeListener('tags:scanProgress', handler)
+  },
 
   // Batch downloads
   startBatch: (albumId: string, albumTitle: string, photoCount?: number, videoCount?: number, force?: boolean, mediaType?: 'photo' | 'video', privacyFilter?: string, track?: boolean, smartMode?: 'updated' | 'never-downloaded', zipMode?: boolean): Promise<{ alreadyQueued: boolean }> =>

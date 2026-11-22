@@ -135,6 +135,7 @@ export interface MetadataSettings {
   embedPhotoUrl: boolean
   embedPhotoId: boolean
   writeSidecarJson: boolean
+  keepDescriptionHtml: boolean   // true = embed Flickr's original HTML description; false = plain text
 }
 
 export type LicenseFilter = 'all' | 'cc' | 'public' | 'gov' | 'arr'
@@ -255,4 +256,60 @@ export interface AuthState {
   status: AuthStatus
   user: FlickrUser | null
   error: string | null
+}
+
+// ── Tag index (Tags tab) ─────────────────────────────────────────────────────
+
+export interface TagIndexStatus {
+  hasIndex: boolean
+  scanning: boolean
+  lastScanAt: number | null       // ms; last completed scan or refresh
+  lastFullScanAt: number | null   // ms; last completed full scan
+  indexedPhotos: number
+  tagCount: number
+  flickrTotal: number | null      // photo total reported by Flickr at the last check
+  hasSpellings: boolean           // true when the as-typed spellings were fetched ("New York")
+}
+
+export interface TagScanProgress {
+  mode: 'full' | 'refresh'
+  phase: 'scanning' | 'finishing' | 'done' | 'cancelled' | 'error'
+  page: number
+  pages: number
+  photos: number
+  total: number
+  error?: string
+}
+
+export interface TagRow {
+  name: string      // Flickr's clean form ("newyork"); this is the key for filtering photos
+  display: string   // best as-typed spelling ("New York"); falls back to name
+  variants: number  // how many different spellings exist for this tag (1 = consistent)
+  count: number
+}
+
+export type TagTextOperator = 'contains' | 'startsWith' | 'endsWith' | 'exact'
+
+export interface TagListQuery {
+  prefix?: string              // letter or letter pair chosen in the strip ('' = all)
+  afterPrefix?: 'other'        // with prefix: next character is not a letter or digit
+  other?: boolean              // true = tags that start with a non-Latin letter or symbol
+  digits?: boolean             // true = tags that start with a digit
+  text?: string                // text typed in the filter box
+  operator?: TagTextOperator   // how text matches (default contains)
+  sort?: 'alpha' | 'count'
+  includeMachine?: boolean     // machine tags (contain ':') are hidden unless true
+  offset?: number
+  limit?: number
+}
+
+export interface TagListPage {
+  rows: TagRow[]
+  total: number
+}
+
+export interface TagLetterGroup {
+  key: string      // next character: a-z; '#' (all digits) at the top level, 0-9 deeper; 'other'; '' = the bare tag itself
+  label: string
+  count: number    // tags in this group
 }
