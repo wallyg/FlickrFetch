@@ -31,7 +31,7 @@ export function canCopyAttribution(license: string): boolean {
 // One-line credit for a Creative Commons photo, in the usual "title, author, source, license" order.
 export function buildAttribution(license: string, title: string, owner: string, photoUrl: string): string {
   const lic = LICENSE_MAP[license]
-  if (!lic) return ''
+  if (!lic || !canCopyAttribution(license)) return ''   // All Rights Reserved and unknown licenses get no credit line
   const who = owner || 'the photographer'
   const name = title ? `\u201c${title}\u201d` : 'Photo'
   if (NO_CREDIT_IDS.has(license)) {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import type { FlickrPhoto, PhotoSize, PhotoInfo, DownloadSize, CameraExif } from '../../shared/types'
 import { descriptionToPlainText } from '../../shared/description'
-import { buildAttribution, canCopyAttribution } from '../../shared/licenses'
+import { buildAttribution, canCopyAttribution, LICENSE_MAP } from '../../shared/licenses'
 import DescriptionView from './DescriptionView'
 
 const PANEL_WIDTH_KEY = 'flickrfetch:detail-panel-width'
@@ -19,25 +19,7 @@ function loadPanelWidth(): number {
 
 type DownloadState = 'idle' | 'downloading' | 'done' | 'error'
 
-const LICENSE_NAMES: Record<string, string> = {
-  '0':  'All Rights Reserved',
-  '1':  'CC BY-NC-SA 2.0',
-  '2':  'CC BY-NC 2.0',
-  '3':  'CC BY-NC-ND 2.0',
-  '4':  'CC BY 2.0',
-  '5':  'CC BY-SA 2.0',
-  '6':  'CC BY-ND 2.0',
-  '7':  'No Known Copyright Restrictions',
-  '8':  'US Government Work',
-  '9':  'CC0 1.0 Universal',
-  '10': 'Public Domain Mark 1.0',
-  '11': 'CC BY 4.0',
-  '12': 'CC BY-SA 4.0',
-  '13': 'CC BY-ND 4.0',
-  '14': 'CC BY-NC 4.0',
-  '15': 'CC BY-NC-SA 4.0',
-  '16': 'CC BY-NC-ND 4.0',
-}
+const licenseName = (license: string): string => (LICENSE_MAP[license] ?? LICENSE_MAP['0']).name
 
 const LICENSE_ICONS: Record<string, string[]> = {
   '1':  ['CC', 'BY', 'NC', 'SA'],
@@ -373,7 +355,7 @@ export default function PhotoDetail({
       if (exif.focalLength) lines.push(`Focal length: ${exif.focalLength}`)
     }
     if (originalSize) lines.push(`Resolution: ${originalSize.width} × ${originalSize.height}`)
-    lines.push(`License: ${LICENSE_NAMES[info.license] ?? LICENSE_NAMES['0']}`)
+    lines.push(`License: ${licenseName(info.license)}`)
     if (info.ownerName) lines.push(`Owner: ${info.ownerName}`)
     lines.push(`Privacy: ${privacyBadge.label}`)
     lines.push(`Photo URL: ${photoUrl}`)
@@ -608,7 +590,7 @@ export default function PhotoDetail({
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' as const }}>
                 {LICENSE_ICONS[info.license]?.map(label => <CcBadge key={label} label={label} />)}
                 <span style={{ ...styles.fieldValue, marginLeft: LICENSE_ICONS[info.license] ? '2px' : 0 }}>
-                  {LICENSE_NAMES[info.license] ?? LICENSE_NAMES['0']}
+                  {licenseName(info.license)}
                 </span>
               </div>
             </div>

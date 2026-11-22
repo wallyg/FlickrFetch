@@ -230,6 +230,7 @@ ipcMain.handle('auth:getState', async () => {
     return { user }
   } catch {
     clearToken()
+    ownerNsidForMenu = null
     return { user: null }
   }
 })
@@ -1276,9 +1277,11 @@ ipcMain.on('shell:openExternal', (_event, url: string) => {
 })
 
 // Right-click menu on one of your own photos in a grid
+let ownerNsidForMenu: string | null = null   // read once from the stored sign-in; cleared on sign-out
 ipcMain.on('photo:contextMenu', (_event, photoId: string) => {
   if (!mainWindow || !/^\d+$/.test(photoId)) return
-  const nsid = loadToken()?.nsid
+  if (!ownerNsidForMenu) ownerNsidForMenu = loadToken()?.nsid ?? null
+  const nsid = ownerNsidForMenu
   const url = nsid ? `https://www.flickr.com/photos/${nsid}/${photoId}` : `https://www.flickr.com/photo.gne?id=${photoId}`
   Menu.buildFromTemplate([
     { label: 'Open on Flickr', click: () => { void shell.openExternal(url) } },
@@ -1302,6 +1305,7 @@ ipcMain.handle('shell:confirm', async (_event, message: string, detail?: string)
 // Sign out: clear the stored token
 ipcMain.handle('auth:signout', () => {
   clearToken()
+  ownerNsidForMenu = null
 })
 
 // Download history DB

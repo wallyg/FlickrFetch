@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from 'react'
 import type { FlickrPhoto, PhotoPage, SearchOperator, DateRangeField, TagMode, LicenseFilter } from '../../shared/types'
 import { MediaFilter, DownloadFilter, PrivacyFilter, PrivacyLevel, PRIVACY_OPTIONS, PRIVACY_LABELS, JustifiedIcon, GridIcon, ListIcon, PrivacyIcon, Chip, Tooltip, PhotoListRow, DownloadFilterSelect, LicenseFilterSelect, matchesLicenseFilter, LICENSE_FILTER_LABEL, getPrivacyLevel, sharedStyles, DateMode, getPresetDates, formatDateChip, loadRowHeight, saveRowHeight, computeJustifiedRows, DOWNLOAD_FILTER_LABEL } from './PhotoGridShared'
+import { cleanTag } from '../../shared/tags'
 import EmptyState from './EmptyState'
 
 type AlbumPhotoViewMode = 'list' | 'grid' | 'justified'
@@ -37,9 +38,11 @@ interface AlbumPhotoGridProps {
   tagFilterRequest?: { tag: string; nonce: number } | null
   // Lets the tag chip offer 'Search whole photostream' for the same tag
   onSearchWholePhotostream?: (tag: string) => void
+  // Remembers which request was already applied, so opening another album doesn't replay it
+  handledTagRequest?: React.MutableRefObject<number>
 }
 
-export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, selectedIds, onToggleSelect, onPhotosLoaded, onPageInfo, onFilteredPhotosChange, onMediaFilterChange, onPrivacyFilterChange, onExtraFiltersChange, tagFilterRequest, onSearchWholePhotostream }: AlbumPhotoGridProps): React.JSX.Element {
+export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, selectedIds, onToggleSelect, onPhotosLoaded, onPageInfo, onFilteredPhotosChange, onMediaFilterChange, onPrivacyFilterChange, onExtraFiltersChange, tagFilterRequest, onSearchWholePhotostream, handledTagRequest }: AlbumPhotoGridProps): React.JSX.Element {
   const [photos, setPhotos] = useState<FlickrPhoto[]>([])
   const [pageInfo, setPageInfo] = useState<Pick<PhotoPage, 'page' | 'pages' | 'total'> | null>(null)
   const [loading, setLoading] = useState(true)
@@ -168,7 +171,8 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
 
   // A tag clicked in the detail panel: start over with just that tag
   useEffect(() => {
-    if (!tagFilterRequest) return
+    if (!tagFilterRequest || handledTagRequest?.current === tagFilterRequest.nonce) return
+    if (handledTagRequest) handledTagRequest.current = tagFilterRequest.nonce
     setMediaFilter('all'); setPrivacyFilter('all'); setDownloadFilter('all'); setLicenseFilter('all')
     setTitleQuery(''); setActiveTitleQuery('')
     setDateMode('all'); setDateCustomMin(''); setDateCustomMax('')
@@ -201,9 +205,8 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
   }, [photos, sort])
 
   const filteredPhotos = useMemo(() => {
-    // Flickr's own tag form: lower case, no spaces or punctuation, so "New York" matches "newyork"
-    const norm = (t: string): string => t.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '')
-    const tagList = activeTagQuery ? activeTagQuery.split(',').map(norm).filter(Boolean) : []
+    // Flickr's own tag form (lower case, no spaces or punctuation), so "New York" matches "newyork"
+    const tagList = activeTagQuery ? activeTagQuery.split(',').map(cleanTag).filter(Boolean) : []
     let result = sortedPhotos
       .filter(p => {
         if (!activeTitleQuery) return true
@@ -216,7 +219,7 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
       })
       .filter(p => {
         if (!tagList.length) return true
-        const photoTags = (p.tags ?? []).map(norm)
+        const photoTags = (p.tags ?? []).map(cleanTag)
         return activeTagMode === 'all'
           ? tagList.every(t => photoTags.includes(t))
           : tagList.some(t => photoTags.includes(t))

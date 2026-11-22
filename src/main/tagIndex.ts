@@ -1,9 +1,10 @@
 import { ipcMain } from 'electron'
 import type { BrowserWindow } from 'electron'
-import axios from 'axios'
 import type Database from 'better-sqlite3'
 import { FLICKR_API_KEY } from './config'
-import { getOAuthHeader, loadToken } from './auth'
+import { createHash } from 'crypto'
+import { loadToken } from './auth'
+import { signedGet, clearTagSearchMemory } from './flickr'
 import { getDb } from './database'
 import type {
   FlickrTokenData, TagIndexStatus, TagScanProgress, TagListQuery, TagListPage, TagRow, TagLetterGroup
@@ -15,7 +16,6 @@ import type {
 // and counting then run locally. Read-only: nothing is changed on Flickr.
 
 const FLICKR_API_BASE = 'https://www.flickr.com/services/rest/'
-const USER_AGENT = 'FlickrFetch/0.1.0 (Electron desktop app; https://github.com/flickrfetch)'
 const PER_PAGE = 500
 const REFRESH_MARGIN_MS = 60 * 60 * 1000   // look back an extra hour to cover clock differences
 
@@ -94,8 +94,7 @@ async function flickrCall(tokenData: FlickrTokenData, method: string, params: Re
   let lastError: unknown
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const headers = getOAuthHeader(url, 'GET', tokenData)   // fresh signature each attempt
-      const res = await axios.get(url, { headers: { ...headers, 'User-Agent': USER_AGENT }, timeout: 30000 })
+      const res = await signedGet(url, tokenData)   // signed fresh on each attempt
       const data = res.data as Record<string, unknown>
       if (data.stat !== 'ok') throw new Error(String(data.message ?? 'Flickr returned an error'))
       return data
@@ -181,6 +180,10 @@ async function syncRawSpellings(db: Database.Database, tokenData: FlickrTokenDat
   } catch {
     return false   // spellings are a nice-to-have; the scan itself still succeeded
   }
+  // Nothing changed since the last time: keep what is stored instead of rewriting ~100,000 rows
+  const signature = createHash('sha1').update(JSON.stringify(entries)).digest('hex')
+  const stored = (db.prepare('SELECT COUNT(*) AS n FROM tag_raw').get() as { n: number }).n
+  if (stored > 0 && getMeta(db, 'raw_signature') === signature) return true
   const tagIds = loadTagIds(db)
   const insertRaw = db.prepare('INSERT OR IGNORE INTO tag_raw (tag_id, raw, raw_lower) VALUES (?, ?, ?)')
   const setDisplay = db.prepare('UPDATE tag_names SET display = ? WHERE id = ?')
@@ -196,6 +199,7 @@ async function syncRawSpellings(db: Database.Database, tokenData: FlickrTokenDat
       setDisplay.run(pickDisplay(spellings), id)
     }
   })()
+  setMeta(db, 'raw_signature', signature)
   return true
 }
 
@@ -213,10 +217,16 @@ async function runFullScan(db: Database.Database, tokenData: FlickrTokenData, se
   let photosDone = 0
 
   while (page <= pages) {
-    if (cancelRequested) { send({ mode: 'full', phase: 'cancelled', page, pages, photos: photosDone, total }); return }
-    const data = await flickrCall(tokenData, 'flickr.people.getPhotos', {
-      user_id: 'me', per_page: PER_PAGE, page, extras: 'tags,last_update'
-    })
+    if (cancelRequested) { recomputeCounts(db); send({ mode: 'full', phase: 'cancelled', page, pages, photos: photosDone, total }); return }
+    let data: Record<string, unknown>
+    try {
+      data = await flickrCall(tokenData, 'flickr.people.getPhotos', {
+        user_id: 'me', per_page: PER_PAGE, page, extras: 'tags,last_update'
+      })
+    } catch (err) {
+      recomputeCounts(db)   // pages already read stay; make the counts match what is stored
+      throw err
+    }
     const parsed = parsePhotosPage(data)
     pages = parsed.pages
     total = parsed.total
@@ -239,6 +249,7 @@ async function runFullScan(db: Database.Database, tokenData: FlickrTokenData, se
   setMeta(db, 'last_scan_at', Date.now())
   setMeta(db, 'last_full_scan_at', Date.now())
   setMeta(db, 'flickr_total', total)
+  clearTagSearchMemory()
   send({ mode: 'full', phase: 'done', page: pages, pages, photos: photosDone, total })
 }
 
@@ -254,10 +265,16 @@ async function runRefresh(db: Database.Database, tokenData: FlickrTokenData, sen
   let photosDone = 0
 
   while (page <= pages) {
-    if (cancelRequested) { send({ mode: 'refresh', phase: 'cancelled', page, pages, photos: photosDone, total: photosDone }); return }
-    const data = await flickrCall(tokenData, 'flickr.photos.recentlyUpdated', {
-      min_date: minDate, per_page: PER_PAGE, page, extras: 'tags,last_update'
-    })
+    if (cancelRequested) { recomputeCounts(db); send({ mode: 'refresh', phase: 'cancelled', page, pages, photos: photosDone, total: photosDone }); return }
+    let data: Record<string, unknown>
+    try {
+      data = await flickrCall(tokenData, 'flickr.photos.recentlyUpdated', {
+        min_date: minDate, per_page: PER_PAGE, page, extras: 'tags,last_update'
+      })
+    } catch (err) {
+      recomputeCounts(db)
+      throw err
+    }
     const parsed = parsePhotosPage(data)
     pages = parsed.pages
     indexPhotos(db, parsed.photos, scanId, tagIds)
@@ -275,6 +292,7 @@ async function runRefresh(db: Database.Database, tokenData: FlickrTokenData, sen
   setMeta(db, 'flickr_total', parsePhotosPage(totalData).total)
   setMeta(db, 'last_scan_start', startedAt)
   setMeta(db, 'last_scan_at', Date.now())
+  clearTagSearchMemory()
   send({ mode: 'refresh', phase: 'done', page: pages, pages, photos: photosDone, total: photosDone })
 }
 
@@ -341,16 +359,17 @@ function buildWhere(q: TagListQuery): { sql: string; params: (string | number)[]
   // Text matches the clean form ("newyork") or any as-typed spelling ("new york")
   const text = (q.text ?? '').trim().toLowerCase()
   if (text) {
+    const len = Array.from(text).length   // SQLite counts characters, not UTF-16 units
     const anyRaw = (test: string): string =>
       `EXISTS (SELECT 1 FROM tag_raw r WHERE r.tag_id = tag_names.id AND ${test})`
     switch (q.operator ?? 'contains') {
       case 'startsWith':
         conds.push(`(substr(name, 1, ?) = ? OR ${anyRaw('substr(r.raw_lower, 1, ?) = ?')})`)
-        params.push(text.length, text, text.length, text)
+        params.push(len, text, len, text)
         break
       case 'endsWith':
         conds.push(`(substr(name, ?) = ? OR ${anyRaw('substr(r.raw_lower, ?) = ?')})`)
-        params.push(-text.length, text, -text.length, text)
+        params.push(-len, text, -len, text)
         break
       case 'exact':
         conds.push(`(name = ? OR ${anyRaw('r.raw_lower = ?')})`)

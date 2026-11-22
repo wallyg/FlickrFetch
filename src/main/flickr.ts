@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { FLICKR_API_KEY } from './config'
 import { getOAuthHeader } from './auth'
+import { cleanTag, foldAccents } from '../shared/tags'
 import type { FlickrTokenData, FlickrUser, FlickrPhoto, PhotoPage, PhotoSize, PhotoInfo, FlickrAlbum, AlbumPage, FlickrCollection, FlickrSet, CameraExif, PhotoSearchParams, DiscoverUser, DiscoverContact, DiscoverGroup } from '../shared/types'
 
 const FLICKR_API_BASE = 'https://www.flickr.com/services/rest/'
@@ -429,46 +430,61 @@ export async function getCollectionTree(tokenData: FlickrTokenData): Promise<Fli
 
 // Flickr's tag search cannot find tags typed with some accented letters (é, ã, ñ, ç…) when it is
 // given the accented spelling: "québec" returns nothing while "quebec" finds the photos. Tags with
-// macrons (ō) or non-Latin letters (日本) are found as typed. So a tag search that comes back empty
-// is retried once with the accents removed, and the spelling that worked is remembered for the
-// following pages. The plain-letter search also returns photos tagged with the plain spelling
-// ("Montreal" as well as "Montréal"), so those results are asked to include their tags and the extras
-// are dropped again here, leaving exactly the photos that carry the tag that was asked for.
-const foldedTagQueries = new Map<string, string>()
+// macrons (ō) or non-Latin letters (日本) are found as typed. So each accented tag in a search is
+// checked once (a one-photo probe) and, if Flickr doesn't understand it as typed, sent without its
+// accents. The answer is remembered for half an hour and forgotten after a tag rescan. The plain-letter
+// search also returns photos tagged with the plain spelling ("Montreal" as well as "Montréal"), so those
+// searches ask for each photo's tags and the extras are dropped again here, leaving exactly the photos
+// that carry the tags that were asked for.
+const FOLD_MEMORY_MS = 30 * 60 * 1000
+const foldChoice = new Map<string, { folded: boolean; at: number }>()   // "owner|tag" -> sent without accents?
 const droppedExtras = new Map<string, number>()
 
-function foldAccents(s: string): string {
-  return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').normalize('NFC')
+export function clearTagSearchMemory(): void {
+  foldChoice.clear()
+  droppedExtras.clear()
 }
 
-// Flickr's own tag form: lower case, no spaces or punctuation
-function cleanTag(s: string): string {
-  return s.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '')
-}
-
-async function signedGet(url: string, tokenData: FlickrTokenData): Promise<{ data: Record<string, any> }> { // eslint-disable-line @typescript-eslint/no-explicit-any
+export async function signedGet(url: string, tokenData: FlickrTokenData): Promise<{ data: Record<string, any> }> { // eslint-disable-line @typescript-eslint/no-explicit-any
   const authHeader = getOAuthHeader(url, 'GET', tokenData)
-  return axios.get(url, { headers: { ...authHeader, 'User-Agent': USER_AGENT } })
+  return axios.get(url, { headers: { ...authHeader, 'User-Agent': USER_AGENT }, timeout: 30000 })
+}
+
+async function searchUnderstandsTag(tokenData: FlickrTokenData, ownerId: string, tag: string): Promise<boolean> {
+  const url = `${FLICKR_API_BASE}?method=flickr.photos.search` +
+    `&api_key=${encodeURIComponent(FLICKR_API_KEY)}&user_id=${encodeURIComponent(ownerId)}` +
+    `&tags=${encodeURIComponent(tag)}&per_page=1&format=json&nojsoncallback=1`
+  const r = await signedGet(url, tokenData)
+  return r.data.stat === 'ok' && Number(r.data.photos?.total) > 0
+}
+
+// Decide, tag by tag, which spelling to send. `folded` is true when any tag was sent without accents.
+async function resolveTagQuery(tokenData: FlickrTokenData, ownerId: string, tagQuery: string | undefined): Promise<{ query: string | undefined; folded: boolean }> {
+  if (!tagQuery) return { query: tagQuery, folded: false }
+  const sent: string[] = []
+  let folded = false
+  for (const tag of tagQuery.split(',').map(t => t.trim()).filter(Boolean)) {
+    const plain = foldAccents(tag)
+    if (plain === tag) { sent.push(tag); continue }
+    const key = `${ownerId}|${tag}`
+    let choice = foldChoice.get(key)
+    if (!choice || Date.now() - choice.at > FOLD_MEMORY_MS) {
+      choice = { folded: !(await searchUnderstandsTag(tokenData, ownerId, tag)), at: Date.now() }
+      foldChoice.set(key, choice)
+    }
+    if (choice.folded) { sent.push(plain); folded = true } else sent.push(tag)
+  }
+  return folded ? { query: sent.join(','), folded } : { query: tagQuery, folded: false }
 }
 
 interface TagSearchResult { response: { data: Record<string, any> }; folded: boolean } // eslint-disable-line @typescript-eslint/no-explicit-any
 
 // buildUrl(tags, withTags): withTags asks Flickr to include each photo's tags (needed to trim extras)
 async function searchWithTagFallback(
-  tokenData: FlickrTokenData, tagQuery: string | undefined, page: number, buildUrl: (tags: string | undefined, withTags: boolean) => string
+  tokenData: FlickrTokenData, ownerId: string, tagQuery: string | undefined, buildUrl: (tags: string | undefined, withTags: boolean) => string
 ): Promise<TagSearchResult> {
-  const remembered = tagQuery ? foldedTagQueries.get(tagQuery) : undefined
-  if (remembered) return { response: await signedGet(buildUrl(remembered, true), tokenData), folded: true }
-  const first = await signedGet(buildUrl(tagQuery, false), tokenData)
-  if (!tagQuery || page !== 1 || first.data.stat !== 'ok' || Number(first.data.photos?.total) > 0) return { response: first, folded: false }
-  const folded = foldAccents(tagQuery)
-  if (folded === tagQuery) return { response: first, folded: false }
-  const retry = await signedGet(buildUrl(folded, true), tokenData)
-  if (retry.data.stat === 'ok' && Number(retry.data.photos?.total) > 0) {
-    foldedTagQueries.set(tagQuery, folded)
-    return { response: retry, folded: true }
-  }
-  return { response: first, folded: false }
+  const { query, folded } = await resolveTagQuery(tokenData, ownerId, tagQuery)
+  return { response: await signedGet(buildUrl(query, folded), tokenData), folded }
 }
 
 // Keep only photos that really carry the requested tag(s); returns the total Flickr should be
@@ -483,6 +499,7 @@ function trimToRequestedTags<T extends Record<string, string>>(
     return search.tagMode === 'all' ? wanted.every(t => have.has(t)) : wanted.some(t => have.has(t))
   })
   const key = JSON.stringify([search, sort])
+  if (droppedExtras.size > 100) droppedExtras.clear()
   const dropped = (page === 1 ? 0 : droppedExtras.get(key) ?? 0) + (records.length - kept.length)
   droppedExtras.set(key, dropped)
   return { records: kept, total: Math.max(flickrTotal - dropped, kept.length) }
@@ -541,7 +558,7 @@ export async function getPhotos(tokenData: FlickrTokenData, page: number = 1, so
     return url
   }
 
-  const { response, folded } = await searchWithTagFallback(tokenData, search?.tagQuery, page, buildUrl)
+  const { response, folded } = await searchWithTagFallback(tokenData, tokenData.nsid, search?.tagQuery, buildUrl)
 
   if (response.data.stat !== 'ok') {
     throw new Error(`Flickr API error: ${response.data.message ?? 'unknown error'}`)
@@ -757,7 +774,7 @@ export async function getPublicPhotos(nsid: string, tokenData: FlickrTokenData, 
     return url
   }
 
-  const { response, folded } = await searchWithTagFallback(tokenData, search?.tagQuery, page, buildUrl)
+  const { response, folded } = await searchWithTagFallback(tokenData, nsid, search?.tagQuery, buildUrl)
   if (response.data.stat !== 'ok') throw new Error(response.data.message ?? 'unknown error')
   const data = response.data.photos
   const trimmed = trimToRequestedTags(data.photo as Record<string, string>[], search, sort, page, Number(data.total), folded)

@@ -66,6 +66,9 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
   const [tagsVisited, setTagsVisited] = useState(false)
   // Set when a tag is clicked in the photo detail while viewing an album; the album grid filters itself to it
   const [albumTagRequest, setAlbumTagRequest] = useState<{ tag: string; nonce: number } | null>(null)
+  // Which of those requests the grids have already applied (a grid that remounts must not replay an old one)
+  const handledTagSearch = useRef(0)
+  const handledAlbumTag = useRef(0)
   // Set when 'View photos' is pressed in the Tags tab; the photostream applies it as a tag search
   const [tagSearchRequest, setTagSearchRequest] = useState<{ tags: string[]; mode: TagMode; nonce: number } | null>(null)
   const [collectionPath, setCollectionPath] = useState<FlickrCollection[]>([])
@@ -732,6 +735,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             onFiltersActiveChange={setPhotostreamFiltersActive}
             tagSearchRequest={tagSearchRequest}
             onBackToTags={() => { setTagsVisited(true); setView('tags') }}
+            handledTagRequest={handledTagSearch}
           />
         </div>
         {tagsVisited && (
@@ -781,6 +785,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
               onPrivacyFilterChange={setAlbumPrivacyFilter}
               tagFilterRequest={albumTagRequest}
               onSearchWholePhotostream={showPhotostreamTag}
+              handledTagRequest={handledAlbumTag}
             />
           </div>
         )}

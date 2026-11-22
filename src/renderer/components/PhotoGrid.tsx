@@ -20,9 +20,11 @@ interface PhotoGridProps {
   tagSearchRequest?: { tags: string[]; mode: TagMode; nonce: number } | null
   // Shown next to the tag chip while viewing the result of a Tags tab search
   onBackToTags?: () => void
+  // Remembers which request was already applied, so remounting this grid (Refresh) doesn't replay it
+  handledTagRequest?: React.MutableRefObject<number>
 }
 
-export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onToggleSelect, onPhotosLoaded, onPageInfo, onSortChange, onFilteredPhotosChange, onFiltersActiveChange, tagSearchRequest, onBackToTags }: PhotoGridProps): React.JSX.Element {
+export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onToggleSelect, onPhotosLoaded, onPageInfo, onSortChange, onFilteredPhotosChange, onFiltersActiveChange, tagSearchRequest, onBackToTags, handledTagRequest }: PhotoGridProps): React.JSX.Element {
   const [photos, setPhotos] = useState<FlickrPhoto[]>([])
   const [page, setPage] = useState(1)
   const [pages, setPages] = useState(1)
@@ -143,7 +145,8 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
 
   // 'View photos' in the Tags tab: start over with just that tag search
   useEffect(() => {
-    if (!tagSearchRequest) return
+    if (!tagSearchRequest || handledTagRequest?.current === tagSearchRequest.nonce) return
+    if (handledTagRequest) handledTagRequest.current = tagSearchRequest.nonce
     const tq = tagSearchRequest.tags.join(', ')
     setMediaFilter('all'); setPrivacyFilter('all'); setDownloadFilter('all'); setLicenseFilter('all')
     setSearchQuery(''); setDateMode('all'); setDateCustomMin(''); setDateCustomMax('')
