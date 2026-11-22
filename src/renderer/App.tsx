@@ -54,7 +54,6 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'center',
     height: '100vh',
-    fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif'
   },
   loadingText: {
     color: '#999',

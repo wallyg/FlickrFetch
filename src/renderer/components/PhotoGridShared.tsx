@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import type { FlickrPhoto } from '../../shared/types'
+import type { FlickrPhoto, LicenseFilter, PhotoSearchParams } from '../../shared/types'
+export type { LicenseFilter }
 
 // ── Shared types ──────────────────────────────────────────────────────────────
 export type MediaFilter = 'all' | 'photo' | 'video'
@@ -149,9 +150,10 @@ interface PhotoListRowProps {
   isSelected?: boolean
   selectMode?: boolean
   onClick: (e: React.MouseEvent) => void
+  onContextMenu?: () => void
 }
 
-export function PhotoListRow({ photo, isDownloaded, isSelected, selectMode, onClick }: PhotoListRowProps): React.JSX.Element {
+export function PhotoListRow({ photo, isDownloaded, isSelected, selectMode, onClick, onContextMenu }: PhotoListRowProps): React.JSX.Element {
   const privacyLevel = getPrivacyLevel(photo)
   return (
     <div
@@ -162,6 +164,7 @@ export function PhotoListRow({ photo, isDownloaded, isSelected, selectMode, onCl
         background: isSelected ? 'rgba(255,0,132,0.06)' : 'transparent',
       }}
       onClick={onClick}
+      onContextMenu={onContextMenu}
     >
       {selectMode && (
         <div style={{
@@ -287,16 +290,17 @@ export function PrivacyIcon({ level }: { level: PrivacyLevel }): React.JSX.Eleme
   )
 }
 
-export function Tooltip({ text, children }: { text: string; children: React.ReactNode }): React.JSX.Element {
+export function Tooltip({ text, children, align = 'center', side = 'above' }: { text: string; children: React.ReactNode; align?: 'center' | 'right' | 'left'; side?: 'above' | 'below' }): React.JSX.Element {
   const [visible, setVisible] = useState(false)
   return (
     <span style={{ position: 'relative', display: 'inline-flex' }} onMouseEnter={() => setVisible(true)} onMouseLeave={() => setVisible(false)}>
       {children}
       {visible && (
         <span style={{
-          position: 'absolute', bottom: 'calc(100% + 6px)', left: '50%', transform: 'translateX(-50%)',
+          position: 'absolute', ...(side === 'below' ? { top: 'calc(100% + 6px)' } : { bottom: 'calc(100% + 6px)' }),
+          ...(align === 'right' ? { right: 0 } : align === 'left' ? { left: 0 } : { left: '50%', transform: 'translateX(-50%)' }),
           backgroundColor: '#333', color: '#fff', fontSize: '11px', lineHeight: '1.5',
-          padding: '5px 9px', borderRadius: '5px', maxWidth: '220px', whiteSpace: 'normal',
+          padding: '5px 9px', borderRadius: '5px', maxWidth: '220px', width: 'max-content', whiteSpace: 'pre-line',
           zIndex: 100, pointerEvents: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
           textAlign: 'left' as const
         }}>
@@ -327,6 +331,59 @@ export function DownloadFilterSelect({ value, onChange }: { value: DownloadFilte
       <option value="all">All photos</option>
       <option value="not-downloaded">Not downloaded</option>
       <option value="downloaded">Downloaded</option>
+    </select>
+  )
+}
+
+export const DRAWER_LABEL_WIDTH = 90
+
+// True when two server searches would return the same results (ignores key order and empty values),
+// so a filter change that doesn't alter the search doesn't trigger a pointless reload.
+export function sameSearchParams(a: PhotoSearchParams, b: PhotoSearchParams): boolean {
+  const key = (p: PhotoSearchParams): string => [
+    p.query || '', p.query ? (p.operator || 'contains') : '',
+    p.tagQuery || '', p.tagQuery ? (p.tagMode || 'any') : '',
+    (p.dateMin || p.dateMax) ? (p.dateField || 'taken') : '', p.dateMin || '', p.dateMax || ''
+  ].join('\u0001')
+  return key(a) === key(b)
+}
+
+const LICENSE_FILTER_OPTIONS:{ value: LicenseFilter; label: string }[] = [
+  { value: 'all',    label: 'All licenses' },
+  { value: 'cc',     label: 'Creative Commons' },
+  { value: 'public', label: 'Public Domain' },
+  { value: 'gov',    label: 'US Government' },
+  { value: 'arr',    label: 'All Rights Reserved' },
+]
+
+export const LICENSE_FILTER_LABEL: Record<LicenseFilter, string> = Object.fromEntries(
+  LICENSE_FILTER_OPTIONS.map(o => [o.value, o.label])
+) as Record<LicenseFilter, string>
+
+export const LICENSE_FILTER_IDS: Record<LicenseFilter, string[]> = {
+  all:    [],
+  cc:     ['1', '2', '3', '4', '5', '6', '11', '12', '13', '14', '15', '16'],
+  public: ['7', '9', '10'],
+  gov:    ['8'],
+  arr:    ['0'],
+}
+
+export function matchesLicenseFilter(license: string | undefined, filter: LicenseFilter): boolean {
+  if (filter === 'all') return true
+  // Unknown license (not fetched) never matches a specific license group
+  return license !== undefined && LICENSE_FILTER_IDS[filter].includes(String(license))
+}
+
+export function LicenseFilterSelect({ value, onChange }: { value: LicenseFilter; onChange: (v: LicenseFilter) => void }): React.JSX.Element {
+  return (
+    <select
+      style={{ ...sharedStyles.sortSelect, minWidth: '140px' }}
+      value={value}
+      onChange={e => onChange(e.target.value as LicenseFilter)}
+    >
+      {LICENSE_FILTER_OPTIONS.map(o => (
+        <option key={o.value} value={o.value}>{o.label}</option>
+      ))}
     </select>
   )
 }
@@ -374,7 +431,7 @@ export const sharedStyles: Record<string, React.CSSProperties> = {
   toolbar: { display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' as const, padding: '10px 16px 8px' },
   drawer: { display: 'flex', flexDirection: 'column' as const, borderTop: '1px solid #ece8e2', backgroundColor: '#faf9f7' },
   drawerRow: { display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' as const, padding: '7px 16px', borderBottom: '1px solid #f0ede8' },
-  drawerLabel: { fontSize: '11px', fontWeight: '600', color: '#999', textTransform: 'uppercase' as const, letterSpacing: '0.04em', minWidth: '52px' },
+  drawerLabel: { fontSize: '11px', fontWeight: '600', color: '#999', textTransform: 'uppercase' as const, letterSpacing: '0.04em', minWidth: `${DRAWER_LABEL_WIDTH}px` },
   // Search / filter controls
   searchGroup: { display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '6px', overflow: 'hidden', backgroundColor: '#fff' },
   searchIcon: { display: 'flex', alignItems: 'center', padding: '0 4px 0 8px', color: '#aaa', flexShrink: 0 },
@@ -412,7 +469,6 @@ export const sharedStyles: Record<string, React.CSSProperties> = {
   dateInputsInline: { display: 'flex', alignItems: 'center', gap: '5px' },
   dateInput: { border: '1px solid #ddd', borderRadius: '5px', padding: '4px 6px', fontSize: '12px', color: '#444', background: '#fff' },
   dateToLabel: { fontSize: '12px', color: '#888' },
-  applyBtn: { backgroundColor: '#111', border: 'none', borderRadius: '5px', padding: '4px 10px', fontSize: '12px', color: '#fff', cursor: 'pointer' },
   comingSoon: { fontSize: '12px', color: '#bbb' },
   downloadFilterBtn: { background: 'none', border: '1px solid #ddd', borderRadius: '6px', padding: '5px 10px', fontSize: '12px', color: '#555', cursor: 'pointer', whiteSpace: 'nowrap' as const },
   downloadFilterBtnActive: { backgroundColor: '#111', color: '#fff', borderColor: '#111' },
@@ -421,7 +477,5 @@ export const sharedStyles: Record<string, React.CSSProperties> = {
   // Empty / error states
   centered: { display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', height: '100%', gap: '12px' },
   mutedText: { color: '#888', fontSize: '15px', margin: 0 },
-  emptyFilter: { display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', gap: '12px', padding: '48px 24px', textAlign: 'center' as const },
-  emptyFilterMsg: { color: '#888', fontSize: '14px', margin: 0 },
   clearFiltersBtn: { background: 'none', border: '1px solid #ccc', borderRadius: '6px', padding: '6px 16px', fontSize: '13px', color: '#555', cursor: 'pointer' },
 }

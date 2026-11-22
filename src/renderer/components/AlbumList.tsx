@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import type { FlickrAlbum } from '../../shared/types'
 import { GridIcon, ListIcon, loadAlbumViewMode, saveAlbumViewMode, type AlbumViewMode, type GridSize } from './PhotoGridShared'
+import BackToTop from '../ui/BackToTop'
+import { useFindShortcut } from '../hooks/useFindShortcut'
 
 type AlbumSearchOperator = 'contains' | 'starts' | 'ends' | 'exact'
 
@@ -18,9 +20,12 @@ const COVER_HEIGHT: Record<GridSize, string> = {
 
 interface AlbumListProps {
   onAlbumSelect: (album: FlickrAlbum) => void
+  active?: boolean   // this tab is showing (Cmd+F then jumps to the search box)
 }
 
-export default function AlbumList({ onAlbumSelect }: AlbumListProps): React.JSX.Element {
+export default function AlbumList({ onAlbumSelect, active = true }: AlbumListProps): React.JSX.Element {
+  const searchRef = useRef<HTMLInputElement | null>(null)
+  useFindShortcut(active, searchRef)
   const [albums, setAlbums] = useState<FlickrAlbum[]>([])
   const [pageInfo, setPageInfo] = useState<{ page: number; pages: number; total: number } | null>(null)
   const [loading, setLoading] = useState(true)
@@ -126,6 +131,7 @@ export default function AlbumList({ onAlbumSelect }: AlbumListProps): React.JSX.
             <option value="exact">Exact match</option>
           </select>
           <input
+            ref={searchRef}
             style={styles.searchInput}
             type="text"
             placeholder="Search albums…"
@@ -222,6 +228,7 @@ export default function AlbumList({ onAlbumSelect }: AlbumListProps): React.JSX.
           {tooltip.title}
         </div>
       )}
+      <BackToTop />
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import type { FlickrCollection, FlickrSet } from '../../shared/types'
 import { GridIcon, ListIcon, loadAlbumViewMode, saveAlbumViewMode, type AlbumViewMode, type GridSize } from './PhotoGridShared'
+import BackToTop from '../ui/BackToTop'
 
 interface CollectionDetailProps {
   collection: FlickrCollection
@@ -74,6 +75,7 @@ export default function CollectionDetail({ collection, onCollectionSelect, onSet
           )}
         </section>
       )}
+      <BackToTop />
     </div>
   )
 }

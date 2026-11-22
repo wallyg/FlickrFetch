@@ -27,6 +27,8 @@ const DEFAULT_METADATA: MetadataSettings = {
   embedLicense: true,
   embedPhotoUrl: true,
   embedPhotoId: true,
+  writeSidecarJson: false,
+  keepDescriptionHtml: false,
 }
 
 const defaults: AppSettings = {
@@ -38,6 +40,8 @@ const defaults: AppSettings = {
   downloadSize: 'original',
   openFinderOnComplete: true,
   metadata: DEFAULT_METADATA,
+  onThisDayCard: true,
+  onThisDayNotify: false,
 }
 
 export function ensureDownloadFolder(folder: string): void {

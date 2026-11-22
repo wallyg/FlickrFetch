@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import type { FlickrPhoto, PhotoSize, PhotoInfo, DownloadSize, CameraExif } from '../../shared/types'
+import { descriptionToPlainText } from '../../shared/description'
+import { buildAttribution, canCopyAttribution, LICENSE_MAP } from '../../shared/licenses'
+import DescriptionView from './DescriptionView'
 
 const PANEL_WIDTH_KEY = 'flickrfetch:detail-panel-width'
 const PANEL_MIN = 240
@@ -16,25 +19,7 @@ function loadPanelWidth(): number {
 
 type DownloadState = 'idle' | 'downloading' | 'done' | 'error'
 
-const LICENSE_NAMES: Record<string, string> = {
-  '0':  'All Rights Reserved',
-  '1':  'CC BY-NC-SA 2.0',
-  '2':  'CC BY-NC 2.0',
-  '3':  'CC BY-NC-ND 2.0',
-  '4':  'CC BY 2.0',
-  '5':  'CC BY-SA 2.0',
-  '6':  'CC BY-ND 2.0',
-  '7':  'No Known Copyright Restrictions',
-  '8':  'US Government Work',
-  '9':  'CC0 1.0 Universal',
-  '10': 'Public Domain Mark 1.0',
-  '11': 'CC BY 4.0',
-  '12': 'CC BY-SA 4.0',
-  '13': 'CC BY-ND 4.0',
-  '14': 'CC BY-NC 4.0',
-  '15': 'CC BY-NC-SA 4.0',
-  '16': 'CC BY-NC-ND 4.0',
-}
+const licenseName = (license: string): string => (LICENSE_MAP[license] ?? LICENSE_MAP['0']).name
 
 const LICENSE_ICONS: Record<string, string[]> = {
   '1':  ['CC', 'BY', 'NC', 'SA'],
@@ -113,12 +98,12 @@ function formatDownloadDateTime(ms: number): string {
 }
 
 function getPrivacyBadge(photo: FlickrPhoto): { label: string; bg: string; color: string } {
-  if (photo.ispublic === 1) return { label: 'Public', bg: '#e8f8ea', color: '#27ae60' }
+  if (photo.ispublic === 1) return { label: 'Public', bg: 'var(--ff-success-bg)', color: 'var(--ff-success)' }
   if (photo.ispublic === undefined) return { label: 'Unknown', bg: '#f5f5f5', color: '#999' }
   if (photo.isfriend === 1 && photo.isfamily === 1) return { label: 'Friends & Family', bg: '#fff3e0', color: '#e67e22' }
   if (photo.isfriend === 1) return { label: 'Friends', bg: '#e8f4fd', color: '#2980b9' }
   if (photo.isfamily === 1) return { label: 'Family', bg: '#f0e8fd', color: '#8e44ad' }
-  return { label: 'Private', bg: '#fce8e8', color: '#c0392b' }
+  return { label: 'Private', bg: 'var(--ff-error-bg)', color: 'var(--ff-error)' }
 }
 
 function CopyButton({ text }: { text: string }): React.JSX.Element {
@@ -144,6 +129,22 @@ function CopyButton({ text }: { text: string }): React.JSX.Element {
   )
 }
 
+// A small labelled button that copies text and briefly says so
+function CopyActionButton({ label, title, getText }: { label: string; title: string; getText: () => string }): React.JSX.Element {
+  const [copied, setCopied] = useState(false)
+  return (
+    <button
+      style={styles.actionBtn}
+      title={title}
+      onClick={() => {
+        navigator.clipboard.writeText(getText())
+          .then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500) })
+          .catch(() => {})
+      }}
+    >{copied ? '✓ Copied' : label}</button>
+  )
+}
+
 interface PhotoDetailProps {
   photo: FlickrPhoto
   index: number
@@ -156,10 +157,12 @@ interface PhotoDetailProps {
   onClose: () => void
   sourceName: string
   discoverMode?: boolean
+  // When given, each tag is a button that calls this (My Flickr only; Discover shows plain tags)
+  onTagClick?: (tag: string) => void
 }
 
 export default function PhotoDetail({
-  photo, index, total, hasMore, canGoPrev, canGoNext, onPrev, onNext, onClose, sourceName, discoverMode = false
+  photo, index, total, hasMore, canGoPrev, canGoNext, onPrev, onNext, onClose, sourceName, discoverMode = false, onTagClick
 }: PhotoDetailProps): React.JSX.Element {
   const [sizes, setSizes] = useState<PhotoSize[]>([])
   const [info, setInfo] = useState<PhotoInfo | null>(null)
@@ -320,9 +323,45 @@ export default function PhotoDetail({
   }
 
   const privacyBadge = discoverMode
-    ? { label: 'Public', bg: '#e8f8ea', color: '#27ae60' }
+    ? { label: 'Public', bg: 'var(--ff-success-bg)', color: 'var(--ff-success)' }
     : getPrivacyBadge(photo)
   const originalSize = sizes.find(s => s.label === 'Original') ?? sizes.filter(s => s.media === 'photo').at(-1)
+
+  // Link to the photo's Flickr page (photo.gne redirects to the right page when the owner's name isn't known yet)
+  const photoUrl = info?.ownerPathAlias
+    ? `https://www.flickr.com/photos/${info.ownerPathAlias}/${info.id}`
+    : `https://www.flickr.com/photo.gne?id=${photo.id}`
+
+  const buildMetadataText = (): string => {
+    if (!info) return ''
+    const lines: string[] = [`Title: ${photo.title || 'Untitled'}`]
+    const desc = descriptionToPlainText(info.description)
+    if (desc) {
+      if (desc.includes('\n')) lines.push(`Description:\n${desc}\n`)
+      else lines.push(`Description: ${desc}`)
+    }
+    if (info.tags.length > 0) lines.push(`Tags: ${info.tags.join(', ')}`)
+    if (photo.dateTaken) lines.push(`Date taken: ${formatDate(photo.dateTaken)}`)
+    if (photo.datePosted) lines.push(`Date posted: ${formatUnixDate(photo.datePosted)}`)
+    if (photo.lastUpdate != null && photo.lastUpdate > 0) lines.push(`Date updated: ${formatUnixDateSec(photo.lastUpdate)}`)
+    if (info.locationName) lines.push(`Location: ${info.locationName}`)
+    if (info.latitude != null && info.longitude != null) lines.push(`Coordinates: ${info.latitude}, ${info.longitude}`)
+    if (exif) {
+      if (exif.camera) lines.push(`Camera: ${exif.camera}`)
+      if (exif.lens) lines.push(`Lens: ${exif.lens}`)
+      if (exif.aperture) lines.push(`Aperture: ${exif.aperture}`)
+      if (exif.shutterSpeed) lines.push(`Shutter: ${exif.shutterSpeed}`)
+      if (exif.iso) lines.push(`ISO: ${exif.iso}`)
+      if (exif.focalLength) lines.push(`Focal length: ${exif.focalLength}`)
+    }
+    if (originalSize) lines.push(`Resolution: ${originalSize.width} × ${originalSize.height}`)
+    lines.push(`License: ${licenseName(info.license)}`)
+    if (info.ownerName) lines.push(`Owner: ${info.ownerName}`)
+    lines.push(`Privacy: ${privacyBadge.label}`)
+    lines.push(`Photo URL: ${photoUrl}`)
+    lines.push(`Photo ID: ${info.id}`)
+    return lines.join('\n')
+  }
 
   // Find the best video source URL from sizes — widen filter to check label too,
   // since Flickr sometimes tags video sizes with media:'photo'
@@ -436,6 +475,20 @@ export default function PhotoDetail({
             </span>
           </div>
 
+          <div style={styles.actionRow}>
+            <button style={styles.actionBtn} title="Open this photo's page on Flickr" onClick={() => window.flickrAPI.openExternal(photoUrl)}>Open on Flickr ↗</button>
+            {info && canCopyAttribution(info.license) && (
+              <CopyActionButton
+                label="Copy attribution"
+                title="Copy a credit line for this Creative Commons photo"
+                getText={() => buildAttribution(info.license, photo.title, info.ownerName, photoUrl)}
+              />
+            )}
+            {info && (
+              <CopyActionButton label="Copy all metadata" title="Copy every field shown here as plain text" getText={buildMetadataText} />
+            )}
+          </div>
+
           {!loadingDetail && originalSize && (
             <div style={{ marginBottom: '4px' }}>
               <p style={{ ...styles.fieldLabel, marginBottom: '2px' }}>Photo Resolution</p>
@@ -492,10 +545,10 @@ export default function PhotoDetail({
             <div style={styles.section}>
               <div style={{ display: 'flex', alignItems: 'center', marginBottom: '6px' }}>
                 <p style={{ ...styles.fieldLabel, margin: 0, flex: 1 }}>Description</p>
-                {info.description && <CopyButton text={info.description} />}
+                {info.description && <CopyButton text={descriptionToPlainText(info.description)} />}
               </div>
               {info.description
-                ? <p style={{ ...styles.fieldValue, margin: 0 }}>{info.description}</p>
+                ? <DescriptionView html={info.description} style={{ ...styles.fieldValue, margin: 0 }} />
                 : <p style={{ ...styles.fieldValue, margin: 0, color: '#bbb', fontStyle: 'italic' as const }}>No description</p>
               }
             </div>
@@ -508,7 +561,10 @@ export default function PhotoDetail({
                 {info.tags.length > 0 && <CopyButton text={info.tags.join(', ')} />}
               </div>
               {info.tags.length > 0
-                ? <div style={styles.tagWrap}>{info.tags.map(tag => <span key={tag} style={styles.tag}>{tag}</span>)}</div>
+                ? <div style={styles.tagWrap}>{info.tags.map(tag => onTagClick
+                    ? <button key={tag} style={styles.tagButton} title={`Show photos tagged "${tag}"`} onClick={() => onTagClick(tag)}>{tag}</button>
+                    : <span key={tag} style={styles.tag}>{tag}</span>
+                  )}</div>
                 : <p style={{ ...styles.fieldValue, margin: 0, color: '#bbb', fontStyle: 'italic' as const }}>No tags</p>
               }
             </div>
@@ -534,7 +590,7 @@ export default function PhotoDetail({
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' as const }}>
                 {LICENSE_ICONS[info.license]?.map(label => <CcBadge key={label} label={label} />)}
                 <span style={{ ...styles.fieldValue, marginLeft: LICENSE_ICONS[info.license] ? '2px' : 0 }}>
-                  {LICENSE_NAMES[info.license] ?? LICENSE_NAMES['0']}
+                  {licenseName(info.license)}
                 </span>
               </div>
             </div>
@@ -856,6 +912,31 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundColor: '#f0ece6',
     color: '#666',
     userSelect: 'text' as const,
+  },
+  tagButton: {
+    fontSize: '11px',
+    padding: '2px 8px',
+    borderRadius: '20px',
+    backgroundColor: '#f0ece6',
+    color: '#666',
+    border: 'none',
+    cursor: 'pointer',
+    fontFamily: 'inherit',
+  },
+  actionRow: {
+    display: 'flex',
+    flexWrap: 'wrap' as const,
+    gap: '6px',
+    margin: '8px 0 12px',
+  },
+  actionBtn: {
+    background: '#fff',
+    border: '1px solid #ddd',
+    borderRadius: '6px',
+    padding: '4px 9px',
+    fontSize: '12px',
+    color: '#555',
+    cursor: 'pointer',
   },
   copyBtn: {
     background: 'none',

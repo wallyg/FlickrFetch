@@ -102,7 +102,7 @@ export default function DownloadConfirmModal({ pending, settingsKey, onCancel, o
                     <div style={s.metaGrid}>
                       {onFields.map(({ key, label }) => (
                         <div key={key} style={s.metaItem}>
-                          <span style={{ ...s.metaCheck, color: '#27ae60' }}>✓</span>
+                          <span style={{ ...s.metaCheck, color: 'var(--ff-success)' }}>✓</span>
                           <span style={{ ...s.metaLabel, color: '#222' }}>{label}</span>
                         </div>
                       ))}

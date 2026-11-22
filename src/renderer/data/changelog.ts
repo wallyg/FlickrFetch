@@ -7,6 +7,78 @@ export interface Release {
 
 const changelog: Release[] = [
   {
+    version: '3.5',
+    date: 'November 2026',
+    highlights: [
+      'On This Day — a new tab shows photos taken on today\'s date in other years, grouped by year. A big calendar page anchors the top, with Yesterday and Tomorrow beside it and a Jump to date button; boxes below show the years as bars (busiest highlighted), the most-used tags with counts, the time of day as a small chart, and how many photos have a location. A public / not public switch filters the view',
+      'On This Day card and notification — a one-line notice at the top of My Flickr tells you how many photos you took on this date; point at it to see the years, the busiest year, the most common tags and a few of the photos (hide it for the day, or turn it off in Settings). Optionally get one macOS notification a day while FlickrFetch is open',
+      'Timeline — a new tab shades every month you took photos. Click a month to see it day by day as a calendar, then click a day to see its photos. A key above the grid explains the shading, a back button says where it goes, and arrows step to the previous or next month or day. Open any month or day in the Photostream, or download it',
+      'Camera roll — click a day on the Timeline to see its photos, or press Camera roll on a month to see the whole month in calendar order, grouped by day with a heading for each, oldest or newest first. See in On This Day shows that date across the years',
+      'Easier long pages — a round up-arrow button appears at the bottom right of On This Day, the Timeline and the camera roll once you scroll down, and takes you back to the top. On This Day also puts a line between years, shows each year\'s Open in Photostream and Download as small buttons with icons, and shows tag counts in brackets so they do not read as part of the tag',
+      'Collages and cards — turn a day\'s photos into a shareable picture: choose 1 to 6 photos, a layout (Grid, Feature, Banner, Row, Column) and a frame (Polaroid, Matched, Paper, Gallery, Film) whose colors come from your photos. Tick "Use public photos only" to leave out private ones. Add short Flickr links, then save or copy the image at standard or large size and in a shape that suits where it is going: auto, square, portrait, story or wide, with the photos resizing to fill the shape. Each collage opens with a calendar page, "On This Day", how many photos that day holds, and its most common tags on one row, with a small "Created with FlickrFetch" mark in the corner, and every year sits on its own photo. If you ticked photos first you can use those or one from each year',
+      'Tags browsing — clicking # now opens a row of digits 0 to 9, and Other opens a row of writing systems (Chinese & Japanese, Accented Latin, Greek, Cyrillic and more), with accented Latin split by plain letter when the group is large',
+      'New Health Check tab and tab bar — Tag audit and Photo health moved out of the Tags tab into their own Health Check tab (switch between the two at the top). The Tags tab is back to browsing tags, with a pointer to Health Check. The controls on Health Check now share one compact row (the On This Day card steps aside on Health Check, Tags and Timeline), so more of the report fits on screen. In the lists, the Open / Marked fine choice, sort and export now sit in the left column under the problem types, and the text filter is gone. Tabs are now grouped with thin dividers: Photostream, Albums, Collections | On This Day, Timeline | Tags, Health Check. Each line in the audit Plan box now shows its problem type and has a ✕ to remove it, and the audit lists can be sorted by most photos, fewest photos or A to Z',
+      'Health Check front page and Tune checks — Health Check now opens on an Overview with a scorecard for Tags and for Photos, the best places to start across both, and the optional checks. Every check is an Issue (a problem that needs attention, counted in your score), a Warning (listed, never lowers the score) or Off, and Tune checks (a tab in Settings, also reached from the Health Check tab) lets you set each one, and FlickrFetch can quietly Update your library list for you: every time you open it, once a day (the default), or never. Update replaces Refresh and Rebuild replaces Full rescan, both behind one data button that shows how fresh your library list is. Plan opens as a panel from its button instead of pushing the page down, and both dashboards are redesigned around one headline, one chart by type and a best places to start list',
+      'One look for buttons — the main action on each screen is now pink everywhere, chosen switches and list rows share one soft pink highlight, and other buttons share one quiet style',
+      'One more scan — On This Day and the Timeline need your library list rebuilt once more (Rebuild on the Health Check tab, a few minutes) to learn which photos are public and where they were taken. Until then everything works except the public / not public switch. Nothing on Flickr is changed',
+      'The About screen now says FlickrFetch checks GitHub for new versions (there are still no FlickrFetch servers, analytics or tracking), and the Problem screen no longer lists album names among the embedded fields'
+    ]
+  },
+  {
+    version: '3.4',
+    date: 'November 2026',
+    highlights: [
+      'Tag audit — a new Audit switch in the Tags tab lists likely tag problems by type: names stuck together after a lost comma, possible typos, accented tags with no plain twin (Flickr search can\'t find accented tags), plain tags that may need accents, odd characters, run-ons, and tags typed more than one way. Each finding has an editable suggested fix',
+      'Plan and "This one is fine" — add findings to a plan, a checklist to work through on Flickr (copy it or save it as a spreadsheet), or mark a finding fine to hide it for good. After a Refresh, items you\'ve fixed tick themselves off',
+      'Export this list and Open on Flickr — save any list as a spreadsheet (it opens in your Downloads folder), and jump from any tag straight to its page on Flickr',
+      'Metadata health — a new Health switch lists photos with no title or a camera-file title (IMG_1234), no description, no tags, or no location, with thumbnails, as a to-do list for Flickr',
+      'Dashboards — both Audit and Health open on an Overview: number tiles, bars by type, how clean your library is, the biggest single issues, a by-year chart, and where the gaps cluster. Click anything to open its list',
+      'One more scan — Health needs your tag list rebuilt once (Full rescan, a few minutes). It also keeps titles, descriptions, locations and thumbnails on your computer. Nothing on Flickr is changed',
+      'The Full rescan confirmation now says "Rescan" instead of "Queue Again"'
+    ]
+  },
+  {
+    version: '3.3',
+    date: 'November 2026',
+    highlights: [
+      'Tags tab — a new tab in My Flickr that lists every tag you\'ve used. Build the list once (a minute or two for a big library), then browse by letter, narrow with a second row of letters, or search by "contains", "starts with", "ends with", or exact match. Pick several tags and press View photos to see them in your photostream, ready to download',
+      'Tags show as you typed them — "New York" instead of "newyork" — and tags you\'ve typed more than one way are flagged. Searching "new york" or "newyork" finds the same tag',
+      'Refresh and Full rescan — Refresh only reads photos that changed since last time; Full rescan starts over. Press Cmd+F (Ctrl+F on Windows) to jump to the tag search',
+      'Click a tag — in a photo\'s details, every tag is now a button. From your photostream it shows all your photos with that tag; from inside an album it filters that album, with a link to search your whole photostream instead',
+      'Links in descriptions work — links, bold, italic, and lists in a photo\'s description now display properly instead of showing raw code',
+      'Cleaner descriptions in your files — downloaded photos now get a plain-text description (links written as "text (address)"). A new "Keep Flickr\'s HTML" switch in Settings → Metadata keeps the original instead',
+      'New buttons on every photo — Open on Flickr, Copy attribution (a ready-made credit line for Creative Commons photos), and Copy all metadata. Right-click a photo in the grid for Open on Flickr and Copy Flickr link',
+      'Fixed tag searches that found nothing for tags with accented letters, such as Québec or Honshū',
+      'Easier-to-read tooltips and confirmation messages — separate ideas now sit on their own lines',
+    ]
+  },
+  {
+    version: '3.2',
+    date: 'November 2026',
+    highlights: [
+      'License filter — filter photos in your photostream and albums, Groups, and People by Creative Commons, Public Domain, US Government, or All Rights Reserved, so you can find photos you\'re free to reuse',
+      'Filters respond as you go — the Apply buttons are gone; dropdowns and buttons take effect instantly, typed searches run when you pause, and your photos stay on screen (dimmed) while new results load instead of flashing blank',
+      'Brand waves — the soft FlickrFetch wave pattern now appears in the About window and behind the People and My Groups headers',
+      'Friendlier empty screens — "nothing here" messages now say what\'s going on and what to try next',
+      'Sidecar JSON files — an opt-in setting (Settings → Metadata → Output files) that saves a companion .json file next to each downloaded photo with its title, tags, date, location, and license',
+      'Clearer download history — each batch now shows a colored status dot and badges for downloaded, errors, and skipped, with expandable details; failed photos open by default when a batch partly succeeded',
+      'Lato throughout — the brand typeface now appears across the whole app, not just the sign-in screen',
+      'Brand color cleanup — buttons, badges, and status messages now use one consistent set of brand colors',
+      'Branded installer — the Mac installer window now has the FlickrFetch look',
+      'Smaller app — the logo image is a third of its previous size',
+    ]
+  },
+  {
+    version: '3.1',
+    date: 'November 2026',
+    highlights: [
+      'Group photo date filter — narrow a group\'s photos by when they were taken or posted, using presets or a custom range',
+      'Filters now apply when you say so — the Groups filter drawer has an Apply button, so changing several filters no longer reloads the grid after each one',
+      'Large group warning — downloading all photos from a very large group now asks you to confirm first, since it can take a while to start',
+      'Fixed the grid going blank when filters emptied the results and then cleared',
+    ]
+  },
+  {
     version: '3.0',
     date: 'November 2026',
     milestone: 'FlickrFetch 3.0 — justified photo grid with real aspect ratios, plus polish throughout',

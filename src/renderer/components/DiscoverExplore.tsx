@@ -2,6 +2,8 @@ import React, { useState, useEffect, useLayoutEffect, useCallback, useRef, useMe
 import type { FlickrPhoto, PhotoPage } from '../../shared/types'
 import PhotoDetail from './PhotoDetail'
 import { GridIcon, ListIcon, JustifiedIcon, sharedStyles as ss, type PhotoViewMode, PhotoListRow, loadPhotoViewMode, savePhotoViewMode, loadRowHeight, saveRowHeight, computeJustifiedRows } from './PhotoGridShared'
+import EmptyState from './EmptyState'
+import { DISCOVER_GUTTER } from './WaveHeader'
 
 interface Props {
   onDownload?: (photo: FlickrPhoto) => void
@@ -184,7 +186,7 @@ export default function DiscoverExplore({ onDownload }: Props): React.JSX.Elemen
       )}
 
       {!loading && !error && photos.length === 0 && (
-        <div style={s.emptyState}>No photos found.</div>
+        <EmptyState title="No photos found" body="Try again in a moment." />
       )}
 
       {photos.length > 0 && (
@@ -380,7 +382,7 @@ const sb: Record<string, React.CSSProperties> = {
 }
 
 const s: Record<string, React.CSSProperties> = {
-  container: { display: 'flex', flexDirection: 'column', gap: '16px', padding: '0 20px 32px' },
+  container: { display: 'flex', flexDirection: 'column', gap: '16px', padding: `0 ${DISCOVER_GUTTER}px 32px` },
   stickyHeader: { position: 'sticky' as const, top: 0, zIndex: 10, background: '#fff', paddingBottom: '8px' },
   headerRow: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', paddingTop: '20px' },
   heading: { margin: 0, fontSize: '18px', fontWeight: 600, color: '#1a1a1a' },
@@ -398,13 +400,13 @@ const s: Record<string, React.CSSProperties> = {
     cursor: 'pointer', borderRadius: '4px', background: '#f0f0f0',
   },
   tileHover: { opacity: 0.9 },
-  tileSelected: { outline: '3px solid #FF0084', outlineOffset: '-3px' },
+  tileSelected: { outline: '3px solid var(--ff-pink)', outlineOffset: '-3px' },
   checkOverlay: {
     position: 'absolute', inset: 0, background: 'rgba(255,0,132,0.25)',
     display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', padding: '6px',
   },
   check: {
-    width: '20px', height: '20px', borderRadius: '50%', background: '#FF0084',
+    width: '20px', height: '20px', borderRadius: '50%', background: 'var(--ff-pink)',
     color: '#fff', fontSize: '11px', fontWeight: 700,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
   },
@@ -423,7 +425,6 @@ const s: Record<string, React.CSSProperties> = {
     background: '#fff', cursor: 'pointer', fontSize: '13px', color: '#444'
   },
   loadingState: { textAlign: 'center', color: '#888', fontSize: '14px', paddingTop: '48px' },
-  errorState: { textAlign: 'center', color: '#c0392b', fontSize: '14px', paddingTop: '48px' },
-  emptyState: { textAlign: 'center', color: '#888', fontSize: '14px', paddingTop: '48px' },
+  errorState: { textAlign: 'center', color: 'var(--ff-error)', fontSize: '14px', paddingTop: '48px' },
   selectToggleBtn: { padding: '6px 14px', borderRadius: '8px', border: '1px solid #ddd', background: '#fff', cursor: 'pointer', fontSize: '13px', color: '#444', flexShrink: 0 },
 }

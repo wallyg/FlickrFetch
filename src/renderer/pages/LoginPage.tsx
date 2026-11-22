@@ -1,8 +1,5 @@
 import React, { useState } from 'react'
 import logoTrayImg from '../assets/logo-tray.png'
-import '@fontsource/lato/400.css'
-import '@fontsource/lato/700.css'
-import '@fontsource/lato/400-italic.css'
 import type { FlickrUser } from '../../shared/types'
 import ProblemModal from '../components/ProblemModal'
 

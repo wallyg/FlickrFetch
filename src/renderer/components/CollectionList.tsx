@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import type { FlickrCollection } from '../../shared/types'
+import BackToTop from '../ui/BackToTop'
 
 type SearchOperator = 'contains' | 'starts' | 'ends' | 'exact'
 
@@ -89,6 +90,7 @@ export default function CollectionList({ onCollectionSelect }: CollectionListPro
             ))}
           </div>
         )}
+        <BackToTop />
       </div>
     </div>
   )

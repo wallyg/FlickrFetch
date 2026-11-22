@@ -1,12 +1,18 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import type { FlickrUser, FlickrPhoto, FlickrAlbum, FlickrCollection, FlickrSet, BatchProgress } from '../../shared/types'
+import type { FlickrUser, FlickrPhoto, FlickrAlbum, FlickrCollection, FlickrSet, BatchProgress, TagMode } from '../../shared/types'
 import PhotoGrid from '../components/PhotoGrid'
 import PhotoDetail from '../components/PhotoDetail'
 import SettingsModal from '../components/SettingsModal'
+import type { SettingsTab } from '../components/SettingsModal'
 import AlbumList from '../components/AlbumList'
 import AlbumPhotoGrid from '../components/AlbumPhotoGrid'
 import CollectionList from '../components/CollectionList'
 import CollectionDetail from '../components/CollectionDetail'
+import TagsPanel from '../components/TagsPanel'
+import CleanupPanel from '../components/CleanupPanel'
+import OnThisDayPanel from '../components/OnThisDayPanel'
+import TimelinePanel from '../components/TimelinePanel'
+import OnThisDayCard from '../components/OnThisDayCard'
 import DownloadQueueBar from '../components/DownloadQueueBar'
 import AboutModal from '../components/AboutModal'
 import DownloadConfirmModal, { type PendingDownload } from '../components/DownloadConfirmModal'
@@ -36,7 +42,7 @@ function IconBtn({ label, onClick, children, badge, showLabel }: { label: string
   )
 }
 
-type MainView = 'photostream' | 'albums' | 'album-detail' | 'collections' | 'collection-detail' | 'photo-detail'
+type MainView = 'photostream' | 'tags' | 'cleanup' | 'onthisday' | 'timeline' | 'albums' | 'album-detail' | 'collections' | 'collection-detail' | 'photo-detail'
 
 interface MainPageProps {
   user: FlickrUser
@@ -58,10 +64,31 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
   const [fetchingMoreDetail, setFetchingMoreDetail] = useState(false)
   const waitingToAdvanceRef = useRef(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [settingsTab, setSettingsTab] = useState<SettingsTab | undefined>(undefined)   // which tab Settings opens on
+  const openSettings = (tab?: SettingsTab): void => { setSettingsTab(tab); setShowSettings(true) }
   const [showHistory, setShowHistory] = useState(false)
   const [updateVersion, setUpdateVersion] = useState<string | null>(null)
   const [albumsVisited, setAlbumsVisited] = useState(false)
   const [collectionsVisited, setCollectionsVisited] = useState(false)
+  const [tagsVisited, setTagsVisited] = useState(false)
+  const [cleanupVisited, setCleanupVisited] = useState(false)
+  // Which tab a 'View photos' search came from, so the Photostream's back link returns there
+  const [tagBackView, setTagBackView] = useState<'tags' | 'cleanup'>('tags')
+  const [onThisDayVisited, setOnThisDayVisited] = useState(false)
+  const [timelineVisited, setTimelineVisited] = useState(false)
+  // Set by 'Open in Photostream' in On This Day or the Timeline; the photostream applies it as a date range
+  const [dateSearchRequest, setDateSearchRequest] = useState<{ from: string; to: string; publicOnly?: boolean; tag?: string; backLabel?: string; nonce: number } | null>(null)
+  const handledDateSearch = useRef(0)
+  const [dateBackView, setDateBackView] = useState<'onthisday' | 'timeline'>('onthisday')
+  const [otdJump, setOtdJump] = useState<{ month: number; day: number; year?: number; nonce: number } | null>(null)
+  const [dataKey, setDataKey] = useState(0)   // changes when a scan finishes, so On This Day, the Timeline and the card look again
+  // Set when a tag is clicked in the photo detail while viewing an album; the album grid filters itself to it
+  const [albumTagRequest, setAlbumTagRequest] = useState<{ tag: string; nonce: number } | null>(null)
+  // Which of those requests the grids have already applied (a grid that remounts must not replay an old one)
+  const handledTagSearch = useRef(0)
+  const handledAlbumTag = useRef(0)
+  // Set when 'View photos' is pressed in the Tags tab; the photostream applies it as a tag search
+  const [tagSearchRequest, setTagSearchRequest] = useState<{ tags: string[]; mode: TagMode; nonce: number } | null>(null)
   const [collectionPath, setCollectionPath] = useState<FlickrCollection[]>([])
   const [albumDetailOrigin, setAlbumDetailOrigin] = useState<'albums' | 'collections'>('albums')
   const [batchProgress, setBatchProgress] = useState<BatchProgress | null>(null)
@@ -83,6 +110,8 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
   const [albumFilteredPhotos, setAlbumFilteredPhotos] = useState<FlickrPhoto[]>([])
   const [photostreamFilteredPhotos, setPhotostreamFilteredPhotos] = useState<FlickrPhoto[]>([])
   const [albumMediaFilter, setAlbumMediaFilter] = useState<'all' | 'photo' | 'video'>('all')
+  const [albumExtraFilters, setAlbumExtraFilters] = useState(false)
+  const [photostreamFiltersActive, setPhotostreamFiltersActive] = useState(false)
   const [albumPrivacyFilter, setAlbumPrivacyFilter] = useState<'all' | 'public' | 'friends' | 'family' | 'private'>('all')
   const handleResetRecords = useCallback(async () => {
     if (!selectedAlbum) return
@@ -109,6 +138,9 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
   const [showAlbumOverflow, setShowAlbumOverflow] = useState(false)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false)
+  useEffect(() => window.flickrAPI.onTagScanProgress(p => { if (p.phase === 'done') setDataKey(k => k + 1) }), [])
+  useEffect(() => window.flickrAPI.onOpenOnThisDay(() => { setAppMode('you'); setOnThisDayVisited(true); setView('onthisday') }), [])
+
   useEffect(() => {
     const unsubscribe = window.flickrAPI.onBatchProgress((p) => {
       const prev = prevProgressRef.current
@@ -137,7 +169,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
   }, [])
 
   useEffect(() => {
-    const unsubscribe = window.flickrAPI.onOpenSettings(() => setShowSettings(true))
+    const unsubscribe = window.flickrAPI.onOpenSettings(() => { setSettingsTab(undefined); setShowSettings(true) })
     return unsubscribe
   }, [])
 
@@ -165,9 +197,9 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
   }, [])
 
   const handleSelectAll = useCallback((): void => {
-    const source = albumFilteredPhotos.length > 0 ? albumFilteredPhotos : loadedAlbumPhotos
-    setAlbumSelectedIds(new Set(source.map((p) => p.id)))
-  }, [albumFilteredPhotos, loadedAlbumPhotos])
+    // Only what's visible: photos hidden by a filter are never selected
+    setAlbumSelectedIds(new Set(albumFilteredPhotos.map((p) => p.id)))
+  }, [albumFilteredPhotos])
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent): void => {
@@ -180,22 +212,21 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
         if (albumSelectMode) { e.preventDefault(); handleSelectAll() }
         else if (photostreamSelectMode) {
           e.preventDefault()
-          const source = photostreamFilteredPhotos.length > 0 ? photostreamFilteredPhotos : loadedPhotostreamPhotos
-          setPhotostreamSelectedIds(new Set(source.map(p => p.id)))
+          setPhotostreamSelectedIds(new Set(photostreamFilteredPhotos.map(p => p.id)))
         }
       }
     }
     document.addEventListener('keydown', handleKey)
     return () => document.removeEventListener('keydown', handleKey)
-  }, [albumSelectMode, photostreamSelectMode, exitAlbumSelect, exitPhotostreamSelect, handleSelectAll, loadedPhotostreamPhotos, photostreamFilteredPhotos])
+  }, [albumSelectMode, photostreamSelectMode, exitAlbumSelect, exitPhotostreamSelect, handleSelectAll, photostreamFilteredPhotos])
 
   const handleAlbumToggleSelect = (photo: FlickrPhoto, shiftKey: boolean): void => {
     if (shiftKey && albumLastClickedId) {
-      const fromIdx = loadedAlbumPhotos.findIndex((p) => p.id === albumLastClickedId)
-      const toIdx = loadedAlbumPhotos.findIndex((p) => p.id === photo.id)
+      const fromIdx = albumFilteredPhotos.findIndex((p) => p.id === albumLastClickedId)
+      const toIdx = albumFilteredPhotos.findIndex((p) => p.id === photo.id)
       if (fromIdx !== -1 && toIdx !== -1) {
         const [start, end] = fromIdx < toIdx ? [fromIdx, toIdx] : [toIdx, fromIdx]
-        const rangeIds = loadedAlbumPhotos.slice(start, end + 1).map((p) => p.id)
+        const rangeIds = albumFilteredPhotos.slice(start, end + 1).map((p) => p.id)
         setAlbumSelectedIds((prev) => new Set([...prev, ...rangeIds]))
       }
     } else {
@@ -211,11 +242,11 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
 
   const handlePhotostreamToggleSelect = (photo: FlickrPhoto, shiftKey: boolean): void => {
     if (shiftKey && photostreamLastClickedId) {
-      const fromIdx = loadedPhotostreamPhotos.findIndex((p) => p.id === photostreamLastClickedId)
-      const toIdx = loadedPhotostreamPhotos.findIndex((p) => p.id === photo.id)
+      const fromIdx = photostreamFilteredPhotos.findIndex((p) => p.id === photostreamLastClickedId)
+      const toIdx = photostreamFilteredPhotos.findIndex((p) => p.id === photo.id)
       if (fromIdx !== -1 && toIdx !== -1) {
         const [start, end] = fromIdx < toIdx ? [fromIdx, toIdx] : [toIdx, fromIdx]
-        const rangeIds = loadedPhotostreamPhotos.slice(start, end + 1).map((p) => p.id)
+        const rangeIds = photostreamFilteredPhotos.slice(start, end + 1).map((p) => p.id)
         setPhotostreamSelectedIds((prev) => new Set([...prev, ...rangeIds]))
       }
     } else {
@@ -229,8 +260,45 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
     }
   }
 
+  // Filters are on: download exactly the photos visible in the grid instead of the whole album/photostream
+  // Downloads started from On This Day or the Timeline (the photos come from the local list)
+  const startDateDownload = (photos: { id: string; title: string }[], title: string, note: string): void => {
+    if (photos.length === 0) return
+    setPendingDownload({
+      title: `↓ Download ${photos.length.toLocaleString()} photos: ${title}`,
+      photoCount: photos.length,
+      videoCount: 0,
+      note,
+      onConfirm: (track, exportFormat) => {
+        window.flickrAPI.startSelectedBatch(photos, `${title} (${photos.length})`, track, exportFormat === 'zip')
+      },
+    })
+  }
+  const openDateRange = (from: string, to: string, publicOnly: boolean, from_view: 'onthisday' | 'timeline', tag?: string): void => {
+    exitPhotostreamSelect()
+    setDateBackView(from_view)
+    setDateSearchRequest({ from, to, publicOnly, tag, backLabel: from_view === 'onthisday' ? 'On This Day' : 'Timeline', nonce: Date.now() })
+    setView('photostream')
+  }
+
+  const startShownDownload = (shown: FlickrPhoto[], where: string, displayTitle: string): void => {
+    if (shown.length === 0) return
+    const photoCount = shown.filter(p => p.media !== 'video').length
+    const videoCount = shown.filter(p => p.media === 'video').length
+    const photos = shown.map(p => ({ id: p.id, title: p.title }))
+    setPendingDownload({
+      title: `↓ Download ${shown.length.toLocaleString()} shown from ${where}`,
+      photoCount,
+      videoCount,
+      note: 'Only the photos matching your filters are downloaded',
+      onConfirm: (track, exportFormat) => {
+        window.flickrAPI.startSelectedBatch(photos, `${displayTitle} (${photos.length} shown)`, track, exportFormat === 'zip')
+      },
+    })
+  }
+
   const handleDownloadAlbumSelected = (): void => {
-    const selected = loadedAlbumPhotos.filter((p) => albumSelectedIds.has(p.id))
+    const selected = albumFilteredPhotos.filter((p) => albumSelectedIds.has(p.id))
     if (selected.length === 0) return
     const albumTitle = selectedAlbum?.title ?? ''
     const photoCount = selected.filter(p => p.media !== 'video').length
@@ -248,7 +316,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
   }
 
   const handleDownloadPhotostreamSelected = (): void => {
-    const selected = loadedPhotostreamPhotos.filter((p) => photostreamSelectedIds.has(p.id))
+    const selected = photostreamFilteredPhotos.filter((p) => photostreamSelectedIds.has(p.id))
     if (selected.length === 0) return
     const photoCount = selected.filter(p => p.media !== 'video').length
     const videoCount = selected.filter(p => p.media === 'video').length
@@ -329,6 +397,25 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
     }
   }, [photoDetailIndex, photoDetailSource, loadedPhotostreamPhotos, loadedAlbumPhotos, fetchMoreForDetail])
 
+  // A tag clicked in the photo detail panel: inside an album it filters that album, otherwise it
+  // searches the whole photostream. Commas would split one tag into two in Flickr's search.
+  const showPhotostreamTag = useCallback((tag: string): void => {
+    exitPhotostreamSelect()
+    setTagSearchRequest({ tags: [tag.replace(/,/g, ' ').trim()], mode: 'any', nonce: Date.now() })
+    setPhotoDetailIndex(null)
+    setView('photostream')
+  }, [exitPhotostreamSelect])
+
+  const handleDetailTagClick = useCallback((tag: string): void => {
+    if (photoDetailSource === 'album' && selectedAlbum) {
+      setAlbumTagRequest({ tag: tag.replace(/,/g, ' ').trim(), nonce: Date.now() })
+      setPhotoDetailIndex(null)
+      setView(photoDetailReturnView)
+    } else {
+      showPhotostreamTag(tag)
+    }
+  }, [photoDetailSource, selectedAlbum, photoDetailReturnView, showPhotostreamTag])
+
   const handleAlbumSelect = (album: FlickrAlbum): void => {
     setSelectedAlbum(album)
     setAlbumDetailOrigin('albums')
@@ -380,7 +467,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
       <header style={styles.header}>
         <div style={styles.headerLeft}>
           <span style={styles.wordmark}>
-            <span style={{ color: '#0063DC' }}>Flickr</span><span style={{ color: '#FF0084' }}>Fetch</span>
+            <span style={{ color: 'var(--ff-blue)' }}>Flickr</span><span style={{ color: 'var(--ff-pink)' }}>Fetch</span>
           </span>
           <div style={styles.headerDivider} />
           <div style={styles.modeTabs}>
@@ -402,7 +489,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
               <polyline points="12 7 12 12 15.5 14" strokeWidth="2"/>
             </svg>
           </IconBtn>
-          <IconBtn label="Settings" onClick={() => setShowSettings(true)} badge={!!updateVersion} showLabel>
+          <IconBtn label="Settings" onClick={() => openSettings()} badge={!!updateVersion} showLabel>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <line x1="4" y1="6" x2="20" y2="6"/>
               <line x1="4" y1="12" x2="20" y2="12"/>
@@ -476,6 +563,31 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
           >
             Collections
           </button>
+          <button
+            style={{ ...styles.tab, ...(view === 'onthisday' ? styles.tabActive : {}) }}
+            onClick={() => { setOnThisDayVisited(true); setView('onthisday') }}
+          >
+            On This Day
+          </button>
+          <button
+            style={{ ...styles.tab, ...(view === 'timeline' ? styles.tabActive : {}) }}
+            onClick={() => { setTimelineVisited(true); setView('timeline') }}
+          >
+            Timeline
+          </button>
+          <button
+            style={{ ...styles.tab, ...(view === 'tags' ? styles.tabActive : {}) }}
+            onClick={() => { setTagsVisited(true); setView('tags') }}
+          >
+            Tags
+          </button>
+          <span style={styles.tabDivider} aria-hidden="true" />   {/* views on the left, tools on the right */}
+          <button
+            style={{ ...styles.tab, ...(view === 'cleanup' ? styles.tabActive : {}) }}
+            onClick={() => { setCleanupVisited(true); setView('cleanup') }}
+          >
+            Health Check
+          </button>
         </div>
         {view === 'photostream' && !photostreamSelectMode && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -493,24 +605,35 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
                 <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
               </svg>
             </button>
-            <SmartDownloadButton
-              label="Download All"
-              onDownload={(mode) => {
-                const smartMode = mode === 'all' ? undefined : mode
-                const photoCount = loadedPhotostreamPhotos.filter(p => p.media !== 'video').length
-                const videoCount = loadedPhotostreamPhotos.filter(p => p.media === 'video').length
-                const modeTitle = mode === 'updated' ? '↓ Download Updated (Photostream)' : mode === 'never-downloaded' ? '↓ Download Never Downloaded (Photostream)' : '↓ Download Photostream'
-                setPendingDownload({
-                  title: modeTitle,
-                  photoCount,
-                  videoCount,
-                  note: `${(photoCount + videoCount).toLocaleString()} loaded — batch downloads your full photostream`,
-                  onConfirm: (track, exportFormat) => {
-                    window.flickrAPI.startPhotostreamBatch('Photostream', track, smartMode, undefined, photostreamSort, exportFormat === 'zip')
-                  },
-                })
-              }}
-            />
+            {photostreamFiltersActive ? (
+              <button
+                style={{ ...styles.selectButton, borderColor: 'var(--ff-pink)', color: 'var(--ff-pink-action)' }}
+                disabled={photostreamFilteredPhotos.length === 0}
+                title={"Filters are on, so only the photos shown below are downloaded.\n\nClear the filters to download the whole photostream."}
+                onClick={() => startShownDownload(photostreamFilteredPhotos, 'Photostream', 'Photostream')}
+              >
+                {`Download ${photostreamFilteredPhotos.length.toLocaleString()} shown`}
+              </button>
+            ) : (
+              <SmartDownloadButton
+                label="Download All"
+                onDownload={(mode) => {
+                  const smartMode = mode === 'all' ? undefined : mode
+                  const photoCount = loadedPhotostreamPhotos.filter(p => p.media !== 'video').length
+                  const videoCount = loadedPhotostreamPhotos.filter(p => p.media === 'video').length
+                  const modeTitle = mode === 'updated' ? '↓ Download Updated (Photostream)' : mode === 'never-downloaded' ? '↓ Download Never Downloaded (Photostream)' : '↓ Download Photostream'
+                  setPendingDownload({
+                    title: modeTitle,
+                    photoCount,
+                    videoCount,
+                    note: `${(photoCount + videoCount).toLocaleString()} loaded — batch downloads your full photostream`,
+                    onConfirm: (track, exportFormat) => {
+                      window.flickrAPI.startPhotostreamBatch('Photostream', track, smartMode, undefined, photostreamSort, exportFormat === 'zip')
+                    },
+                  })
+                }}
+              />
+            )}
             <button style={styles.selectButton} onClick={() => setPhotostreamSelectMode(true)}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                 <rect x="2" y="3" width="7" height="7" rx="1"/><rect x="13" y="3" width="7" height="7" rx="1"/><rect x="2" y="14" width="7" height="7" rx="1"/><path d="M14 17l2 2 4-4"/>
@@ -520,6 +643,9 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
           </div>
         )}
       </div>}
+      {appMode === 'you' && (view === 'photostream' || view === 'albums' || view === 'collections' || view === 'album-detail' || view === 'collection-detail') && (
+        <OnThisDayCard refreshKey={dataKey} onOpen={() => { setOnThisDayVisited(true); setView('onthisday') }} />
+      )}
 
       {appMode === 'you' && view === 'album-detail' && selectedAlbum && (
         <div style={styles.albumHeader}>
@@ -536,33 +662,45 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
           <div style={{ flex: 1 }} />
           {!albumSelectMode ? (
             <>
-              <SmartDownloadButton
-                label="Download Album"
-                onDownload={(mode) => {
-                  const mt = albumMediaFilter !== 'all' ? albumMediaFilter : undefined
-                  const pf = albumPrivacyFilter !== 'all' ? albumPrivacyFilter : undefined
-                  const photoCount = mt === 'video' ? 0 : selectedAlbum.photoCount
-                  const videoCount = mt === 'photo' ? 0 : selectedAlbum.videoCount
-                  const smartMode = mode === 'all' ? undefined : mode
-                  const modeTitle = mode === 'updated' ? `↓ Download Updated: "${selectedAlbum.title}"` : mode === 'never-downloaded' ? `↓ Download Never Downloaded: "${selectedAlbum.title}"` : `↓ Download Album: "${selectedAlbum.title}"`
-                  setPendingDownload({
-                    title: modeTitle,
-                    photoCount,
-                    videoCount,
-                    onConfirm: async (track, exportFormat) => {
-                      const zipMode = exportFormat === 'zip'
-                      const result = await window.flickrAPI.startBatch(selectedAlbum.id, selectedAlbum.title, selectedAlbum.photoCount, selectedAlbum.videoCount, false, mt, pf, track, smartMode, zipMode)
-                      if (result.alreadyQueued) {
-                        const ok = await window.flickrAPI.confirm(
-                          `"${selectedAlbum.title}" is already downloading or queued.`,
-                          'Do you want to add it to the queue again?'
-                        )
-                        if (ok) window.flickrAPI.startBatch(selectedAlbum.id, selectedAlbum.title, selectedAlbum.photoCount, selectedAlbum.videoCount, true, mt, pf, track, smartMode, zipMode)
-                      }
-                    },
-                  })
-                }}
-              />
+              {albumExtraFilters ? (
+                <button
+                  style={{ ...styles.selectButton, borderColor: 'var(--ff-pink)', color: 'var(--ff-pink-action)' }}
+                  disabled={albumFilteredPhotos.length === 0}
+                  title={"Filters are on, so only the photos shown below are downloaded.\n\nClear the filters to download the whole album."}
+                  onClick={() => startShownDownload(albumFilteredPhotos, `"${selectedAlbum.title}"`, selectedAlbum.title)}
+                >
+                  {`Download ${albumFilteredPhotos.length.toLocaleString()} shown`}
+                </button>
+              ) : (
+                <SmartDownloadButton
+                  label="Download Album"
+                  onDownload={(mode) => {
+                    const mt = albumMediaFilter !== 'all' ? albumMediaFilter : undefined
+                    const pf = albumPrivacyFilter !== 'all' ? albumPrivacyFilter : undefined
+                    const photoCount = mt === 'video' ? 0 : selectedAlbum.photoCount
+                    const videoCount = mt === 'photo' ? 0 : selectedAlbum.videoCount
+                    const smartMode = mode === 'all' ? undefined : mode
+                    const modeTitle = mode === 'updated' ? `↓ Download Updated: "${selectedAlbum.title}"` : mode === 'never-downloaded' ? `↓ Download Never Downloaded: "${selectedAlbum.title}"` : `↓ Download Album: "${selectedAlbum.title}"`
+                    setPendingDownload({
+                      title: modeTitle,
+                      photoCount,
+                      videoCount,
+                      onConfirm: async (track, exportFormat) => {
+                        const zipMode = exportFormat === 'zip'
+                        const result = await window.flickrAPI.startBatch(selectedAlbum.id, selectedAlbum.title, selectedAlbum.photoCount, selectedAlbum.videoCount, false, mt, pf, track, smartMode, zipMode)
+                        if (result.alreadyQueued) {
+                          const ok = await window.flickrAPI.confirm(
+                            `"${selectedAlbum.title}" is already downloading or queued.`,
+                            'Do you want to add it to the queue again?',
+                            'Queue Again'
+                          )
+                          if (ok) window.flickrAPI.startBatch(selectedAlbum.id, selectedAlbum.title, selectedAlbum.photoCount, selectedAlbum.videoCount, true, mt, pf, track, smartMode, zipMode)
+                        }
+                      },
+                    })
+                  }}
+                />
+              )}
               <button style={styles.selectButton} onClick={() => setAlbumSelectMode(true)}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                   <rect x="2" y="3" width="7" height="7" rx="1"/><rect x="13" y="3" width="7" height="7" rx="1"/><rect x="2" y="14" width="7" height="7" rx="1"/><path d="M14 17l2 2 4-4"/>
@@ -658,11 +796,70 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             onPageInfo={(page, pages) => setPhotostreamPageInfo({ page, pages })}
             onSortChange={sort => setPhotostreamSort(sort)}
             onFilteredPhotosChange={setPhotostreamFilteredPhotos}
+            onFiltersActiveChange={setPhotostreamFiltersActive}
+            tagSearchRequest={tagSearchRequest}
+            onBackToTags={() => { if (tagBackView === 'cleanup') setCleanupVisited(true); else setTagsVisited(true); setView(tagBackView) }}
+            backToTagsLabel={tagBackView === 'cleanup' ? 'Health Check' : 'Tags'}
+            handledTagRequest={handledTagSearch}
+            dateSearchRequest={dateSearchRequest}
+            handledDateRequest={handledDateSearch}
+            onBackToDates={() => { if (dateBackView === 'timeline') setTimelineVisited(true); else setOnThisDayVisited(true); setView(dateBackView) }}
           />
         </div>
+        {onThisDayVisited && (
+          <div style={view === 'onthisday' ? styles.tabPane : styles.tabPaneHidden}>
+            <OnThisDayPanel
+              refreshKey={dataKey}
+              jumpTo={otdJump}
+              onOpenRange={(from, to, publicOnly, tag) => openDateRange(from, to, publicOnly, 'onthisday', tag)}
+              onDownload={startDateDownload}
+              onFullRescan={() => { setCleanupVisited(true); setView('cleanup') }}
+            />
+          </div>
+        )}
+        {timelineVisited && (
+          <div style={view === 'timeline' ? styles.tabPane : styles.tabPaneHidden}>
+            <TimelinePanel
+              active={view === 'timeline' && !showSettings && !showHistory && !aboutVersion && !pendingDownload && !showResetConfirm && !showSignOutConfirm}
+              refreshKey={dataKey}
+              onOpenRange={(from, to, publicOnly) => openDateRange(from, to, publicOnly, 'timeline')}
+              onDownload={startDateDownload}
+              onOpenDay={(month, day, year) => { setOtdJump({ month, day, year, nonce: Date.now() }); setOnThisDayVisited(true); setView('onthisday') }}
+              onFullRescan={() => { setCleanupVisited(true); setView('cleanup') }}
+            />
+          </div>
+        )}
+        {tagsVisited && (
+          <div style={view === 'tags' ? styles.tabPane : styles.tabPaneHidden}>
+            <TagsPanel
+              active={view === 'tags'}
+              onViewPhotos={(tags, mode) => {
+                exitPhotostreamSelect()
+                setTagBackView('tags')
+                setTagSearchRequest({ tags: tags.map(t => t.replace(/,/g, ' ').trim()), mode, nonce: Date.now() })
+                setView('photostream')
+              }}
+              onOpenCleanup={() => { setCleanupVisited(true); setView('cleanup') }}
+            />
+          </div>
+        )}
+        {cleanupVisited && (
+          <div style={view === 'cleanup' ? styles.tabPane : styles.tabPaneHidden}>
+            <CleanupPanel
+              settingsKey={settingsKey}
+              onOpenSettings={() => openSettings('health')}
+              onViewPhotos={(tags, mode) => {
+                exitPhotostreamSelect()
+                setTagBackView('cleanup')
+                setTagSearchRequest({ tags: tags.map(t => t.replace(/,/g, ' ').trim()), mode, nonce: Date.now() })
+                setView('photostream')
+              }}
+            />
+          </div>
+        )}
         {albumsVisited && (
           <div style={view === 'albums' ? styles.tabPane : styles.tabPaneHidden}>
-            <AlbumList onAlbumSelect={handleAlbumSelect} />
+            <AlbumList onAlbumSelect={handleAlbumSelect} active={view === 'albums'} />
           </div>
         )}
         {collectionsVisited && (
@@ -690,8 +887,12 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
               onPhotosLoaded={setLoadedAlbumPhotos}
               onPageInfo={(page, pages) => setAlbumPageInfo({ page, pages })}
               onFilteredPhotosChange={setAlbumFilteredPhotos}
+              onExtraFiltersChange={setAlbumExtraFilters}
               onMediaFilterChange={setAlbumMediaFilter}
               onPrivacyFilterChange={setAlbumPrivacyFilter}
+              tagFilterRequest={albumTagRequest}
+              onSearchWholePhotostream={showPhotostreamTag}
+              handledTagRequest={handledAlbumTag}
             />
           </div>
         )}
@@ -708,6 +909,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
               onNext={handleNextPhoto}
               onClose={handleClosePhotoDetail}
               sourceName={detailSourceName}
+              onTagClick={handleDetailTagClick}
             />
           </div>
         )}
@@ -718,7 +920,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
           <div style={styles.confirmCard}>
             <p style={styles.confirmTitle}>Reset download records?</p>
             <p style={styles.confirmBody}>
-              This will remove the download record for all {((selectedAlbum.photoCount ?? 0) + (selectedAlbum.videoCount ?? 0)).toLocaleString()} items in &ldquo;{selectedAlbum.title}&rdquo;. Smart Download will treat them as never downloaded.
+              This will remove the download record for all {((selectedAlbum.photoCount ?? 0) + (selectedAlbum.videoCount ?? 0)).toLocaleString()} items in &ldquo;{selectedAlbum.title}&rdquo;.<br /><br />Smart Download will treat them as never downloaded.
             </p>
             <div style={styles.confirmActions}>
               <button style={styles.confirmCancel} onClick={() => setShowResetConfirm(false)}>Cancel</button>
@@ -739,7 +941,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
           </div>
         </div>
       )}
-      {showSettings && <SettingsModal onClose={() => { setShowSettings(false); setSettingsKey(k => k + 1) }} updateVersion={updateVersion ?? undefined} />}
+      {showSettings && <SettingsModal initialTab={settingsTab} onClose={() => { setShowSettings(false); setSettingsKey(k => k + 1) }} updateVersion={updateVersion ?? undefined} />}
       {showHistory && <HistoryPanel onClose={() => setShowHistory(false)} />}
       {aboutVersion && <AboutModal version={aboutVersion} onClose={() => setAboutVersion(null)} />}
       {pendingDownload && (
@@ -747,7 +949,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
           pending={pendingDownload}
           settingsKey={settingsKey}
           onCancel={() => setPendingDownload(null)}
-          onOpenSettings={() => setShowSettings(true)}
+          onOpenSettings={() => openSettings()}
         />
       )}
 
@@ -818,8 +1020,8 @@ const styles: Record<string, React.CSSProperties> = {
     letterSpacing: '-0.01em',
   },
   modeTabActive: {
-    color: '#0063DC',
-    borderBottom: '3px solid #0063DC',
+    color: 'var(--ff-blue)',
+    borderBottom: '3px solid var(--ff-blue)',
   },
   proBadge: {
     fontSize: '9px',
@@ -922,6 +1124,14 @@ const styles: Record<string, React.CSSProperties> = {
   tabGroup: {
     display: 'flex',
     gap: '0'
+  },
+  tabDivider: {
+    width: '1px',
+    height: '18px',
+    background: '#d9d6d0',
+    margin: '0 10px',
+    alignSelf: 'center',
+    flexShrink: 0
   },
   tab: {
     background: 'none',
@@ -1114,7 +1324,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   overflowMenuItemDestructive: {
     display: 'block', width: '100%', textAlign: 'left' as const, background: 'none', border: 'none',
-    padding: '8px 12px', fontSize: '13px', color: '#c0392b', cursor: 'pointer', borderRadius: '5px',
+    padding: '8px 12px', fontSize: '13px', color: 'var(--ff-error)', cursor: 'pointer', borderRadius: '5px',
   },
   confirmOverlay: {
     position: 'fixed' as const, inset: 0, backgroundColor: 'rgba(0,0,0,0.4)',
@@ -1132,7 +1342,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '8px 18px', fontSize: '14px', color: '#555', cursor: 'pointer',
   },
   confirmDestructive: {
-    background: '#c0392b', border: 'none', borderRadius: '8px',
+    background: 'var(--ff-error)', border: 'none', borderRadius: '8px',
     padding: '8px 18px', fontSize: '14px', fontWeight: '600' as const, color: '#fff', cursor: 'pointer',
   },
 }

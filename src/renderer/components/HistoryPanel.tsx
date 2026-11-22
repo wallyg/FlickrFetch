@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import type { BatchLogEntry, PhotoDownloadRecord, DiscoverDownloadRecord, FlickrAlbum } from '../../shared/types'
+import EmptyState from './EmptyState'
 
 interface HistoryPanelProps {
   onClose: () => void
@@ -25,6 +26,20 @@ function formatDateShort(ts: number): string {
   })
 }
 
+// Semantic aliases onto the brand tokens defined in index.html
+const C = {
+  downloaded:  'var(--ff-success)',
+  error:       'var(--ff-error)',
+  skipped:     'var(--ff-text-secondary)',
+  partial:     'var(--ff-warning)',
+  complete:    'var(--ff-success)',
+  cancelled:   'var(--ff-slate)',
+  errorDot:    'var(--ff-error)',
+  text:        'var(--ff-text)',
+  muted:       'var(--ff-text-muted)',
+  subtle:      'var(--ff-text-secondary)',
+} as const
+
 // ── Batches tab ──────────────────────────────────────────────────────────────
 
 function sourceLabel(entry: BatchLogEntry): string {
@@ -36,39 +51,42 @@ function sourceLabel(entry: BatchLogEntry): string {
   return entry.source
 }
 
-function statusDot(status: BatchLogEntry['status']): string {
+function statusCircleColor(status: BatchLogEntry['status']): string {
   switch (status) {
-    case 'complete': return '✓'
-    case 'partial': return '⚠'
-    case 'cancelled': return '✕'
-    case 'error': return '!'
+    case 'complete':  return C.complete
+    case 'partial':   return C.partial
+    case 'cancelled': return C.cancelled
+    case 'error':     return C.errorDot
   }
 }
 
-function statusColor(status: BatchLogEntry['status']): string {
-  switch (status) {
-    case 'complete': return '#22c55e'
-    case 'partial': return '#f59e0b'
-    case 'cancelled': return '#94a3b8'
-    case 'error': return '#ef4444'
-  }
-}
-
-function FailureList({ entry }: { entry: BatchLogEntry }): React.JSX.Element | null {
-  const [expanded, setExpanded] = useState(false)
-  if (!entry.failedPhotos?.length) return null
+function StatusCircle({ status }: { status: BatchLogEntry['status'] }): React.JSX.Element {
+  const color = statusCircleColor(status)
   return (
-    <div style={styles.failureWrap}>
-      <button style={styles.failureToggle} onClick={() => setExpanded(e => !e)}>
-        {expanded ? '▾' : '▸'} {entry.failed} failed — show {expanded ? 'less' : 'details'}
+    <svg width="10" height="10" viewBox="0 0 10 10" style={{ flexShrink: 0 }}>
+      <circle cx="5" cy="5" r="5" style={{ fill: color }} />
+    </svg>
+  )
+}
+
+function CountPill({ label, color }: { label: string; color: string }): React.JSX.Element {
+  return (
+    <span style={{ ...styles.pill, color, borderColor: color, background: `color-mix(in srgb, ${color} 10%, transparent)` }}>
+      {label}
+    </span>
+  )
+}
+
+function ExpandableSection({ label, color, defaultExpanded, children }: {
+  label: string; color: string; defaultExpanded: boolean; children: React.ReactNode
+}): React.JSX.Element {
+  const [expanded, setExpanded] = useState(defaultExpanded)
+  return (
+    <div style={styles.expandableWrap}>
+      <button style={{ ...styles.expandableToggle, color }} onClick={() => setExpanded(e => !e)}>
+        {expanded ? '▾' : '▸'} {label}
       </button>
-      {expanded && (
-        <ul style={styles.failureList}>
-          {entry.failedPhotos.map(p => (
-            <li key={p.id} style={styles.failureItem}>{p.title || p.id}</li>
-          ))}
-        </ul>
-      )}
+      {expanded && <div style={styles.expandableBody}>{children}</div>}
     </div>
   )
 }
@@ -97,40 +115,71 @@ function BatchesTab({ onClear }: { onClear: () => void }) {
   if (loading) return <p style={styles.empty}>Loading…</p>
 
   if (entries.length === 0) return (
-    <p style={styles.empty}>No batch download history yet. Batches are tracked for 90 days.</p>
+    <EmptyState title="Your history starts here" body="Every batch you download shows up here, with what was saved and what was skipped. Batches are kept for 90 days." />
   )
 
   return (
     <>
       <div style={styles.tabBody}>
-        {entries.map(entry => (
-          <div key={entry.id} style={styles.row}>
-            <div style={styles.rowTop}>
-              <span style={{ ...styles.statusDot, color: statusColor(entry.status) }}>
-                {statusDot(entry.status)}
-              </span>
-              <span style={styles.source}>{sourceLabel(entry)}</span>
-              <span style={styles.date}>{formatDate(entry.createdAt)}</span>
-            </div>
-            <div style={styles.rowCounts}>
-              <span style={styles.countSaved}>{entry.downloaded} saved</span>
+        {entries.map(entry => {
+          // smartFiltered is only meaningful on batches that ran to the end (complete or partial);
+          // on cancelled/error the residual just means "not yet processed".
+          const smartFiltered = entry.status === 'complete' || entry.status === 'partial'
+            ? entry.total - entry.downloaded - entry.skippedCollision - entry.failed
+            : 0
+          const isPartial = entry.downloaded > 0 && entry.failed > 0
+          const hasNoPills = entry.downloaded === 0 && entry.failed === 0 && entry.skippedCollision === 0 && smartFiltered === 0
+          return (
+            <div key={entry.id} style={styles.row}>
+              <div style={styles.rowTop}>
+                <StatusCircle status={entry.status} />
+                <span style={styles.source}>{sourceLabel(entry)}</span>
+                <span style={styles.date}>{formatDate(entry.createdAt)}</span>
+              </div>
+              <div style={styles.rowCounts}>
+                {entry.downloaded > 0 && (
+                  <CountPill label={`✓ ${entry.downloaded} downloaded`} color={C.downloaded} />
+                )}
+                {entry.failed > 0 && (
+                  <CountPill label={`✕ ${entry.failed} errors`} color={C.error} />
+                )}
+                {entry.skippedCollision > 0 && (
+                  <CountPill label={`— ${entry.skippedCollision} skipped`} color={C.skipped} />
+                )}
+                {smartFiltered > 0 && (
+                  <CountPill label={`— ${smartFiltered} already downloaded`} color={C.skipped} />
+                )}
+                {hasNoPills && (
+                  <CountPill label={entry.status === 'cancelled' ? '— cancelled' : '— no downloads'} color={C.skipped} />
+                )}
+              </div>
+              {entry.failedPhotos && entry.failedPhotos.length > 0 && (
+                <ExpandableSection
+                  label={`${entry.failed} failed — show details`}
+                  color={C.error}
+                  defaultExpanded={isPartial}
+                >
+                  <ul style={styles.expandableList}>
+                    {entry.failedPhotos.map(p => (
+                      <li key={p.id} style={styles.expandableItem}>{p.title || p.id}</li>
+                    ))}
+                  </ul>
+                </ExpandableSection>
+              )}
               {entry.skippedCollision > 0 && (
-                <span style={styles.countSkip}>{entry.skippedCollision} skipped</span>
+                <ExpandableSection
+                  label={`${entry.skippedCollision} skipped — files already in folder`}
+                  color={C.skipped}
+                  defaultExpanded={false}
+                >
+                  <ul style={styles.expandableList}>
+                    <li style={styles.expandableItem}>These files were not downloaded because they already exist in your download folder. Change conflict behavior in Settings to overwrite or rename instead.</li>
+                  </ul>
+                </ExpandableSection>
               )}
-              {entry.failed > 0 && !entry.failedPhotos?.length && (
-                <span style={styles.countFail}>{entry.failed} failed</span>
-              )}
-              {(() => {
-                const smartFiltered = entry.total - entry.downloaded - entry.skippedCollision - entry.failed
-                return smartFiltered > 0 ? (
-                  <span style={styles.countSkip}>{smartFiltered} already downloaded</span>
-                ) : null
-              })()}
-              {entry.total > 0 && <span style={styles.countTotal}>of {entry.total}</span>}
             </div>
-            <FailureList entry={entry} />
-          </div>
-        ))}
+          )
+        })}
       </div>
       <div style={styles.footer}>
         <button
@@ -465,14 +514,13 @@ function PhotosTab() {
         {loading ? (
           <p style={styles.empty}>Loading records…</p>
         ) : allRecords.length === 0 ? (
-          <p style={styles.empty}>No download records yet. Photos are tracked when you download them.</p>
+          <EmptyState title="No downloads recorded yet" body="Photos are tracked here as you download them." />
         ) : albumFilterLoading ? (
           <p style={styles.empty}>Loading album photos…</p>
         ) : filteredRecords.length === 0 ? (
-          <div style={styles.emptyFilter}>
-            <p style={styles.empty}>No records match your filters.</p>
-            <button style={styles.clearFiltersBtn} onClick={handleClearAllPhotoFilters}>Clear Filters</button>
-          </div>
+          <EmptyState title="No records match these filters" body="Try removing a filter.">
+            <button style={styles.clearFiltersBtn} onClick={handleClearAllPhotoFilters}>Clear filters</button>
+          </EmptyState>
         ) : (
           filteredRecords.map(r => (
             <div key={r.photoId} style={styles.photoRow}>
@@ -605,7 +653,7 @@ function DiscoverTab() {
   if (loading) return <p style={styles.empty}>Loading…</p>
 
   if (records.length === 0) return (
-    <p style={styles.empty}>No Discover download history yet. Individual photos downloaded from People, Groups, and Explore appear here.</p>
+    <EmptyState title="No Discover downloads yet" body="Photos you download from People, Groups, and Explore will appear here." />
   )
 
   return (
@@ -724,10 +772,6 @@ const styles: Record<string, React.CSSProperties> = {
   empty: {
     padding: '24px 20px', color: '#9ca3af', fontSize: 13, lineHeight: 1.5, margin: 0,
   },
-  emptyFilter: {
-    display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: '12px',
-    padding: '40px 24px', textAlign: 'center' as const,
-  },
   clearFiltersBtn: {
     background: 'none', border: '1px solid #d1d5db', borderRadius: '6px',
     padding: '6px 16px', fontSize: 13, color: '#555', cursor: 'pointer',
@@ -740,33 +784,33 @@ const styles: Record<string, React.CSSProperties> = {
   rowTop: {
     display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4,
   },
-  statusDot: {
-    fontSize: 12, fontWeight: 700, width: 14, textAlign: 'center',
-  },
   source: {
-    flex: 1, fontSize: 13, fontWeight: 500, color: '#111827',
+    flex: 1, fontSize: 13, fontWeight: 500, color: C.text,
     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
   },
   date: {
-    fontSize: 11, color: '#9ca3af', flexShrink: 0,
+    fontSize: 11, color: C.muted, flexShrink: 0,
   },
   rowCounts: {
-    display: 'flex', gap: 10, paddingLeft: 22, fontSize: 12,
+    display: 'flex', flexWrap: 'wrap' as const, gap: 6, paddingLeft: 18, marginTop: 4,
   },
-  countSaved: { color: '#22c55e' },
-  countSkip:  { color: '#f59e0b' },
-  countFail:  { color: '#ef4444' },
-  countTotal: { color: '#9ca3af' },
-  failureWrap: { marginTop: '6px' },
-  failureToggle: {
+  pill: {
+    display: 'inline-flex', alignItems: 'center',
+    fontSize: 11, fontWeight: 500,
+    padding: '2px 7px', borderRadius: 99,
+    border: '1px solid',
+  },
+  expandableWrap: { marginTop: 6, paddingLeft: 18 },
+  expandableToggle: {
     background: 'none', border: 'none', cursor: 'pointer',
-    fontSize: '12px', color: '#ef4444', padding: '0'
+    fontSize: 12, padding: 0,
   },
-  failureList: {
-    margin: '4px 0 0 12px', padding: 0,
-    listStyle: 'disc', listStylePosition: 'inside' as const
+  expandableBody: { marginTop: 4, paddingLeft: 12 },
+  expandableList: {
+    margin: '2px 0 0 0', padding: 0,
+    listStyle: 'disc', listStylePosition: 'inside' as const,
   },
-  failureItem: { fontSize: '12px', color: '#666', padding: '1px 0' },
+  expandableItem: { fontSize: 12, color: C.subtle, padding: '1px 0' },
   // Photos tab search bar
   photoSearchBar: {
     padding: '12px 16px 10px',

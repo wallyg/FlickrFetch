@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, shell, dialog, Menu, Notification } from 'electron'
+import { app, BrowserWindow, ipcMain, shell, dialog, Menu, Notification, clipboard } from 'electron'
 import { autoUpdater } from 'electron-updater'
 import { join, basename } from 'path'
 import { tmpdir } from 'os'
@@ -9,6 +9,12 @@ import { getUserInfo, getPhotos, getPhotoSizes, getPhotoInfo, getPhotoExif, getA
 import { downloadPhoto, downloadToFolder } from './downloader'
 import { endExifTool } from './exiftool'
 import { loadSettings, saveSettings, resetSettings, ensureDownloadFolder } from './settings'
+import { registerTagIpc } from './tagIndex'
+import { registerAuditIpc } from './tagAudit'
+import { registerHealthIpc } from './photoHealth'
+import { registerDatesIpc } from './dateViews'
+import { registerShareIpc } from './share'
+import { ownerNsid, forgetOwnerNsid } from './owner'
 import { openDatabase, closeDatabase, writeBatchLog, writePhotoRecord, getPhotoRecord, getPhotoRecordsBatch, getBatchLog, clearBatchLog, clearAllHistory, searchPhotoRecords, deletePhotoRecord, deletePhotoRecords, clearPhotoRecords, writeDiscoverRecord, getDiscoverRecordsBatch, searchDiscoverRecords, deleteDiscoverRecord, deleteDiscoverRecords, clearDiscoverRecords } from './database'
 import type { AppSettings, FileNamingConfig, PhotoInfo, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams, MetadataSettings, DiscoverUser, DiscoverContact, DiscoverGroup } from '../shared/types'
 
@@ -229,6 +235,7 @@ ipcMain.handle('auth:getState', async () => {
     return { user }
   } catch {
     clearToken()
+    forgetOwnerNsid()
     return { user: null }
   }
 })
@@ -310,9 +317,17 @@ ipcMain.handle('collections:getTree', async () => {
 
 // Settings
 ipcMain.handle('settings:get', () => loadSettings())
-ipcMain.handle('settings:set', (_event, settings: AppSettings) => saveSettings(settings))
+// Merged with what is saved, so a panel that only knows some settings (the Settings window) cannot erase the others
+ipcMain.handle('settings:set', (_event, settings: Partial<AppSettings>) => saveSettings({ ...loadSettings(), ...settings }))
 ipcMain.handle('settings:reset', () => resetSettings())
 ipcMain.handle('video:resolveUrl', (_event, sourceUrl: string) => resolveVideoUrl(sourceUrl))
+
+// Tags tab: local tag index (scan, browse, count)
+registerTagIpc(() => mainWindow)
+registerAuditIpc(() => mainWindow)
+registerHealthIpc(() => mainWindow)
+registerDatesIpc(() => mainWindow)
+registerShareIpc(() => mainWindow)
 
 // Folder picker dialog
 ipcMain.handle('shell:pickFolder', async () => {
@@ -1267,15 +1282,27 @@ ipcMain.on('shell:showInFinder', (_event, filePath: string) => {
 
 // Open an external URL (mailto, https, etc.) in the default app
 ipcMain.on('shell:openExternal', (_event, url: string) => {
+  if (!/^(https?:\/\/|mailto:)/i.test(url)) return   // web and email addresses only
   shell.openExternal(url)
 })
 
+// Right-click menu on one of your own photos in a grid
+ipcMain.on('photo:contextMenu', (_event, photoId: string) => {
+  if (!mainWindow || !/^\d+$/.test(photoId)) return
+  const nsid = ownerNsid()
+  const url = nsid ? `https://www.flickr.com/photos/${nsid}/${photoId}` : `https://www.flickr.com/photo.gne?id=${photoId}`
+  Menu.buildFromTemplate([
+    { label: 'Open on Flickr', click: () => { void shell.openExternal(url) } },
+    { label: 'Copy Flickr link', click: () => clipboard.writeText(url) }
+  ]).popup({ window: mainWindow })
+})
+
 // Native confirmation dialog
-ipcMain.handle('shell:confirm', async (_event, message: string, detail?: string) => {
+ipcMain.handle('shell:confirm', async (_event, message: string, detail?: string, confirmLabel?: string) => {
   if (!mainWindow) return false
   const { response } = await dialog.showMessageBox(mainWindow, {
     type: 'question',
-    buttons: ['Cancel', 'Queue Again'],
+    buttons: ['Cancel', confirmLabel || 'OK'],
     defaultId: 1,
     message,
     detail
@@ -1286,6 +1313,7 @@ ipcMain.handle('shell:confirm', async (_event, message: string, detail?: string)
 // Sign out: clear the stored token
 ipcMain.handle('auth:signout', () => {
   clearToken()
+  forgetOwnerNsid()
 })
 
 // Download history DB

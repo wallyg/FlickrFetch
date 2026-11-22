@@ -5,6 +5,11 @@ import type { BatchLogEntry, PhotoDownloadRecord, DiscoverDownloadRecord } from 
 
 let db: Database.Database | null = null
 
+// Lets other main-process modules (the tag index) use the same open database.
+export function getDb(): Database.Database | null {
+  return db
+}
+
 export function openDatabase(): void {
   const dbPath = join(app.getPath('userData'), 'flickrfetch.db')
   db = new Database(dbPath)

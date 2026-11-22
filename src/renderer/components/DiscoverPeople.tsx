@@ -3,7 +3,9 @@ import type { FlickrPhoto, FlickrAlbum, FlickrCollection, DiscoverUser, Discover
 import PhotoDetail from './PhotoDetail'
 import { AttributionNotice, DiscoverTile, DiscoverSelectBar } from './DiscoverExplore'
 import SmartDownloadButton from './SmartDownloadButton'
-import { GridIcon, ListIcon, JustifiedIcon, ChevronLeftIcon, sharedStyles as ss, type MediaFilter, type GridSize, type AlbumViewMode, type PhotoViewMode, type DownloadFilter, type DateMode, getPresetDates, formatDateChip, Chip, PhotoListRow, DownloadFilterSelect, loadAlbumViewMode, saveAlbumViewMode, loadPhotoViewMode, savePhotoViewMode, loadRowHeight, saveRowHeight, computeJustifiedRows } from './PhotoGridShared'
+import { GridIcon, ListIcon, JustifiedIcon, ChevronLeftIcon, sharedStyles as ss, type MediaFilter, type GridSize, type AlbumViewMode, type PhotoViewMode, type DownloadFilter, type LicenseFilter, type DateMode, getPresetDates, formatDateChip, Chip, PhotoListRow, DownloadFilterSelect, LicenseFilterSelect, matchesLicenseFilter, sameSearchParams, loadAlbumViewMode, saveAlbumViewMode, loadPhotoViewMode, savePhotoViewMode, loadRowHeight, saveRowHeight, computeJustifiedRows } from './PhotoGridShared'
+import EmptyState from './EmptyState'
+import WaveHeader, { DISCOVER_GUTTER } from './WaveHeader'
 
 const ALBUM_COLUMNS: Record<GridSize, string> = {
   small: 'repeat(auto-fill, minmax(130px, 1fr))',
@@ -70,6 +72,7 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
   // Toolbar state (user photos view)
   const [userPhotosViewMode, setUserPhotosViewMode] = useState<PhotoViewMode>(loadPhotoViewMode)
   const [userDownloadFilter, setUserDownloadFilter] = useState<DownloadFilter>('all')
+  const [userLicenseFilter, setUserLicenseFilter] = useState<LicenseFilter>('all')
   const [userDownloadRecords, setUserDownloadRecords] = useState<Record<string, true>>({})
   const [sort, setSort] = useState('date-posted-desc')
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>('all')
@@ -90,6 +93,7 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
   // Toolbar state (album photos view)
   const [albumPhotosViewMode, setAlbumPhotosViewMode] = useState<PhotoViewMode>(loadPhotoViewMode)
   const [albumPhotosDownloadFilter, setAlbumPhotosDownloadFilter] = useState<DownloadFilter>('all')
+  const [albumPhotosLicenseFilter, setAlbumPhotosLicenseFilter] = useState<LicenseFilter>('all')
   const [albumPhotosDownloadRecords, setAlbumPhotosDownloadRecords] = useState<Record<string, true>>({})
   const [albumPhotosMediaFilter, setAlbumPhotosMediaFilter] = useState<MediaFilter>('all')
   const [albumPhotosSearchInput, setAlbumPhotosSearchInput] = useState('')
@@ -146,6 +150,9 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
     }
   }, [searchQuery]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Numbered so a slow earlier search can't overwrite the results of a newer one.
+  const searchReqRef = useRef(0)
+
   const openUser = useCallback(async (user: DiscoverUser): Promise<void> => {
     setFoundUser(user)
     setView('user-photos')
@@ -172,6 +179,7 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
     setSort('date-posted-desc')
     setMediaFilter('all')
     setUserDownloadFilter('all')
+    setUserLicenseFilter('all')
     setUserDownloadRecords({})
     setSearchOperator('contains')
     setPhotoSearchInput('')
@@ -183,15 +191,19 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
     setDateCustomMax('')
     setDrawerOpen(false)
     setActiveSearch({})
+    // Invalidates any search still in flight for the previous person
+    const reqId = ++searchReqRef.current
     try {
       const result = await window.flickrAPI.discoverGetPublicPhotos(user.nsid, 1, 'date-posted-desc', {})
+      if (reqId !== searchReqRef.current) return
       setUserPhotos(result.photos)
       setPhotosPage(result.page)
       setPhotosPages(result.pages)
     } catch (e) {
+      if (reqId !== searchReqRef.current) return
       setPhotosError(e instanceof Error ? e.message : 'Failed to load photos')
     } finally {
-      setPhotosLoading(false)
+      if (reqId === searchReqRef.current) setPhotosLoading(false)
     }
   }, [])
 
@@ -207,32 +219,38 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
 
   const applySearch = useCallback(async (newSort?: string, newSearch?: PhotoSearchParams): Promise<void> => {
     if (!foundUser) return
+    const reqId = ++searchReqRef.current
     const effectiveSort = newSort !== undefined ? newSort : sort
     const effectiveSearch = newSearch !== undefined ? newSearch : activeSearch
     if (newSort !== undefined) setSort(newSort)
     if (newSearch !== undefined) setActiveSearch(newSearch)
     setPhotosLoading(true)
-    setUserPhotos([])
     setPhotosPage(1)
     setPhotosPages(1)
     setPhotosError(null)
     try {
       const result = await window.flickrAPI.discoverGetPublicPhotos(foundUser.nsid, 1, effectiveSort, effectiveSearch)
+      if (reqId !== searchReqRef.current) return
       setUserPhotos(result.photos)
       setPhotosPage(result.page)
       setPhotosPages(result.pages)
     } catch (e) {
+      if (reqId !== searchReqRef.current) return
+      // Don't leave the previous (unfiltered) photos on screen looking like the search result
+      setUserPhotos([])
       setPhotosError(e instanceof Error ? e.message : 'Failed to load photos')
     } finally {
-      setPhotosLoading(false)
+      if (reqId === searchReqRef.current) setPhotosLoading(false)
     }
   }, [foundUser, sort, activeSearch])
 
   const loadMorePhotos = useCallback(async (): Promise<void> => {
     if (!foundUser || photosLoadingMore || photosPage >= photosPages) return
     setPhotosLoadingMore(true)
+    const reqId = searchReqRef.current
     try {
       const result = await window.flickrAPI.discoverGetPublicPhotos(foundUser.nsid, photosPage + 1, sort, activeSearch)
+      if (reqId !== searchReqRef.current) return
       setUserPhotos(prev => [...prev, ...result.photos])
       setPhotosPage(result.page)
     } catch { /* ignore */ }
@@ -280,6 +298,7 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
     setAlbumSelectedIds(new Set())
     setAlbumPhotosMediaFilter('all')
     setAlbumPhotosDownloadFilter('all')
+    setAlbumPhotosLicenseFilter('all')
     setAlbumPhotosDownloadRecords({})
     setAlbumPhotosSearchInput('')
     setAlbumPhotosSearchOperator('contains')
@@ -350,42 +369,47 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
     }
   }
 
-  const handleTitleSearch = (): void => {
+  // Builds the Flickr search from everything the user has typed or picked.
+  const buildPeopleSearch = (): PhotoSearchParams => {
+    const next: PhotoSearchParams = {}
     const q = photoSearchInput.trim()
-    if (!q) {
-      const newSearch = { ...activeSearch }
-      delete newSearch.query
-      delete newSearch.operator
-      void applySearch(undefined, newSearch)
-    } else {
-      void applySearch(undefined, { ...activeSearch, query: q, operator: searchOperator as SearchOperator })
+    if (q && searchOperator !== 'photo-id') {
+      next.query = q
+      next.operator = searchOperator as SearchOperator
     }
+    if (tagInput.trim()) {
+      next.tagQuery = tagInput.trim()
+      next.tagMode = tagMode
+    }
+    if (dateMode !== 'all') {
+      const dates = dateMode === 'between' ? { min: dateCustomMin, max: dateCustomMax } : getPresetDates(dateMode)
+      if (dates.min || dates.max) {
+        next.dateField = dateField
+        if (dates.min) next.dateMin = dates.min
+        if (dates.max) next.dateMax = dates.max
+      }
+    }
+    return next
   }
 
-  const handleApplyDrawer = (): void => {
-    const dates = (dateMode !== 'all' && dateMode !== 'since' && dateMode !== 'between')
-      ? getPresetDates(dateMode)
-      : { min: dateCustomMin, max: dateCustomMax }
-    const newSearch: PhotoSearchParams = { ...activeSearch }
-    if (tagInput.trim()) {
-      newSearch.tagQuery = tagInput.trim()
-      newSearch.tagMode = tagMode
-    } else {
-      delete newSearch.tagQuery
-      delete newSearch.tagMode
-    }
-    if (dateMode !== 'all' && (dates.min || dates.max)) {
-      newSearch.dateField = dateField
-      newSearch.dateMin = dates.min
-      newSearch.dateMax = dates.max
-    } else {
-      delete newSearch.dateField
-      delete newSearch.dateMin
-      delete newSearch.dateMax
-    }
-    void applySearch(undefined, newSearch)
-    setDrawerOpen(false)
+  // Runs the search if anything that affects it has changed. Called as you go — straight away
+  // for dropdowns and buttons, after a short typing pause for text — and when you press Enter.
+  const syncSearch = (): void => {
+    if (!foundUser) return
+    const next = buildPeopleSearch()
+    if (sameSearchParams(next, activeSearch)) return
+    void applySearch(undefined, next)
   }
+  const syncSearchRef = useRef(syncSearch)
+  syncSearchRef.current = syncSearch
+
+  useEffect(() => { syncSearchRef.current() }, [searchOperator, tagMode, dateField, dateMode, dateCustomMin, dateCustomMax])
+  useEffect(() => {
+    const t = setTimeout(() => syncSearchRef.current(), 600)
+    return () => clearTimeout(t)
+  }, [photoSearchInput, tagInput])
+
+  const handleTitleSearch = (): void => { syncSearch() }
 
   const handleClearFilters = (): void => {
     const newSearch: PhotoSearchParams = {}
@@ -397,8 +421,9 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
     setDateMode('all')
     setDateCustomMin('')
     setDateCustomMax('')
-    void applySearch(undefined, newSearch)
-    setDrawerOpen(false)
+    setUserDownloadFilter('all')
+    setUserLicenseFilter('all')
+    if (!sameSearchParams(newSearch, activeSearch)) void applySearch(undefined, newSearch)
   }
 
   // Client-side filters: media type and photo ID
@@ -411,16 +436,27 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
     if (userDownloadFilter !== 'all') {
       result = result.filter(p => userDownloadFilter === 'downloaded' ? !!userDownloadRecords[p.id] : !userDownloadRecords[p.id])
     }
+    if (userLicenseFilter !== 'all') {
+      result = result.filter(p => matchesLicenseFilter(p.license, userLicenseFilter))
+    }
     return result
-  }, [userPhotos, mediaFilter, searchOperator, photoSearchInput, userDownloadFilter, userDownloadRecords])
+  }, [userPhotos, mediaFilter, searchOperator, photoSearchInput, userDownloadFilter, userLicenseFilter, userDownloadRecords])
 
   const activeFilterCount = useMemo(() => {
     let count = 0
     if (activeSearch.tagQuery) count++
     if (activeSearch.dateMin || activeSearch.dateMax) count++
     if (userDownloadFilter !== 'all') count++
+    if (userLicenseFilter !== 'all') count++
     return count
-  }, [activeSearch, userDownloadFilter])
+  }, [activeSearch, userDownloadFilter, userLicenseFilter])
+
+  // Album date filter applies as soon as the dates change (it only filters photos already loaded)
+  useEffect(() => {
+    setAlbumPhotosActiveDateMin(albumPhotosDateMin)
+    setAlbumPhotosActiveDateMax(albumPhotosDateMax)
+    setAlbumPhotosActiveDateField(albumPhotosDateField)
+  }, [albumPhotosDateMin, albumPhotosDateMax, albumPhotosDateField])
 
   const filteredAlbumPhotos = useMemo(() => {
     let result = albumPhotos
@@ -454,12 +490,15 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
     if (albumPhotosDownloadFilter !== 'all') {
       result = result.filter(p => albumPhotosDownloadFilter === 'downloaded' ? !!albumPhotosDownloadRecords[p.id] : !albumPhotosDownloadRecords[p.id])
     }
+    if (albumPhotosLicenseFilter !== 'all') {
+      result = result.filter(p => matchesLicenseFilter(p.license, albumPhotosLicenseFilter))
+    }
     return result
-  }, [albumPhotos, albumPhotosMediaFilter, albumPhotosSearchInput, albumPhotosSearchOperator, albumPhotosSort, albumPhotosActiveDateMin, albumPhotosActiveDateMax, albumPhotosActiveDateField, albumPhotosDownloadFilter, albumPhotosDownloadRecords])
+  }, [albumPhotosLicenseFilter, albumPhotos, albumPhotosMediaFilter, albumPhotosSearchInput, albumPhotosSearchOperator, albumPhotosSort, albumPhotosActiveDateMin, albumPhotosActiveDateMax, albumPhotosActiveDateField, albumPhotosDownloadFilter, albumPhotosDownloadRecords])
 
   const albumPhotosActiveFilterCount = useMemo(() => {
-    return (albumPhotosActiveDateMin || albumPhotosActiveDateMax ? 1 : 0) + (albumPhotosDownloadFilter !== 'all' ? 1 : 0)
-  }, [albumPhotosActiveDateMin, albumPhotosActiveDateMax, albumPhotosDownloadFilter])
+    return (albumPhotosActiveDateMin || albumPhotosActiveDateMax ? 1 : 0) + (albumPhotosDownloadFilter !== 'all' ? 1 : 0) + (albumPhotosLicenseFilter !== 'all' ? 1 : 0)
+  }, [albumPhotosActiveDateMin, albumPhotosActiveDateMax, albumPhotosDownloadFilter, albumPhotosLicenseFilter])
 
   const userPhotosJustifiedRows = useMemo(() => {
     if (userPhotosViewMode !== 'justified' || userPhotosContainerWidth === 0) return null
@@ -692,6 +731,10 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
                 <DownloadFilterSelect value={albumPhotosDownloadFilter} onChange={setAlbumPhotosDownloadFilter} />
               </div>
               <div style={ss.drawerRow}>
+                <span style={ss.drawerLabel}>License</span>
+                <LicenseFilterSelect value={albumPhotosLicenseFilter} onChange={setAlbumPhotosLicenseFilter} />
+              </div>
+              <div style={ss.drawerRow}>
                 <span style={ss.drawerLabel}>Date</span>
                 <div style={ss.segGroup}>
                   {(['taken', 'posted'] as DateRangeField[]).map(f => (
@@ -703,12 +746,6 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
                 <input type="date" style={ss.dateInput} value={albumPhotosDateMin} onChange={e => setAlbumPhotosDateMin(e.target.value)} />
                 <span style={ss.dateSep}>–</span>
                 <input type="date" style={ss.dateInput} value={albumPhotosDateMax} onChange={e => setAlbumPhotosDateMax(e.target.value)} />
-                <button style={ss.applyBtn} onClick={() => {
-                  setAlbumPhotosActiveDateMin(albumPhotosDateMin)
-                  setAlbumPhotosActiveDateMax(albumPhotosDateMax)
-                  setAlbumPhotosActiveDateField(albumPhotosDateField)
-                  setAlbumPhotosDrawerOpen(false)
-                }}>Apply</button>
                 {(albumPhotosActiveDateMin || albumPhotosActiveDateMax) && (
                   <button style={ss.clearFiltersLink} onClick={() => {
                     setAlbumPhotosDateMin(''); setAlbumPhotosDateMax('')
@@ -978,6 +1015,11 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
                     <span style={ss.drawerLabel}>Downloaded</span>
                     <DownloadFilterSelect value={userDownloadFilter} onChange={setUserDownloadFilter} />
                   </div>
+                  {/* License */}
+                  <div style={ss.drawerRow}>
+                    <span style={ss.drawerLabel}>License</span>
+                    <LicenseFilterSelect value={userLicenseFilter} onChange={setUserLicenseFilter} />
+                  </div>
                   {/* Tags row */}
                   <div style={ss.drawerRow}>
                     <span style={ss.drawerLabel}>Tags</span>
@@ -1017,7 +1059,15 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
                     <select
                       style={ss.sortSelect}
                       value={dateMode}
-                      onChange={e => setDateMode(e.target.value as DateMode)}
+                      onChange={e => {
+                        const next = e.target.value as DateMode
+                        // Switching a preset to a custom range starts from that preset's dates instead of dropping the filter
+                        if (next === 'between' && dateMode !== 'between' && dateMode !== 'all') {
+                          const { min, max } = getPresetDates(dateMode)
+                          setDateCustomMin(min); setDateCustomMax(max)
+                        }
+                        setDateMode(next)
+                      }}
                     >
                       <option value="all">All time</option>
                       <option value="last7">Last 7 days</option>
@@ -1046,10 +1096,11 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
                   </div>
 
                   {/* Drawer actions row */}
-                  <div style={{ ...ss.drawerRow, justifyContent: 'flex-end', gap: '12px' }}>
-                    <button style={ss.clearFiltersLink} onClick={handleClearFilters}>Clear filters</button>
-                    <button style={s.applyBtn} onClick={handleApplyDrawer}>Apply</button>
-                  </div>
+                  {(activeFilterCount > 0 || tagInput.trim() !== '') && (
+                    <div style={{ ...ss.drawerRow, justifyContent: 'flex-end', gap: '12px' }}>
+                      <button style={ss.clearFiltersLink} onClick={handleClearFilters}>Clear filters</button>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1115,14 +1166,14 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
         <AttributionNotice />
 
         {userTab === 'photos' && (
-          <>
-            {photosLoading && <div style={s.loadingState}>Loading photos…</div>}
+          <div style={photosLoading && userPhotos.length > 0 ? { opacity: 0.45, pointerEvents: 'none', transition: 'opacity 0.15s' } : { transition: 'opacity 0.15s' }}>
+            {photosLoading && userPhotos.length === 0 && <div style={s.loadingState}>Loading photos…</div>}
             {photosError && <div style={s.errorState}>{photosError}</div>}
             {!photosLoading && !photosError && filteredPhotos.length === 0 && userPhotos.length === 0 && (
-              <div style={s.emptyState}>No public photos found.</div>
+              <EmptyState title="No public photos" body="This person hasn't shared any photos publicly." />
             )}
             {!photosLoading && !photosError && filteredPhotos.length === 0 && userPhotos.length > 0 && (
-              <div style={s.emptyState}>No photos match the current filters.</div>
+              <EmptyState title="No photos match these filters" body="Try removing a filter, or load more photos." />
             )}
             {filteredPhotos.length > 0 && (
               <>
@@ -1207,7 +1258,7 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
                 )}
               </>
             )}
-          </>
+          </div>
         )}
 
         {userTab === 'albums' && (
@@ -1239,7 +1290,7 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
             {albumsLoading && <div style={s.loadingState}>Loading albums…</div>}
             {albumsError && <div style={s.errorState}>{albumsError}</div>}
             {!albumsLoading && !albumsError && userAlbums.length === 0 && (
-              <div style={s.emptyState}>No public albums.</div>
+              <EmptyState title="No public albums" body="This person hasn't shared any albums publicly." />
             )}
             {userAlbums.length > 0 && (
               albumsViewMode === 'list' ? (
@@ -1303,7 +1354,7 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
             {collectionsLoading && <div style={s.loadingState}>Loading collections…</div>}
             {collectionsError && <div style={s.errorState}>{collectionsError}</div>}
             {!collectionsLoading && !collectionsError && collectionsLoaded && userCollections.length === 0 && activeDiscoverCollection === null && (
-              <div style={s.emptyState}>No public collections.</div>
+              <EmptyState title="No public collections" body="This person hasn't shared any collections publicly." />
             )}
             {activeDiscoverCollection === null && userCollections.length > 0 && (
               <div style={s.collectionGrid}>
@@ -1317,7 +1368,7 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
               const hasSubColls = col.collections.length > 0
               const hasSets = col.sets.length > 0
               if (!hasSubColls && !hasSets) {
-                return <div style={s.emptyState}>This collection is empty.</div>
+                return <EmptyState title="This collection is empty" />
               }
               return (
                 <>
@@ -1405,6 +1456,7 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
   // ── Home: search + contacts
   return (
     <div style={s.container}>
+      <WaveHeader>
       <div style={s.headerRow}>
         <div>
           <h2 style={s.heading}>People</h2>
@@ -1425,6 +1477,7 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
           {searching ? 'Finding…' : 'Find on Flickr'}
         </button>
       </form>
+      </WaveHeader>
 
       {searchError && <div style={s.searchError}>{searchError}</div>}
 
@@ -1434,7 +1487,7 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
         </div>
         {contactsLoading && <div style={s.loadingState}>Loading contacts…</div>}
         {!contactsLoading && filteredContacts.length === 0 && contacts.length === 0 && (
-          <div style={s.emptyState}>You are not following anyone on Flickr.</div>
+          <EmptyState title="You're not following anyone yet" body="People you follow on Flickr will show up here. You can also find someone by username above." />
         )}
         {!contactsLoading && filteredContacts.length === 0 && contacts.length > 0 && searchQuery.trim() && (
           <div style={s.emptyState}>No contacts match "{searchQuery}". Press Find to search all of Flickr.</div>
@@ -1517,12 +1570,12 @@ function DiscoverCollCard({ col, onClick }: { col: FlickrCollection; onClick: ()
 }
 
 const s: Record<string, React.CSSProperties> = {
-  container: { display: 'flex', flexDirection: 'column', gap: '16px', padding: '0 20px 32px' },
+  container: { display: 'flex', flexDirection: 'column', gap: '16px', padding: `0 ${DISCOVER_GUTTER}px 32px` },
   stickyHeader: { position: 'sticky' as const, top: 0, zIndex: 10, background: '#fff', display: 'flex', flexDirection: 'column' as const },
   headerRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', paddingTop: '20px', paddingBottom: '8px' },
   heading: { margin: 0, fontSize: '18px', fontWeight: 600, color: '#1a1a1a' },
   subheading: { margin: '4px 0 0', fontSize: '13px', color: '#888' },
-  backBtn: { background: 'none', border: 'none', color: '#0063DC', cursor: 'pointer', fontSize: '14px', padding: '4px 0', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '4px' },
+  backBtn: { background: 'none', border: 'none', color: 'var(--ff-blue)', cursor: 'pointer', fontSize: '14px', padding: '4px 0', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '4px' },
   selectBtn: { background: 'none', border: '1px solid #ccc', borderRadius: '6px', padding: '5px 12px', fontSize: '13px', color: '#555', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px' },
   searchForm: { display: 'flex', gap: '8px' },
   searchInput: {
@@ -1531,10 +1584,10 @@ const s: Record<string, React.CSSProperties> = {
   },
   searchBtn: {
     height: '36px', padding: '0 20px', borderRadius: '8px',
-    background: '#0063DC', color: '#fff', border: 'none', cursor: 'pointer',
+    background: 'var(--ff-blue)', color: '#fff', border: 'none', cursor: 'pointer',
     fontSize: '14px', fontWeight: 500, flexShrink: 0,
   },
-  searchError: { color: '#c0392b', fontSize: '13px' },
+  searchError: { color: 'var(--ff-error)', fontSize: '13px' },
   contactsSection: { display: 'flex', flexDirection: 'column', gap: '12px' },
   contactsLabel: { fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#aaa' },
   contactsGrid: {
@@ -1557,7 +1610,7 @@ const s: Record<string, React.CSSProperties> = {
     padding: '8px 16px', cursor: 'pointer', fontSize: '14px', fontWeight: 500,
     color: '#888', marginBottom: '-1px', outline: 'none',
   },
-  userTabActive: { borderBottom: '2px solid #FF0084', color: '#FF0084' },
+  userTabActive: { borderBottom: '2px solid var(--ff-pink)', color: 'var(--ff-pink)' },
   userAvatar: { width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 },
   userName: { fontSize: '16px', fontWeight: 600, color: '#1a1a1a' },
   userHandle: { fontSize: '12px', color: '#888' },
@@ -1577,11 +1630,6 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: '12px', outline: 'none', cursor: 'pointer',
   },
   dateSep: { fontSize: '12px', color: '#888' },
-  applyBtn: {
-    padding: '5px 14px', borderRadius: '6px', border: 'none',
-    background: '#0063DC', color: '#fff', fontSize: '12px',
-    fontWeight: 600, cursor: 'pointer',
-  },
   grid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px' },
   albumGrid: {
     display: 'grid',
@@ -1604,7 +1652,7 @@ const s: Record<string, React.CSSProperties> = {
   loadMoreRow: { display: 'flex', justifyContent: 'center', paddingTop: '8px' },
   loadMoreBtn: { padding: '8px 24px', borderRadius: '8px', border: '1px solid #ddd', background: '#fff', cursor: 'pointer', fontSize: '13px', color: '#444' },
   loadingState: { textAlign: 'center', color: '#888', fontSize: '14px', paddingTop: '48px' },
-  errorState: { textAlign: 'center', color: '#c0392b', fontSize: '14px', paddingTop: '48px' },
+  errorState: { textAlign: 'center', color: 'var(--ff-error)', fontSize: '14px', paddingTop: '48px' },
   emptyState: { textAlign: 'center', color: '#888', fontSize: '14px', paddingTop: '48px' },
   // Collections tab
   collectionGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px', marginBottom: '16px' },

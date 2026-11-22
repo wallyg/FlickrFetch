@@ -24,13 +24,14 @@ mac:
     - target: dmg
       arch:
         - arm64
-    - target: pkg
-      arch:
-        - arm64
   category: public.app-category.photography
 
 dmg:
   title: FlickrFetch
+  background: assets/brand/dmg-background.png
+  window:
+    width: 540
+    height: 380
   contents:
     - x: 130
       y: 220
@@ -38,9 +39,6 @@ dmg:
       y: 220
       type: link
       path: /Applications
-
-pkg:
-  scripts: resources/pkg-scripts
 
 publish:
   provider: github

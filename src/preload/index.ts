@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { IpcRendererEvent } from 'electron'
-import type { FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery, DiscoverDownloadRecord, DiscoverUser, DiscoverContact, DiscoverGroup } from '../shared/types'
+import type { FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery, DiscoverDownloadRecord, DiscoverUser, DiscoverContact, DiscoverGroup, AuditSummary, AuditListQuery, AuditListPage, AuditSetRequest, AuditPlanRow, AuditExportQuery, HealthSummary, HealthListQuery, DayView, DayQuery, DayPhoto, DayPhotosQuery, DatePhotoIdsQuery, PrivacyScope, TimelineMonths, TimelineDays, TodaySummary, CameraRollQuery, CameraRollView, HealthListPage, HealthSetRequest, HealthExportQuery, AuditOverview, HealthOverview, TagIndexStatus, TagLetterGroup, TagListQuery, TagListPage, TagScanProgress } from '../shared/types'
 
 // Expose a safe, limited API surface to the renderer process.
 // The renderer cannot access Node.js or Electron directly — only these methods.
@@ -44,6 +44,7 @@ contextBridge.exposeInMainWorld('flickrAPI', {
 
   // Open an external URL in the default browser/mail app
   openExternal: (url: string): void => ipcRenderer.send('shell:openExternal', url),
+  showPhotoMenu: (photoId: string): void => ipcRenderer.send('photo:contextMenu', photoId),
 
   // Cancel an in-progress download
   cancelDownload: (): void => ipcRenderer.send('photos:cancelDownload'),
@@ -60,18 +61,68 @@ contextBridge.exposeInMainWorld('flickrAPI', {
 
   // App settings
   getSettings: (): Promise<AppSettings> => ipcRenderer.invoke('settings:get'),
-  setSettings: (settings: AppSettings): Promise<void> => ipcRenderer.invoke('settings:set', settings),
+  setSettings: (settings: Partial<AppSettings>): Promise<void> => ipcRenderer.invoke('settings:set', settings),
   resetSettings: (): Promise<AppSettings> => ipcRenderer.invoke('settings:reset'),
   resolveVideoUrl: (sourceUrl: string): Promise<string> => ipcRenderer.invoke('video:resolveUrl', sourceUrl),
 
   // Folder picker
   pickFolder: (): Promise<string | null> => ipcRenderer.invoke('shell:pickFolder'),
 
+  // Tags tab: local tag index
+  getTagIndexStatus: (): Promise<TagIndexStatus> => ipcRenderer.invoke('tags:getStatus'),
+  startTagScan: (mode: 'full' | 'refresh'): Promise<{ started: boolean }> => ipcRenderer.invoke('tags:startScan', mode),
+  cancelTagScan: (): void => ipcRenderer.send('tags:cancelScan'),
+  getTagGroups: (prefix: string, includeMachine: boolean): Promise<TagLetterGroup[]> => ipcRenderer.invoke('tags:getGroups', prefix, includeMachine),
+  listTags: (query: TagListQuery): Promise<TagListPage> => ipcRenderer.invoke('tags:list', query),
+  countTagPhotos: (names: string[], mode: 'any' | 'all'): Promise<number> => ipcRenderer.invoke('tags:countPhotos', names, mode),
+  onTagScanProgress: (cb: (progress: TagScanProgress) => void): (() => void) => {
+    const handler = (_evt: IpcRendererEvent, data: TagScanProgress) => cb(data)
+    ipcRenderer.on('tags:scanProgress', handler)
+    return () => ipcRenderer.removeListener('tags:scanProgress', handler)
+  },
+
+  // Tag audit
+  getAuditSummary: (): Promise<AuditSummary> => ipcRenderer.invoke('audit:summary'),
+  getAuditOverview: (): Promise<AuditOverview> => ipcRenderer.invoke('audit:overview'),
+  listAuditFindings: (query: AuditListQuery): Promise<AuditListPage> => ipcRenderer.invoke('audit:list', query),
+  setAuditStatus: (req: AuditSetRequest): Promise<void> => ipcRenderer.invoke('audit:set', req),
+  getAuditPlan: (): Promise<AuditPlanRow[]> => ipcRenderer.invoke('audit:plan'),
+  copyAuditPlan: (): Promise<boolean> => ipcRenderer.invoke('audit:copyPlan'),
+  saveAuditPlanCsv: (): Promise<string | null> => ipcRenderer.invoke('audit:savePlanCsv'),
+  saveAuditListCsv: (query: AuditExportQuery): Promise<string | null> => ipcRenderer.invoke('audit:saveListCsv', query),
+
+  // Metadata health
+  getHealthSummary: (): Promise<HealthSummary> => ipcRenderer.invoke('health:summary'),
+  getHealthOverview: (): Promise<HealthOverview> => ipcRenderer.invoke('health:overview'),
+  listHealthPhotos: (query: HealthListQuery): Promise<HealthListPage> => ipcRenderer.invoke('health:list', query),
+  setHealthStatus: (req: HealthSetRequest): Promise<void> => ipcRenderer.invoke('health:set', req),
+  saveHealthCsv: (query: HealthExportQuery): Promise<string | null> => ipcRenderer.invoke('health:saveCsv', query),
+
+  // On This Day and the Timeline
+  getDayView: (q: DayQuery): Promise<DayView> => ipcRenderer.invoke('dates:day', q),
+  getDayPhotos: (q: DayPhotosQuery): Promise<DayPhoto[]> => ipcRenderer.invoke('dates:dayPhotos', q),
+  getDatePhotoIds: (q: DatePhotoIdsQuery): Promise<{ id: string; title: string }[]> => ipcRenderer.invoke('dates:photoIds', q),
+  getTimelineMonths: (scope: PrivacyScope): Promise<TimelineMonths> => ipcRenderer.invoke('dates:months', scope),
+  getTimelineDays: (year: number, month: number, scope: PrivacyScope): Promise<TimelineDays> => ipcRenderer.invoke('dates:days', year, month, scope),
+  getCameraRoll: (q: CameraRollQuery): Promise<CameraRollView> => ipcRenderer.invoke('dates:camera', q),
+  getTodaySummary: (): Promise<TodaySummary> => ipcRenderer.invoke('dates:today'),
+  hideOnThisDayCardToday: (): Promise<void> => ipcRenderer.invoke('dates:hideCardToday'),
+  onOpenOnThisDay: (cb: () => void): (() => void) => {
+    const handler = (): void => cb()
+    ipcRenderer.on('otd:open', handler)
+    return () => ipcRenderer.removeListener('otd:open', handler)
+  },
+
+  // Collage and card maker
+  fetchShareImage: (url: string): Promise<string | null> => ipcRenderer.invoke('share:image', url),
+  saveShareImage: (dataUrl: string, defaultName: string): Promise<string | null> => ipcRenderer.invoke('share:savePng', dataUrl, defaultName),
+  copyShareImage: (dataUrl: string): Promise<boolean> => ipcRenderer.invoke('share:copyImage', dataUrl),
+
   // Batch downloads
   startBatch: (albumId: string, albumTitle: string, photoCount?: number, videoCount?: number, force?: boolean, mediaType?: 'photo' | 'video', privacyFilter?: string, track?: boolean, smartMode?: 'updated' | 'never-downloaded', zipMode?: boolean): Promise<{ alreadyQueued: boolean }> =>
     ipcRenderer.invoke('batch:startAlbum', albumId, albumTitle, photoCount, videoCount, force, mediaType, privacyFilter, track, smartMode, zipMode),
-  confirm: (message: string, detail?: string): Promise<boolean> =>
-    ipcRenderer.invoke('shell:confirm', message, detail),
+  confirm: (message: string, detail?: string, confirmLabel?: string): Promise<boolean> =>
+    ipcRenderer.invoke('shell:confirm', message, detail, confirmLabel),
   startSelectedBatch: (photos: { id: string; title: string }[], displayTitle: string, track?: boolean, zipMode?: boolean): Promise<void> =>
     ipcRenderer.invoke('batch:startSelected', photos, displayTitle, track, zipMode),
   startPhotostreamBatch: (albumTitle: string, track?: boolean, smartMode?: 'updated' | 'never-downloaded', privacyFilter?: string, sort?: string, zipMode?: boolean): Promise<void> =>

@@ -1,4 +1,4 @@
-import type { FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery, DiscoverDownloadRecord, DiscoverUser, DiscoverContact, DiscoverGroup } from '../shared/types'
+import type { FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery, DiscoverDownloadRecord, DiscoverUser, DiscoverContact, DiscoverGroup, TagIndexStatus, TagLetterGroup, TagListQuery, TagListPage, TagScanProgress, AuditSummary, AuditListQuery, AuditListPage, AuditSetRequest, AuditPlanRow, AuditExportQuery, HealthSummary, HealthListQuery, HealthListPage, HealthSetRequest, HealthExportQuery, AuditOverview, HealthOverview, DayView, DayQuery, DayPhoto, DayPhotosQuery, DatePhotoIdsQuery, PrivacyScope, TimelineMonths, TimelineDays, TodaySummary, CameraRollQuery, CameraRollView } from '../shared/types'
 
 declare module '*.png' {
   const src: string
@@ -20,13 +20,46 @@ declare global {
       onDownloadProgress: (callback: (percent: number) => void) => () => void
       showInFinder: (filePath: string) => void
       openExternal: (url: string) => void
+      showPhotoMenu: (photoId: string) => void
       cancelDownload: () => void
       getAlbums: (page: number) => Promise<AlbumPage>
       getAlbumPhotos: (albumId: string, page: number) => Promise<PhotoPage>
       getCollectionTree: () => Promise<FlickrCollection[]>
       startCollectionBatch: (collection: FlickrCollection) => Promise<{ queued: number }>
+      getTagIndexStatus: () => Promise<TagIndexStatus>
+      startTagScan: (mode: 'full' | 'refresh') => Promise<{ started: boolean }>
+      cancelTagScan: () => void
+      getTagGroups: (prefix: string, includeMachine: boolean) => Promise<TagLetterGroup[]>
+      listTags: (query: TagListQuery) => Promise<TagListPage>
+      countTagPhotos: (names: string[], mode: 'any' | 'all') => Promise<number>
+      onTagScanProgress: (callback: (progress: TagScanProgress) => void) => () => void
+      getAuditSummary: () => Promise<AuditSummary>
+      getAuditOverview: () => Promise<AuditOverview>
+      listAuditFindings: (query: AuditListQuery) => Promise<AuditListPage>
+      setAuditStatus: (req: AuditSetRequest) => Promise<void>
+      getAuditPlan: () => Promise<AuditPlanRow[]>
+      copyAuditPlan: () => Promise<boolean>
+      saveAuditPlanCsv: () => Promise<string | null>
+      saveAuditListCsv: (query: AuditExportQuery) => Promise<string | null>
+      getHealthSummary: () => Promise<HealthSummary>
+      getHealthOverview: () => Promise<HealthOverview>
+      listHealthPhotos: (query: HealthListQuery) => Promise<HealthListPage>
+      setHealthStatus: (req: HealthSetRequest) => Promise<void>
+      saveHealthCsv: (query: HealthExportQuery) => Promise<string | null>
+      getDayView: (q: DayQuery) => Promise<DayView>
+      getDayPhotos: (q: DayPhotosQuery) => Promise<DayPhoto[]>
+      getDatePhotoIds: (q: DatePhotoIdsQuery) => Promise<{ id: string; title: string }[]>
+      getTimelineMonths: (scope: PrivacyScope) => Promise<TimelineMonths>
+      getTimelineDays: (year: number, month: number, scope: PrivacyScope) => Promise<TimelineDays>
+      getCameraRoll: (q: CameraRollQuery) => Promise<CameraRollView>
+      getTodaySummary: () => Promise<TodaySummary>
+      hideOnThisDayCardToday: () => Promise<void>
+      onOpenOnThisDay: (cb: () => void) => () => void
+      fetchShareImage: (url: string) => Promise<string | null>
+      saveShareImage: (dataUrl: string, defaultName: string) => Promise<string | null>
+      copyShareImage: (dataUrl: string) => Promise<boolean>
       getSettings: () => Promise<AppSettings>
-      setSettings: (settings: AppSettings) => Promise<void>
+      setSettings: (settings: Partial<AppSettings>) => Promise<void>
       resetSettings: () => Promise<AppSettings>
       resolveVideoUrl: (sourceUrl: string) => Promise<string>
       pickFolder: () => Promise<string | null>
@@ -38,7 +71,7 @@ declare global {
       pauseBatch: () => void
       resumeBatch: () => void
       removeFromQueue: (id: string) => Promise<void>
-      confirm: (message: string, detail?: string) => Promise<boolean>
+      confirm: (message: string, detail?: string, confirmLabel?: string) => Promise<boolean>
       onBatchProgress: (cb: (progress: BatchProgress) => void) => () => void
       onShowAbout: (cb: (data: { version: string }) => void) => () => void
       onOpenSettings: (cb: () => void) => () => void

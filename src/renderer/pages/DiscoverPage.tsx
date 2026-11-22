@@ -71,7 +71,7 @@ const s: Record<string, React.CSSProperties> = {
     padding: '10px 16px', cursor: 'pointer', fontSize: '14px', fontWeight: 500,
     color: '#888', marginBottom: '-1px', outline: 'none',
   },
-  tabActive: { borderBottom: '2px solid #FF0084', color: '#FF0084' },
+  tabActive: { borderBottom: '2px solid var(--ff-pink)', color: 'var(--ff-pink)' },
   content: { flex: 1, overflowY: 'auto', position: 'relative' },
   paneVisible: { display: 'block' },
   paneHidden: { display: 'none' },
