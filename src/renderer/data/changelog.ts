@@ -7,6 +7,21 @@ export interface Release {
 
 const changelog: Release[] = [
   {
+    version: '3.3',
+    date: 'November 2026',
+    highlights: [
+      'Tags tab — a new tab in My Flickr that lists every tag you\'ve used. Build the list once (a minute or two for a big library), then browse by letter, narrow with a second row of letters, or search by "contains", "starts with", "ends with", or exact match. Pick several tags and press View photos to see them in your photostream, ready to download',
+      'Tags show as you typed them — "New York" instead of "newyork" — and tags you\'ve typed more than one way are flagged. Searching "new york" or "newyork" finds the same tag',
+      'Refresh and Full rescan — Refresh only reads photos that changed since last time; Full rescan starts over. Press Cmd+F (Ctrl+F on Windows) to jump to the tag search',
+      'Click a tag — in a photo\'s details, every tag is now a button. From your photostream it shows all your photos with that tag; from inside an album it filters that album, with a link to search your whole photostream instead',
+      'Links in descriptions work — links, bold, italic, and lists in a photo\'s description now display properly instead of showing raw code',
+      'Cleaner descriptions in your files — downloaded photos now get a plain-text description (links written as "text (address)"). A new "Keep Flickr\'s HTML" switch in Settings → Metadata keeps the original instead',
+      'New buttons on every photo — Open on Flickr, Copy attribution (a ready-made credit line for Creative Commons photos), and Copy all metadata. Right-click a photo in the grid for Open on Flickr and Copy Flickr link',
+      'Fixed tag searches that found nothing for tags with accented letters, such as Québec or Honshū',
+      'Easier-to-read tooltips and confirmation messages — separate ideas now sit on their own lines',
+    ]
+  },
+  {
     version: '3.2',
     date: 'November 2026',
     highlights: [

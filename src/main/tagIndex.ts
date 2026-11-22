@@ -373,10 +373,14 @@ export function listTags(q: TagListQuery): TagListPage {
   const offset = Math.max(q.offset ?? 0, 0)
   const rows = db.prepare(`
     SELECT name, COALESCE(display, name) AS display, photo_count AS count,
-           MAX((SELECT COUNT(*) FROM tag_raw r WHERE r.tag_id = tag_names.id), 1) AS variants
+           MAX((SELECT COUNT(*) FROM tag_raw r WHERE r.tag_id = tag_names.id), 1) AS variants,
+           (SELECT group_concat(raw, char(31)) FROM tag_raw r WHERE r.tag_id = tag_names.id) AS spellingList
     FROM tag_names WHERE ${sql} ORDER BY ${order} LIMIT ? OFFSET ?
-  `).all(...params, limit, offset) as TagRow[]
-  return { rows, total }
+  `).all(...params, limit, offset) as (TagRow & { spellingList: string | null })[]
+  return {
+    rows: rows.map(({ spellingList, ...row }) => ({ ...row, spellings: spellingList ? spellingList.split('\u001f') : [] })),
+    total
+  }
 }
 
 // The strip: groups by the next character after `prefix`. With no prefix this is the top-level

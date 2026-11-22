@@ -731,6 +731,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             onFilteredPhotosChange={setPhotostreamFilteredPhotos}
             onFiltersActiveChange={setPhotostreamFiltersActive}
             tagSearchRequest={tagSearchRequest}
+            onBackToTags={() => { setTagsVisited(true); setView('tags') }}
           />
         </div>
         {tagsVisited && (

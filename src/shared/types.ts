@@ -285,6 +285,7 @@ export interface TagRow {
   name: string      // Flickr's clean form ("newyork"); this is the key for filtering photos
   display: string   // best as-typed spelling ("New York"); falls back to name
   variants: number  // how many different spellings exist for this tag (1 = consistent)
+  spellings: string[] // every spelling typed for this tag (empty when only the clean form is known)
   count: number
 }
 

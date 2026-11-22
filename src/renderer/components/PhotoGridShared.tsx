@@ -290,14 +290,14 @@ export function PrivacyIcon({ level }: { level: PrivacyLevel }): React.JSX.Eleme
   )
 }
 
-export function Tooltip({ text, children, align = 'center' }: { text: string; children: React.ReactNode; align?: 'center' | 'right' }): React.JSX.Element {
+export function Tooltip({ text, children, align = 'center', side = 'above' }: { text: string; children: React.ReactNode; align?: 'center' | 'right'; side?: 'above' | 'below' }): React.JSX.Element {
   const [visible, setVisible] = useState(false)
   return (
     <span style={{ position: 'relative', display: 'inline-flex' }} onMouseEnter={() => setVisible(true)} onMouseLeave={() => setVisible(false)}>
       {children}
       {visible && (
         <span style={{
-          position: 'absolute', bottom: 'calc(100% + 6px)',
+          position: 'absolute', ...(side === 'below' ? { top: 'calc(100% + 6px)' } : { bottom: 'calc(100% + 6px)' }),
           ...(align === 'right' ? { right: 0 } : { left: '50%', transform: 'translateX(-50%)' }),
           backgroundColor: '#333', color: '#fff', fontSize: '11px', lineHeight: '1.5',
           padding: '5px 9px', borderRadius: '5px', maxWidth: '220px', width: 'max-content', whiteSpace: 'pre-line',

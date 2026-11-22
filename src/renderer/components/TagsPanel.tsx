@@ -46,6 +46,13 @@ function levelsToQuery(levels: string[]): Partial<TagListQuery> {
   return { prefix: levels.join('') }
 }
 
+// Hover text for the "N spellings" badge. Flickr doesn't say how often each spelling is used, so this is a plain list.
+function spellingTip(row: TagRow): string {
+  const shown = row.spellings.slice(0, 12)
+  const more = row.spellings.length - shown.length
+  return `Typed ${row.variants} ways:\n${shown.map(s => `• ${s}`).join('\n')}${more > 0 ? `\n…and ${more} more` : ''}`
+}
+
 export default function TagsPanel({ active, onViewPhotos }: TagsPanelProps): React.JSX.Element {
   const [status, setStatus] = useState<TagIndexStatus | null>(null)
   const [progress, setProgress] = useState<TagScanProgress | null>(null)
@@ -130,8 +137,8 @@ export default function TagsPanel({ active, onViewPhotos }: TagsPanelProps): Rea
   const query: TagListQuery = useMemo(() => {
     const base: TagListQuery = { sort, includeMachine }
     const t = text.trim()
-    if (t) return { ...base, text: t, operator }
-    return { ...base, ...levelsToQuery(levels) }
+    // Typed text narrows within the chosen letter. ("Just this tag" is already an exact match, so typed text wins there.)
+    return { ...base, ...levelsToQuery(levels), ...(t ? { text: t, operator } : {}) }
   }, [levels, text, operator, sort, includeMachine])
 
   useEffect(() => {
@@ -226,17 +233,13 @@ export default function TagsPanel({ active, onViewPhotos }: TagsPanelProps): Rea
   }, [selected, selectMode, resultsVersion])
 
   const pickLevel = (depth: number, key: string): void => {
-    setText('')
     const current = levels[depth]
     // Clicking the chosen chip again steps back up one level
     if (current === key) setLevels(levels.slice(0, depth))
     else setLevels([...levels.slice(0, depth), key])
   }
 
-  const onTextChange = (value: string): void => {
-    setText(value)
-    if (value.trim()) setLevels([])   // typing searches everything; picking a letter clears the text
-  }
+  const onTextChange = (value: string): void => setText(value)
 
   // ── Rendering ──────────────────────────────────────────────────────────────
   if (!status) return <div style={styles.center}><span style={styles.muted}>Loading…</span></div>
@@ -264,7 +267,7 @@ export default function TagsPanel({ active, onViewPhotos }: TagsPanelProps): Rea
       <div style={styles.center}>
         <EmptyState
           title="Build your tag list"
-          body="Flickr can't list tags by letter or count them, so FlickrFetch reads your photos once and keeps the tags on this computer. It takes a minute or two for a big library, nothing on Flickr is changed, and afterwards browsing is instant."
+          body={"Flickr can't list tags by letter or count them, so FlickrFetch reads your photos once and keeps the tags on this computer. It takes a minute or two for a big library, nothing on Flickr is changed, and afterwards browsing is instant.\n\nLater, Refresh reads only the photos changed since your last update, usually a few seconds. Full rescan reads every photo again, which is worth doing after you delete photos."}
         >
           <button style={styles.primaryBtn} onClick={() => void startScan('full')}>Scan my photos</button>
           {progress?.phase === 'cancelled' && <div style={styles.muted}>Scan cancelled. Nothing was saved.</div>}
@@ -289,7 +292,7 @@ export default function TagsPanel({ active, onViewPhotos }: TagsPanelProps): Rea
         <input type="checkbox" checked={isSel} readOnly style={styles.check} />
         <span style={styles.tagName} title={row.display === row.name ? row.name : `${row.display}  (Flickr form: ${row.name})`}>{row.display}</span>
         {row.variants > 1 && (
-          <span style={styles.variantChip} title="This tag has been typed more than one way">{row.variants} spellings</span>
+          <span style={styles.variantChip} title={spellingTip(row)}>{row.variants} spellings</span>
         )}
         <span style={{ flex: 1 }} />
         <span style={styles.count}>{row.count.toLocaleString()} photo{row.count === 1 ? '' : 's'}</span>
@@ -311,10 +314,10 @@ export default function TagsPanel({ active, onViewPhotos }: TagsPanelProps): Rea
           <span style={styles.muted}> · updated {formatWhen(status.lastScanAt)}</span>
         </div>
         <div style={{ flex: 1 }} />
-        <Tooltip text={"Checks only the photos changed since the last update, usually a few seconds.\n\nPicks up new uploads and tag edits."}>
+        <Tooltip side="below" align="right" text={"Checks only the photos changed since the last update, usually a few seconds.\n\nPicks up new uploads and tag edits."}>
           <button style={styles.secondaryBtn} onClick={() => void startScan('refresh')}>Refresh</button>
         </Tooltip>
-        <Tooltip align="right" text={"Reads every photo again to rebuild the whole tag list, about a minute or two.\n\nUse it after deleting photos, or if the counts look off."}>
+        <Tooltip side="below" align="right" text={"Reads every photo again to rebuild the whole tag list, about a minute or two.\n\nUse it after deleting photos, or if the counts look off."}>
           <button style={styles.linkBtn} onClick={() => void startFullRescan()}>Full rescan</button>
         </Tooltip>
       </div>
@@ -352,7 +355,7 @@ export default function TagsPanel({ active, onViewPhotos }: TagsPanelProps): Rea
         </div>
       </div>
 
-      {!text.trim() && (
+      {(
         <div style={styles.strips}>
           {strips.map((strip, depth) => (
             <div key={strip.prefix || 'root'} style={styles.stripRow}>
@@ -380,8 +383,8 @@ export default function TagsPanel({ active, onViewPhotos }: TagsPanelProps): Rea
 
       <div style={styles.listInfo}>
         {total.toLocaleString()} tag{total === 1 ? '' : 's'}
-        {text.trim() ? ` ${OPERATOR_LABELS[operator].toLowerCase()} “${text.trim()}”` : levels.length ? '' : ' in total'}
-        {!text.trim() && levels.length > 0 && strips.length === levels.length + 1
+        {text.trim() ? ` ${OPERATOR_LABELS[operator].toLowerCase()} “${text.trim()}”${levels.length ? ' within the chosen letter' : ''}` : levels.length ? '' : ' in total'}
+        {levels.length > 0 && strips.length === levels.length + 1
           ? <span style={styles.muted}> · pick the next letter above to narrow further</span> : null}
       </div>
 

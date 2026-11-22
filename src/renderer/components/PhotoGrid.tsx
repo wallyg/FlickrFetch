@@ -18,9 +18,11 @@ interface PhotoGridProps {
   onFiltersActiveChange?: (active: boolean) => void
   // From the Tags tab: show only photos with these tags (replaces any search or filters in place)
   tagSearchRequest?: { tags: string[]; mode: TagMode; nonce: number } | null
+  // Shown next to the tag chip while viewing the result of a Tags tab search
+  onBackToTags?: () => void
 }
 
-export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onToggleSelect, onPhotosLoaded, onPageInfo, onSortChange, onFilteredPhotosChange, onFiltersActiveChange, tagSearchRequest }: PhotoGridProps): React.JSX.Element {
+export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onToggleSelect, onPhotosLoaded, onPageInfo, onSortChange, onFilteredPhotosChange, onFiltersActiveChange, tagSearchRequest, onBackToTags }: PhotoGridProps): React.JSX.Element {
   const [photos, setPhotos] = useState<FlickrPhoto[]>([])
   const [page, setPage] = useState(1)
   const [pages, setPages] = useState(1)
@@ -600,6 +602,9 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
                   label={`Tags (${activeSearch.tagMode ?? 'any'}): ${activeSearch.tagQuery}`}
                   onDismiss={dismissTagQuery}
                 />
+              )}
+              {onBackToTags && tagSearchRequest && activeSearch.tagQuery === tagSearchRequest.tags.join(', ') && (
+                <button style={styles.clearFiltersLink} onClick={onBackToTags}>← Back to Tags</button>
               )}
               {(activeSearch.dateMin || activeSearch.dateMax) && (
                 <Chip
