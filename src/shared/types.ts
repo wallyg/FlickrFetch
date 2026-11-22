@@ -269,6 +269,7 @@ export interface TagIndexStatus {
   tagCount: number
   flickrTotal: number | null      // photo total reported by Flickr at the last check
   hasSpellings: boolean           // true when the as-typed spellings were fetched ("New York")
+  hasPhotoMeta: boolean           // true when the scan also saved titles, descriptions, locations and thumbnails
 }
 
 export interface TagScanProgress {
@@ -313,4 +314,108 @@ export interface TagLetterGroup {
   key: string      // next character: a-z; '#' (all digits) at the top level, 0-9 deeper; 'other'; '' = the bare tag itself
   label: string
   count: number    // tags in this group
+}
+
+// ── Tag audit (read-only report of likely tag problems) ──────────────────────
+export type AuditCategory = 'glued' | 'typo' | 'notwin' | 'noaccent' | 'junk' | 'runon' | 'spelling'
+export type AuditStatus = 'open' | 'plan' | 'fine' | 'fixed'
+export type AuditConfidence = 'high' | 'medium' | 'low'
+
+export interface AuditFinding {
+  category: AuditCategory
+  tag: string             // Flickr's clean form; with the category this identifies the finding
+  display: string         // the spelling shown in the Tags tab
+  count: number           // photos with this tag
+  confidence: AuditConfidence
+  replacement: string     // what to replace the tag with: a comma list (it may include the original, to keep it)
+  evidence: string
+  spellings: string[]
+  status: AuditStatus
+  flickrUrl: string       // this tag's page on your Flickr account (a handy place to fix it by hand)
+}
+
+export interface AuditSummaryRow { category: AuditCategory; open: number; plan: number; fine: number; fixed: number }
+export interface AuditSummary { computedAt: number; hasIndex: boolean; rows: AuditSummaryRow[] }
+
+export interface AuditListQuery {
+  category: AuditCategory
+  status: AuditStatus
+  search?: string
+  offset: number
+  limit: number
+}
+export interface AuditListPage { rows: AuditFinding[]; total: number }
+
+export type AuditExportQuery = Omit<AuditListQuery, 'offset' | 'limit'>
+
+export interface AuditSetRequest {
+  tag: string
+  category: AuditCategory
+  status: 'open' | 'plan' | 'fine'   // 'open' clears a plan or fine mark
+  replacement?: string               // the user's edit of the replacement list
+}
+
+export interface AuditPlanRow {
+  category: AuditCategory
+  tag: string
+  display: string
+  count: number
+  replacement: string
+  status: 'plan' | 'fixed'
+  flickrUrl: string
+  line: string            // "Replace "Kantō" with Kantō, Kanto (1,133 photos)"
+}
+
+// ── Metadata health (photos with missing or weak metadata) ───────────────────
+export type HealthCondition = 'title' | 'description' | 'tags' | 'location'
+
+export interface HealthSummaryRow { condition: HealthCondition; open: number; fine: number }
+export interface HealthSummary { hasData: boolean; photos: number; rows: HealthSummaryRow[] }
+
+export interface HealthListQuery {
+  condition: HealthCondition
+  status: 'open' | 'fine'
+  search?: string
+  year?: string         // only photos taken in this year (from a dashboard cluster)
+  offset: number
+  limit: number
+}
+export type HealthExportQuery = Omit<HealthListQuery, 'offset' | 'limit'>
+
+export interface HealthPhoto {
+  photoId: string
+  title: string
+  thumbUrl: string
+  dateTaken: string
+  kind: string          // for titles: 'No title' or 'Camera-file title'
+  flickrUrl: string
+  status: 'open' | 'fine'
+}
+export interface HealthListPage { rows: HealthPhoto[]; total: number }
+
+export interface HealthSetRequest { photoId: string; condition: HealthCondition; status: 'open' | 'fine' }
+
+// ── Dashboard overviews ──────────────────────────────────────────────────────
+export interface AuditOverview {
+  hasIndex: boolean
+  totalTags: number
+  totalPhotos: number
+  flaggedTags: number          // tags with an open or planned finding (cosmetic spelling not counted)
+  flaggedPhotos: number        // photos carrying at least one of those tags
+  plan: number
+  fine: number
+  fixed: number
+  byType: { category: AuditCategory; open: number; plan: number; fine: number; fixed: number; photos: number }[]
+  biggest: { display: string; category: AuditCategory; count: number }[]
+}
+
+export interface HealthOverview {
+  hasData: boolean
+  photos: number
+  complete: number             // photos with nothing missing
+  withGap: number
+  twoOrMore: number
+  byType: { condition: HealthCondition; open: number }[]
+  byYear: { year: string; total: number; anyGap: number; title: number; description: number; tags: number; location: number }[]
+  clusters: { condition: HealthCondition; year: string; count: number; total: number }[]
 }

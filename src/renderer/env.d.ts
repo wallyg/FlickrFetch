@@ -1,4 +1,4 @@
-import type { FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery, DiscoverDownloadRecord, DiscoverUser, DiscoverContact, DiscoverGroup, TagIndexStatus, TagLetterGroup, TagListQuery, TagListPage, TagScanProgress } from '../shared/types'
+import type { FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery, DiscoverDownloadRecord, DiscoverUser, DiscoverContact, DiscoverGroup, TagIndexStatus, TagLetterGroup, TagListQuery, TagListPage, TagScanProgress, AuditSummary, AuditListQuery, AuditListPage, AuditSetRequest, AuditPlanRow, AuditExportQuery, HealthSummary, HealthListQuery, HealthListPage, HealthSetRequest, HealthExportQuery, AuditOverview, HealthOverview } from '../shared/types'
 
 declare module '*.png' {
   const src: string
@@ -33,6 +33,19 @@ declare global {
       listTags: (query: TagListQuery) => Promise<TagListPage>
       countTagPhotos: (names: string[], mode: 'any' | 'all') => Promise<number>
       onTagScanProgress: (callback: (progress: TagScanProgress) => void) => () => void
+      getAuditSummary: () => Promise<AuditSummary>
+      getAuditOverview: () => Promise<AuditOverview>
+      listAuditFindings: (query: AuditListQuery) => Promise<AuditListPage>
+      setAuditStatus: (req: AuditSetRequest) => Promise<void>
+      getAuditPlan: () => Promise<AuditPlanRow[]>
+      copyAuditPlan: () => Promise<boolean>
+      saveAuditPlanCsv: () => Promise<string | null>
+      saveAuditListCsv: (query: AuditExportQuery) => Promise<string | null>
+      getHealthSummary: () => Promise<HealthSummary>
+      getHealthOverview: () => Promise<HealthOverview>
+      listHealthPhotos: (query: HealthListQuery) => Promise<HealthListPage>
+      setHealthStatus: (req: HealthSetRequest) => Promise<void>
+      saveHealthCsv: (query: HealthExportQuery) => Promise<string | null>
       getSettings: () => Promise<AppSettings>
       setSettings: (settings: AppSettings) => Promise<void>
       resetSettings: () => Promise<AppSettings>
@@ -46,7 +59,7 @@ declare global {
       pauseBatch: () => void
       resumeBatch: () => void
       removeFromQueue: (id: string) => Promise<void>
-      confirm: (message: string, detail?: string) => Promise<boolean>
+      confirm: (message: string, detail?: string, confirmLabel?: string) => Promise<boolean>
       onBatchProgress: (cb: (progress: BatchProgress) => void) => () => void
       onShowAbout: (cb: (data: { version: string }) => void) => () => void
       onOpenSettings: (cb: () => void) => () => void

@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { TagIndexStatus, TagScanProgress, TagRow, TagLetterGroup, TagListQuery, TagTextOperator, TagMode } from '../../shared/types'
 import EmptyState from './EmptyState'
+import AuditPanel from './AuditPanel'
+import HealthPanel from './HealthPanel'
 import { Tooltip } from './PhotoGridShared'
 
 // The Tags tab: browse every tag you have used, narrow by letter or by typing, pick some,
@@ -59,6 +61,7 @@ export default function TagsPanel({ active, onViewPhotos }: TagsPanelProps): Rea
   const [scanError, setScanError] = useState<string | null>(null)
 
   // Browse controls
+  const [view, setView] = useState<'browse' | 'audit' | 'health'>('browse')
   const [levels, setLevels] = useState<string[]>([])
   const [text, setText] = useState('')
   const [operator, setOperator] = useState<TagTextOperator>('contains')
@@ -111,7 +114,7 @@ export default function TagsPanel({ active, onViewPhotos }: TagsPanelProps): Rea
   }
 
   const startFullRescan = async (): Promise<void> => {
-    const ok = await window.flickrAPI.confirm('Rescan every photo?', 'This reads all your photos again to rebuild the tag list.\n\nIt takes a minute or two and changes nothing on Flickr.')
+    const ok = await window.flickrAPI.confirm('Rescan every photo?', 'This reads all your photos again to rebuild the tag list and the metadata report.\n\nIt takes a few minutes and changes nothing on Flickr.', 'Rescan')
     if (ok) void startScan('full')
   }
 
@@ -267,7 +270,7 @@ export default function TagsPanel({ active, onViewPhotos }: TagsPanelProps): Rea
       <div style={styles.center}>
         <EmptyState
           title="Build your tag list"
-          body={"Flickr can't list tags by letter or count them, so FlickrFetch reads your photos once and keeps the tags on this computer. It takes a minute or two for a big library, nothing on Flickr is changed, and afterwards browsing is instant.\n\nLater, Refresh reads only the photos changed since your last update, usually a few seconds. Full rescan reads every photo again, which is worth doing after you delete photos."}
+          body={"Flickr can't list tags by letter or count them, so FlickrFetch reads your photos once and keeps the tags on this computer. It takes a few minutes for a big library, nothing on Flickr is changed, and afterwards browsing is instant.\n\nLater, Refresh reads only the photos changed since your last update, usually a few seconds. Full rescan reads every photo again, which is worth doing after you delete photos."}
         >
           <button style={styles.primaryBtn} onClick={() => void startScan('full')}>Scan my photos</button>
           {progress?.phase === 'cancelled' && <div style={styles.muted}>Scan cancelled. Nothing was saved.</div>}
@@ -309,25 +312,35 @@ export default function TagsPanel({ active, onViewPhotos }: TagsPanelProps): Rea
   return (
     <div style={styles.wrap}>
       <div style={styles.header}>
+        <div style={styles.segGroup} title={"Browse your tags, audit them for likely problems,\nor check your photos for missing titles, descriptions, tags and locations"}>
+          {(['browse', 'audit', 'health'] as const).map(v => (
+            <button key={v} style={{ ...styles.seg, ...(view === v ? styles.segActive : {}) }} onClick={() => setView(v)}>{v === 'browse' ? 'Browse' : v === 'audit' ? 'Audit' : 'Health'}</button>
+          ))}
+        </div>
         <div style={styles.headline}>
           <strong>{status.tagCount.toLocaleString()}</strong> tags on <strong>{status.indexedPhotos.toLocaleString()}</strong> photos
           <span style={styles.muted}> · updated {formatWhen(status.lastScanAt)}</span>
         </div>
         <div style={{ flex: 1 }} />
-        <Tooltip side="below" align="right" text={"Checks only the photos changed since the last update, usually a few seconds.\n\nPicks up new uploads and tag edits."}>
+        <Tooltip side="below" align="right" text={"Checks only the photos changed since the last update, usually a few seconds.\n\nPicks up new uploads and edits, but not deleted photos."}>
           <button style={styles.secondaryBtn} onClick={() => void startScan('refresh')}>Refresh</button>
         </Tooltip>
-        <Tooltip side="below" align="right" text={"Reads every photo again to rebuild the whole tag list, about a minute or two.\n\nUse it after deleting photos, or if the counts look off."}>
+        <Tooltip side="below" align="right" text={"Reads every photo again to rebuild the whole tag list and metadata report, about three to five minutes.\n\nUse it after deleting photos, or if the counts look off."}>
           <button style={styles.linkBtn} onClick={() => void startFullRescan()}>Full rescan</button>
         </Tooltip>
       </div>
-      {Math.abs(libraryGap) > 10 && (
+      {(libraryGap < 0 || libraryGap > 10) && (
         <div style={styles.notice}>
-          Flickr reports {status.flickrTotal?.toLocaleString()} photos but {status.indexedPhotos.toLocaleString()} are in your tag list. Photos may have been added or removed. A Full rescan will bring it up to date.
+          Flickr reports {status.flickrTotal?.toLocaleString()} photos but {status.indexedPhotos.toLocaleString()} are in your tag list. Photos may have been added or removed. Refresh picks up new and changed photos, but only a Full rescan drops deleted ones.
         </div>
       )}
       {scanError && <div style={{ ...styles.notice, color: 'var(--ff-error)' }}>{scanError}</div>}
 
+      {view === 'audit' ? (
+        <AuditPanel refreshKey={status.lastScanAt ?? 0} onViewPhotos={onViewPhotos} />
+      ) : view === 'health' ? (
+        <HealthPanel refreshKey={status.lastScanAt ?? 0} onFullRescan={() => void startFullRescan()} />
+      ) : (<>
       <div style={styles.controls}>
         <div style={styles.searchGroup}>
           <select style={styles.select} value={operator} onChange={e => setOperator(e.target.value as TagTextOperator)}>
@@ -420,6 +433,7 @@ export default function TagsPanel({ active, onViewPhotos }: TagsPanelProps): Rea
           </div>
         </div>
       )}
+      </>)}
     </div>
   )
 }

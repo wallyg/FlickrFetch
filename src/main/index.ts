@@ -10,6 +10,9 @@ import { downloadPhoto, downloadToFolder } from './downloader'
 import { endExifTool } from './exiftool'
 import { loadSettings, saveSettings, resetSettings, ensureDownloadFolder } from './settings'
 import { registerTagIpc } from './tagIndex'
+import { registerAuditIpc } from './tagAudit'
+import { registerHealthIpc } from './photoHealth'
+import { ownerNsid, forgetOwnerNsid } from './owner'
 import { openDatabase, closeDatabase, writeBatchLog, writePhotoRecord, getPhotoRecord, getPhotoRecordsBatch, getBatchLog, clearBatchLog, clearAllHistory, searchPhotoRecords, deletePhotoRecord, deletePhotoRecords, clearPhotoRecords, writeDiscoverRecord, getDiscoverRecordsBatch, searchDiscoverRecords, deleteDiscoverRecord, deleteDiscoverRecords, clearDiscoverRecords } from './database'
 import type { AppSettings, FileNamingConfig, PhotoInfo, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams, MetadataSettings, DiscoverUser, DiscoverContact, DiscoverGroup } from '../shared/types'
 
@@ -230,7 +233,7 @@ ipcMain.handle('auth:getState', async () => {
     return { user }
   } catch {
     clearToken()
-    ownerNsidForMenu = null
+    forgetOwnerNsid()
     return { user: null }
   }
 })
@@ -318,6 +321,8 @@ ipcMain.handle('video:resolveUrl', (_event, sourceUrl: string) => resolveVideoUr
 
 // Tags tab: local tag index (scan, browse, count)
 registerTagIpc(() => mainWindow)
+registerAuditIpc(() => mainWindow)
+registerHealthIpc(() => mainWindow)
 
 // Folder picker dialog
 ipcMain.handle('shell:pickFolder', async () => {
@@ -1277,11 +1282,9 @@ ipcMain.on('shell:openExternal', (_event, url: string) => {
 })
 
 // Right-click menu on one of your own photos in a grid
-let ownerNsidForMenu: string | null = null   // read once from the stored sign-in; cleared on sign-out
 ipcMain.on('photo:contextMenu', (_event, photoId: string) => {
   if (!mainWindow || !/^\d+$/.test(photoId)) return
-  if (!ownerNsidForMenu) ownerNsidForMenu = loadToken()?.nsid ?? null
-  const nsid = ownerNsidForMenu
+  const nsid = ownerNsid()
   const url = nsid ? `https://www.flickr.com/photos/${nsid}/${photoId}` : `https://www.flickr.com/photo.gne?id=${photoId}`
   Menu.buildFromTemplate([
     { label: 'Open on Flickr', click: () => { void shell.openExternal(url) } },
@@ -1290,11 +1293,11 @@ ipcMain.on('photo:contextMenu', (_event, photoId: string) => {
 })
 
 // Native confirmation dialog
-ipcMain.handle('shell:confirm', async (_event, message: string, detail?: string) => {
+ipcMain.handle('shell:confirm', async (_event, message: string, detail?: string, confirmLabel?: string) => {
   if (!mainWindow) return false
   const { response } = await dialog.showMessageBox(mainWindow, {
     type: 'question',
-    buttons: ['Cancel', 'Queue Again'],
+    buttons: ['Cancel', confirmLabel || 'OK'],
     defaultId: 1,
     message,
     detail
@@ -1305,7 +1308,7 @@ ipcMain.handle('shell:confirm', async (_event, message: string, detail?: string)
 // Sign out: clear the stored token
 ipcMain.handle('auth:signout', () => {
   clearToken()
-  ownerNsidForMenu = null
+  forgetOwnerNsid()
 })
 
 // Download history DB

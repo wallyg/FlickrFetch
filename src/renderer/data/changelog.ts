@@ -7,6 +7,19 @@ export interface Release {
 
 const changelog: Release[] = [
   {
+    version: '3.4',
+    date: 'November 2026',
+    highlights: [
+      'Tag audit — a new Audit switch in the Tags tab lists likely tag problems by type: names stuck together after a lost comma, possible typos, accented tags with no plain twin (Flickr search can\'t find accented tags), plain tags that may need accents, odd characters, run-ons, and tags typed more than one way. Each finding has an editable suggested fix',
+      'Plan and "This one is fine" — add findings to a plan, a checklist to work through on Flickr (copy it or save it as a spreadsheet), or mark a finding fine to hide it for good. After a Refresh, items you\'ve fixed tick themselves off',
+      'Export this list and Open on Flickr — save any list as a spreadsheet (it opens in your Downloads folder), and jump from any tag straight to its page on Flickr',
+      'Metadata health — a new Health switch lists photos with no title or a camera-file title (IMG_1234), no description, no tags, or no location, with thumbnails, as a to-do list for Flickr',
+      'Dashboards — both Audit and Health open on an Overview: number tiles, bars by type, how clean your library is, the biggest single issues, a by-year chart, and where the gaps cluster. Click anything to open its list',
+      'One more scan — Health needs your tag list rebuilt once (Full rescan, a few minutes). It also keeps titles, descriptions, locations and thumbnails on your computer. Nothing on Flickr is changed',
+      'The Full rescan confirmation now says "Rescan" instead of "Queue Again"'
+    ]
+  },
+  {
     version: '3.3',
     date: 'November 2026',
     highlights: [

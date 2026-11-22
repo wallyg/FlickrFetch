@@ -23,7 +23,28 @@ let scanning = false
 let cancelRequested = false
 let schemaReady: Database.Database | null = null
 
-interface RawPhoto { id: string; tags?: string; lastupdate?: string }
+interface RawPhoto {
+  id: string; tags?: string; lastupdate?: string
+  title?: string; description?: { _content?: string } | string
+  latitude?: number | string; longitude?: number | string
+  url_q?: string; datetaken?: string
+}
+
+// One row per photo with what the Health report needs (also created by photoHealth.ts, so it lives here once)
+export const PHOTO_META_DDL = `
+  CREATE TABLE IF NOT EXISTS photo_meta (
+    photo_id TEXT PRIMARY KEY,
+    title TEXT NOT NULL DEFAULT '',
+    has_description INTEGER NOT NULL DEFAULT 0,
+    has_tags INTEGER NOT NULL DEFAULT 0,
+    has_location INTEGER NOT NULL DEFAULT 0,
+    thumb_url TEXT NOT NULL DEFAULT '',
+    date_taken TEXT NOT NULL DEFAULT ''
+  );
+`
+
+// What each scan asks Flickr to include with every photo
+const SCAN_EXTRAS = 'tags,last_update,description,geo,url_q,date_taken'
 
 // ── Schema and small helpers ─────────────────────────────────────────────────
 
@@ -53,6 +74,7 @@ function requireDb(): Database.Database {
         PRIMARY KEY (photo_id, tag_id)
       ) WITHOUT ROWID;
       CREATE INDEX IF NOT EXISTS idx_tag_photo_tag ON tag_photo(tag_id);
+      ${PHOTO_META_DDL}
       CREATE TABLE IF NOT EXISTS tag_indexed_photo (
         photo_id TEXT PRIMARY KEY,
         last_update INTEGER NOT NULL,
@@ -123,12 +145,21 @@ function indexPhotos(db: Database.Database, photos: RawPhoto[], scanId: number, 
     ON CONFLICT(photo_id) DO UPDATE SET last_update = excluded.last_update, scan_id = excluded.scan_id
   `)
   const insertLink = db.prepare('INSERT OR IGNORE INTO tag_photo (photo_id, tag_id) VALUES (?, ?)')
+  const upsertMeta = db.prepare(`
+    INSERT INTO photo_meta (photo_id, title, has_description, has_tags, has_location, thumb_url, date_taken) VALUES (?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(photo_id) DO UPDATE SET title = excluded.title, has_description = excluded.has_description, has_tags = excluded.has_tags,
+      has_location = excluded.has_location, thumb_url = excluded.thumb_url, date_taken = excluded.date_taken
+  `)
 
   db.transaction(() => {
     for (const photo of photos) {
       deleteLinks.run(photo.id)
       upsertPhoto.run(photo.id, Number(photo.lastupdate ?? 0), scanId)
       const names = new Set((photo.tags ?? '').split(' ').filter(Boolean))
+      const description = typeof photo.description === 'string' ? photo.description : photo.description?._content ?? ''
+      // Flickr reports 0, 0 for a photo with no location
+      const hasLocation = Number(photo.latitude ?? 0) !== 0 || Number(photo.longitude ?? 0) !== 0
+      upsertMeta.run(photo.id, photo.title ?? '', description.trim() ? 1 : 0, names.size > 0 ? 1 : 0, hasLocation ? 1 : 0, photo.url_q ?? '', photo.datetaken ?? '')
       for (const name of names) {
         let id = tagIds.get(name)
         if (id === undefined) {
@@ -221,7 +252,7 @@ async function runFullScan(db: Database.Database, tokenData: FlickrTokenData, se
     let data: Record<string, unknown>
     try {
       data = await flickrCall(tokenData, 'flickr.people.getPhotos', {
-        user_id: 'me', per_page: PER_PAGE, page, extras: 'tags,last_update'
+        user_id: 'me', per_page: PER_PAGE, page, extras: SCAN_EXTRAS
       })
     } catch (err) {
       recomputeCounts(db)   // pages already read stay; make the counts match what is stored
@@ -240,6 +271,7 @@ async function runFullScan(db: Database.Database, tokenData: FlickrTokenData, se
   db.transaction(() => {
     // Anything not seen in this scan is gone from Flickr
     db.prepare('DELETE FROM tag_photo WHERE photo_id IN (SELECT photo_id FROM tag_indexed_photo WHERE scan_id != ?)').run(scanId)
+    db.prepare('DELETE FROM photo_meta WHERE photo_id IN (SELECT photo_id FROM tag_indexed_photo WHERE scan_id != ?)').run(scanId)
     db.prepare('DELETE FROM tag_indexed_photo WHERE scan_id != ?').run(scanId)
   })()
   recomputeCounts(db)
@@ -248,6 +280,7 @@ async function runFullScan(db: Database.Database, tokenData: FlickrTokenData, se
   setMeta(db, 'last_scan_start', startedAt)
   setMeta(db, 'last_scan_at', Date.now())
   setMeta(db, 'last_full_scan_at', Date.now())
+  setMeta(db, 'has_photo_meta', 1)
   setMeta(db, 'flickr_total', total)
   clearTagSearchMemory()
   send({ mode: 'full', phase: 'done', page: pages, pages, photos: photosDone, total })
@@ -269,7 +302,7 @@ async function runRefresh(db: Database.Database, tokenData: FlickrTokenData, sen
     let data: Record<string, unknown>
     try {
       data = await flickrCall(tokenData, 'flickr.photos.recentlyUpdated', {
-        min_date: minDate, per_page: PER_PAGE, page, extras: 'tags,last_update'
+        min_date: minDate, per_page: PER_PAGE, page, extras: SCAN_EXTRAS
       })
     } catch (err) {
       recomputeCounts(db)
@@ -329,7 +362,8 @@ export function getTagIndexStatus(): TagIndexStatus {
     indexedPhotos,
     tagCount,
     flickrTotal: metaNumber(db, 'flickr_total'),
-    hasSpellings: metaNumber(db, 'has_spellings') === 1
+    hasSpellings: metaNumber(db, 'has_spellings') === 1,
+    hasPhotoMeta: metaNumber(db, 'has_photo_meta') === 1
   }
 }
 

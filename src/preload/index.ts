@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { IpcRendererEvent } from 'electron'
-import type { FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery, DiscoverDownloadRecord, DiscoverUser, DiscoverContact, DiscoverGroup, TagIndexStatus, TagLetterGroup, TagListQuery, TagListPage, TagScanProgress } from '../shared/types'
+import type { FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery, DiscoverDownloadRecord, DiscoverUser, DiscoverContact, DiscoverGroup, AuditSummary, AuditListQuery, AuditListPage, AuditSetRequest, AuditPlanRow, AuditExportQuery, HealthSummary, HealthListQuery, HealthListPage, HealthSetRequest, HealthExportQuery, AuditOverview, HealthOverview, TagIndexStatus, TagLetterGroup, TagListQuery, TagListPage, TagScanProgress } from '../shared/types'
 
 // Expose a safe, limited API surface to the renderer process.
 // The renderer cannot access Node.js or Electron directly — only these methods.
@@ -81,11 +81,28 @@ contextBridge.exposeInMainWorld('flickrAPI', {
     return () => ipcRenderer.removeListener('tags:scanProgress', handler)
   },
 
+  // Tag audit
+  getAuditSummary: (): Promise<AuditSummary> => ipcRenderer.invoke('audit:summary'),
+  getAuditOverview: (): Promise<AuditOverview> => ipcRenderer.invoke('audit:overview'),
+  listAuditFindings: (query: AuditListQuery): Promise<AuditListPage> => ipcRenderer.invoke('audit:list', query),
+  setAuditStatus: (req: AuditSetRequest): Promise<void> => ipcRenderer.invoke('audit:set', req),
+  getAuditPlan: (): Promise<AuditPlanRow[]> => ipcRenderer.invoke('audit:plan'),
+  copyAuditPlan: (): Promise<boolean> => ipcRenderer.invoke('audit:copyPlan'),
+  saveAuditPlanCsv: (): Promise<string | null> => ipcRenderer.invoke('audit:savePlanCsv'),
+  saveAuditListCsv: (query: AuditExportQuery): Promise<string | null> => ipcRenderer.invoke('audit:saveListCsv', query),
+
+  // Metadata health
+  getHealthSummary: (): Promise<HealthSummary> => ipcRenderer.invoke('health:summary'),
+  getHealthOverview: (): Promise<HealthOverview> => ipcRenderer.invoke('health:overview'),
+  listHealthPhotos: (query: HealthListQuery): Promise<HealthListPage> => ipcRenderer.invoke('health:list', query),
+  setHealthStatus: (req: HealthSetRequest): Promise<void> => ipcRenderer.invoke('health:set', req),
+  saveHealthCsv: (query: HealthExportQuery): Promise<string | null> => ipcRenderer.invoke('health:saveCsv', query),
+
   // Batch downloads
   startBatch: (albumId: string, albumTitle: string, photoCount?: number, videoCount?: number, force?: boolean, mediaType?: 'photo' | 'video', privacyFilter?: string, track?: boolean, smartMode?: 'updated' | 'never-downloaded', zipMode?: boolean): Promise<{ alreadyQueued: boolean }> =>
     ipcRenderer.invoke('batch:startAlbum', albumId, albumTitle, photoCount, videoCount, force, mediaType, privacyFilter, track, smartMode, zipMode),
-  confirm: (message: string, detail?: string): Promise<boolean> =>
-    ipcRenderer.invoke('shell:confirm', message, detail),
+  confirm: (message: string, detail?: string, confirmLabel?: string): Promise<boolean> =>
+    ipcRenderer.invoke('shell:confirm', message, detail, confirmLabel),
   startSelectedBatch: (photos: { id: string; title: string }[], displayTitle: string, track?: boolean, zipMode?: boolean): Promise<void> =>
     ipcRenderer.invoke('batch:startSelected', photos, displayTitle, track, zipMode),
   startPhotostreamBatch: (albumTitle: string, track?: boolean, smartMode?: 'updated' | 'never-downloaded', privacyFilter?: string, sort?: string, zipMode?: boolean): Promise<void> =>

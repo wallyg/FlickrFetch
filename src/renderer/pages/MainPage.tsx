@@ -628,7 +628,8 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
                         if (result.alreadyQueued) {
                           const ok = await window.flickrAPI.confirm(
                             `"${selectedAlbum.title}" is already downloading or queued.`,
-                            'Do you want to add it to the queue again?'
+                            'Do you want to add it to the queue again?',
+                            'Queue Again'
                           )
                           if (ok) window.flickrAPI.startBatch(selectedAlbum.id, selectedAlbum.title, selectedAlbum.photoCount, selectedAlbum.videoCount, true, mt, pf, track, smartMode, zipMode)
                         }
