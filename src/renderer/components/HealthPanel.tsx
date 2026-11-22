@@ -5,6 +5,7 @@ import type { HealthCondition, HealthPhoto, HealthSummary } from '../../shared/t
 import HealthOverview from './HealthOverview'
 import { dash, SectionSwitch } from './DashboardParts'
 import RuleRail, { RailHead, RailRow } from './RuleRail'
+import { forgetOverview } from './LibraryOverview'
 import { quietBtn, primaryBtn, selectedOn, filterInput } from '../ui/kit'
 import BackToTop from '../ui/BackToTop'
 
@@ -79,6 +80,7 @@ export default function HealthPanel({ refreshKey, onFullRescan, toolbarLeft, sta
 
   const mark = async (p: HealthPhoto, next: 'open' | 'fine'): Promise<void> => {
     await window.flickrAPI.setHealthStatus({ photoId: p.photoId, condition, status: next })
+    forgetOverview()
     setRows(prev => prev.filter(r => r.photoId !== p.photoId))
     setTotal(t => Math.max(0, t - 1))
     await loadSummary()
@@ -186,7 +188,7 @@ const styles: Record<string, React.CSSProperties> = {
   title: { fontSize: 14, fontWeight: 600, color: 'var(--ff-text)', overflowWrap: 'anywhere' },
   pill: { fontSize: 11, borderRadius: 10, padding: '1px 8px', background: '#fef3c7', color: '#92400e' },
   actions: { display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, flexWrap: 'wrap' },
-  primaryBtn: { background: 'var(--ff-pink-action)', color: '#fff', border: 'none', borderRadius: 6, padding: '7px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' },
+  primaryBtn: { ...primaryBtn },
   secondaryBtn: { ...quietBtn },
   linkBtn: { background: 'none', border: 'none', color: 'var(--ff-blue)', fontSize: 12, cursor: 'pointer' },
   moreBtn: { width: '100%', padding: 8, background: 'none', border: '1px dashed #ccc', borderRadius: 8, color: 'var(--ff-text-secondary)', fontSize: 13, cursor: 'pointer', marginBottom: 12 }

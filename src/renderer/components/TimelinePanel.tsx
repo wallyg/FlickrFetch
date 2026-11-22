@@ -6,6 +6,7 @@ import TimelineNav, { type Step } from './TimelineNav'
 import BackToTop from '../ui/BackToTop'
 import { OpenIcon, DownloadIcon, CameraRollIcon } from '../ui/icons'
 import { quietBtn, primaryBtn, pillBtn } from '../ui/kit'
+import { asButton } from '../ui/a11y'
 
 // Timeline: every month you took photos, shaded by how many. Click a month to see it day by day; click a day to
 // see its photos as a camera roll. A back button says where it goes, and arrows step to the next or previous
@@ -30,6 +31,8 @@ const isTodayThisYear = (p: { year: number; month: number; day?: number }): bool
   return p.year === n.getFullYear() && p.month === n.getMonth() + 1 && p.day === n.getDate()
 }
 const monthKey = (y: number, m: number): number => y * 12 + (m - 1)
+// The months grid: year label column, gap between squares, side padding of its card (also used to work out a square's width)
+const LABEL_W = 44, GAP = 3, CARD_PAD = 16
 
 export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownload, onOpenDay, onFullRescan }: Props): React.JSX.Element {
   const [scope, setScope] = useState<PrivacyScope>('all')
@@ -59,8 +62,7 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
 
   useEffect(() => {
     if (!gridEl) return
-    // 44 px year label, 12 squares, 3 px gaps
-    const measure = (): void => setCellW((gridEl.clientWidth - 44 - 12 * 3) / 12)
+    const measure = (): void => setCellW((gridEl.clientWidth - 2 * CARD_PAD - LABEL_W - 11 * GAP) / 12)
     measure()
     const ro = new ResizeObserver(measure)
     ro.observe(gridEl)
@@ -221,7 +223,8 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
                         color: strength(n, grid.max) > 0.55 ? 'rgba(255,255,255,0.85)' : 'rgba(27,41,70,0.55)', userSelect: 'none' }}
                       onMouseEnter={() => setHover({ year: y, month: m, n })}
                       onMouseLeave={() => setHover(null)}
-                      onClick={() => { if (n) openMonth(y, m) }}
+                      {...(n ? asButton(() => openMonth(y, m)) : {})}
+                      aria-label={n ? `${monthTitle(y, m)}, ${n.toLocaleString()} photo${n === 1 ? '' : 's'}` : undefined}
                     >
                       {n > 0 && cellW >= 46 ? n.toLocaleString() : ''}
                     </div>
@@ -258,7 +261,7 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
                     key={d}
                     title={`${n.toLocaleString()} photo${n === 1 ? '' : 's'}, ${MONTHS[drill.month - 1]} ${d}, ${drill.year}`}
                     style={{ height: 46, borderRadius: 6, background: shade(n, dayMax), position: 'relative', padding: '3px 5px', fontSize: 11, color: strength(n, dayMax) > 0.55 ? '#fff' : 'var(--ff-navy)', cursor: n ? 'pointer' : 'default' }}
-                    onClick={() => { if (n) setRoll({ year: drill.year, month: drill.month, day: d }) }}
+                    {...(n ? asButton(() => setRoll({ year: drill.year, month: drill.month, day: d })) : {})}
                   >
                     {d}
                     {n > 0 && <b style={{ position: 'absolute', right: 6, bottom: 3, fontSize: 13 }}>{n.toLocaleString()}</b>}
@@ -282,8 +285,8 @@ const styles: Record<string, React.CSSProperties> = {
   muted: { fontSize: 12, color: 'var(--ff-text-secondary)' },
   row: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
   link: { background: 'none', border: 'none', color: 'var(--ff-blue)', fontSize: 13, cursor: 'pointer', padding: 0 },
-  card: { background: '#fff', border: '1px solid var(--ff-border)', borderRadius: 12, padding: '14px 16px' },
-  hm: { display: 'grid', gridTemplateColumns: '44px repeat(12, 1fr)', gap: 3, marginBottom: 3, alignItems: 'center' },
+  card: { background: '#fff', border: '1px solid var(--ff-border)', borderRadius: 12, padding: `14px ${CARD_PAD}px` },
+  hm: { display: 'grid', gridTemplateColumns: `${LABEL_W}px repeat(12, 1fr)`, gap: GAP, marginBottom: GAP, alignItems: 'center' },
   hl: { fontSize: 11, color: 'var(--ff-text-secondary)' },
   hc: { fontSize: 10, color: 'var(--ff-text-secondary)', textAlign: 'center' },
   cal: { display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, maxWidth: 560 },

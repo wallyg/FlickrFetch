@@ -14,7 +14,7 @@ export function RailHead({ children, first }: { children: React.ReactNode; first
 
 export function RailRow({ selected, dim, label, count, onSelect }: { selected: boolean; dim?: boolean; label: string; count: number; onSelect: () => void }): React.JSX.Element {
   return (
-    <div style={{ ...railItem, ...(selected ? railSel : {}), opacity: dim && !selected ? 0.55 : 1 }} {...asButton(onSelect)} aria-pressed={selected}>
+    <div style={{ ...railItem, ...(selected ? railSel : {}), opacity: dim && !selected ? 0.55 : 1 }} {...asButton(onSelect)} aria-current={selected ? 'true' : undefined}>
       <span>{label}</span><b style={{ fontWeight: 600 }}>{count.toLocaleString()}</b>
     </div>
   )

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import AuditOverview from './AuditOverview'
 import { dash, SectionSwitch } from './DashboardParts'
 import RuleRail, { RailHead, RailRow } from './RuleRail'
+import { forgetOverview } from './LibraryOverview'
 import { GLUE_BOUNDARY_SOURCE } from '../../shared/tags'
 import type { CleanupRuleState } from '../../shared/cleanupRules'
 import type { AuditCategory, AuditFinding, AuditPlanRow, AuditSort, AuditStatus, AuditSummary, TagMode } from '../../shared/types'
@@ -166,6 +167,7 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
   // The ✕ on a line in the Plan box: back to Open, without hunting for the list it came from
   const removeFromPlan = async (p: AuditPlanRow): Promise<void> => {
     await window.flickrAPI.setAuditStatus({ tag: p.tag, category: p.category, status: 'open' })
+    forgetOverview()
     await loadSummary()
     await refreshPlan()
     void loadRows(0)
@@ -174,6 +176,7 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
   const keyOf = (f: AuditFinding): string => `${f.category}|${f.tag}`
   const change = async (f: AuditFinding, next: 'open' | 'plan' | 'fine'): Promise<void> => {
     await window.flickrAPI.setAuditStatus({ tag: f.tag, category: f.category, status: next, replacement: drafts[keyOf(f)] ?? f.replacement })
+    forgetOverview()
     setRows(prev => prev.filter(r => keyOf(r) !== keyOf(f)))   // it moves to another status list
     setTotal(t => Math.max(0, t - 1))
     await loadSummary()

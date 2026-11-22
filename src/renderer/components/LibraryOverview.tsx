@@ -33,6 +33,8 @@ interface Props {
 
 // The last numbers fetched, by refreshKey, so switching away and back does not read the whole library list again
 let lastOverview: { key: number; audit: AuditOverview; health: HealthOverview } | null = null
+// Called when a finding is marked fine, planned or put back: the counts and scores change without a new scan
+export function forgetOverview(): void { lastOverview = null }
 
 export default function LibraryOverview({ refreshKey, offCount, onGoTags, onGoPhotos, onOpenTags, onOpenPhotos, onTune }: Props): React.JSX.Element {
   const same = lastOverview?.key === refreshKey ? lastOverview : null
