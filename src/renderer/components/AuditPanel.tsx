@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import AuditOverview from './AuditOverview'
-import { dash } from './DashboardParts'
+import { dash, SectionSwitch } from './DashboardParts'
+import RuleRail, { RailHead, RailRow } from './RuleRail'
 import { GLUE_BOUNDARY_SOURCE } from '../../shared/tags'
 import type { CleanupRuleState } from '../../shared/cleanupRules'
 import type { AuditCategory, AuditFinding, AuditPlanRow, AuditSort, AuditStatus, AuditSummary, TagMode } from '../../shared/types'
-import { quietBtn, primaryBtn, selectedOn, railSel as railSelBase, railItem as railItemBase } from '../ui/kit'
+import { quietBtn, primaryBtn, selectedOn, filterInput } from '../ui/kit'
 import BackToTop from '../ui/BackToTop'
 
 // The Audit view of the Tags tab: likely tag problems by type, each with an editable fix.
@@ -86,6 +87,7 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
   const [category, setCategory] = useState<AuditCategory>('glued')
   const [status, setStatus] = useState<AuditStatus>('open')
   const [sort, setSort] = useState<AuditSort>('suggested')
+  const [search, setSearch] = useState('')
   const [blurbOpen, setBlurbOpen] = useState(false)   // the explanation of a problem type folds to its first sentence
   const [rows, setRows] = useState<AuditFinding[]>([])
   const [total, setTotal] = useState(0)
@@ -133,17 +135,18 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
   const loadRows = useCallback(async (offset: number): Promise<void> => {
     const req = ++requestRef.current
     if (offset === 0) setLoading(true)
-    const page = await window.flickrAPI.listAuditFindings({ category, status, search: '', sort, offset, limit: PAGE })
+    const page = await window.flickrAPI.listAuditFindings({ category, status, search, sort, offset, limit: PAGE })
     if (req !== requestRef.current) return
     setRows(prev => (offset === 0 ? page.rows : [...prev, ...page.rows]))
     setTotal(page.total)
     setLoading(false)
-  }, [category, status, sort])
+  }, [category, status, sort, search])
 
   useEffect(() => { setBlurbOpen(false) }, [category])
 
   useEffect(() => {
-    void loadRows(0)
+    const t = setTimeout(() => void loadRows(0), search ? 200 : 0)   // typing waits a moment so every key does not search
+    return () => clearTimeout(t)
   }, [loadRows, refreshKey])
 
   // When the report is hidden (its toolbar slot is handed away), the panel closes
@@ -181,13 +184,7 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
   const planCount = summary ? summary.rows.reduce((n, r) => n + r.plan, 0) : 0
   const info = CATEGORY_INFO[category]
 
-  const sectionSwitch = (
-    <div style={dash.seg}>
-      {(['overview', 'lists'] as const).map(v => (
-        <button key={v} style={{ ...dash.segBtn, ...(section === v ? dash.segOn : {}) }} onClick={() => setSection(v)}>{v === 'overview' ? 'Summary' : 'Lists'}</button>
-      ))}
-    </div>
-  )
+  const sectionSwitch = <SectionSwitch section={section} onChange={setSection} />
   const planPanel = plan && (
     <div style={styles.planPop} role="dialog" aria-label="Your plan">
           <div style={styles.planTitle}>Your plan{planCount > 0 ? ` · ${planCount} to do on Flickr` : ''}</div>
@@ -245,42 +242,29 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
       <div style={styles.body}>
         <div style={styles.railCol}>
         <div style={styles.rail}>
-          {([['on', 'Issues'], ['optional', 'Warnings']] as const).map(([st, heading]) => {
-            const list = ALL_CATEGORIES.filter(c => stateOf(`tags:${c}`) === st)
-            if (list.length === 0) return null
-            return (
-              <React.Fragment key={st}>
-                <div style={{ ...styles.railHead, paddingTop: st === 'on' ? 4 : 10 }}>{heading}</div>
-                {list.map(c => {
-                  const r = summary?.rows.find(x => x.category === c)
-                  return (
-                    <div key={c} style={{ ...styles.railItem, ...(c === category ? styles.railSel : {}), opacity: r && r.open === 0 && c !== category ? 0.55 : 1 }} onClick={() => { setCategory(c); setStatus('open') }}>
-                      <span>{CATEGORY_INFO[c].name}</span><b style={{ fontWeight: 600 }}>{(r?.open ?? 0).toLocaleString()}</b>
-                    </div>
-                  )
-                })}
-              </React.Fragment>
-            )
-          })}
-          {ALL_CATEGORIES.every(c => stateOf(`tags:${c}`) === 'off') && <div style={{ ...styles.muted, padding: 8 }}>Every tag check is switched off (Tune checks).</div>}
+          <RuleRail
+            rules={ALL_CATEGORIES.map(c => ({ id: `tags:${c}`, name: CATEGORY_INFO[c].name, count: summary?.rows.find(x => x.category === c)?.open ?? 0 }))}
+            stateOf={stateOf}
+            selectedId={`tags:${category}`}
+            onSelect={id => { setCategory(id.slice(5) as AuditCategory); setStatus('open') }}
+            offText="Every tag check is switched off (Tune checks)."
+          />
         </div>
 
         <div style={styles.rail}>
-          <div style={{ ...styles.railHead, paddingTop: 4 }}>Show</div>
-          {STATUS_LABELS.map(s => (
-            <div key={s.key} style={{ ...styles.railItem, ...(status === s.key ? styles.railSel : {}) }} onClick={() => setStatus(s.key)}>
-              <span>{s.label}</span><b style={{ fontWeight: 600 }}>{(row ? row[s.key] : 0).toLocaleString()}</b>
-            </div>
-          ))}
-          <div style={styles.railHead}>Sort</div>
+          <RailHead first>Show</RailHead>
+          {STATUS_LABELS.map(st => <RailRow key={st.key} selected={status === st.key} label={st.label} count={row ? row[st.key] : 0} onSelect={() => setStatus(st.key)} />)}
+          <RailHead>Filter</RailHead>
+          <input style={filterInput} placeholder="Filter this list…" value={search} onChange={e => setSearch(e.target.value)} aria-label="Filter this list" />
+          <RailHead>Sort</RailHead>
           <select style={styles.sortSelect} value={sort} onChange={e => setSort(e.target.value as AuditSort)} title="How this list is ordered" aria-label="Sort this list">
             <option value="suggested">Suggested order</option>
             <option value="most">Most photos</option>
             <option value="fewest">Fewest photos</option>
             <option value="alpha">A to Z</option>
           </select>
-          <div style={styles.railHead}>This list</div>
-          <button style={{ ...styles.secondaryBtn, width: '100%' }} title="Save every row of this list as a spreadsheet" onClick={async () => { setListSaved(await window.flickrAPI.saveAuditListCsv({ category, status, search: '', sort })) }}>Export this list</button>
+          <RailHead>This list</RailHead>
+          <button style={{ ...styles.secondaryBtn, width: '100%' }} title="Save every row of this list as a spreadsheet" onClick={async () => { setListSaved(await window.flickrAPI.saveAuditListCsv({ category, status, search, sort })) }}>Export this list</button>
           {listSaved && <div style={{ ...styles.muted, padding: '6px 9px 2px' }}>Saved to {listSaved.split('/').pop()} <button style={{ ...styles.viewBtn, marginLeft: 0 }} onClick={() => window.flickrAPI.showInFinder(listSaved)}>Show in Finder</button></div>}
         </div>
         </div>
@@ -349,9 +333,6 @@ const styles: Record<string, React.CSSProperties> = {
   body: { flex: 1, minHeight: 0, display: 'flex', gap: 16, padding: '4px 24px 12px' },
   railCol: { width: 230, flexShrink: 0, alignSelf: 'flex-start', display: 'flex', flexDirection: 'column', gap: 12 },
   rail: { background: '#fff', border: '1px solid var(--ff-border)', borderRadius: 10, padding: 6 },
-  railItem: { ...railItemBase },
-  railSel: { ...railSelBase },
-  railHead: { fontSize: 11, color: 'var(--ff-text-muted)', padding: '10px 9px 2px' },
   main: { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: 0 },
   statusRow: { display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, flexWrap: 'wrap' },
   statusChip: { border: '1px solid var(--ff-border)', borderRadius: 14, padding: '3px 11px', fontSize: 13, background: '#fff', color: 'var(--ff-text)', cursor: 'pointer' },

@@ -38,7 +38,6 @@ export default function CleanupPanel({ onViewPhotos, settingsKey, onOpenSettings
   const [rightSlot, setRightSlot] = useState<HTMLElement | null>(null)
 
   if (!scan.status) return <div style={styles.center}><span style={styles.muted}>Loading…</span></div>
-  if (scan.scanning) return <ScanProgressCard progress={scan.progress} />
   if (!scan.status.hasIndex) {
     return (
       <div style={styles.center}>
@@ -62,8 +61,12 @@ export default function CleanupPanel({ onViewPhotos, settingsKey, onOpenSettings
   const offCount = CLEANUP_RULES.filter(r => rules.stateOf(r.id) === 'off').length
   const rebuild = (): void => void scan.startFullRescan()
 
+  // While a scan runs the progress card is shown and the reports are only hidden, not removed, so each one
+  // keeps its place (Summary or Lists, the chosen list, the scroll) for when the scan is over
   return (
-    <div style={styles.wrap}>
+    <>
+    {scan.scanning && <ScanProgressCard progress={scan.progress} />}
+    <div style={{ ...styles.wrap, ...(scan.scanning ? { display: 'none' } : {}) }}>
       <div style={styles.toolbar}>
         <div style={styles.segGroup} title={"Overview: the front page across both reports.\nTags: likely typos, stuck-together names and accent problems in your tags.\nPhotos: photos with a missing title, description, tags or location."}>
           {([['overview', 'Overview'], ['tags', 'Tags'], ['photos', 'Photos']] as const).map(([v, label]) => (
@@ -76,7 +79,7 @@ export default function CleanupPanel({ onViewPhotos, settingsKey, onOpenSettings
         <LibraryDataChip status={scan.status} info={info} onUpdate={() => void scan.startScan('refresh')} onRebuild={rebuild} />
         <span ref={setRightSlot} style={styles.slot} />
       </div>
-      <ScanNotices status={scan.status} scanError={scan.scanError} onRebuild={rebuild} />
+      <ScanNotices status={scan.status} scanError={scan.scanError} />
       {view === 'overview' && (
         <LibraryOverview
           refreshKey={refreshKey}
@@ -99,6 +102,7 @@ export default function CleanupPanel({ onViewPhotos, settingsKey, onOpenSettings
         </div>
       )}
     </div>
+    </>
   )
 }
 

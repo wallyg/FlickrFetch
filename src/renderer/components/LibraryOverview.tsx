@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import type { AuditCategory, AuditOverview, HealthCondition, HealthOverview } from '../../shared/types'
 import { Ring, COLORS, dash, pctLabel } from './DashboardParts'
 import { quietBtn, chip } from '../ui/kit'
+import { asButton } from '../ui/a11y'
 
 // The front page of Cleanup: one scorecard per report (counting only the checks that Need attention), the best
 // places to start across all of them, and a summary of the Optional checks. Everything here opens the matching list.
@@ -30,13 +31,22 @@ interface Props {
   onTune: () => void
 }
 
+// The last numbers fetched, by refreshKey, so switching away and back does not read the whole library list again
+let lastOverview: { key: number; audit: AuditOverview; health: HealthOverview } | null = null
+
 export default function LibraryOverview({ refreshKey, offCount, onGoTags, onGoPhotos, onOpenTags, onOpenPhotos, onTune }: Props): React.JSX.Element {
-  const [audit, setAudit] = useState<AuditOverview | null>(null)
-  const [health, setHealth] = useState<HealthOverview | null>(null)
+  const same = lastOverview?.key === refreshKey ? lastOverview : null
+  const [audit, setAudit] = useState<AuditOverview | null>(same?.audit ?? null)
+  const [health, setHealth] = useState<HealthOverview | null>(same?.health ?? null)
   const [more, setMore] = useState(false)
   useEffect(() => {
-    void window.flickrAPI.getAuditOverview().then(setAudit)
-    void window.flickrAPI.getHealthOverview().then(setHealth)
+    if (lastOverview?.key === refreshKey) { setAudit(lastOverview.audit); setHealth(lastOverview.health); return }
+    let cancelled = false
+    void Promise.all([window.flickrAPI.getAuditOverview(), window.flickrAPI.getHealthOverview()]).then(([a, h]) => {
+      lastOverview = { key: refreshKey, audit: a, health: h }
+      if (!cancelled) { setAudit(a); setHealth(h) }
+    })
+    return () => { cancelled = true }
   }, [refreshKey])
 
   if (!audit || !health) return <div style={dash.wrap}><span style={dash.muted}>Checking your library…</span></div>
@@ -60,7 +70,7 @@ export default function LibraryOverview({ refreshKey, offCount, onGoTags, onGoPh
   return (
     <div style={dash.wrap}>
       <div style={styles.cards}>
-        <div style={styles.score} onClick={onGoTags} role="button">
+        <div style={styles.score} {...asButton(onGoTags)}>
           <h3 style={dash.cardTitle}>Tags</h3>
           {tagsOn.length === 0 ? <span style={dash.muted}>No tag check is set to Issue.</span> : (
             <div style={dash.ringWrap}>
@@ -69,7 +79,7 @@ export default function LibraryOverview({ refreshKey, offCount, onGoTags, onGoPh
             </div>
           )}
         </div>
-        <div style={styles.score} onClick={onGoPhotos} role="button">
+        <div style={styles.score} {...asButton(onGoPhotos)}>
           <h3 style={dash.cardTitle}>Photos</h3>
           {!health.hasData ? <span style={dash.muted}>Photo checks need one Rebuild of your library list.</span>
             : photosOn.length === 0 ? <span style={dash.muted}>No photo check is set to Issue.</span> : (
@@ -85,7 +95,7 @@ export default function LibraryOverview({ refreshKey, offCount, onGoTags, onGoPh
         <h3 style={dash.cardTitle}>Biggest Issues to address <span style={dash.hint}>(by photos affected, across tags and photos; click for the list)</span></h3>
         {starts.length === 0 && <span style={dash.muted}>No Issues right now.</span>}
         {shown.map(s => (
-          <div key={s.key} style={dash.item} onClick={s.open}>
+          <div key={s.key} style={dash.item} {...asButton(s.open)}>
             <span>{s.label}<span style={dash.pill}>{s.pill}</span></span>
             <span style={dash.muted}>{fmt(s.count)} photo{s.count === 1 ? '' : 's'}</span>
           </div>
@@ -99,12 +109,12 @@ export default function LibraryOverview({ refreshKey, offCount, onGoTags, onGoPh
         <h3 style={dash.cardTitle}>Warnings to review <span style={dash.hint}>(could be better; these never lower the scores above)</span></h3>
         {optionalTags.length + optionalPhotos.length === 0 && <span style={dash.muted}>Nothing to show.</span>}
         {optionalPhotos.map(t => (
-          <div key={`p${t.condition}`} style={dash.item} onClick={() => onOpenPhotos(t.condition)}>
+          <div key={`p${t.condition}`} style={dash.item} {...asButton(() => onOpenPhotos(t.condition))}>
             <span>{PHOTO_NAMES[t.condition]}<span style={dash.pill}>photos</span></span><b>{fmt(t.open)}</b>
           </div>
         ))}
         {optionalTags.map(r => (
-          <div key={`t${r.category}`} style={dash.item} onClick={() => onOpenTags(r.category)}>
+          <div key={`t${r.category}`} style={dash.item} {...asButton(() => onOpenTags(r.category))}>
             <span>{TAG_NAMES[r.category]}<span style={dash.pill}>tags</span></span><b>{fmt(r.open + r.plan)}</b>
           </div>
         ))}

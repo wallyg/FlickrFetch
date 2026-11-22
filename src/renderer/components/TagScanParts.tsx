@@ -80,13 +80,13 @@ export function LibraryDataChip({ status, info, onUpdate, onRebuild }: { status:
 }
 
 // Warnings under the data line: the library list and Flickr disagree, or the last scan failed
-export function ScanNotices({ status, scanError, onRebuild }: { status: TagIndexStatus; scanError: string | null; onRebuild?: () => void }): React.JSX.Element {
+export function ScanNotices({ status, scanError }: { status: TagIndexStatus; scanError: string | null }): React.JSX.Element {
   const libraryGap = status.flickrTotal !== null ? status.flickrTotal - status.indexedPhotos : 0
   return (
     <>
       {(libraryGap < 0 || libraryGap > 10) && (
         <div style={styles.notice}>
-          Flickr reports {status.flickrTotal?.toLocaleString()} photos but {status.indexedPhotos.toLocaleString()} are in your tag list. Photos may have been added or removed. Refresh picks up new and changed photos, but only a Full rescan drops deleted ones.
+          Flickr reports {status.flickrTotal?.toLocaleString()} photos but {status.indexedPhotos.toLocaleString()} are in your tag list. Photos may have been added or removed. Update picks up new and changed photos, but only a Rebuild drops deleted ones.
         </div>
       )}
       {scanError && <div style={{ ...styles.notice, color: 'var(--ff-error)' }}>{scanError}</div>}
@@ -111,7 +111,7 @@ export function ScanLine({ status, scanError, onRefresh, onFullRescan }: {
         <div style={{ flex: 1 }} />
         <LibraryDataChip status={status} info={'Tags are read from your photos once and kept on this computer.\n\nNothing here changes Flickr or your files.'} onUpdate={onRefresh} onRebuild={onFullRescan} />
       </div>
-      <ScanNotices status={status} scanError={scanError} onRebuild={onFullRescan} />
+      <ScanNotices status={status} scanError={scanError} />
     </>
   )
 }
@@ -129,6 +129,5 @@ const styles: Record<string, React.CSSProperties> = {
   barTrack: { width: '100%', height: '8px', background: '#eee', borderRadius: '4px', overflow: 'hidden' },
   barFill: { height: '100%', background: 'var(--ff-pink)', transition: 'width 0.3s' },
   updateBtn: { background: 'var(--ff-pink-action)', color: '#fff', border: '1px solid var(--ff-pink-action)', borderRadius: '6px', padding: '6px 14px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' },
-  dataPanel: { position: 'absolute', top: 'calc(100% + 6px)', right: 0, width: 370, background: '#fff', border: '1px solid var(--ff-line-strong)', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,0.18)', padding: '14px 16px', zIndex: 20 },
-  infoDot: { display: 'inline-block', width: 15, height: 15, borderRadius: '50%', border: '1px solid #aaa', color: '#777', fontSize: 10, textAlign: 'center', lineHeight: '13px', cursor: 'default' }
+  dataPanel: { position: 'absolute', top: 'calc(100% + 6px)', right: 0, width: 370, background: '#fff', border: '1px solid var(--ff-line-strong)', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,0.18)', padding: '14px 16px', zIndex: 20 }
 }

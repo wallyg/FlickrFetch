@@ -1,5 +1,6 @@
 import React from 'react'
 import { segGroup, segBtn as segBtnBase, selectedOn } from '../ui/kit'
+import { asButton } from '../ui/a11y'
 
 // Small building blocks shared by the Audit and Health dashboards: a bar row, rings.
 
@@ -10,7 +11,7 @@ export function BarRow({ name, parts, max, number, onClick }: { name: string; pa
   const total = parts.reduce((n, p) => n + p.value, 0)
   const width = max > 0 ? Math.max(total > 0 ? 1.5 : 0, (total / max) * 100) : 0
   return (
-    <div style={{ ...styles.row, cursor: onClick ? 'pointer' : 'default' }} onClick={onClick}>
+    <div style={{ ...styles.row, cursor: onClick ? 'pointer' : 'default' }} {...(onClick ? asButton(onClick) : {})}>
       <div style={styles.rowName}>{name}</div>
       <div style={styles.barTrack}>
         <div style={{ display: 'flex', width: `${width}%`, height: '100%' }}>
@@ -117,4 +118,15 @@ const styles: Record<string, React.CSSProperties> = {
   rowNum: { textAlign: 'right', fontSize: 13, fontWeight: 600, color: 'var(--ff-text)' },
   legend: { display: 'flex', gap: 14, flexWrap: 'wrap', marginTop: 10, fontSize: 12, color: 'var(--ff-text-secondary)' },
   swatch: { display: 'inline-block', width: 10, height: 10, borderRadius: 3, marginRight: 5, verticalAlign: -1, fontStyle: 'normal' }
+}
+
+// The Summary | Lists switch at the top of the Tags and Photos reports
+export function SectionSwitch({ section, onChange }: { section: 'overview' | 'lists'; onChange: (s: 'overview' | 'lists') => void }): React.JSX.Element {
+  return (
+    <div style={dash.seg}>
+      {(['overview', 'lists'] as const).map(v => (
+        <button key={v} style={{ ...dash.segBtn, ...(section === v ? dash.segOn : {}) }} onClick={() => onChange(v)}>{v === 'overview' ? 'Summary' : 'Lists'}</button>
+      ))}
+    </div>
+  )
 }

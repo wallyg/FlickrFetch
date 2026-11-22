@@ -1,6 +1,7 @@
 import React from 'react'
 import type { DayPhoto, PrivacyScope } from '../../shared/types'
 import { segGroup, segBtn, selectedOn } from '../ui/kit'
+import { asButton } from '../ui/a11y'
 
 // Small pieces shared by On This Day and the Timeline.
 
@@ -44,7 +45,9 @@ export function ScopeToggle({ scope, counts, enabled, onChange }: {
 export function PhotoTile({ photo, selected, onClick }: { photo: DayPhoto; selected: boolean; onClick: () => void }): React.JSX.Element {
   return (
     <div
-      onClick={onClick}
+      {...asButton(onClick)}
+      aria-pressed={selected}
+      aria-label={photo.title || '(no title)'}
       onContextMenu={e => { e.preventDefault(); window.flickrAPI.showPhotoMenu(photo.id) }}
       title={`${photo.title || '(no title)'}\nClick to select. Right-click for more.`}
       style={{ position: 'relative', borderRadius: 8, overflow: 'hidden', background: '#eee', cursor: 'pointer',

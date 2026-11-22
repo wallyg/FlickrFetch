@@ -50,3 +50,9 @@ export const railItem: CSSProperties = {
 }
 
 export const railSel: CSSProperties = { background: 'var(--ff-tint)', color: 'var(--ff-pink-action)', fontWeight: 600 }
+
+// A small text box for filtering a list
+export const filterInput: CSSProperties = {
+  width: '100%', boxSizing: 'border-box', border: '1px solid var(--ff-border)', borderRadius: 6, padding: '5px 8px',
+  fontSize: 13, background: '#fff', color: 'var(--ff-text)'
+}

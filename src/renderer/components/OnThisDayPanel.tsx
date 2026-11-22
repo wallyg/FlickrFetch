@@ -4,6 +4,7 @@ import { MONTHS, pad2, hourLabel, ScopeToggle, PhotoTile } from './DateViewParts
 import ShareDialog from './ShareDialog'
 import { primaryBtn, quietBtn, linkBtn, pillBtn, selectedOn } from '../ui/kit'
 import BackToTop from '../ui/BackToTop'
+import { asButton } from '../ui/a11y'
 import { useTileSize, TILE_MIN, TILE_MAX } from '../hooks/useTileSize'
 import { OpenIcon, DownloadIcon } from '../ui/icons'
 
@@ -192,7 +193,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
             <Insight icon="📅" title="Across the years">
               <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                 {data.years.map(g => (
-                  <div key={g.year} style={styles.yearBar} onClick={() => document.getElementById(`otd-year-${g.year}`)?.scrollIntoView({ block: 'start', behavior: 'smooth' })} title={`${g.count.toLocaleString()} photo${g.count === 1 ? '' : 's'} in ${g.year}. Click to jump there.`}>
+                  <div key={g.year} style={styles.yearBar} {...asButton(() => document.getElementById(`otd-year-${g.year}`)?.scrollIntoView({ block: 'start', behavior: 'smooth' }))} title={`${g.count.toLocaleString()} photo${g.count === 1 ? '' : 's'} in ${g.year}. Click to jump there.`}>
                     <span style={{ width: 34, color: '#444' }}>{g.year}</span>
                     <span style={{ flex: 1, minWidth: 0 }}><i style={{ display: 'block', height: 9, borderRadius: 5, width: `${Math.max(3, (g.count / (topYear?.count || 1)) * 100)}%`, background: g === topYear ? 'var(--ff-pink)' : '#e6b0cb' }} /></span>
                     <span style={{ color: 'var(--ff-text-secondary)', minWidth: 58, textAlign: 'right' }}>{g.count.toLocaleString()}{g === topYear && data.years.length > 1 ? ' · most' : ''}</span>

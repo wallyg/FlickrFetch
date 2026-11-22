@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import type { HealthCondition, HealthOverview as Overview } from '../../shared/types'
 import { BarRow, RingParts, COLORS, dash, pctLabel } from './DashboardParts'
 import type { RingPart } from './DashboardParts'
+import { asButton } from '../ui/a11y'
 import { selectedOn, chip as chipBase } from '../ui/kit'
 
 // The dashboard side of the metadata health report: how complete the library is, which gaps are
@@ -134,7 +135,7 @@ export default function HealthOverview({ refreshKey, onOpenList }: { refreshKey:
           <h3 style={dash.cardTitle}>Biggest Issues to address <span style={dash.hint}>(years where one gap is unusually common; click for its list)</span></h3>
           {data.clusters.length === 0 && <span style={dash.muted}>No year stands out.</span>}
           {clusters.map(c => (
-            <div key={`${c.condition}|${c.year}`} style={dash.item} onClick={() => onOpenList(c.condition, c.year)}>
+            <div key={`${c.condition}|${c.year}`} style={dash.item} {...asButton(() => onOpenList(c.condition, c.year))}>
               <span>{c.year}: {PHRASES[c.condition]}<div style={dash.muted}>{pct(c.count, c.total)} of that year's photos</div></span>
               <b style={{ whiteSpace: 'nowrap' }}>{fmt(c.count)} photos</b>
             </div>

@@ -31,10 +31,10 @@ const TUNE_HELP = [
   'Changes apply at once. Nothing here changes Flickr or your files.'
 ].join('\n\n')
 
-export default function HealthCheckSettings(): React.JSX.Element {
-  const rules = useCleanupRules()
+export default function HealthCheckSettings({ reloadKey = 0 }: { reloadKey?: number }): React.JSX.Element {
+  const rules = useCleanupRules(reloadKey)
   const [when, setWhen] = useState<When>('daily')
-  useEffect(() => { void window.flickrAPI.getSettings().then(s => setWhen(s.autoUpdateWhen ?? (s.autoUpdate === false ? 'off' : 'daily'))) }, [])
+  useEffect(() => { void window.flickrAPI.getSettings().then(s => setWhen(s.autoUpdateWhen ?? (s.autoUpdate === false ? 'off' : 'daily'))) }, [reloadKey])
   const change = async (w: When): Promise<void> => {
     setWhen(w)
     await window.flickrAPI.setSettings({ autoUpdateWhen: w })

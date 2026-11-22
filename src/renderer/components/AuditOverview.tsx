@@ -3,6 +3,7 @@ import type { AuditCategory, AuditOverview as Overview } from '../../shared/type
 import { BarRow, Legend, RingParts, COLORS, dash, pctLabel } from './DashboardParts'
 import type { RingPart } from './DashboardParts'
 import { chip } from '../ui/kit'
+import { asButton } from '../ui/a11y'
 
 // The dashboard side of the tag audit: how many tags and photos are affected, which problems are
 // biggest, and how the clean-up is going. Clicking a row opens that problem's list.
@@ -91,7 +92,7 @@ export default function AuditOverview({ refreshKey, onOpenList }: { refreshKey: 
         <h3 style={dash.cardTitle}>Biggest Issues to address <span style={dash.hint}>(by photos affected; click for the list)</span></h3>
         {data.biggest.length === 0 && <span style={dash.muted}>Nothing flagged.</span>}
         {biggest.map(b => (
-          <div key={`${b.category}|${b.display}`} style={dash.item} onClick={() => onOpenList(b.category)}>
+          <div key={`${b.category}|${b.display}`} style={dash.item} {...asButton(() => onOpenList(b.category))}>
             <span>{b.display}<span style={dash.pill}>{SHORT[b.category].toLowerCase()}</span></span>
             <span style={dash.muted}>{fmt(b.count)} photo{b.count === 1 ? '' : 's'}</span>
           </div>

@@ -39,6 +39,8 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
   const [roll, setRoll] = useState<Period | null>(null)   // the camera roll is open on a day (or the whole month)
   const [lastOpened, setLastOpened] = useState<{ year: number; month: number } | null>(null)   // outlined when you come back to the grid
   const [hover, setHover] = useState<Hover>(null)
+  const [gridEl, setGridEl] = useState<HTMLDivElement | null>(null)   // the months grid, measured so the counts only show when a square can hold them
+  const [cellW, setCellW] = useState(0)
   const reqRef = useRef(0)
 
   const load = useCallback(async () => {
@@ -54,6 +56,16 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
     void window.flickrAPI.getTimelineDays(drill.year, drill.month, scope).then(d => { if (!cancelled) setDays(d) })
     return () => { cancelled = true }
   }, [drill, scope, refreshKey])
+
+  useEffect(() => {
+    if (!gridEl) return
+    // 44 px year label, 12 squares, 3 px gaps
+    const measure = (): void => setCellW((gridEl.clientWidth - 44 - 12 * 3) / 12)
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(gridEl)
+    return () => ro.disconnect()
+  }, [gridEl])
 
   // Esc steps back one level: camera roll to the calendar, calendar to the months
   useEffect(() => {
@@ -192,7 +204,7 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
               <span style={{ marginLeft: 6 }}>Grey means none.</span>
             </div>
           </div>
-          <div style={styles.card}>
+          <div style={styles.card} ref={setGridEl}>
             <div style={styles.hm}><div />{['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'].map((m, i) => <div key={i} style={styles.hc}>{m}</div>)}</div>
             {grid.years.map(y => (
               <div key={y} style={styles.hm}>
@@ -204,11 +216,15 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
                     <div
                       key={m}
                       title={`${n.toLocaleString()} photo${n === 1 ? '' : 's'}, ${monthTitle(y, m)}`}
-                      style={{ height: 18, borderRadius: 3, background: shade(n), cursor: n ? 'pointer' : 'default', outline: came ? '2px solid var(--ff-pink)' : 'none', outlineOffset: 1 }}
+                      style={{ height: 18, borderRadius: 3, background: shade(n), cursor: n ? 'pointer' : 'default', outline: came ? '2px solid var(--ff-pink)' : 'none', outlineOffset: 1,
+                        display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '0 6px', fontSize: 10.5, lineHeight: 1, fontVariantNumeric: 'tabular-nums',
+                        color: strength(n, grid.max) > 0.55 ? 'rgba(255,255,255,0.85)' : 'rgba(27,41,70,0.55)', userSelect: 'none' }}
                       onMouseEnter={() => setHover({ year: y, month: m, n })}
                       onMouseLeave={() => setHover(null)}
                       onClick={() => { if (n) openMonth(y, m) }}
-                    />
+                    >
+                      {n > 0 && cellW >= 46 ? n.toLocaleString() : ''}
+                    </div>
                   )
                 })}
               </div>

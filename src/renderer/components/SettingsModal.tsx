@@ -66,6 +66,7 @@ function PosToggle({ value, onChange }: { value: PartPosition; onChange: (v: Par
 
 export default function SettingsModal({ onClose, updateVersion, initialTab }: { onClose: () => void; updateVersion?: string; initialTab?: SettingsTab }): React.JSX.Element {
   const [activeTab, setActiveTab] = useState<Tab>(initialTab ?? 'general')
+  const [resetCount, setResetCount] = useState(0)   // goes up on Restore defaults, so the Health Check tab reads its choices again
 
   // General tab
   const [showDockProgress, setShowDockProgress] = useState(true)
@@ -172,6 +173,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
   const handleReset = useCallback(async () => {
     const defaults = await window.flickrAPI.resetSettings()
     applySettings(defaults)
+    setResetCount(c => c + 1)
     setConfirmReset(false)
     setResetDone(true)
     setTimeout(() => setResetDone(false), 2000)
@@ -343,7 +345,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
           )}
 
           {/* ── HEALTH CHECK TAB ── */}
-          {activeTab === 'health' && <div style={s.section}><HealthCheckSettings /></div>}
+          {activeTab === 'health' && <div style={s.section}><HealthCheckSettings reloadKey={resetCount} /></div>}
 
           {/* ── DOWNLOADS TAB ── */}
           {activeTab === 'downloads' && (
