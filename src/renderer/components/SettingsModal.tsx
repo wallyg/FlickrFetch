@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import HealthCheckSettings from './HealthCheckSettings'
+import InfoTip from '../ui/InfoTip'
 import type {
   FileNamingConfig, FileNamingCore, FileNamingSep, DateFormat, PartPosition,
   AppSettings, CaseTransform, DownloadSize, ConflictBehavior, MetadataSettings
 } from '../../shared/types'
 
-type Tab = 'general' | 'downloads' | 'naming' | 'metadata'
+export type SettingsTab = 'general' | 'downloads' | 'naming' | 'metadata' | 'health'
+type Tab = SettingsTab
 
 const DATE_EXAMPLES: Record<DateFormat, string> = {
   'YYYY-MM-DD':          '2024-03-15',
@@ -24,19 +27,6 @@ function RadioDot({ active, size = 16 }: { active: boolean; size?: number }): Re
       <circle cx={size / 2} cy={size / 2} r={r} fill="white" stroke={active ? 'var(--ff-pink)' : '#ccc'} strokeWidth="1.5" />
       {active && <circle cx={size / 2} cy={size / 2} r={r - 3.5} fill="var(--ff-pink)" />}
     </svg>
-  )
-}
-
-function InfoTip({ text, direction = 'down' }: { text: string; direction?: 'down' | 'up' }): React.JSX.Element {
-  const [show, setShow] = useState(false)
-  const bubbleStyle: React.CSSProperties = direction === 'up'
-    ? { ...s.tipBubble, top: 'auto', bottom: 'calc(100% + 7px)' }
-    : s.tipBubble
-  return (
-    <div style={s.tipWrap} onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}>
-      <div style={s.tipIcon}>i</div>
-      {show && <div style={bubbleStyle}>{text}</div>}
-    </div>
   )
 }
 
@@ -74,12 +64,14 @@ function PosToggle({ value, onChange }: { value: PartPosition; onChange: (v: Par
   )
 }
 
-export default function SettingsModal({ onClose, updateVersion }: { onClose: () => void; updateVersion?: string }): React.JSX.Element {
-  const [activeTab, setActiveTab] = useState<Tab>('general')
+export default function SettingsModal({ onClose, updateVersion, initialTab }: { onClose: () => void; updateVersion?: string; initialTab?: SettingsTab }): React.JSX.Element {
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab ?? 'general')
 
   // General tab
   const [showDockProgress, setShowDockProgress] = useState(true)
   const [notifyOnComplete, setNotifyOnComplete] = useState(true)
+  const [onThisDayCard, setOnThisDayCard] = useState(true)
+  const [onThisDayNotify, setOnThisDayNotify] = useState(false)
 
   // Downloads tab
   const [downloadFolder, setDownloadFolder] = useState('')
@@ -141,6 +133,8 @@ export default function SettingsModal({ onClose, updateVersion }: { onClose: () 
   const applySettings = useCallback((settings: AppSettings) => {
     setShowDockProgress(settings.showDockProgress ?? true)
     setNotifyOnComplete(settings.notifyOnComplete ?? true)
+    setOnThisDayCard(settings.onThisDayCard ?? true)
+    setOnThisDayNotify(settings.onThisDayNotify ?? false)
     setDownloadFolder(settings.downloadFolder)
     setConflictBehavior(settings.conflictBehavior ?? 'rename')
     setDownloadSize(settings.downloadSize ?? 'original')
@@ -211,7 +205,7 @@ export default function SettingsModal({ onClose, updateVersion }: { onClose: () 
       }
       window.flickrAPI.setSettings({
         fileNaming, downloadFolder, showDockProgress, notifyOnComplete,
-        conflictBehavior, downloadSize, openFinderOnComplete, metadata
+        conflictBehavior, downloadSize, openFinderOnComplete, metadata, onThisDayCard, onThisDayNotify
       })
     }, 300)
     return () => clearTimeout(timer)
@@ -219,7 +213,7 @@ export default function SettingsModal({ onClose, updateVersion }: { onClose: () 
     core, sep, datePos, dateFmt, seqPos, customPos, customText,
     caseTransform, charSubstitution, subStripParens, subStripBrackets,
     sizeTokenPos, downloadFolder, showDockProgress, notifyOnComplete,
-    conflictBehavior, downloadSize, openFinderOnComplete,
+    conflictBehavior, downloadSize, openFinderOnComplete, onThisDayCard, onThisDayNotify,
     embedTitle, embedDescription, embedTags,
     embedDateTaken, embedCreator, embedGps, stripGpsFromPrivate,
     embedLicense, embedPhotoUrl, embedPhotoId, writeSidecarJson, keepDescriptionHtml
@@ -289,13 +283,13 @@ export default function SettingsModal({ onClose, updateVersion }: { onClose: () 
 
         {/* Tab bar */}
         <div style={s.tabBar}>
-          {(['general', 'downloads', 'naming', 'metadata'] as Tab[]).map(tab => (
+          {(['general', 'downloads', 'naming', 'metadata', 'health'] as Tab[]).map(tab => (
             <button
               key={tab}
               style={{ ...s.tabBtn, ...(activeTab === tab ? s.tabBtnActive : {}) }}
               onClick={() => setActiveTab(tab)}
             >
-              {tab === 'general' ? 'General' : tab === 'downloads' ? 'Downloads' : tab === 'naming' ? 'File Naming' : 'Metadata'}
+              {tab === 'general' ? 'General' : tab === 'downloads' ? 'Downloads' : tab === 'naming' ? 'File Naming' : tab === 'metadata' ? 'Metadata' : 'Health Check'}
             </button>
           ))}
         </div>
@@ -325,8 +319,31 @@ export default function SettingsModal({ onClose, updateVersion }: { onClose: () 
                   />
                 </div>
               </div>
+
+              <div style={s.section}>
+                <div style={s.sectionRow}>
+                  <p style={s.sectionTitle}>On This Day</p>
+                </div>
+                <div style={s.toggleList}>
+                  <Toggle
+                    value={onThisDayCard}
+                    onChange={v => { setOnThisDayCard(v) }}
+                    label="Show the On This Day card"
+                    desc="A small card at the top of My Flickr when photos were taken on today's date"
+                  />
+                  <Toggle
+                    value={onThisDayNotify}
+                    onChange={v => { setOnThisDayNotify(v) }}
+                    label="Daily On This Day notification"
+                    desc="One macOS notification a day while FlickrFetch is open"
+                  />
+                </div>
+              </div>
             </>
           )}
+
+          {/* ── HEALTH CHECK TAB ── */}
+          {activeTab === 'health' && <div style={s.section}><HealthCheckSettings /></div>}
 
           {/* ── DOWNLOADS TAB ── */}
           {activeTab === 'downloads' && (
@@ -626,7 +643,8 @@ export default function SettingsModal({ onClose, updateVersion }: { onClose: () 
                   }
                   const [val, setter] = stateMap[key]
                   return (
-                    <div key={key} style={s.optRow}>
+                    <React.Fragment key={key}>
+                    <div style={s.optRow}>
                       <div style={s.optLabelGroup}>
                         <span style={s.optName}>{label}</span>
                         <InfoTip text={tip} />
@@ -636,20 +654,21 @@ export default function SettingsModal({ onClose, updateVersion }: { onClose: () 
                         <button style={{ ...s.posBtn, borderRight: 'none', ...(val ? s.posBtnActive : {}) }} onClick={() => { setter(true) }}>On</button>
                       </div>
                     </div>
+                    {key === 'embedDescription' && embedDescription && (
+                      <div style={{ ...s.optRow, marginTop: '4px', marginLeft: '22px' }}>
+                        <div style={s.optLabelGroup}>
+                          <span style={s.optName}><span style={s.subArrow} aria-hidden="true">↳</span>Keep Flickr's HTML</span>
+                          <InfoTip text={"Off (recommended): saved as plain text. Line breaks are kept, list items start with a dash, and each link is written as “text (address)”.\n\nOn: saved exactly as Flickr stores it, including tags like <a href=...>.\n\nThe optional sidecar file always keeps the original."} />
+                        </div>
+                        <div style={s.posGroup}>
+                          <button style={{ ...s.posBtn, ...(!keepDescriptionHtml ? s.posBtnActive : {}) }} onClick={() => { setKeepDescriptionHtml(false) }}>Off</button>
+                          <button style={{ ...s.posBtn, borderRight: 'none', ...(keepDescriptionHtml ? s.posBtnActive : {}) }} onClick={() => { setKeepDescriptionHtml(true) }}>On</button>
+                        </div>
+                      </div>
+                    )}
+                    </React.Fragment>
                   )
                 })}
-                {embedDescription && (
-                  <div style={{ ...s.optRow, marginTop: '4px' }}>
-                    <div style={s.optLabelGroup}>
-                      <span style={{ ...s.optName, color: '#888' }}>Keep Flickr's HTML</span>
-                      <InfoTip text={"Off (recommended): saved as plain text. Line breaks are kept, list items start with a dash, and each link is written as “text (address)”.\n\nOn: saved exactly as Flickr stores it, including tags like <a href=...>.\n\nThe optional sidecar file always keeps the original."} />
-                    </div>
-                    <div style={s.posGroup}>
-                      <button style={{ ...s.posBtn, ...(!keepDescriptionHtml ? s.posBtnActive : {}) }} onClick={() => { setKeepDescriptionHtml(false) }}>Off</button>
-                      <button style={{ ...s.posBtn, borderRight: 'none', ...(keepDescriptionHtml ? s.posBtnActive : {}) }} onClick={() => { setKeepDescriptionHtml(true) }}>On</button>
-                    </div>
-                  </div>
-                )}
               </div>
 
               <div style={s.section}>
@@ -665,9 +684,9 @@ export default function SettingsModal({ onClose, updateVersion }: { onClose: () 
                   </div>
                 </div>
                 {embedGps && (
-                  <div style={{ ...s.optRow, marginTop: '4px' }}>
+                  <div style={{ ...s.optRow, marginTop: '4px', marginLeft: '22px' }}>
                     <div style={s.optLabelGroup}>
-                      <span style={{ ...s.optName, color: '#888' }}>Strip GPS from private</span>
+                      <span style={s.optName}><span style={s.subArrow} aria-hidden="true">↳</span>Strip GPS from private</span>
                       <InfoTip text={"When a photo is private, skip GPS even if GPS embedding is on.\n\nUseful for location privacy."} />
                     </div>
                     <div style={s.posGroup}>
@@ -766,7 +785,7 @@ export default function SettingsModal({ onClose, updateVersion }: { onClose: () 
 
 const s: Record<string, React.CSSProperties> = {
   overlay: { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 600 },
-  card: { backgroundColor: '#fff', borderRadius: '12px', width: '480px', maxWidth: '90vw', height: '660px', maxHeight: '90vh', boxShadow: '0 8px 40px rgba(0,0,0,0.3)', display: 'flex', flexDirection: 'column' },
+  card: { backgroundColor: '#fff', borderRadius: '12px', width: '580px', maxWidth: '90vw', height: '660px', maxHeight: '90vh', boxShadow: '0 8px 40px rgba(0,0,0,0.3)', display: 'flex', flexDirection: 'column' },
   header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px 0', flexShrink: 0 },
   title: { fontSize: '18px', fontWeight: '600', color: '#111', margin: 0 },
   closeBtn: { background: 'none', border: 'none', fontSize: '16px', color: '#888', cursor: 'pointer', padding: '4px' },
@@ -782,9 +801,6 @@ const s: Record<string, React.CSSProperties> = {
   sectionTitle: { fontSize: '11px', fontWeight: '600', color: '#888', textTransform: 'uppercase' as const, letterSpacing: '0.07em', margin: 0 },
 
   // Tooltip
-  tipWrap: { position: 'relative', display: 'inline-flex', alignItems: 'center' },
-  tipIcon: { width: '15px', height: '15px', borderRadius: '50%', background: '#ece8e2', color: '#888', fontSize: '9px', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'default', userSelect: 'none' as const },
-  tipBubble: { position: 'absolute', top: 'calc(100% + 7px)', left: '0', background: '#1a1a1a', color: '#f0ede8', fontSize: '12px', lineHeight: '1.45', padding: '7px 10px', borderRadius: '6px', whiteSpace: 'pre-line' as const, pointerEvents: 'none', zIndex: 200, width: '220px', textAlign: 'left' as const, boxShadow: '0 2px 8px rgba(0,0,0,0.25)' },
 
   // Download folder
   folderRow: { display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '8px', border: '1px solid #eee', backgroundColor: '#fafafa' },
@@ -826,6 +842,7 @@ const s: Record<string, React.CSSProperties> = {
   // Optional parts
   optRow: { display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 11px', borderRadius: '8px', border: '1px solid #eeebe6', background: '#fafaf8' },
   optLabelGroup: { display: 'flex', alignItems: 'center', gap: '5px', flex: 1 },
+  subArrow: { color: '#aaa', marginRight: '7px', fontWeight: '400' },
   optName: { fontSize: '13px', fontWeight: '500', color: '#333' },
   posGroup: { display: 'flex', border: '1px solid #d8d4ce', borderRadius: '6px', overflow: 'hidden', flexShrink: 0 },
   posBtn: { background: 'none', border: 'none', borderRight: '1px solid #d8d4ce', padding: '4px 10px', fontSize: '12px', color: '#777', cursor: 'pointer', whiteSpace: 'nowrap' as const },

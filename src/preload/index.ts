@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { IpcRendererEvent } from 'electron'
-import type { FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery, DiscoverDownloadRecord, DiscoverUser, DiscoverContact, DiscoverGroup, AuditSummary, AuditListQuery, AuditListPage, AuditSetRequest, AuditPlanRow, AuditExportQuery, HealthSummary, HealthListQuery, HealthListPage, HealthSetRequest, HealthExportQuery, AuditOverview, HealthOverview, TagIndexStatus, TagLetterGroup, TagListQuery, TagListPage, TagScanProgress } from '../shared/types'
+import type { FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery, DiscoverDownloadRecord, DiscoverUser, DiscoverContact, DiscoverGroup, AuditSummary, AuditListQuery, AuditListPage, AuditSetRequest, AuditPlanRow, AuditExportQuery, HealthSummary, HealthListQuery, DayView, DayQuery, DayPhoto, DayPhotosQuery, DatePhotoIdsQuery, PrivacyScope, TimelineMonths, TimelineDays, TodaySummary, CameraRollQuery, CameraRollView, HealthListPage, HealthSetRequest, HealthExportQuery, AuditOverview, HealthOverview, TagIndexStatus, TagLetterGroup, TagListQuery, TagListPage, TagScanProgress } from '../shared/types'
 
 // Expose a safe, limited API surface to the renderer process.
 // The renderer cannot access Node.js or Electron directly — only these methods.
@@ -97,6 +97,26 @@ contextBridge.exposeInMainWorld('flickrAPI', {
   listHealthPhotos: (query: HealthListQuery): Promise<HealthListPage> => ipcRenderer.invoke('health:list', query),
   setHealthStatus: (req: HealthSetRequest): Promise<void> => ipcRenderer.invoke('health:set', req),
   saveHealthCsv: (query: HealthExportQuery): Promise<string | null> => ipcRenderer.invoke('health:saveCsv', query),
+
+  // On This Day and the Timeline
+  getDayView: (q: DayQuery): Promise<DayView> => ipcRenderer.invoke('dates:day', q),
+  getDayPhotos: (q: DayPhotosQuery): Promise<DayPhoto[]> => ipcRenderer.invoke('dates:dayPhotos', q),
+  getDatePhotoIds: (q: DatePhotoIdsQuery): Promise<{ id: string; title: string }[]> => ipcRenderer.invoke('dates:photoIds', q),
+  getTimelineMonths: (scope: PrivacyScope): Promise<TimelineMonths> => ipcRenderer.invoke('dates:months', scope),
+  getTimelineDays: (year: number, month: number, scope: PrivacyScope): Promise<TimelineDays> => ipcRenderer.invoke('dates:days', year, month, scope),
+  getCameraRoll: (q: CameraRollQuery): Promise<CameraRollView> => ipcRenderer.invoke('dates:camera', q),
+  getTodaySummary: (): Promise<TodaySummary> => ipcRenderer.invoke('dates:today'),
+  hideOnThisDayCardToday: (): Promise<void> => ipcRenderer.invoke('dates:hideCardToday'),
+  onOpenOnThisDay: (cb: () => void): (() => void) => {
+    const handler = (): void => cb()
+    ipcRenderer.on('otd:open', handler)
+    return () => ipcRenderer.removeListener('otd:open', handler)
+  },
+
+  // Collage and card maker
+  fetchShareImage: (url: string): Promise<string | null> => ipcRenderer.invoke('share:image', url),
+  saveShareImage: (dataUrl: string, defaultName: string): Promise<string | null> => ipcRenderer.invoke('share:savePng', dataUrl, defaultName),
+  copyShareImage: (dataUrl: string): Promise<boolean> => ipcRenderer.invoke('share:copyImage', dataUrl),
 
   // Batch downloads
   startBatch: (albumId: string, albumTitle: string, photoCount?: number, videoCount?: number, force?: boolean, mediaType?: 'photo' | 'video', privacyFilter?: string, track?: boolean, smartMode?: 'updated' | 'never-downloaded', zipMode?: boolean): Promise<{ alreadyQueued: boolean }> =>

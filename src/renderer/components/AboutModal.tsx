@@ -59,7 +59,7 @@ export default function AboutModal({ version, onClose }: AboutModalProps): React
                 <div>
                   <p style={styles.sectionLabel}>Privacy</p>
                   <p style={styles.sectionText}>
-                    FlickrFetch connects directly to Flickr. No third-party servers or cloud storage are involved.
+                    No FlickrFetch servers. The app talks to Flickr, and to GitHub to check whether a new version is out. There is no analytics or tracking.
                   </p>
                 </div>
               </div>

@@ -3,6 +3,7 @@ import type { FlickrPhoto, PhotoPage, SearchOperator, DateRangeField, TagMode, L
 import { MediaFilter, DownloadFilter, PrivacyFilter, PrivacyLevel, PRIVACY_OPTIONS, PRIVACY_LABELS, JustifiedIcon, GridIcon, ListIcon, PrivacyIcon, Chip, Tooltip, PhotoListRow, DownloadFilterSelect, LicenseFilterSelect, matchesLicenseFilter, LICENSE_FILTER_LABEL, getPrivacyLevel, sharedStyles, DateMode, getPresetDates, formatDateChip, loadRowHeight, saveRowHeight, computeJustifiedRows, DOWNLOAD_FILTER_LABEL } from './PhotoGridShared'
 import { cleanTag } from '../../shared/tags'
 import EmptyState from './EmptyState'
+import BackToTop from '../ui/BackToTop'
 
 type AlbumPhotoViewMode = 'list' | 'grid' | 'justified'
 
@@ -619,6 +620,7 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
               </div>
             )
           })}
+          <BackToTop />
         </div>
       ) : (
         <div ref={gridContainerRef} style={styles.justifiedContainer}>

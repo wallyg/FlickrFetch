@@ -12,6 +12,8 @@ import { loadSettings, saveSettings, resetSettings, ensureDownloadFolder } from 
 import { registerTagIpc } from './tagIndex'
 import { registerAuditIpc } from './tagAudit'
 import { registerHealthIpc } from './photoHealth'
+import { registerDatesIpc } from './dateViews'
+import { registerShareIpc } from './share'
 import { ownerNsid, forgetOwnerNsid } from './owner'
 import { openDatabase, closeDatabase, writeBatchLog, writePhotoRecord, getPhotoRecord, getPhotoRecordsBatch, getBatchLog, clearBatchLog, clearAllHistory, searchPhotoRecords, deletePhotoRecord, deletePhotoRecords, clearPhotoRecords, writeDiscoverRecord, getDiscoverRecordsBatch, searchDiscoverRecords, deleteDiscoverRecord, deleteDiscoverRecords, clearDiscoverRecords } from './database'
 import type { AppSettings, FileNamingConfig, PhotoInfo, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams, MetadataSettings, DiscoverUser, DiscoverContact, DiscoverGroup } from '../shared/types'
@@ -315,7 +317,8 @@ ipcMain.handle('collections:getTree', async () => {
 
 // Settings
 ipcMain.handle('settings:get', () => loadSettings())
-ipcMain.handle('settings:set', (_event, settings: AppSettings) => saveSettings(settings))
+// Merged with what is saved, so a panel that only knows some settings (the Settings window) cannot erase the others
+ipcMain.handle('settings:set', (_event, settings: AppSettings) => saveSettings({ ...loadSettings(), ...settings }))
 ipcMain.handle('settings:reset', () => resetSettings())
 ipcMain.handle('video:resolveUrl', (_event, sourceUrl: string) => resolveVideoUrl(sourceUrl))
 
@@ -323,6 +326,8 @@ ipcMain.handle('video:resolveUrl', (_event, sourceUrl: string) => resolveVideoUr
 registerTagIpc(() => mainWindow)
 registerAuditIpc(() => mainWindow)
 registerHealthIpc(() => mainWindow)
+registerDatesIpc(() => mainWindow)
+registerShareIpc(() => mainWindow)
 
 // Folder picker dialog
 ipcMain.handle('shell:pickFolder', async () => {

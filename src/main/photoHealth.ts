@@ -4,8 +4,10 @@ import type Database from 'better-sqlite3'
 import { getDb } from './database'
 import { ownerNsid } from './owner'
 import { csvCell, saveCsvFile } from './csv'
-import { PHOTO_META_DDL } from './tagIndex'
+import { PHOTO_META_DDL, addPhotoMetaColumns } from './tagIndex'
 import { foldAccents } from '../shared/tags'
+import { loadSettings } from './settings'
+import { ruleState } from '../shared/cleanupRules'
 import type {
   HealthCondition, HealthExportQuery, HealthListPage, HealthListQuery, HealthOverview, HealthPhoto, HealthSetRequest, HealthSummary
 } from '../shared/types'
@@ -49,6 +51,7 @@ function healthDb(): Database.Database {
     // Lower-case and accent-free, so the title filter finds "Québec" when you type "quebec" (SQLite's own LIKE only ignores case for plain English letters)
     db.function('ff_fold', { deterministic: true }, (t: unknown) => (typeof t === 'string' ? foldAccents(t).toLowerCase() : ''))
     db.function('ff_camera_title', { deterministic: true }, (t: unknown) => (typeof t === 'string' && isCameraTitle(t) ? 1 : 0))
+    addPhotoMetaColumns(db)
     ready = db
   }
   return db
@@ -128,7 +131,12 @@ export function healthSet(req: HealthSetRequest): void {
 // The numbers behind the dashboard: how complete the library is, by type, by year, and where gaps bunch up
 export function healthOverview(): HealthOverview {
   const db = healthDb()
-  if (!hasData(db)) return { hasData: false, photos: 0, complete: 0, withGap: 0, twoOrMore: 0, byType: [], byYear: [], clusters: [] }
+  if (!hasData(db)) return { hasData: false, photos: 0, complete: 0, withGap: 0, twoOrMore: 0, onlyOne: { title: 0, description: 0, tags: 0, location: 0 }, byType: [], byYear: [], clusters: [] }
+  // Checks that are Off are left out; Optional ones are listed but do not count towards "complete"
+  const cleanupRules = loadSettings().cleanupRules
+  const stateOf = (c: HealthCondition): 'off' | 'optional' | 'on' => ruleState(cleanupRules, `photos:${c}`)
+  const isOn = (c: HealthCondition): number => (stateOf(c) === 'on' ? 1 : 0)
+  const isWarn = (c: HealthCondition): number => (stateOf(c) === 'optional' ? 1 : 0)
   // One pass over every photo, counting only gaps that have not been marked fine
   const rows = db.prepare(`
     SELECT substr(p.date_taken, 1, 4) AS y,
@@ -142,24 +150,33 @@ export function healthOverview(): HealthOverview {
     LEFT JOIN photo_health_state sg ON sg.photo_id = p.photo_id AND sg.condition = 'tags'
     LEFT JOIN photo_health_state sl ON sl.photo_id = p.photo_id AND sl.condition = 'location'
   `).all() as { y: string; t: number; d: number; g: number; l: number }[]
-  const years = new Map<string, { year: string; total: number; anyGap: number; title: number; description: number; tags: number; location: number }>()
+  const years = new Map<string, { year: string; total: number; anyGap: number; both: number; warnOnly: number; title: number; description: number; tags: number; location: number }>()
   const totals = { title: 0, description: 0, tags: 0, location: 0 }
+  const onlyOne = { title: 0, description: 0, tags: 0, location: 0 }
   let withGap = 0, twoOrMore = 0
   for (const r of rows) {
     const y = r.y || 'Unknown'
-    const e = years.get(y) ?? { year: y, total: 0, anyGap: 0, title: 0, description: 0, tags: 0, location: 0 }
-    const gaps = r.t + r.d + r.g + r.l
+    const e = years.get(y) ?? { year: y, total: 0, anyGap: 0, both: 0, warnOnly: 0, title: 0, description: 0, tags: 0, location: 0 }
+    // Gaps that count towards the headline: only the checks that are On
+    const t = r.t * isOn('title'), d = r.d * isOn('description'), g = r.g * isOn('tags'), l = r.l * isOn('location')
+    const gaps = t + d + g + l
     e.total++; e.title += r.t; e.description += r.d; e.tags += r.g; e.location += r.l
-    if (gaps > 0) { e.anyGap++; withGap++ }
+    // Photos whose only gaps are in checks set to Warning (no Issue gap at all): the light part of the stacked bars
+    const warn = r.t * isWarn('title') + r.d * isWarn('description') + r.g * isWarn('tags') + r.l * isWarn('location')
+    // both: an Issue gap and a Warning gap on the same photo (a photo counts once, as an Issue, in anyGap)
+    if (gaps > 0) { e.anyGap++; withGap++; if (warn > 0) e.both++ } else if (warn > 0) e.warnOnly++
     if (gaps > 1) twoOrMore++
+    if (gaps === 1) { if (t) onlyOne.title++; else if (d) onlyOne.description++; else if (g) onlyOne.tags++; else onlyOne.location++ }
     totals.title += r.t; totals.description += r.d; totals.tags += r.g; totals.location += r.l
     years.set(y, e)
   }
   const photos = rows.length
   const byYear = [...years.values()].filter(e => e.year !== 'Unknown').sort((a, b) => a.year.localeCompare(b.year))
   // A cluster is a year where a gap is at least twice as common as in the library overall; the biggest excesses come first
+  // (only for the checks that are On: these are the places to start)
   const clusters: HealthOverview['clusters'] = []
   for (const condition of HEALTH_CONDITIONS) {
+    if (stateOf(condition) !== 'on') continue
     const rate = totals[condition] / Math.max(photos, 1)
     for (const e of byYear) {
       const count = e[condition]
@@ -169,9 +186,9 @@ export function healthOverview(): HealthOverview {
   const excess = (c: HealthOverview['clusters'][number]): number => c.count - (totals[c.condition] / Math.max(photos, 1)) * c.total
   clusters.sort((a, b) => excess(b) - excess(a))
   return {
-    hasData: true, photos, complete: photos - withGap, withGap, twoOrMore,
-    byType: HEALTH_CONDITIONS.map(condition => ({ condition, open: totals[condition] })),
-    byYear, clusters: clusters.slice(0, 6)
+    hasData: true, photos, complete: photos - withGap, withGap, twoOrMore, onlyOne,
+    byType: HEALTH_CONDITIONS.filter(c => stateOf(c) !== 'off').map(condition => ({ condition, state: stateOf(condition) as 'optional' | 'on', open: totals[condition] })),
+    byYear, clusters: clusters.slice(0, 10)
   }
 }
 

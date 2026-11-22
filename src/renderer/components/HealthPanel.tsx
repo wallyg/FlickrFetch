@@ -1,7 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import type { CleanupRuleState } from '../../shared/cleanupRules'
 import type { HealthCondition, HealthPhoto, HealthSummary } from '../../shared/types'
 import HealthOverview from './HealthOverview'
 import { dash } from './DashboardParts'
+import { quietBtn, primaryBtn, selectedOn, railSel as railSelBase, railItem as railItemBase } from '../ui/kit'
+import BackToTop from '../ui/BackToTop'
 
 // The Health view of the Tags tab: photos with missing or weak metadata, by problem, as a to-do list
 // to fix on Flickr. Nothing here changes Flickr or your files.
@@ -9,6 +13,9 @@ import { dash } from './DashboardParts'
 interface HealthPanelProps {
   refreshKey: number       // changes when the library is rescanned
   onFullRescan: () => void // for libraries scanned before this report existed
+  toolbarLeft?: HTMLElement | null   // where the Overview | Lists switch goes (the Cleanup toolbar)
+  stateOf: (id: string) => CleanupRuleState   // Off / Warning / Issue for each check
+  openRequest?: { condition: HealthCondition; year?: string; nonce: number } | null   // the front page asking for one list
 }
 
 const PAGE = 100
@@ -24,13 +31,12 @@ const INFO: Record<HealthCondition, { name: string; blurb: string }> = {
 }
 const CONDITIONS: HealthCondition[] = ['title', 'description', 'tags', 'location']
 
-export default function HealthPanel({ refreshKey, onFullRescan }: HealthPanelProps): React.JSX.Element {
+export default function HealthPanel({ refreshKey, onFullRescan, toolbarLeft, stateOf, openRequest }: HealthPanelProps): React.JSX.Element {
   const [summary, setSummary] = useState<HealthSummary | null>(null)
   const [section, setSection] = useState<'overview' | 'lists'>('overview')
   const [condition, setCondition] = useState<HealthCondition>('title')
   const [year, setYear] = useState('')   // set by clicking a cluster on the overview
   const [status, setStatus] = useState<'open' | 'fine'>('open')
-  const [search, setSearch] = useState('')
   const [rows, setRows] = useState<HealthPhoto[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -40,21 +46,33 @@ export default function HealthPanel({ refreshKey, onFullRescan }: HealthPanelPro
   const loadSummary = useCallback(async () => { setSummary(await window.flickrAPI.getHealthSummary()) }, [])
   useEffect(() => { void loadSummary() }, [loadSummary, refreshKey])
 
+  // If the chosen check gets switched off, move to one that is still on
+  useEffect(() => {
+    if (stateOf(`photos:${condition}`) !== 'off') return
+    const next = CONDITIONS.find(c => stateOf(`photos:${c}`) !== 'off')
+    if (next) setCondition(next)
+  }, [condition, stateOf])
+
+  // The front page asks for one list
+  useEffect(() => {
+    if (!openRequest) return
+    setCondition(openRequest.condition); setStatus('open'); setYear(openRequest.year ?? ''); setSection('lists')
+  }, [openRequest?.nonce])
+
   const loadRows = useCallback(async (offset: number): Promise<void> => {
     const req = ++requestRef.current
     if (offset === 0) setLoading(true)
-    const page = await window.flickrAPI.listHealthPhotos({ condition, status, search, year: year || undefined, offset, limit: PAGE })
+    const page = await window.flickrAPI.listHealthPhotos({ condition, status, search: '', year: year || undefined, offset, limit: PAGE })
     if (req !== requestRef.current) return
     setRows(prev => (offset === 0 ? page.rows : [...prev, ...page.rows]))
     setTotal(page.total)
     setLoading(false)
-  }, [condition, status, search, year])
+  }, [condition, status, year])
 
   useEffect(() => {
     if (summary && !summary.hasData) return
-    const t = setTimeout(() => void loadRows(0), search ? 200 : 0)
-    return () => clearTimeout(t)
-  }, [loadRows, search, refreshKey, summary?.hasData])
+    void loadRows(0)
+  }, [loadRows, refreshKey, summary?.hasData])
 
   const mark = async (p: HealthPhoto, next: 'open' | 'fine'): Promise<void> => {
     await window.flickrAPI.setHealthStatus({ photoId: p.photoId, condition, status: next })
@@ -68,57 +86,68 @@ export default function HealthPanel({ refreshKey, onFullRescan }: HealthPanelPro
       <div style={styles.empty}>
         <div style={styles.emptyTitle}>One more scan needed</div>
         <div style={styles.muted}>
-          Your tag list was built before the metadata report existed. A Full rescan reads every photo once more, this time also noting titles, descriptions, locations and thumbnails. It takes a few minutes and changes nothing on Flickr.
+          Your tag list was built before the metadata report existed. A Rebuild reads every photo once more, this time also noting titles, descriptions, locations and thumbnails. It takes a few minutes and changes nothing on Flickr.
         </div>
-        <button style={styles.primaryBtn} onClick={onFullRescan}>Full rescan</button>
+        <button style={styles.primaryBtn} onClick={onFullRescan}>Rebuild</button>
       </div>
     )
   }
 
   const row = summary?.rows.find(r => r.condition === condition)
 
+  const sectionSwitch = (
+    <div style={dash.seg}>
+      {(['overview', 'lists'] as const).map(v => (
+        <button key={v} style={{ ...dash.segBtn, ...(section === v ? dash.segOn : {}) }} onClick={() => setSection(v)}>{v === 'overview' ? 'Summary' : 'Lists'}</button>
+      ))}
+    </div>
+  )
+
   return (
     <div style={styles.wrap}>
-      <div style={dash.switchRow}>
-        <div style={dash.seg}>
-          {(['overview', 'lists'] as const).map(v => (
-            <button key={v} style={{ ...dash.segBtn, ...(section === v ? dash.segOn : {}) }} onClick={() => setSection(v)}>{v === 'overview' ? 'Overview' : 'Lists'}</button>
-          ))}
-        </div>
-      </div>
-      <div style={styles.top}>
-        <span style={styles.muted}>
-          {summary ? `${summary.photos.toLocaleString()} photos checked. ` : ''}Nothing here changes Flickr or your files. Fix titles, descriptions, tags and locations on Flickr, then Refresh.
-        </span>
-      </div>
+      {toolbarLeft ? createPortal(sectionSwitch, toolbarLeft) : <div style={dash.switchRow}>{sectionSwitch}</div>}
+
       {section === 'overview' ? (
         <HealthOverview refreshKey={refreshKey} onOpenList={(c, y) => { setCondition(c); setStatus('open'); setYear(y ?? ''); setSection('lists') }} />
       ) : (
       <div style={styles.body}>
+        <div style={styles.railCol}>
         <div style={styles.rail}>
-          {CONDITIONS.map(c => {
-            const r = summary?.rows.find(x => x.condition === c)
+          {([['on', 'Issues'], ['optional', 'Warnings']] as const).map(([st, heading]) => {
+            const list = CONDITIONS.filter(c => stateOf(`photos:${c}`) === st)
+            if (list.length === 0) return null
             return (
-              <div key={c} style={{ ...styles.railItem, ...(c === condition ? styles.railSel : {}) }} onClick={() => { setCondition(c); setStatus('open'); setYear('') }}>
-                <span>{INFO[c].name}</span><b style={{ fontWeight: 600 }}>{(r?.open ?? 0).toLocaleString()}</b>
-              </div>
+              <React.Fragment key={st}>
+                <div style={{ ...styles.railHead, paddingTop: st === 'on' ? 4 : 10 }}>{heading}</div>
+                {list.map(c => {
+                  const r = summary?.rows.find(x => x.condition === c)
+                  return (
+                    <div key={c} style={{ ...styles.railItem, ...(c === condition ? styles.railSel : {}) }} onClick={() => { setCondition(c); setStatus('open'); setYear('') }}>
+                      <span>{INFO[c].name}</span><b style={{ fontWeight: 600 }}>{(r?.open ?? 0).toLocaleString()}</b>
+                    </div>
+                  )
+                })}
+              </React.Fragment>
             )
           })}
+          {CONDITIONS.every(c => stateOf(`photos:${c}`) === 'off') && <div style={{ ...styles.muted, padding: 8 }}>Every photo check is switched off (Tune checks).</div>}
+        </div>
+
+        <div style={styles.rail}>
+          <div style={{ ...styles.railHead, paddingTop: 4 }}>Show</div>
+          {(['open', 'fine'] as const).map(s => (
+            <div key={s} style={{ ...styles.railItem, ...(status === s ? styles.railSel : {}) }} onClick={() => setStatus(s)}>
+              <span>{s === 'open' ? 'Open' : 'Marked fine'}</span><b style={{ fontWeight: 600 }}>{(year && s === status ? total : row ? row[s] : 0).toLocaleString()}</b>
+            </div>
+          ))}
+          <div style={styles.railHead}>This list</div>
+          <button style={{ ...styles.secondaryBtn, width: '100%' }} title="Save every photo in this list as a spreadsheet" onClick={async () => { setSaved(await window.flickrAPI.saveHealthCsv({ condition, status, search: '', year: year || undefined })) }}>Export this list</button>
+          {saved && <div style={{ ...styles.muted, padding: '6px 9px 2px' }}>Saved to {saved.split('/').pop()} <button style={styles.linkBtn} onClick={() => window.flickrAPI.showInFinder(saved)}>Show in Finder</button></div>}
+        </div>
         </div>
 
         <div style={styles.main}>
-          <div style={styles.statusRow}>
-            {(['open', 'fine'] as const).map(s => (
-              <button key={s} style={{ ...styles.statusChip, ...(status === s ? styles.statusChipOn : {}) }} onClick={() => setStatus(s)}>
-                {s === 'open' ? 'Open' : 'Marked fine'} <span style={{ opacity: 0.7 }}>{(year && s === status ? total : row ? row[s] : 0).toLocaleString()}</span>
-              </button>
-            ))}
-            <div style={{ flex: 1 }} />
-            <button style={styles.secondaryBtn} title="Save every photo in this list (with the current filter) as a spreadsheet" onClick={async () => { setSaved(await window.flickrAPI.saveHealthCsv({ condition, status, search, year: year || undefined })) }}>Export this list</button>
-            {saved && <><span style={styles.muted}>Saved to {saved.split('/').pop()}</span><button style={styles.linkBtn} onClick={() => window.flickrAPI.showInFinder(saved)}>Show in Finder</button></>}
- {year && <button style={styles.statusChip} title="Show every year again" onClick={() => setYear('')}>Taken in {year} ✕</button>}
-            <input style={styles.search} placeholder="Filter by title…" value={search} onChange={e => setSearch(e.target.value)} />
-          </div>
+          {year && <div style={styles.statusRow}><button style={styles.statusChip} title="Show every year again" onClick={() => setYear('')}>Taken in {year} ✕</button></div>}
           <div style={{ ...styles.muted, margin: '2px 0 10px' }}>{INFO[condition].blurb} Newest photos first.</div>
 
           <div style={styles.list}>
@@ -144,6 +173,7 @@ export default function HealthPanel({ refreshKey, onFullRescan }: HealthPanelPro
               ))}
             {rows.length < total && <button style={styles.moreBtn} onClick={() => void loadRows(rows.length)}>Show more ({(total - rows.length).toLocaleString()} left)</button>}
           </div>
+          <BackToTop />
         </div>
       </div>
       )}
@@ -158,14 +188,15 @@ const styles: Record<string, React.CSSProperties> = {
   empty: { padding: '60px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, textAlign: 'center', maxWidth: 520, margin: '0 auto' },
   emptyTitle: { fontSize: 15, fontWeight: 700, color: 'var(--ff-navy)' },
   body: { flex: 1, minHeight: 0, display: 'flex', gap: 16, padding: '4px 24px 12px' },
-  rail: { width: 230, flexShrink: 0, alignSelf: 'flex-start', background: '#fff', border: '1px solid var(--ff-border)', borderRadius: 10, padding: 6 },
-  railItem: { display: 'flex', justifyContent: 'space-between', gap: 8, padding: '7px 9px', borderRadius: 6, fontSize: 13, cursor: 'pointer', color: 'var(--ff-text)' },
-  railSel: { background: '#e6f1fb', color: '#185fa5' },
+  railCol: { width: 230, flexShrink: 0, alignSelf: 'flex-start', display: 'flex', flexDirection: 'column', gap: 12 },
+  railHead: { fontSize: 11, color: 'var(--ff-text-muted)', padding: '10px 9px 4px' },
+  rail: { background: '#fff', border: '1px solid var(--ff-border)', borderRadius: 10, padding: 6 },
+  railItem: { ...railItemBase },
+  railSel: { ...railSelBase },
   main: { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: 0 },
   statusRow: { display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, flexWrap: 'wrap' },
   statusChip: { border: '1px solid var(--ff-border)', borderRadius: 14, padding: '3px 11px', fontSize: 13, background: '#fff', color: 'var(--ff-text)', cursor: 'pointer' },
-  statusChipOn: { background: 'var(--ff-navy)', borderColor: 'var(--ff-navy)', color: '#fff' },
-  search: { border: '1px solid var(--ff-border)', borderRadius: 6, padding: '5px 10px', fontSize: 13, minWidth: 180, background: '#fff', color: 'var(--ff-text)' },
+  statusChipOn: { ...selectedOn },
   list: { flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: 4 },
   card: { display: 'flex', gap: 12, background: '#fff', border: '1px solid var(--ff-border)', borderRadius: 10, padding: 10, marginBottom: 8 },
   thumb: { width: 76, height: 76, borderRadius: 6, objectFit: 'cover', background: '#eee', flexShrink: 0 },
@@ -175,7 +206,7 @@ const styles: Record<string, React.CSSProperties> = {
   pill: { fontSize: 11, borderRadius: 10, padding: '1px 8px', background: '#fef3c7', color: '#92400e' },
   actions: { display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, flexWrap: 'wrap' },
   primaryBtn: { background: 'var(--ff-pink-action)', color: '#fff', border: 'none', borderRadius: 6, padding: '7px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' },
-  secondaryBtn: { background: '#fff', border: '1px solid #ccc', borderRadius: 6, padding: '4px 11px', fontSize: 13, color: '#555', cursor: 'pointer' },
+  secondaryBtn: { ...quietBtn },
   linkBtn: { background: 'none', border: 'none', color: 'var(--ff-blue)', fontSize: 12, cursor: 'pointer' },
   moreBtn: { width: '100%', padding: 8, background: 'none', border: '1px dashed #ccc', borderRadius: 8, color: 'var(--ff-text-secondary)', fontSize: 13, cursor: 'pointer', marginBottom: 12 }
 }

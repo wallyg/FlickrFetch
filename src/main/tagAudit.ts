@@ -8,6 +8,8 @@ import enableWords from './data/enable1.txt?raw'
 import { csvCell, saveCsvFile } from './csv'
 import { cleanTag, foldLatinAccents, GLUE_BOUNDARY_SOURCE } from '../shared/tags'
 import { decodeEntities } from '../shared/description'
+import { loadSettings } from './settings'
+import { ruleState } from '../shared/cleanupRules'
 import type {
   AuditCategory, AuditConfidence, AuditExportQuery, AuditFinding, AuditListPage, AuditListQuery, AuditPlanRow,
   AuditOverview, AuditSetRequest, AuditStatus, AuditSummary
@@ -387,16 +389,24 @@ function matchingRows(q: AuditExportQuery): Finding[] {
   } else {
     rows = findings.filter(f => f.category === q.category && f.status === q.status && match(f))
   }
+  // Suggested keeps the order the detection gave (strongest suspicion first); the others reorder the whole list,
+  // so paging and the export follow it too. Ties fall back to A to Z.
+  if (q.sort && q.sort !== 'suggested') {
+    const byName = (a: Finding, b: Finding): number => a.display.localeCompare(b.display, undefined, { sensitivity: 'base' })
+    rows = [...rows].sort(q.sort === 'most' ? (a, b) => b.count - a.count || byName(a, b)
+      : q.sort === 'fewest' ? (a, b) => a.count - b.count || byName(a, b) : byName)
+  }
   return rows
 }
 
-const DASHBOARD_CATEGORIES: AuditCategory[] = ['notwin', 'noaccent', 'typo', 'glued', 'junk', 'runon']   // cosmetic spelling is left out
+// Every check can be On, Optional or Off (Tune checks), including the cosmetic spelling check, which is Optional by default
+const DASHBOARD_CATEGORIES: AuditCategory[] = ['notwin', 'noaccent', 'typo', 'glued', 'junk', 'runon', 'spelling']
 
 // The numbers behind the dashboard: how many tags and photos are affected, and how the work is going
 export function auditOverview(): AuditOverview {
   const db = auditDb()
   const findings = currentFindings(db)
-  const empty: AuditOverview = { hasIndex: false, totalTags: 0, totalPhotos: 0, flaggedTags: 0, flaggedPhotos: 0, plan: 0, fine: 0, fixed: 0, byType: [], biggest: [] }
+  const empty: AuditOverview = { hasIndex: false, totalTags: 0, totalPhotos: 0, flaggedTags: 0, flaggedPhotos: 0, optionalTags: 0, optionalPhotos: 0, plan: 0, fine: 0, fixed: 0, byType: [], biggest: [] }
   if (!findings) return empty
   const totalTags = (db.prepare('SELECT COUNT(*) AS n FROM tag_names WHERE photo_count > 0').get() as { n: number }).n
   const totalPhotos = (db.prepare('SELECT COUNT(*) AS n FROM tag_indexed_photo').get() as { n: number }).n
@@ -410,13 +420,19 @@ export function auditOverview(): AuditOverview {
     db.transaction(() => { for (const n of tagNames) { const id = ids.get(n); if (id !== undefined) fillPick.run(id) } })()
     return (db.prepare('SELECT COUNT(DISTINCT tp.photo_id) AS n FROM tag_photo tp JOIN audit_pick k ON k.tag_id = tp.tag_id').get() as { n: number }).n
   }
-  const live = findings.filter(f => DASHBOARD_CATEGORIES.includes(f.category) && (f.status === 'open' || f.status === 'plan'))
+  // Checks that are Off are left out; Optional ones are shown but do not count towards the headline
+  const cleanupRules = loadSettings().cleanupRules
+  const stateOf = (c: AuditCategory): 'off' | 'optional' | 'on' => ruleState(cleanupRules, `tags:${c}`)
+  const shown = DASHBOARD_CATEGORIES.filter(c => stateOf(c) !== 'off')
+  const live = findings.filter(f => shown.includes(f.category) && (f.status === 'open' || f.status === 'plan'))
+  const liveOn = live.filter(f => stateOf(f.category) === 'on')
   const states = db.prepare('SELECT category, status, COUNT(*) AS n FROM tag_audit_state GROUP BY category, status').all() as { category: AuditCategory; status: string; n: number }[]
   const stateCount = (category: AuditCategory, status: string): number => states.find(s => s.category === category && s.status === status)?.n ?? 0
-  const byType = DASHBOARD_CATEGORIES.map(category => {
+  const byType = shown.map(category => {
     const mine = live.filter(f => f.category === category)
     return {
       category,
+      state: stateOf(category) as 'optional' | 'on',
       open: mine.filter(f => f.status === 'open').length,
       plan: stateCount(category, 'plan'),
       fine: stateCount(category, 'fine'),
@@ -424,17 +440,21 @@ export function auditOverview(): AuditOverview {
       photos: photosFor([...new Set(mine.map(f => f.tag))])
     }
   })
-  const flaggedNames = [...new Set(live.map(f => f.tag))]
+  const flaggedNames = [...new Set(liveOn.map(f => f.tag))]
+  const flagged = new Set(flaggedNames)
+  const optionalNames = [...new Set(live.filter(f => stateOf(f.category) === 'optional' && !flagged.has(f.tag)).map(f => f.tag))]
   return {
     hasIndex: true,
     totalTags, totalPhotos,
     flaggedTags: flaggedNames.length,
     flaggedPhotos: photosFor(flaggedNames),
+    optionalTags: optionalNames.length,
+    optionalPhotos: photosFor(optionalNames),
     plan: byType.reduce((n, r) => n + r.plan, 0),
     fine: byType.reduce((n, r) => n + r.fine, 0),
     fixed: byType.reduce((n, r) => n + r.fixed, 0),
     byType,
-    biggest: [...live].sort((a, b) => b.count - a.count).slice(0, 6).map(f => ({ display: f.display, category: f.category, count: f.count }))
+    biggest: [...liveOn].sort((a, b) => b.count - a.count).slice(0, 10).map(f => ({ display: f.display, category: f.category, count: f.count }))
   }
 }
 

@@ -40,8 +40,8 @@ export default function ProblemModal({ onClose }: ProblemModalProps): React.JSX.
           <p style={s.para}>
             FlickrFetch was built to close that gap. It downloads photos and videos from your Flickr
             library and embeds the metadata directly into each file using industry-standard EXIF and
-            IPTC fields — title, description, tags, GPS coordinates, capture date, album, license,
-            and more. The result is a true archive: files that are self-describing, portable, and
+            IPTC fields — title, description, tags, GPS coordinates, capture date, license, creator,
+            and a link back to the photo on Flickr (you choose which in Settings). The result is a true archive: files that are self-describing, portable, and
             not dependent on Flickr remaining online or your account remaining active.
           </p>
           <p style={{ ...s.para, fontWeight: 600, color: 'var(--ff-navy)', marginBottom: 0 }}>

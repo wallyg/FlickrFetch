@@ -4,8 +4,10 @@ import type Database from 'better-sqlite3'
 import { FLICKR_API_KEY } from './config'
 import { createHash } from 'crypto'
 import { loadToken } from './auth'
+import { loadSettings } from './settings'
 import { signedGet, clearTagSearchMemory } from './flickr'
 import { getDb } from './database'
+import { foldLatinAccents } from '../shared/tags'
 import type {
   FlickrTokenData, TagIndexStatus, TagScanProgress, TagListQuery, TagListPage, TagRow, TagLetterGroup
 } from '../shared/types'
@@ -28,6 +30,7 @@ interface RawPhoto {
   title?: string; description?: { _content?: string } | string
   latitude?: number | string; longitude?: number | string
   url_q?: string; datetaken?: string
+  ispublic?: number | string; isfriend?: number | string; isfamily?: number | string
 }
 
 // One row per photo with what the Health report needs (also created by photoHealth.ts, so it lives here once)
@@ -39,12 +42,30 @@ export const PHOTO_META_DDL = `
     has_tags INTEGER NOT NULL DEFAULT 0,
     has_location INTEGER NOT NULL DEFAULT 0,
     thumb_url TEXT NOT NULL DEFAULT '',
-    date_taken TEXT NOT NULL DEFAULT ''
+    date_taken TEXT NOT NULL DEFAULT '',
+    privacy INTEGER NOT NULL DEFAULT 0,
+    latitude REAL,
+    longitude REAL
   );
 `
 
+// Columns added after 3.4 shipped; tables made by earlier versions get them here
+export function addPhotoMetaColumns(db: Database.Database): void {
+  const have = new Set((db.prepare('PRAGMA table_info(photo_meta)').all() as { name: string }[]).map(c => c.name))
+  if (!have.has('privacy')) db.exec('ALTER TABLE photo_meta ADD COLUMN privacy INTEGER NOT NULL DEFAULT 0')
+  if (!have.has('latitude')) db.exec('ALTER TABLE photo_meta ADD COLUMN latitude REAL')
+  if (!have.has('longitude')) db.exec('ALTER TABLE photo_meta ADD COLUMN longitude REAL')
+}
+
+// 0 public, 1 friends, 2 family, 3 friends and family, 4 private
+function privacyOf(p: RawPhoto): number {
+  if (Number(p.ispublic ?? 1) === 1) return 0
+  const friend = Number(p.isfriend ?? 0) === 1, family = Number(p.isfamily ?? 0) === 1
+  return friend && family ? 3 : friend ? 1 : family ? 2 : 4
+}
+
 // What each scan asks Flickr to include with every photo
-const SCAN_EXTRAS = 'tags,last_update,description,geo,url_q,date_taken'
+const SCAN_EXTRAS = 'tags,last_update,description,geo,url_q,date_taken,ispublic,isfriend,isfamily'
 
 // ── Schema and small helpers ─────────────────────────────────────────────────
 
@@ -84,6 +105,8 @@ function requireDb(): Database.Database {
     // Older copies of the table have no 'display' column
     const cols = db.prepare('PRAGMA table_info(tag_names)').all() as { name: string }[]
     if (!cols.some(c => c.name === 'display')) db.exec('ALTER TABLE tag_names ADD COLUMN display TEXT')
+    addPhotoMetaColumns(db)
+    addTagSqlFunctions(db)
     schemaReady = db
   }
   return db
@@ -146,9 +169,10 @@ function indexPhotos(db: Database.Database, photos: RawPhoto[], scanId: number, 
   `)
   const insertLink = db.prepare('INSERT OR IGNORE INTO tag_photo (photo_id, tag_id) VALUES (?, ?)')
   const upsertMeta = db.prepare(`
-    INSERT INTO photo_meta (photo_id, title, has_description, has_tags, has_location, thumb_url, date_taken) VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO photo_meta (photo_id, title, has_description, has_tags, has_location, thumb_url, date_taken, privacy, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(photo_id) DO UPDATE SET title = excluded.title, has_description = excluded.has_description, has_tags = excluded.has_tags,
-      has_location = excluded.has_location, thumb_url = excluded.thumb_url, date_taken = excluded.date_taken
+      has_location = excluded.has_location, thumb_url = excluded.thumb_url, date_taken = excluded.date_taken,
+      privacy = excluded.privacy, latitude = excluded.latitude, longitude = excluded.longitude
   `)
 
   db.transaction(() => {
@@ -159,7 +183,8 @@ function indexPhotos(db: Database.Database, photos: RawPhoto[], scanId: number, 
       const description = typeof photo.description === 'string' ? photo.description : photo.description?._content ?? ''
       // Flickr reports 0, 0 for a photo with no location
       const hasLocation = Number(photo.latitude ?? 0) !== 0 || Number(photo.longitude ?? 0) !== 0
-      upsertMeta.run(photo.id, photo.title ?? '', description.trim() ? 1 : 0, names.size > 0 ? 1 : 0, hasLocation ? 1 : 0, photo.url_q ?? '', photo.datetaken ?? '')
+      upsertMeta.run(photo.id, photo.title ?? '', description.trim() ? 1 : 0, names.size > 0 ? 1 : 0, hasLocation ? 1 : 0, photo.url_q ?? '', photo.datetaken ?? '',
+        privacyOf(photo), hasLocation ? Number(photo.latitude) : null, hasLocation ? Number(photo.longitude) : null)
       for (const name of names) {
         let id = tagIds.get(name)
         if (id === undefined) {
@@ -281,6 +306,7 @@ async function runFullScan(db: Database.Database, tokenData: FlickrTokenData, se
   setMeta(db, 'last_scan_at', Date.now())
   setMeta(db, 'last_full_scan_at', Date.now())
   setMeta(db, 'has_photo_meta', 1)
+  setMeta(db, 'has_catalog_v2', 1)   // privacy and coordinates are saved too (3.5)
   setMeta(db, 'flickr_total', total)
   clearTagSearchMemory()
   send({ mode: 'full', phase: 'done', page: pages, pages, photos: photosDone, total })
@@ -329,14 +355,23 @@ async function runRefresh(db: Database.Database, tokenData: FlickrTokenData, sen
   send({ mode: 'refresh', phase: 'done', page: pages, pages, photos: photosDone, total: photosDone })
 }
 
-export function startTagScan(mode: 'full' | 'refresh', getWindow: () => BrowserWindow | null): { started: boolean } {
-  if (scanning) return { started: false }
+// True while an automatic (background) Update is running: it sends no progress and the UI does not show it as a scan
+let quiet = false
+
+export function startTagScan(mode: 'full' | 'refresh', getWindow: () => BrowserWindow | null, silent = false): { started: boolean } {
+  if (scanning) {
+    // The user pressed Update or Rebuild while the quiet one was running: let them see it from here on
+    if (quiet && !silent) { quiet = false; return { started: true } }
+    return { started: false }
+  }
   const tokenData = loadToken()
   if (!tokenData) throw new Error('Not authenticated')
   const db = requireDb()
-  const send: Sender = progress => getWindow()?.webContents.send('tags:scanProgress', progress)
+  // A background (automatic) update stays quiet: no progress screen, only the final "done" so open screens refresh
+  const send: Sender = progress => { if (!quiet || progress.phase === 'done') getWindow()?.webContents.send('tags:scanProgress', progress) }
 
   scanning = true
+  quiet = silent
   cancelRequested = false
   const run = mode === 'full' ? runFullScan : runRefresh
   run(db, tokenData, send)
@@ -344,7 +379,7 @@ export function startTagScan(mode: 'full' | 'refresh', getWindow: () => BrowserW
       const message = err instanceof Error ? err.message : String(err)
       send({ mode, phase: 'error', page: 0, pages: 0, photos: 0, total: 0, error: message })
     })
-    .finally(() => { scanning = false })
+    .finally(() => { scanning = false; quiet = false })
   return { started: true }
 }
 
@@ -356,19 +391,51 @@ export function getTagIndexStatus(): TagIndexStatus {
   const tagCount = (db.prepare('SELECT COUNT(*) AS n FROM tag_names WHERE photo_count > 0').get() as { n: number }).n
   return {
     hasIndex: metaNumber(db, 'last_full_scan_at') !== null,
-    scanning,
+    scanning: scanning && !quiet,
     lastScanAt: metaNumber(db, 'last_scan_at'),
     lastFullScanAt: metaNumber(db, 'last_full_scan_at'),
     indexedPhotos,
     tagCount,
     flickrTotal: metaNumber(db, 'flickr_total'),
     hasSpellings: metaNumber(db, 'has_spellings') === 1,
-    hasPhotoMeta: metaNumber(db, 'has_photo_meta') === 1
+    hasPhotoMeta: metaNumber(db, 'has_photo_meta') === 1,
+    hasCatalog: metaNumber(db, 'has_catalog_v2') === 1
   }
 }
 
 const isLetter = (col: string): string => `(${col} BETWEEN 'a' AND 'z')`
 const isDigit = (col: string): string => `(${col} BETWEEN '0' AND '9')`
+
+// ── "Other" tags: grouped by the writing system of the first character ───────
+// Tags that start with something other than a-z or 0-9 (accented letters, other alphabets, symbols).
+const SCRIPT_LABELS: Record<string, string> = {
+  latin: 'Accented Latin (é ñ ø…)', cyrillic: 'Cyrillic', greek: 'Greek', arabic: 'Arabic', hebrew: 'Hebrew',
+  indic: 'Indian scripts', cjk: 'Chinese & Japanese', korean: 'Korean', seasia: 'Thai, Lao, Khmer…', digits: 'Other digits', misc: 'Symbols & others'
+}
+export function scriptBucket(name: string): string {
+  const ch = Array.from(name)[0] ?? ''
+  if (/\p{Script=Latin}/u.test(ch)) return 'latin'
+  if (/\p{Script=Cyrillic}/u.test(ch)) return 'cyrillic'
+  if (/\p{Script=Greek}/u.test(ch)) return 'greek'
+  if (/[\p{Script=Arabic}\p{Script=Syriac}\p{Script=Thaana}]/u.test(ch)) return 'arabic'
+  if (/\p{Script=Hebrew}/u.test(ch)) return 'hebrew'
+  if (/[\p{Script=Devanagari}\p{Script=Bengali}\p{Script=Gurmukhi}\p{Script=Gujarati}\p{Script=Tamil}\p{Script=Telugu}\p{Script=Kannada}\p{Script=Malayalam}\p{Script=Sinhala}]/u.test(ch)) return 'indic'
+  if (/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Bopomofo}]/u.test(ch)) return 'cjk'
+  if (/\p{Script=Hangul}/u.test(ch)) return 'korean'
+  if (/[\p{Script=Thai}\p{Script=Lao}\p{Script=Khmer}\p{Script=Myanmar}]/u.test(ch)) return 'seasia'
+  if (/\p{N}/u.test(ch)) return 'digits'
+  return 'misc'
+}
+// The plain letter an accented first letter stands for (é -> e); empty when it has none (ø, ł)
+export function baseLetter(name: string): string {
+  const ch = Array.from(name)[0] ?? ''
+  const plain = foldLatinAccents(ch).toLowerCase()
+  return /^[a-z]$/.test(plain) ? plain : ''
+}
+export function addTagSqlFunctions(db: Database.Database): void {
+  db.function('ff_script', { deterministic: true }, (n: unknown) => (typeof n === 'string' ? scriptBucket(n) : 'misc'))
+  db.function('ff_base', { deterministic: true }, (n: unknown) => (typeof n === 'string' ? baseLetter(n) : ''))
+}
 
 function buildWhere(q: TagListQuery): { sql: string; params: (string | number)[] } {
   const conds: string[] = ['photo_count > 0']
@@ -380,6 +447,8 @@ function buildWhere(q: TagListQuery): { sql: string; params: (string | number)[]
     conds.push(isDigit(first))
   } else if (q.other) {
     conds.push(`NOT (${isLetter(first)} OR ${isDigit(first)})`)
+    if (q.script) { conds.push('ff_script(name) = ?'); params.push(q.script) }
+    if (q.base) { conds.push('ff_base(name) = ?'); params.push(q.base === 'misc' ? '' : q.base) }
   } else if (q.prefix) {
     conds.push('substr(name, 1, ?) = ?')
     params.push(q.prefix.length, q.prefix)
@@ -443,6 +512,24 @@ export function listTagGroups(prefix: string, includeMachine: boolean): TagLette
   const machine = includeMachine ? '' : " AND instr(name, ':') = 0"
   let rows: { k: string; n: number }[]
 
+  if (prefix === '#') {
+    // Digits: one chip per first digit
+    const c = 'substr(name, 1, 1)'
+    const digits = db.prepare(`SELECT ${c} AS k, COUNT(*) AS n FROM tag_names WHERE photo_count > 0${machine} AND ${isDigit(c)} GROUP BY k ORDER BY k`).all() as { k: string; n: number }[]
+    return digits.map(r => ({ key: r.k, label: r.k, count: r.n }))
+  }
+  if (prefix === 'other') {
+    // Other: one chip per writing system, biggest first
+    const c = 'substr(name, 1, 1)'
+    const buckets = db.prepare(`SELECT ff_script(name) AS k, COUNT(*) AS n FROM tag_names WHERE photo_count > 0${machine} AND NOT (${isLetter(c)} OR ${isDigit(c)}) GROUP BY k`).all() as { k: string; n: number }[]
+    return buckets.sort((a, b) => b.n - a.n).map(r => ({ key: r.k, label: SCRIPT_LABELS[r.k] ?? r.k, count: r.n }))
+  }
+  if (prefix === 'other:latin') {
+    // Accented Latin: by the plain letter it stands for (é under e), then the letters with none (ø, ł)
+    const c = 'substr(name, 1, 1)'
+    const bases = db.prepare(`SELECT ff_base(name) AS k, COUNT(*) AS n FROM tag_names WHERE photo_count > 0${machine} AND NOT (${isLetter(c)} OR ${isDigit(c)}) AND ff_script(name) = 'latin' GROUP BY k`).all() as { k: string; n: number }[]
+    return bases.sort((a, b) => (a.k === '' ? 1 : b.k === '' ? -1 : a.k < b.k ? -1 : 1)).map(r => ({ key: r.k === '' ? 'misc' : r.k, label: r.k === '' ? 'ø ł đ…' : `${r.k} (${r.k === 'a' ? 'á à â ã ä å' : r.k === 'e' ? 'é è ê ë' : r.k === 'i' ? 'í ì î ï' : r.k === 'o' ? 'ó ò ô ö' : r.k === 'u' ? 'ú ù û ü' : r.k === 'n' ? 'ñ' : r.k === 'c' ? 'ç' : '…'})`, count: r.n }))
+  }
   if (!prefix) {
     const c = 'substr(name, 1, 1)'
     rows = db.prepare(`
@@ -484,7 +571,31 @@ export function countPhotosForTags(names: string[], mode: 'any' | 'all'): number
 
 // ── IPC wiring ───────────────────────────────────────────────────────────────
 
+// Automatic Update: while the app is open, once a day (checked shortly after launch and then hourly), run the quick
+// Update if the library list is more than a day old. Never a full rebuild, never anything on Flickr's side.
+const AUTO_UPDATE_AGE_MS = 24 * 3600 * 1000
+function autoUpdateMode(): 'open' | 'daily' | 'off' {
+  const st = loadSettings()
+  return st.autoUpdateWhen ?? (st.autoUpdate === false ? 'off' : 'daily')
+}
+// atLaunch: the check shortly after the app opens. In "every time I open it" mode that one always updates; every other
+// check (the hourly ones while the app stays open) only updates when the list is more than a day old.
+function maybeAutoUpdate(getWindow: () => BrowserWindow | null, atLaunch = false): void {
+  try {
+    const mode = autoUpdateMode()
+    if (scanning || mode === 'off' || !loadToken()) return
+    const db = getDb()
+    if (!db || metaNumber(db, 'last_full_scan_at') === null) return   // nothing built yet: the user starts that
+    const last = metaNumber(db, 'last_scan_at')
+    const always = atLaunch && mode === 'open'
+    if (!always && last !== null && Date.now() - last < AUTO_UPDATE_AGE_MS) return
+    startTagScan('refresh', getWindow, true)
+  } catch { /* try again at the next check */ }
+}
+
 export function registerTagIpc(getWindow: () => BrowserWindow | null): void {
+  setTimeout(() => maybeAutoUpdate(getWindow, true), 30 * 1000)
+  setInterval(() => maybeAutoUpdate(getWindow), 3600 * 1000)
   ipcMain.handle('tags:getStatus', () => getTagIndexStatus())
   ipcMain.handle('tags:startScan', (_event, mode: 'full' | 'refresh') => startTagScan(mode, getWindow))
   ipcMain.on('tags:cancelScan', () => { cancelRequested = true })

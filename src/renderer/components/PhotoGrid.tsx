@@ -2,6 +2,7 @@ import React, { useState, useEffect, useLayoutEffect, useMemo, useRef } from 're
 import type { FlickrPhoto, PhotoSearchParams, SearchOperator, DateRangeField, TagMode, LicenseFilter } from '../../shared/types'
 import { MediaFilter, PhotoViewMode, DownloadFilter, PrivacyFilter, PrivacyLevel, PRIVACY_OPTIONS, PRIVACY_LABELS, GRID_COLUMNS, JustifiedIcon, GridIcon, ListIcon, PrivacyIcon, Tooltip, Chip, PhotoListRow, DownloadFilterSelect, LicenseFilterSelect, matchesLicenseFilter, LICENSE_FILTER_LABEL, sameSearchParams, getPrivacyLevel, sharedStyles, DateMode, getPresetDates, formatDateChip, loadPhotoViewMode, savePhotoViewMode, loadRowHeight, saveRowHeight, computeJustifiedRows, DOWNLOAD_FILTER_LABEL } from './PhotoGridShared'
 import EmptyState from './EmptyState'
+import BackToTop from '../ui/BackToTop'
 
 type SortOrder = 'date-posted-desc' | 'date-posted-asc' | 'date-taken-desc' | 'date-taken-asc'
 
@@ -20,11 +21,16 @@ interface PhotoGridProps {
   tagSearchRequest?: { tags: string[]; mode: TagMode; nonce: number } | null
   // Shown next to the tag chip while viewing the result of a Tags tab search
   onBackToTags?: () => void
+  backToTagsLabel?: string   // where 'Back' goes: Tags (default) or Cleanup
   // Remembers which request was already applied, so remounting this grid (Refresh) doesn't replay it
   handledTagRequest?: React.MutableRefObject<number>
+  // From On This Day or the Timeline: show the photos taken between two dates (replaces any search or filters in place)
+  dateSearchRequest?: { from: string; to: string; publicOnly?: boolean; tag?: string; backLabel?: string; nonce: number } | null
+  handledDateRequest?: React.MutableRefObject<number>
+  onBackToDates?: () => void
 }
 
-export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onToggleSelect, onPhotosLoaded, onPageInfo, onSortChange, onFilteredPhotosChange, onFiltersActiveChange, tagSearchRequest, onBackToTags, handledTagRequest }: PhotoGridProps): React.JSX.Element {
+export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onToggleSelect, onPhotosLoaded, onPageInfo, onSortChange, onFilteredPhotosChange, onFiltersActiveChange, tagSearchRequest, onBackToTags, backToTagsLabel, handledTagRequest, dateSearchRequest, handledDateRequest, onBackToDates }: PhotoGridProps): React.JSX.Element {
   const [photos, setPhotos] = useState<FlickrPhoto[]>([])
   const [page, setPage] = useState(1)
   const [pages, setPages] = useState(1)
@@ -154,6 +160,19 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
     applySearch({ tagQuery: tq, tagMode: tagSearchRequest.mode })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tagSearchRequest?.nonce])
+
+  // 'Open in Photostream' from On This Day or the Timeline: start over with just that date range
+  useEffect(() => {
+    if (!dateSearchRequest || handledDateRequest?.current === dateSearchRequest.nonce) return
+    if (handledDateRequest) handledDateRequest.current = dateSearchRequest.nonce
+    setMediaFilter('all'); setPrivacyFilter(dateSearchRequest.publicOnly ? 'public' : 'all'); setDownloadFilter('all'); setLicenseFilter('all')
+    // A tag chosen on the On This Day page narrows the Photostream too (commas would split it into several tags)
+    const tq = (dateSearchRequest.tag ?? '').replace(/,/g, ' ').trim()
+    setSearchQuery(''); setTagQuery(tq)
+    setDateField('taken'); setDateMode('between'); setDateCustomMin(dateSearchRequest.from); setDateCustomMax(dateSearchRequest.to)
+    applySearch({ query: '', tagQuery: tq, tagMode: 'all', dateField: 'taken', dateMin: dateSearchRequest.from, dateMax: dateSearchRequest.to })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dateSearchRequest?.nonce])
 
   const handleSortChange = (newSort: SortOrder): void => {
     setSort(newSort)
@@ -606,8 +625,11 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
                   onDismiss={dismissTagQuery}
                 />
               )}
+              {onBackToDates && dateSearchRequest && activeSearch.dateMin === dateSearchRequest.from && activeSearch.dateMax === dateSearchRequest.to && (
+                <button style={styles.clearFiltersLink} onClick={onBackToDates}>← Back to {dateSearchRequest.backLabel ?? 'On This Day'}</button>
+              )}
               {onBackToTags && tagSearchRequest && activeSearch.tagQuery === tagSearchRequest.tags.join(', ') && (
-                <button style={styles.clearFiltersLink} onClick={onBackToTags}>← Back to Tags</button>
+                <button style={styles.clearFiltersLink} onClick={onBackToTags}>← Back to {backToTagsLabel ?? 'Tags'}</button>
               )}
               {(activeSearch.dateMin || activeSearch.dateMax) && (
                 <Chip
@@ -836,6 +858,7 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
               })}
             </div>
           ))}
+          <BackToTop />
         </div>
       )}
 

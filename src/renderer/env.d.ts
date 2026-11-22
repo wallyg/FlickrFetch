@@ -1,4 +1,4 @@
-import type { FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery, DiscoverDownloadRecord, DiscoverUser, DiscoverContact, DiscoverGroup, TagIndexStatus, TagLetterGroup, TagListQuery, TagListPage, TagScanProgress, AuditSummary, AuditListQuery, AuditListPage, AuditSetRequest, AuditPlanRow, AuditExportQuery, HealthSummary, HealthListQuery, HealthListPage, HealthSetRequest, HealthExportQuery, AuditOverview, HealthOverview } from '../shared/types'
+import type { FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery, DiscoverDownloadRecord, DiscoverUser, DiscoverContact, DiscoverGroup, TagIndexStatus, TagLetterGroup, TagListQuery, TagListPage, TagScanProgress, AuditSummary, AuditListQuery, AuditListPage, AuditSetRequest, AuditPlanRow, AuditExportQuery, HealthSummary, HealthListQuery, HealthListPage, HealthSetRequest, HealthExportQuery, AuditOverview, HealthOverview, DayView, DayQuery, DayPhoto, DayPhotosQuery, DatePhotoIdsQuery, PrivacyScope, TimelineMonths, TimelineDays, TodaySummary, CameraRollQuery, CameraRollView } from '../shared/types'
 
 declare module '*.png' {
   const src: string
@@ -46,6 +46,18 @@ declare global {
       listHealthPhotos: (query: HealthListQuery) => Promise<HealthListPage>
       setHealthStatus: (req: HealthSetRequest) => Promise<void>
       saveHealthCsv: (query: HealthExportQuery) => Promise<string | null>
+      getDayView: (q: DayQuery) => Promise<DayView>
+      getDayPhotos: (q: DayPhotosQuery) => Promise<DayPhoto[]>
+      getDatePhotoIds: (q: DatePhotoIdsQuery) => Promise<{ id: string; title: string }[]>
+      getTimelineMonths: (scope: PrivacyScope) => Promise<TimelineMonths>
+      getTimelineDays: (year: number, month: number, scope: PrivacyScope) => Promise<TimelineDays>
+      getCameraRoll: (q: CameraRollQuery) => Promise<CameraRollView>
+      getTodaySummary: () => Promise<TodaySummary>
+      hideOnThisDayCardToday: () => Promise<void>
+      onOpenOnThisDay: (cb: () => void) => () => void
+      fetchShareImage: (url: string) => Promise<string | null>
+      saveShareImage: (dataUrl: string, defaultName: string) => Promise<string | null>
+      copyShareImage: (dataUrl: string) => Promise<boolean>
       getSettings: () => Promise<AppSettings>
       setSettings: (settings: AppSettings) => Promise<void>
       resetSettings: () => Promise<AppSettings>

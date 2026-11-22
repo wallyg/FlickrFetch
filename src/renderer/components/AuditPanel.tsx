@@ -1,8 +1,12 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import AuditOverview from './AuditOverview'
 import { dash } from './DashboardParts'
 import { GLUE_BOUNDARY_SOURCE } from '../../shared/tags'
-import type { AuditCategory, AuditFinding, AuditPlanRow, AuditStatus, AuditSummary, TagMode } from '../../shared/types'
+import type { CleanupRuleState } from '../../shared/cleanupRules'
+import type { AuditCategory, AuditFinding, AuditPlanRow, AuditSort, AuditStatus, AuditSummary, TagMode } from '../../shared/types'
+import { quietBtn, primaryBtn, selectedOn, railSel as railSelBase, railItem as railItemBase } from '../ui/kit'
+import BackToTop from '../ui/BackToTop'
 
 // The Audit view of the Tags tab: likely tag problems by type, each with an editable fix.
 // Nothing here changes Flickr or your files. "Add to plan" builds a checklist to work through;
@@ -11,6 +15,10 @@ import type { AuditCategory, AuditFinding, AuditPlanRow, AuditStatus, AuditSumma
 interface AuditPanelProps {
   refreshKey: number   // changes when the tag list is rescanned
   onViewPhotos: (tags: string[], mode: TagMode) => void
+  toolbarLeft?: HTMLElement | null    // where the Overview | Lists switch goes (the Cleanup toolbar)
+  toolbarRight?: HTMLElement | null   // where the Plan button goes
+  stateOf: (id: string) => CleanupRuleState   // Off / Warning / Issue for each check
+  openRequest?: { category: AuditCategory; nonce: number } | null   // the front page asking for one list
 }
 
 const PAGE = 100
@@ -52,7 +60,7 @@ const CATEGORY_INFO: Record<AuditCategory, { name: string; blurb: string; label:
     label: 'Use this spelling'
   }
 }
-const MAIN_CATEGORIES: AuditCategory[] = ['glued', 'typo', 'notwin', 'noaccent', 'junk', 'runon']
+const ALL_CATEGORIES: AuditCategory[] = ['glued', 'typo', 'junk', 'runon', 'notwin', 'noaccent', 'spelling']
 const STATUS_LABELS: { key: AuditStatus; label: string }[] = [
   { key: 'open', label: 'Open' }, { key: 'plan', label: 'In plan' }, { key: 'fine', label: 'Marked fine' }, { key: 'fixed', label: 'Fixed' }
 ]
@@ -72,12 +80,13 @@ function GluedName({ text }: { text: string }): React.JSX.Element {
   return <>{parts}</>
 }
 
-export default function AuditPanel({ refreshKey, onViewPhotos }: AuditPanelProps): React.JSX.Element {
+export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, toolbarRight, stateOf, openRequest }: AuditPanelProps): React.JSX.Element {
   const [summary, setSummary] = useState<AuditSummary | null>(null)
   const [section, setSection] = useState<'overview' | 'lists'>('overview')
   const [category, setCategory] = useState<AuditCategory>('glued')
   const [status, setStatus] = useState<AuditStatus>('open')
-  const [search, setSearch] = useState('')
+  const [sort, setSort] = useState<AuditSort>('suggested')
+  const [blurbOpen, setBlurbOpen] = useState(false)   // the explanation of a problem type folds to its first sentence
   const [rows, setRows] = useState<AuditFinding[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -88,6 +97,7 @@ export default function AuditPanel({ refreshKey, onViewPhotos }: AuditPanelProps
   const [listSaved, setListSaved] = useState<string | null>(null)  // last list spreadsheet
   const requestRef = useRef(0)
   const pickedStart = useRef(false)
+  const planRef = useRef<HTMLSpanElement>(null)
 
   const loadSummary = useCallback(async () => {
     const s = await window.flickrAPI.getAuditSummary()
@@ -101,28 +111,62 @@ export default function AuditPanel({ refreshKey, onViewPhotos }: AuditPanelProps
     void loadSummary().then(s => {
       if (!pickedStart.current) {
         pickedStart.current = true
-        const first = s.rows.find(r => MAIN_CATEGORIES.includes(r.category) && r.open > 0)
+        const first = s.rows.find(r => ALL_CATEGORIES.includes(r.category) && stateOf(`tags:${r.category}`) === 'on' && r.open > 0)
         if (first) setCategory(first.category)
       }
     })
   }, [loadSummary, refreshKey])
 
+  // If the chosen check gets switched off, move to one that is still on
+  useEffect(() => {
+    if (stateOf(`tags:${category}`) !== 'off') return
+    const next = ALL_CATEGORIES.find(c => stateOf(`tags:${c}`) !== 'off')
+    if (next) setCategory(next)
+  }, [category, stateOf])
+
+  // The front page asks for one list
+  useEffect(() => {
+    if (!openRequest) return
+    setCategory(openRequest.category); setStatus('open'); setSection('lists')
+  }, [openRequest?.nonce])
+
   const loadRows = useCallback(async (offset: number): Promise<void> => {
     const req = ++requestRef.current
     if (offset === 0) setLoading(true)
-    const page = await window.flickrAPI.listAuditFindings({ category, status, search, offset, limit: PAGE })
+    const page = await window.flickrAPI.listAuditFindings({ category, status, search: '', sort, offset, limit: PAGE })
     if (req !== requestRef.current) return
     setRows(prev => (offset === 0 ? page.rows : [...prev, ...page.rows]))
     setTotal(page.total)
     setLoading(false)
-  }, [category, status, search])
+  }, [category, status, sort])
+
+  useEffect(() => { setBlurbOpen(false) }, [category])
 
   useEffect(() => {
-    const t = setTimeout(() => void loadRows(0), search ? 200 : 0)
-    return () => clearTimeout(t)
-  }, [loadRows, search, refreshKey])
+    void loadRows(0)
+  }, [loadRows, refreshKey])
+
+  // When the report is hidden (its toolbar slot is handed away), the panel closes
+  useEffect(() => { if (!toolbarRight) setPlan(null) }, [toolbarRight])
+
+  // The plan panel hangs from its button; a click elsewhere or Esc closes it
+  useEffect(() => {
+    if (!plan) return
+    const away = (e: MouseEvent): void => { if (planRef.current && !planRef.current.contains(e.target as Node)) setPlan(null) }
+    const esc = (e: KeyboardEvent): void => { if (e.key === 'Escape') setPlan(null) }
+    document.addEventListener('mousedown', away); document.addEventListener('keydown', esc)
+    return () => { document.removeEventListener('mousedown', away); document.removeEventListener('keydown', esc) }
+  }, [plan !== null])
 
   const refreshPlan = useCallback(async () => { setPlan(await window.flickrAPI.getAuditPlan()) }, [])
+
+  // The ✕ on a line in the Plan box: back to Open, without hunting for the list it came from
+  const removeFromPlan = async (p: AuditPlanRow): Promise<void> => {
+    await window.flickrAPI.setAuditStatus({ tag: p.tag, category: p.category, status: 'open' })
+    await loadSummary()
+    await refreshPlan()
+    void loadRows(0)
+  }
 
   const keyOf = (f: AuditFinding): string => `${f.category}|${f.tag}`
   const change = async (f: AuditFinding, next: 'open' | 'plan' | 'fine'): Promise<void> => {
@@ -137,39 +181,31 @@ export default function AuditPanel({ refreshKey, onViewPhotos }: AuditPanelProps
   const planCount = summary ? summary.rows.reduce((n, r) => n + r.plan, 0) : 0
   const info = CATEGORY_INFO[category]
 
-  if (summary && !summary.hasIndex) {
-    return <div style={styles.empty}>Build your tag list first (on the Browse side), then come back to audit it.</div>
-  }
-
-  return (
-    <div style={styles.wrap}>
-      <div style={dash.switchRow}>
-        <div style={dash.seg}>
-          {(['overview', 'lists'] as const).map(v => (
-            <button key={v} style={{ ...dash.segBtn, ...(section === v ? dash.segOn : {}) }} onClick={() => setSection(v)}>{v === 'overview' ? 'Overview' : 'Lists'}</button>
-          ))}
-        </div>
-      </div>
-      <div style={styles.top}>
-        <span style={styles.muted}>Checked against your tag list{summary?.computedAt ? '' : '…'}. Nothing here changes Flickr or your files.</span>
-        <div style={{ flex: 1 }} />
-        <button style={styles.planBtn} onClick={() => { if (plan) setPlan(null); else void refreshPlan() }}>Plan ({planCount})</button>
-      </div>
-
-      {plan && (
-        <div style={styles.planBox}>
-          <div style={styles.planTitle}>Your plan</div>
+  const sectionSwitch = (
+    <div style={dash.seg}>
+      {(['overview', 'lists'] as const).map(v => (
+        <button key={v} style={{ ...dash.segBtn, ...(section === v ? dash.segOn : {}) }} onClick={() => setSection(v)}>{v === 'overview' ? 'Summary' : 'Lists'}</button>
+      ))}
+    </div>
+  )
+  const planPanel = plan && (
+    <div style={styles.planPop} role="dialog" aria-label="Your plan">
+          <div style={styles.planTitle}>Your plan{planCount > 0 ? ` · ${planCount} to do on Flickr` : ''}</div>
           {plan.length === 0 ? <div style={styles.muted}>Nothing added yet.</div> : (
             <>
               <div style={{ ...styles.muted, marginBottom: 6 }}>
-                Do these on Flickr (your Flickr page, Tags section, or the Organizr). After a Refresh, fixed ones tick themselves off.
+                Do these on Flickr (your Flickr page, Tags section, or the Organizr). After an Update, fixed ones tick themselves off.
               </div>
               {plan.map(p => (
                 <div key={`${p.category}|${p.tag}`} style={styles.planLine}>
                   <span style={{ color: p.status === 'fixed' ? 'var(--ff-success)' : 'var(--ff-text-muted)' }}>{p.status === 'fixed' ? '✓' : '○'}</span>
                   <span style={p.status === 'fixed' ? { textDecoration: 'line-through', color: 'var(--ff-text-muted)' } : undefined}>{p.line}</span>
-                  {p.flickrUrl && <button style={styles.viewBtn} onClick={() => window.flickrAPI.openExternal(p.flickrUrl)}>Open on Flickr ↗</button>}
-                  <button style={{ ...styles.viewBtn, marginLeft: 0 }} onClick={() => onViewPhotos([p.display], 'any')}>View photos</button>
+                  <span style={styles.planType} title="The kind of problem this came from">{CATEGORY_INFO[p.category].name}</span>
+                  {p.flickrUrl && <button style={styles.viewBtn} onClick={() => { setPlan(null); window.flickrAPI.openExternal(p.flickrUrl) }}>Open on Flickr ↗</button>}
+                  <button style={{ ...styles.viewBtn, marginLeft: 0 }} onClick={() => { setPlan(null); onViewPhotos([p.display], 'any') }}>View photos</button>
+                  {p.status === 'plan'
+                    ? <button style={styles.planRemove} title="Remove from plan" aria-label="Remove from plan" onClick={() => void removeFromPlan(p)}>✕</button>
+                    : <span style={{ width: 18 }} />}
                 </div>
               ))}
               <div style={styles.actions}>
@@ -179,41 +215,81 @@ export default function AuditPanel({ refreshKey, onViewPhotos }: AuditPanelProps
               </div>
             </>
           )}
-        </div>
-      )}
+    </div>
+  )
+  const planButton = (
+    <span ref={planRef} style={{ position: 'relative', display: 'inline-flex' }}>
+      <button
+        style={{ ...styles.planBtn, display: 'inline-flex', alignItems: 'center', gap: 7, ...(plan ? selectedOn : {}) }}
+        aria-expanded={!!plan}
+        onClick={() => { if (plan) setPlan(null); else void refreshPlan() }}
+      >
+        Plan{planCount > 0 && <b style={styles.planBadge}>{planCount}</b>}
+      </button>
+      {planPanel}
+    </span>
+  )
+
+  if (summary && !summary.hasIndex) {
+    return <div style={styles.empty}>Build your library list first (Health Check tab, or Tags tab), then come back to check it.</div>
+  }
+
+  return (
+    <div style={styles.wrap}>
+      {toolbarLeft ? createPortal(sectionSwitch, toolbarLeft) : <div style={dash.switchRow}>{sectionSwitch}</div>}
+      {toolbarRight ? createPortal(planButton, toolbarRight) : <div style={styles.top}><div style={{ flex: 1 }} />{planButton}</div>}
 
       {section === 'overview' ? (
         <AuditOverview refreshKey={refreshKey} onOpenList={c => { setCategory(c); setStatus('open'); setSection('lists') }} />
       ) : (
       <div style={styles.body}>
+        <div style={styles.railCol}>
         <div style={styles.rail}>
-          {MAIN_CATEGORIES.map(c => {
-            const r = summary?.rows.find(x => x.category === c)
+          {([['on', 'Issues'], ['optional', 'Warnings']] as const).map(([st, heading]) => {
+            const list = ALL_CATEGORIES.filter(c => stateOf(`tags:${c}`) === st)
+            if (list.length === 0) return null
             return (
-              <div key={c} style={{ ...styles.railItem, ...(c === category ? styles.railSel : {}), opacity: r && r.open === 0 && c !== category ? 0.55 : 1 }} onClick={() => { setCategory(c); setStatus('open') }}>
-                <span>{CATEGORY_INFO[c].name}</span><b style={{ fontWeight: 600 }}>{(r?.open ?? 0).toLocaleString()}</b>
-              </div>
+              <React.Fragment key={st}>
+                <div style={{ ...styles.railHead, paddingTop: st === 'on' ? 4 : 10 }}>{heading}</div>
+                {list.map(c => {
+                  const r = summary?.rows.find(x => x.category === c)
+                  return (
+                    <div key={c} style={{ ...styles.railItem, ...(c === category ? styles.railSel : {}), opacity: r && r.open === 0 && c !== category ? 0.55 : 1 }} onClick={() => { setCategory(c); setStatus('open') }}>
+                      <span>{CATEGORY_INFO[c].name}</span><b style={{ fontWeight: 600 }}>{(r?.open ?? 0).toLocaleString()}</b>
+                    </div>
+                  )
+                })}
+              </React.Fragment>
             )
           })}
-          <div style={styles.railHead}>Cosmetic</div>
-          <div style={{ ...styles.railItem, ...(category === 'spelling' ? styles.railSel : {}) }} onClick={() => { setCategory('spelling'); setStatus('open') }}>
-            <span>{CATEGORY_INFO.spelling.name}</span><b style={{ fontWeight: 600 }}>{(summary?.rows.find(x => x.category === 'spelling')?.open ?? 0).toLocaleString()}</b>
-          </div>
+          {ALL_CATEGORIES.every(c => stateOf(`tags:${c}`) === 'off') && <div style={{ ...styles.muted, padding: 8 }}>Every tag check is switched off (Tune checks).</div>}
+        </div>
+
+        <div style={styles.rail}>
+          <div style={{ ...styles.railHead, paddingTop: 4 }}>Show</div>
+          {STATUS_LABELS.map(s => (
+            <div key={s.key} style={{ ...styles.railItem, ...(status === s.key ? styles.railSel : {}) }} onClick={() => setStatus(s.key)}>
+              <span>{s.label}</span><b style={{ fontWeight: 600 }}>{(row ? row[s.key] : 0).toLocaleString()}</b>
+            </div>
+          ))}
+          <div style={styles.railHead}>Sort</div>
+          <select style={styles.sortSelect} value={sort} onChange={e => setSort(e.target.value as AuditSort)} title="How this list is ordered" aria-label="Sort this list">
+            <option value="suggested">Suggested order</option>
+            <option value="most">Most photos</option>
+            <option value="fewest">Fewest photos</option>
+            <option value="alpha">A to Z</option>
+          </select>
+          <div style={styles.railHead}>This list</div>
+          <button style={{ ...styles.secondaryBtn, width: '100%' }} title="Save every row of this list as a spreadsheet" onClick={async () => { setListSaved(await window.flickrAPI.saveAuditListCsv({ category, status, search: '', sort })) }}>Export this list</button>
+          {listSaved && <div style={{ ...styles.muted, padding: '6px 9px 2px' }}>Saved to {listSaved.split('/').pop()} <button style={{ ...styles.viewBtn, marginLeft: 0 }} onClick={() => window.flickrAPI.showInFinder(listSaved)}>Show in Finder</button></div>}
+        </div>
         </div>
 
         <div style={styles.main}>
-          <div style={styles.statusRow}>
-            {STATUS_LABELS.map(s => (
-              <button key={s.key} style={{ ...styles.statusChip, ...(status === s.key ? styles.statusChipOn : {}) }} onClick={() => setStatus(s.key)}>
-                {s.label} <span style={{ opacity: 0.7 }}>{(row ? row[s.key] : 0).toLocaleString()}</span>
-              </button>
-            ))}
-            <div style={{ flex: 1 }} />
-            <button style={styles.secondaryBtn} title="Save every row of this list (with the current filter) as a spreadsheet" onClick={async () => { setListSaved(await window.flickrAPI.saveAuditListCsv({ category, status, search })) }}>Export this list</button>
-            {listSaved && <><span style={styles.muted}>Saved to {listSaved.split('/').pop()}</span><button style={{ ...styles.viewBtn, marginLeft: 0 }} onClick={() => window.flickrAPI.showInFinder(listSaved)}>Show in Finder</button></>}
-            <input style={styles.search} placeholder="Filter this list…" value={search} onChange={e => setSearch(e.target.value)} />
+          <div style={{ ...styles.muted, margin: '2px 0 10px' }}>
+            {blurbOpen ? info.blurb : `${info.blurb.split('. ')[0].replace(/\.$/, '')}.`}{' '}
+            {info.blurb.includes('. ') && <button style={styles.viewBtn} onClick={() => setBlurbOpen(o => !o)}>{blurbOpen ? 'Less' : 'More'}</button>}
           </div>
-          <div style={{ ...styles.muted, margin: '2px 0 10px' }}>{info.blurb}</div>
 
           <div style={styles.list}>
             {loading && rows.length === 0 ? <div style={styles.muted}>Checking your tags…</div>
@@ -256,6 +332,7 @@ export default function AuditPanel({ refreshKey, onViewPhotos }: AuditPanelProps
                 )
               })}
             {rows.length < total && <button style={styles.moreBtn} onClick={() => void loadRows(rows.length)}>Show more ({(total - rows.length).toLocaleString()} left)</button>}
+            <BackToTop />
           </div>
         </div>
       </div>
@@ -270,15 +347,16 @@ const styles: Record<string, React.CSSProperties> = {
   muted: { fontSize: 13, color: 'var(--ff-text-secondary)' },
   empty: { padding: 40, textAlign: 'center', fontSize: 13, color: 'var(--ff-text-secondary)' },
   body: { flex: 1, minHeight: 0, display: 'flex', gap: 16, padding: '4px 24px 12px' },
-  rail: { width: 230, flexShrink: 0, alignSelf: 'flex-start', background: '#fff', border: '1px solid var(--ff-border)', borderRadius: 10, padding: 6 },
-  railItem: { display: 'flex', justifyContent: 'space-between', gap: 8, padding: '7px 9px', borderRadius: 6, fontSize: 13, cursor: 'pointer', color: 'var(--ff-text)' },
-  railSel: { background: '#e6f1fb', color: '#185fa5' },
+  railCol: { width: 230, flexShrink: 0, alignSelf: 'flex-start', display: 'flex', flexDirection: 'column', gap: 12 },
+  rail: { background: '#fff', border: '1px solid var(--ff-border)', borderRadius: 10, padding: 6 },
+  railItem: { ...railItemBase },
+  railSel: { ...railSelBase },
   railHead: { fontSize: 11, color: 'var(--ff-text-muted)', padding: '10px 9px 2px' },
   main: { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: 0 },
   statusRow: { display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, flexWrap: 'wrap' },
   statusChip: { border: '1px solid var(--ff-border)', borderRadius: 14, padding: '3px 11px', fontSize: 13, background: '#fff', color: 'var(--ff-text)', cursor: 'pointer' },
-  statusChipOn: { background: 'var(--ff-navy)', borderColor: 'var(--ff-navy)', color: '#fff' },
-  search: { border: '1px solid var(--ff-border)', borderRadius: 6, padding: '5px 10px', fontSize: 13, minWidth: 200, background: '#fff', color: 'var(--ff-text)' },
+  statusChipOn: { ...selectedOn },
+  sortSelect: { width: '100%', margin: '0 0 2px', border: '1px solid var(--ff-border)', borderRadius: 6, padding: '5px 8px', fontSize: 13, background: '#fff', color: 'var(--ff-text)' },
   list: { flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: 4 },
   card: { background: '#fff', border: '1px solid var(--ff-border)', borderRadius: 10, padding: '10px 12px', marginBottom: 8 },
   l1: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
@@ -293,12 +371,15 @@ const styles: Record<string, React.CSSProperties> = {
   input: { flex: 1, minWidth: 220, border: '1px solid var(--ff-border)', borderRadius: 6, padding: '5px 9px', fontSize: 13, background: '#fff', color: 'var(--ff-text)' },
   ev: { fontSize: 12, color: 'var(--ff-text-secondary)', marginTop: 6, overflowWrap: 'anywhere' },
   actions: { display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, flexWrap: 'wrap' },
-  primaryBtn: { background: 'var(--ff-navy)', color: '#fff', border: '1px solid var(--ff-navy)', borderRadius: 6, padding: '4px 11px', fontSize: 13, cursor: 'pointer' },
-  secondaryBtn: { background: '#fff', border: '1px solid #ccc', borderRadius: 6, padding: '4px 11px', fontSize: 13, color: '#555', cursor: 'pointer' },
-  planBtn: { background: '#fff', border: '1px solid #ccc', borderRadius: 6, padding: '5px 12px', fontSize: 13, color: '#555', cursor: 'pointer' },
-  viewBtn: { marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--ff-blue)', fontSize: 12, cursor: 'pointer' },
+  primaryBtn: { ...primaryBtn },
+  secondaryBtn: { ...quietBtn },
+  planBtn: { ...quietBtn, padding: '5px 12px' },
+  viewBtn: { whiteSpace: 'nowrap', marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--ff-blue)', fontSize: 12, cursor: 'pointer' },
   moreBtn: { width: '100%', padding: 8, background: 'none', border: '1px dashed #ccc', borderRadius: 8, color: 'var(--ff-text-secondary)', fontSize: 13, cursor: 'pointer', marginBottom: 12 },
-  planBox: { margin: '0 24px 8px', background: '#fff', border: '1px solid #ccc', borderRadius: 10, padding: '10px 14px', maxHeight: 240, overflowY: 'auto' },
+  planPop: { position: 'absolute', top: 'calc(100% + 6px)', right: 0, width: 600, maxWidth: 'calc(100vw - 48px)', maxHeight: '62vh', overflowY: 'auto', background: '#fff', border: '1px solid var(--ff-line-strong)', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,0.18)', padding: '14px 16px', zIndex: 20 },
+  planBadge: { background: 'var(--ff-pink-action)', color: '#fff', borderRadius: 9, padding: '0 7px', fontSize: 12, fontWeight: 700 },
   planTitle: { fontSize: 14, fontWeight: 600, marginBottom: 4, color: 'var(--ff-text)' },
+  planType: { fontSize: 11, borderRadius: 10, padding: '1px 8px', background: 'var(--ff-tint)', color: 'var(--ff-pink-action)', whiteSpace: 'nowrap', marginLeft: 'auto' },
+  planRemove: { background: 'none', border: 'none', color: 'var(--ff-text-muted)', fontSize: 13, cursor: 'pointer', padding: '0 2px', width: 18 },
   planLine: { display: 'flex', alignItems: 'baseline', gap: 8, fontSize: 13, padding: '2px 0', color: 'var(--ff-text)' }
 }

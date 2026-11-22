@@ -290,7 +290,7 @@ export function PrivacyIcon({ level }: { level: PrivacyLevel }): React.JSX.Eleme
   )
 }
 
-export function Tooltip({ text, children, align = 'center', side = 'above' }: { text: string; children: React.ReactNode; align?: 'center' | 'right'; side?: 'above' | 'below' }): React.JSX.Element {
+export function Tooltip({ text, children, align = 'center', side = 'above' }: { text: string; children: React.ReactNode; align?: 'center' | 'right' | 'left'; side?: 'above' | 'below' }): React.JSX.Element {
   const [visible, setVisible] = useState(false)
   return (
     <span style={{ position: 'relative', display: 'inline-flex' }} onMouseEnter={() => setVisible(true)} onMouseLeave={() => setVisible(false)}>
@@ -298,7 +298,7 @@ export function Tooltip({ text, children, align = 'center', side = 'above' }: { 
       {visible && (
         <span style={{
           position: 'absolute', ...(side === 'below' ? { top: 'calc(100% + 6px)' } : { bottom: 'calc(100% + 6px)' }),
-          ...(align === 'right' ? { right: 0 } : { left: '50%', transform: 'translateX(-50%)' }),
+          ...(align === 'right' ? { right: 0 } : align === 'left' ? { left: 0 } : { left: '50%', transform: 'translateX(-50%)' }),
           backgroundColor: '#333', color: '#fff', fontSize: '11px', lineHeight: '1.5',
           padding: '5px 9px', borderRadius: '5px', maxWidth: '220px', width: 'max-content', whiteSpace: 'pre-line',
           zIndex: 100, pointerEvents: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.2)',

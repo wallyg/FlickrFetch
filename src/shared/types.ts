@@ -65,6 +65,11 @@ export interface AppSettings {
   downloadSize: DownloadSize
   openFinderOnComplete: boolean
   metadata: MetadataSettings
+  onThisDayCard?: boolean      // show the On This Day card at the top of My Flickr (default on)
+  onThisDayNotify?: boolean    // one macOS notification a day with today's On This Day (default off)
+  autoUpdateWhen?: 'open' | 'daily' | 'off'   // quietly Update the library list: every time the app opens, once a day (default), or never
+  autoUpdate?: boolean         // earlier form of the same setting (false = off); autoUpdateWhen wins when both exist
+  cleanupRules?: Record<string, 'off' | 'optional' | 'on'>   // per check in the Cleanup tab; see shared/cleanupRules.ts
 }
 
 export interface BatchProgress {
@@ -269,6 +274,7 @@ export interface TagIndexStatus {
   tagCount: number
   flickrTotal: number | null      // photo total reported by Flickr at the last check
   hasSpellings: boolean           // true when the as-typed spellings were fetched ("New York")
+  hasCatalog: boolean             // true when the scan also saved each photo's privacy and location (3.5), for On This Day and the Timeline
   hasPhotoMeta: boolean           // true when the scan also saved titles, descriptions, locations and thumbnails
 }
 
@@ -296,6 +302,8 @@ export interface TagListQuery {
   prefix?: string              // letter or letter pair chosen in the strip ('' = all)
   afterPrefix?: 'other'        // with prefix: next character is not a letter or digit
   other?: boolean              // true = tags that start with a non-Latin letter or symbol
+  script?: string              // with other: only this bucket (latin, cyrillic, greek, arabic, hebrew, indic, cjk, korean, seasia, digits, misc)
+  base?: string                // with other + latin: only tags whose first letter is this plain letter once accents are removed (é -> e)
   digits?: boolean             // true = tags that start with a digit
   text?: string                // text typed in the filter box
   operator?: TagTextOperator   // how text matches (default contains)
@@ -337,10 +345,13 @@ export interface AuditFinding {
 export interface AuditSummaryRow { category: AuditCategory; open: number; plan: number; fine: number; fixed: number }
 export interface AuditSummary { computedAt: number; hasIndex: boolean; rows: AuditSummaryRow[] }
 
+export type AuditSort = 'suggested' | 'most' | 'fewest' | 'alpha'   // suggested = strongest suspicion first (today's order)
+
 export interface AuditListQuery {
   category: AuditCategory
   status: AuditStatus
   search?: string
+  sort?: AuditSort
   offset: number
   limit: number
 }
@@ -400,12 +411,14 @@ export interface AuditOverview {
   hasIndex: boolean
   totalTags: number
   totalPhotos: number
-  flaggedTags: number          // tags with an open or planned finding (cosmetic spelling not counted)
+  flaggedTags: number          // tags with an open or planned finding from the checks that are On
   flaggedPhotos: number        // photos carrying at least one of those tags
   plan: number
   fine: number
   fixed: number
-  byType: { category: AuditCategory; open: number; plan: number; fine: number; fixed: number; photos: number }[]
+  optionalTags: number         // tags flagged only by Optional checks
+  optionalPhotos: number
+  byType: { category: AuditCategory; state: 'optional' | 'on'; open: number; plan: number; fine: number; fixed: number; photos: number }[]   // checks that are Off are left out
   biggest: { display: string; category: AuditCategory; count: number }[]
 }
 
@@ -415,7 +428,62 @@ export interface HealthOverview {
   complete: number             // photos with nothing missing
   withGap: number
   twoOrMore: number
-  byType: { condition: HealthCondition; open: number }[]
-  byYear: { year: string; total: number; anyGap: number; title: number; description: number; tags: number; location: number }[]
+  onlyOne: Record<HealthCondition, number>   // photos whose only gap is this one (with twoOrMore, adds up to withGap)
+  byType: { condition: HealthCondition; state: 'optional' | 'on'; open: number }[]   // checks that are Off are left out; gap counts below cover the checks that are On
+  byYear: { year: string; total: number; anyGap: number; both: number; warnOnly: number; title: number; description: number; tags: number; location: number }[]
   clusters: { condition: HealthCondition; year: string; count: number; total: number }[]
 }
+
+// ── On This Day and the Timeline (3.5): read-only views over the local photo list ──
+
+export type PrivacyScope = 'all' | 'public' | 'notpublic'   // "not public" = private, friends, family, or friends and family
+
+export interface DayPhoto { id: string; title: string; thumbUrl: string; dateTaken: string; privacy: number }   // privacy: 0 public, 1 friends, 2 family, 3 friends and family, 4 private
+export interface DayYearGroup { year: string; count: number; photos: DayPhoto[] }
+export interface DayInsights {
+  topTags: { name: string; count: number; key: string }[]   // key: the tag as saved in the library, for filtering
+  busiestHours: { hour: number; count: number }[]
+  hourCounts: number[]         // photos per hour of the day, 24 entries (midnight first)
+  earliestHour: number | null
+  latestHour: number | null
+  withLocation: number
+}
+export interface DayNeighbour { month: number; day: number; count: number }
+export interface DayView {
+  hasData: boolean
+  hasCatalog: boolean          // false until a Full rescan has saved each photo's privacy (3.5)
+  month: number; day: number
+  scope: PrivacyScope
+  total: number
+  counts: { all: number; public: number; notPublic: number }
+  years: DayYearGroup[]        // newest year first
+  insights: DayInsights
+  prev: DayNeighbour; next: DayNeighbour
+}
+export interface DayQuery { month: number; day: number; scope: PrivacyScope; perYear?: number; tag?: string }   // tag: only photos with this tag
+export interface DayPhotosQuery { month: number; day: number; year: string; scope: PrivacyScope; offset: number; limit: number; tag?: string }
+export type DatePhotoIdsQuery =
+  | { kind: 'day'; month: number; day: number; year?: string; scope: PrivacyScope; tag?: string }
+  | { kind: 'range'; from: string; to: string; scope: PrivacyScope }   // YYYY-MM-DD, inclusive
+
+export interface TimelineMonths {
+  hasData: boolean; hasCatalog: boolean; scope: PrivacyScope; total: number
+  cells: { year: number; month: number; count: number }[]
+  counts: { all: number; public: number; notPublic: number }
+}
+export interface TimelineDays { year: number; month: number; days: { day: number; count: number }[] }
+
+export interface TodaySummary {
+  month: number; day: number; total: number; yearCount: number
+  firstYear: string; lastYear: string
+  topYear: { year: string; count: number } | null
+  topTags: { name: string; count: number; key: string }[]
+  years: { year: string; count: number }[]   // oldest first, for the small bars in the card's hover
+  thumbs: string[]             // small pictures from the busiest years, for the card
+  cardHidden: boolean; cardEnabled: boolean; notifyEnabled: boolean
+}
+
+// Camera roll (Timeline): the photos of a month or a day in calendar order, grouped by day
+export interface CameraRollQuery { from: string; to: string; scope: PrivacyScope; order: 'asc' | 'desc'; offset: number; limit: number }   // from and to: YYYY-MM-DD, inclusive; offset and limit count days
+export interface CameraRollDay { date: string; count: number; photos: DayPhoto[] }   // photos: up to 600 per day
+export interface CameraRollView { hasData: boolean; hasCatalog: boolean; scope: PrivacyScope; totalDays: number; totalPhotos: number; days: CameraRollDay[] }

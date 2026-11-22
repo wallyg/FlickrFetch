@@ -3,11 +3,16 @@ import type { FlickrUser, FlickrPhoto, FlickrAlbum, FlickrCollection, FlickrSet,
 import PhotoGrid from '../components/PhotoGrid'
 import PhotoDetail from '../components/PhotoDetail'
 import SettingsModal from '../components/SettingsModal'
+import type { SettingsTab } from '../components/SettingsModal'
 import AlbumList from '../components/AlbumList'
 import AlbumPhotoGrid from '../components/AlbumPhotoGrid'
 import CollectionList from '../components/CollectionList'
 import CollectionDetail from '../components/CollectionDetail'
 import TagsPanel from '../components/TagsPanel'
+import CleanupPanel from '../components/CleanupPanel'
+import OnThisDayPanel from '../components/OnThisDayPanel'
+import TimelinePanel from '../components/TimelinePanel'
+import OnThisDayCard from '../components/OnThisDayCard'
 import DownloadQueueBar from '../components/DownloadQueueBar'
 import AboutModal from '../components/AboutModal'
 import DownloadConfirmModal, { type PendingDownload } from '../components/DownloadConfirmModal'
@@ -37,7 +42,7 @@ function IconBtn({ label, onClick, children, badge, showLabel }: { label: string
   )
 }
 
-type MainView = 'photostream' | 'tags' | 'albums' | 'album-detail' | 'collections' | 'collection-detail' | 'photo-detail'
+type MainView = 'photostream' | 'tags' | 'cleanup' | 'onthisday' | 'timeline' | 'albums' | 'album-detail' | 'collections' | 'collection-detail' | 'photo-detail'
 
 interface MainPageProps {
   user: FlickrUser
@@ -59,11 +64,24 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
   const [fetchingMoreDetail, setFetchingMoreDetail] = useState(false)
   const waitingToAdvanceRef = useRef(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [settingsTab, setSettingsTab] = useState<SettingsTab | undefined>(undefined)   // which tab Settings opens on
+  const openSettings = (tab?: SettingsTab): void => { setSettingsTab(tab); setShowSettings(true) }
   const [showHistory, setShowHistory] = useState(false)
   const [updateVersion, setUpdateVersion] = useState<string | null>(null)
   const [albumsVisited, setAlbumsVisited] = useState(false)
   const [collectionsVisited, setCollectionsVisited] = useState(false)
   const [tagsVisited, setTagsVisited] = useState(false)
+  const [cleanupVisited, setCleanupVisited] = useState(false)
+  // Which tab a 'View photos' search came from, so the Photostream's back link returns there
+  const [tagBackView, setTagBackView] = useState<'tags' | 'cleanup'>('tags')
+  const [onThisDayVisited, setOnThisDayVisited] = useState(false)
+  const [timelineVisited, setTimelineVisited] = useState(false)
+  // Set by 'Open in Photostream' in On This Day or the Timeline; the photostream applies it as a date range
+  const [dateSearchRequest, setDateSearchRequest] = useState<{ from: string; to: string; publicOnly?: boolean; tag?: string; backLabel?: string; nonce: number } | null>(null)
+  const handledDateSearch = useRef(0)
+  const [dateBackView, setDateBackView] = useState<'onthisday' | 'timeline'>('onthisday')
+  const [otdJump, setOtdJump] = useState<{ month: number; day: number; year?: number; nonce: number } | null>(null)
+  const [dataKey, setDataKey] = useState(0)   // changes when a scan finishes, so On This Day, the Timeline and the card look again
   // Set when a tag is clicked in the photo detail while viewing an album; the album grid filters itself to it
   const [albumTagRequest, setAlbumTagRequest] = useState<{ tag: string; nonce: number } | null>(null)
   // Which of those requests the grids have already applied (a grid that remounts must not replay an old one)
@@ -120,6 +138,9 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
   const [showAlbumOverflow, setShowAlbumOverflow] = useState(false)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false)
+  useEffect(() => window.flickrAPI.onTagScanProgress(p => { if (p.phase === 'done') setDataKey(k => k + 1) }), [])
+  useEffect(() => window.flickrAPI.onOpenOnThisDay(() => { setAppMode('you'); setOnThisDayVisited(true); setView('onthisday') }), [])
+
   useEffect(() => {
     const unsubscribe = window.flickrAPI.onBatchProgress((p) => {
       const prev = prevProgressRef.current
@@ -148,7 +169,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
   }, [])
 
   useEffect(() => {
-    const unsubscribe = window.flickrAPI.onOpenSettings(() => setShowSettings(true))
+    const unsubscribe = window.flickrAPI.onOpenSettings(() => { setSettingsTab(undefined); setShowSettings(true) })
     return unsubscribe
   }, [])
 
@@ -240,6 +261,26 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
   }
 
   // Filters are on: download exactly the photos visible in the grid instead of the whole album/photostream
+  // Downloads started from On This Day or the Timeline (the photos come from the local list)
+  const startDateDownload = (photos: { id: string; title: string }[], title: string, note: string): void => {
+    if (photos.length === 0) return
+    setPendingDownload({
+      title: `↓ Download ${photos.length.toLocaleString()} photos: ${title}`,
+      photoCount: photos.length,
+      videoCount: 0,
+      note,
+      onConfirm: (track, exportFormat) => {
+        window.flickrAPI.startSelectedBatch(photos, `${title} (${photos.length})`, track, exportFormat === 'zip')
+      },
+    })
+  }
+  const openDateRange = (from: string, to: string, publicOnly: boolean, from_view: 'onthisday' | 'timeline', tag?: string): void => {
+    exitPhotostreamSelect()
+    setDateBackView(from_view)
+    setDateSearchRequest({ from, to, publicOnly, tag, backLabel: from_view === 'onthisday' ? 'On This Day' : 'Timeline', nonce: Date.now() })
+    setView('photostream')
+  }
+
   const startShownDownload = (shown: FlickrPhoto[], where: string, displayTitle: string): void => {
     if (shown.length === 0) return
     const photoCount = shown.filter(p => p.media !== 'video').length
@@ -448,7 +489,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
               <polyline points="12 7 12 12 15.5 14" strokeWidth="2"/>
             </svg>
           </IconBtn>
-          <IconBtn label="Settings" onClick={() => setShowSettings(true)} badge={!!updateVersion} showLabel>
+          <IconBtn label="Settings" onClick={() => openSettings()} badge={!!updateVersion} showLabel>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <line x1="4" y1="6" x2="20" y2="6"/>
               <line x1="4" y1="12" x2="20" y2="12"/>
@@ -523,10 +564,29 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             Collections
           </button>
           <button
+            style={{ ...styles.tab, ...(view === 'onthisday' ? styles.tabActive : {}) }}
+            onClick={() => { setOnThisDayVisited(true); setView('onthisday') }}
+          >
+            On This Day
+          </button>
+          <button
+            style={{ ...styles.tab, ...(view === 'timeline' ? styles.tabActive : {}) }}
+            onClick={() => { setTimelineVisited(true); setView('timeline') }}
+          >
+            Timeline
+          </button>
+          <button
             style={{ ...styles.tab, ...(view === 'tags' ? styles.tabActive : {}) }}
             onClick={() => { setTagsVisited(true); setView('tags') }}
           >
             Tags
+          </button>
+          <span style={styles.tabDivider} aria-hidden="true" />   {/* views on the left, tools on the right */}
+          <button
+            style={{ ...styles.tab, ...(view === 'cleanup' ? styles.tabActive : {}) }}
+            onClick={() => { setCleanupVisited(true); setView('cleanup') }}
+          >
+            Health Check
           </button>
         </div>
         {view === 'photostream' && !photostreamSelectMode && (
@@ -583,6 +643,9 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
           </div>
         )}
       </div>}
+      {appMode === 'you' && (view === 'photostream' || view === 'albums' || view === 'collections' || view === 'album-detail' || view === 'collection-detail') && (
+        <OnThisDayCard refreshKey={dataKey} onOpen={() => { setOnThisDayVisited(true); setView('onthisday') }} />
+      )}
 
       {appMode === 'you' && view === 'album-detail' && selectedAlbum && (
         <div style={styles.albumHeader}>
@@ -735,16 +798,59 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             onFilteredPhotosChange={setPhotostreamFilteredPhotos}
             onFiltersActiveChange={setPhotostreamFiltersActive}
             tagSearchRequest={tagSearchRequest}
-            onBackToTags={() => { setTagsVisited(true); setView('tags') }}
+            onBackToTags={() => { if (tagBackView === 'cleanup') setCleanupVisited(true); else setTagsVisited(true); setView(tagBackView) }}
+            backToTagsLabel={tagBackView === 'cleanup' ? 'Health Check' : 'Tags'}
             handledTagRequest={handledTagSearch}
+            dateSearchRequest={dateSearchRequest}
+            handledDateRequest={handledDateSearch}
+            onBackToDates={() => { if (dateBackView === 'timeline') setTimelineVisited(true); else setOnThisDayVisited(true); setView(dateBackView) }}
           />
         </div>
+        {onThisDayVisited && (
+          <div style={view === 'onthisday' ? styles.tabPane : styles.tabPaneHidden}>
+            <OnThisDayPanel
+              refreshKey={dataKey}
+              jumpTo={otdJump}
+              onOpenRange={(from, to, publicOnly, tag) => openDateRange(from, to, publicOnly, 'onthisday', tag)}
+              onDownload={startDateDownload}
+              onFullRescan={() => { setCleanupVisited(true); setView('cleanup') }}
+            />
+          </div>
+        )}
+        {timelineVisited && (
+          <div style={view === 'timeline' ? styles.tabPane : styles.tabPaneHidden}>
+            <TimelinePanel
+              active={view === 'timeline'}
+              refreshKey={dataKey}
+              onOpenRange={(from, to, publicOnly) => openDateRange(from, to, publicOnly, 'timeline')}
+              onDownload={startDateDownload}
+              onOpenDay={(month, day, year) => { setOtdJump({ month, day, year, nonce: Date.now() }); setOnThisDayVisited(true); setView('onthisday') }}
+              onFullRescan={() => { setCleanupVisited(true); setView('cleanup') }}
+            />
+          </div>
+        )}
         {tagsVisited && (
           <div style={view === 'tags' ? styles.tabPane : styles.tabPaneHidden}>
             <TagsPanel
               active={view === 'tags'}
               onViewPhotos={(tags, mode) => {
                 exitPhotostreamSelect()
+                setTagBackView('tags')
+                setTagSearchRequest({ tags: tags.map(t => t.replace(/,/g, ' ').trim()), mode, nonce: Date.now() })
+                setView('photostream')
+              }}
+              onOpenCleanup={() => { setCleanupVisited(true); setView('cleanup') }}
+            />
+          </div>
+        )}
+        {cleanupVisited && (
+          <div style={view === 'cleanup' ? styles.tabPane : styles.tabPaneHidden}>
+            <CleanupPanel
+              settingsKey={settingsKey}
+              onOpenSettings={() => openSettings('health')}
+              onViewPhotos={(tags, mode) => {
+                exitPhotostreamSelect()
+                setTagBackView('cleanup')
                 setTagSearchRequest({ tags: tags.map(t => t.replace(/,/g, ' ').trim()), mode, nonce: Date.now() })
                 setView('photostream')
               }}
@@ -753,7 +859,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
         )}
         {albumsVisited && (
           <div style={view === 'albums' ? styles.tabPane : styles.tabPaneHidden}>
-            <AlbumList onAlbumSelect={handleAlbumSelect} />
+            <AlbumList onAlbumSelect={handleAlbumSelect} active={view === 'albums'} />
           </div>
         )}
         {collectionsVisited && (
@@ -835,7 +941,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
           </div>
         </div>
       )}
-      {showSettings && <SettingsModal onClose={() => { setShowSettings(false); setSettingsKey(k => k + 1) }} updateVersion={updateVersion ?? undefined} />}
+      {showSettings && <SettingsModal initialTab={settingsTab} onClose={() => { setShowSettings(false); setSettingsKey(k => k + 1) }} updateVersion={updateVersion ?? undefined} />}
       {showHistory && <HistoryPanel onClose={() => setShowHistory(false)} />}
       {aboutVersion && <AboutModal version={aboutVersion} onClose={() => setAboutVersion(null)} />}
       {pendingDownload && (
@@ -843,7 +949,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
           pending={pendingDownload}
           settingsKey={settingsKey}
           onCancel={() => setPendingDownload(null)}
-          onOpenSettings={() => setShowSettings(true)}
+          onOpenSettings={() => openSettings()}
         />
       )}
 
@@ -1018,6 +1124,14 @@ const styles: Record<string, React.CSSProperties> = {
   tabGroup: {
     display: 'flex',
     gap: '0'
+  },
+  tabDivider: {
+    width: '1px',
+    height: '18px',
+    background: '#d9d6d0',
+    margin: '0 10px',
+    alignSelf: 'center',
+    flexShrink: 0
   },
   tab: {
     background: 'none',

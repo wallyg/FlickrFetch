@@ -40,6 +40,8 @@ const defaults: AppSettings = {
   downloadSize: 'original',
   openFinderOnComplete: true,
   metadata: DEFAULT_METADATA,
+  onThisDayCard: true,
+  onThisDayNotify: false,
 }
 
 export function ensureDownloadFolder(folder: string): void {
