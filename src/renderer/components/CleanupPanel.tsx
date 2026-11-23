@@ -5,6 +5,7 @@ import EmptyState from './EmptyState'
 import AuditPanel from './AuditPanel'
 import HealthPanel from './HealthPanel'
 import BackupPanel from './BackupPanel'
+import AlbumsPanel from './AlbumsPanel'
 import LibraryOverview from './LibraryOverview'
 import { LibraryDataChip, ScanNotices, ScanProgressCard } from './TagScanParts'
 import { useTagScan } from '../hooks/useTagScan'
@@ -23,14 +24,14 @@ interface Props {
   onOpenSettings: () => void   // opens Settings on its Health Check tab (Tune checks)
 }
 
-type View = 'overview' | 'tags' | 'photos' | 'backup'
+type View = 'overview' | 'tags' | 'photos' | 'albums' | 'backup'
 
 export default function CleanupPanel({ onViewPhotos, onDownload, settingsKey, onOpenSettings }: Props): React.JSX.Element {
   const scan = useTagScan()
   const rules = useCleanupRules(settingsKey)
   const [view, setView] = useState<View>('overview')
   // A report stays open once visited (just hidden), so it keeps its place: Summary or Lists, the chosen list, the scroll
-  const [seen, setSeen] = useState({ tags: false, photos: false, backup: false })
+  const [seen, setSeen] = useState({ tags: false, photos: false, albums: false, backup: false })
   const goTo = (v: View): void => { setView(v); if (v !== 'overview') setSeen(s => ({ ...s, [v]: true })) }
   // The front page opens one list in a report: a counter makes each request new
   const [tagReq, setTagReq] = useState<{ category: AuditCategory; nonce: number } | null>(null)
@@ -58,9 +59,11 @@ export default function CleanupPanel({ onViewPhotos, onDownload, settingsKey, on
     ? 'Checked against your tag list.\n\nNothing here changes Flickr or your files.'
     : view === 'photos'
       ? 'Nothing here changes Flickr or your files.\n\nFix titles, descriptions, tags and locations on Flickr, then press Update.'
-      : view === 'backup'
-        ? 'Worked out from FlickrFetch’s own download records and your library list.\n\nNothing here changes Flickr or your files.'
-        : 'Nothing here changes Flickr or your files.'
+      : view === 'albums'
+        ? 'Worked out from the album list FlickrFetch keeps on this computer.\n\nNothing here changes Flickr or your files. Fix things on Flickr, then press Update.'
+        : view === 'backup'
+          ? 'Worked out from FlickrFetch’s own download records and your library list.\n\nNothing here changes Flickr or your files.'
+          : 'Nothing here changes Flickr or your files.'
   const refreshKey = (scan.status.lastScanAt ?? 0) + rules.version   // a changed check or a new scan means fresh numbers
   const offCount = CLEANUP_RULES.filter(r => rules.stateOf(r.id) === 'off').length
   const rebuild = (): void => void scan.startFullRescan()
@@ -72,8 +75,8 @@ export default function CleanupPanel({ onViewPhotos, onDownload, settingsKey, on
     {scan.scanning && <ScanProgressCard progress={scan.progress} />}
     <div style={{ ...styles.wrap, ...(scan.scanning ? { display: 'none' } : {}) }}>
       <div style={styles.toolbar}>
-        <div style={styles.segGroup} title={"Overview: the front page across both reports.\nTags: likely typos, stuck-together names and accent problems in your tags.\nPhotos: photos with a missing title, description, tags or location.\nBackup: what you have and have not downloaded."}>
-          {([['overview', 'Overview'], ['tags', 'Tags'], ['photos', 'Photos'], ['backup', 'Backup']] as const).map(([v, label]) => (
+        <div style={styles.segGroup} title={"Overview: the front page across both reports.\nTags: likely typos, stuck-together names and accent problems in your tags.\nPhotos: photos with a missing title, description, tags or location.\nAlbums: photos in no album, and empty or untidy albums.\nBackup: what you have and have not downloaded."}>
+          {([['overview', 'Overview'], ['tags', 'Tags'], ['photos', 'Photos'], ['albums', 'Albums'], ['backup', 'Backup']] as const).map(([v, label]) => (
             <button key={v} style={{ ...styles.seg, ...(view === v ? styles.segActive : {}) }} onClick={() => { setTagReq(null); setPhotoReq(null); goTo(v) }}>{label}</button>
           ))}
         </div>
@@ -103,6 +106,11 @@ export default function CleanupPanel({ onViewPhotos, onDownload, settingsKey, on
       {seen.photos && (
         <div style={view === 'photos' ? styles.pane : styles.paneHidden}>
           <HealthPanel refreshKey={refreshKey} onFullRescan={rebuild} toolbarLeft={view === 'photos' ? leftSlot : null} stateOf={rules.stateOf} openRequest={photoReq} needsRebuild={scan.status.hasIndex && !scan.status.hasCatalogV3} />
+        </div>
+      )}
+      {seen.albums && (
+        <div style={view === 'albums' ? styles.pane : styles.paneHidden}>
+          <AlbumsPanel refreshKey={refreshKey} onFullRescan={rebuild} toolbarLeft={view === 'albums' ? leftSlot : null} stateOf={rules.stateOf} />
         </div>
       )}
       {seen.backup && (

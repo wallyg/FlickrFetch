@@ -12,6 +12,7 @@ import { loadSettings, saveSettings, resetSettings, ensureDownloadFolder } from 
 import { registerTagIpc } from './tagIndex'
 import { registerAuditIpc } from './tagAudit'
 import { registerHealthIpc } from './photoHealth'
+import { registerAlbumsIpc } from './albumChecks'
 import { registerDatesIpc } from './dateViews'
 import { registerShareIpc } from './share'
 import { registerBatchIpc, batchUrl } from './batchEdit'
@@ -328,6 +329,7 @@ ipcMain.handle('video:resolveUrl', (_event, sourceUrl: string) => resolveVideoUr
 registerTagIpc(() => mainWindow)
 registerAuditIpc(() => mainWindow)
 registerHealthIpc(() => mainWindow)
+registerAlbumsIpc(() => mainWindow)
 registerDatesIpc(() => mainWindow)
 registerShareIpc(() => mainWindow)
 registerBatchIpc()

@@ -5,7 +5,7 @@
 // The user's choices are saved in the app settings (cleanupRules); anything not chosen uses the default here.
 
 export type CleanupRuleState = 'off' | 'optional' | 'on'
-export type CleanupReport = 'tags' | 'photos'
+export type CleanupReport = 'tags' | 'photos' | 'albums'
 
 export interface CleanupRule {
   id: string                 // 'tags:<audit category>' or 'photos:<health condition>'
@@ -47,6 +47,12 @@ export const CLEANUP_RULES: CleanupRule[] = [
   { id: 'photos:descTags', report: 'photos', needsRebuild: true, name: 'Description is a list of tags', blurb: "The description is a list of words that are mostly the photo's own tags.", example: 'paris eiffel tower night', phrase: 'a description that is a list of tags', kind: 'List of tags', defaultState: 'optional' },
   { id: 'photos:locNull', report: 'photos', needsRebuild: true, name: 'Located at 0, 0', blurb: 'A location set to exactly latitude 0, longitude 0 (in the ocean off Africa), usually a failed lookup.', example: 'A street photo placed in the Atlantic', phrase: 'a location at 0, 0', kind: 'At 0, 0', defaultState: 'on' },
   { id: 'photos:locFar', report: 'photos', name: 'Far from nearby photos', blurb: 'The photo sits far from the photos taken just before and after it, while those two are close to each other.', example: 'One photo in Spain between two taken in New Jersey', phrase: 'a location far from nearby photos', kind: 'Far from neighbours', defaultState: 'optional' },
+  { id: 'albums:noAlbum', report: 'albums', name: 'Photos in no album', blurb: 'Photos that are not in any album. Every photo should have a home.', example: 'A photo that sits only in your photostream', phrase: 'in no album', kind: 'In no album', defaultState: 'on' },
+  { id: 'albums:empty', report: 'albums', name: 'Empty albums', blurb: 'Albums with no photos in them.', example: 'An album left over after its photos moved', phrase: 'an empty album', kind: 'Empty', defaultState: 'on' },
+  { id: 'albums:noCollection', report: 'albums', name: 'Albums in no collection', blurb: 'Albums that are not inside any collection, so they sit loose at the top level. Only checked when you use collections at all.', example: 'Trip to Lisbon, outside every collection', phrase: 'an album in no collection', kind: 'In no collection', defaultState: 'optional' },
+  { id: 'albums:oneItem', report: 'albums', name: 'Albums with one photo', blurb: 'Albums that hold a single photo.', example: 'An album with just one photo in it', phrase: 'a one-photo album', kind: 'One photo', defaultState: 'optional' },
+  { id: 'albums:noDesc', report: 'albums', name: 'Albums with no description', blurb: 'Albums whose description box is empty.', example: 'An album with a title and nothing else', phrase: 'an album with no description', kind: 'No description', defaultState: 'optional' },
+  { id: 'albums:dupTitle', report: 'albums', name: 'Albums with the same title', blurb: 'Two or more albums that share a title, which makes them hard to tell apart.', example: 'Two albums called Holiday 2019', phrase: 'albums with the same title', kind: 'Same title', defaultState: 'optional' },
   { id: 'photos:tagsMany', report: 'photos', name: 'Too many tags', blurb: 'More tags than your limit (65 unless you change it). Flickr stops at 75, so a photo near the limit has no room left.', example: 'A photo with 70 tags', phrase: 'too many tags', kind: 'Too many tags', number: { key: 'healthTagLimit', label: 'Flag photos with at least this many tags', min: 2, max: 75, def: 65 }, defaultState: 'optional' }
 ]
 

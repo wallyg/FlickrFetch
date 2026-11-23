@@ -19,7 +19,9 @@ export function formatWhen(ms: number | null): string {
 export function ScanProgressCard({ progress }: { progress: TagScanProgress | null }): React.JSX.Element {
   const p = progress
   const pct = p && p.pages > 0 ? Math.min(100, Math.round((p.page / p.pages) * 100)) : 0
-  const label = p?.phase === 'finishing' ? 'Finishing up…' : p && p.pages > 0
+  const label = p?.phase === 'finishing' ? 'Finishing up…'
+    : p?.phase === 'albums' ? (p.pages > 0 ? `Reading albums… ${p.page.toLocaleString()} of ${p.pages.toLocaleString()}` : 'Reading albums…')
+    : p && p.pages > 0
     ? `Reading photos… ${p.photos.toLocaleString()}${p.total ? ` of ${p.total.toLocaleString()}` : ''}`
     : 'Starting…'
   return (
@@ -96,9 +98,9 @@ export function ScanNotices({ status, scanError, onRebuild }: { status: TagIndex
           Flickr reports {status.flickrTotal?.toLocaleString()} photos but {status.indexedPhotos.toLocaleString()} are in your tag list. Photos may have been added or removed. Update picks up new and changed photos, but only a Rebuild drops deleted ones.
         </div>
       )}
-      {status.hasIndex && !status.hasCatalogV3 && !hidden && (
+      {status.hasIndex && (!status.hasCatalogV3 || !status.hasAlbums) && !hidden && (
         <div style={{ ...styles.notice, display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-          <span style={{ flex: 1, minWidth: 260 }}>FlickrFetch has been updated since you last rebuilt your local library list. The new version checks a few more details about each photo, so some checks show zero until you rebuild. Press Rebuild once. It will take just a few minutes.</span>
+          <span style={{ flex: 1, minWidth: 260 }}>FlickrFetch has been updated since you last rebuilt your local library list. The new version checks a few more details about your photos and albums, so some checks stay empty until you rebuild. Press Rebuild once. It will take just a few minutes.</span>
           <button style={styles.secondaryBtn} onClick={onRebuild}>Rebuild…</button>
           <button style={styles.linkBtn} onClick={hideUpgradeNotice} title="Hide this until you next open FlickrFetch">Not now</button>
         </div>

@@ -7,6 +7,15 @@ export interface Release {
 
 const changelog: Release[] = [
   {
+    version: '3.7',
+    date: 'November 2026',
+    highlights: [
+      'Album checks — a new Albums tab in Health Check lists photos that are in no album, empty albums, albums in no collection, albums with a single photo, albums with no description and albums that share a title. Photos in no album and empty albums are Issues, the rest are Warnings, and each can be Off in Tune checks. Photos in no album can be sent to Flickr\'s batch editor to be put in an album',
+      'Fewer false "No tags" — Flickr\'s photo list sometimes leaves out the tags of a photo that has them, so FlickrFetch now double-checks every photo that looks untagged before listing it. Your next Update does this once for the photos already listed',
+      'One more scan — FlickrFetch now reads which photo is in which album, so your library list needs a Rebuild once more (Health Check, then the data button, then Rebuild; a few minutes). After that, Update keeps the albums current'
+    ]
+  },
+  {
     version: '3.6',
     date: 'November 2026',
     highlights: [

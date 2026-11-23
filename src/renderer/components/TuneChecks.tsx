@@ -35,15 +35,16 @@ export default function TuneChecks({ stateOf, setState }: Props): React.JSX.Elem
     void window.flickrAPI.setSettings({ [key]: n })
   }
   useEffect(() => {
-    void Promise.all([window.flickrAPI.getAuditSummary(), window.flickrAPI.getHealthSummary()]).then(([a, h]) => {
+    void Promise.all([window.flickrAPI.getAuditSummary(), window.flickrAPI.getHealthSummary(), window.flickrAPI.getAlbumSummary()]).then(([a, h, al]) => {
       const c: Record<string, number> = {}
       for (const r of a.rows) c[`tags:${r.category}`] = r.open + r.plan
       for (const r of h.rows) c[`photos:${r.condition}`] = r.open
+      for (const r of al.rows) c[`albums:${r.condition}`] = r.open
       setCounts(c)
     }).catch(() => { /* counts are only a hint */ })
   }, [])
 
-  const group = (report: 'tags' | 'photos', title: string, unit: string): React.JSX.Element => (
+  const group = (report: 'tags' | 'photos' | 'albums', title: string, unit: string): React.JSX.Element => (
     <div>
       <div style={styles.groupHead}>{title}</div>
       <div style={styles.rules}>
@@ -87,6 +88,7 @@ export default function TuneChecks({ stateOf, setState }: Props): React.JSX.Elem
     <div style={styles.body}>
       {group('tags', 'Tags', 'tags')}
       {group('photos', 'Photos', 'photos')}
+      {group('albums', 'Albums', 'items')}
     </div>
   )
 }

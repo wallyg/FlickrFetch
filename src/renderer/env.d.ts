@@ -1,4 +1,4 @@
-import type { BackupQuery, BackupSummary, FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery, DiscoverDownloadRecord, DiscoverUser, DiscoverContact, DiscoverGroup, TagIndexStatus, TagLetterGroup, TagListQuery, TagListPage, TagScanProgress, AuditSummary, AuditListQuery, AuditListPage, AuditSetRequest, AuditPlanRow, AuditExportQuery, HealthSummary, HealthListQuery, HealthListPage, HealthSetRequest, HealthExportQuery, AuditOverview, HealthOverview, DayView, DayQuery, DayPhoto, DayPhotosQuery, DatePhotoIdsQuery, PrivacyScope, TimelineMonths, TimelineDays, TodaySummary, CameraRollQuery, CameraRollView } from '../shared/types'
+import type { AlbumExportQuery, AlbumListPage, AlbumListQuery, AlbumSetRequest, AlbumSummary, BackupQuery, BackupSummary, FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery, DiscoverDownloadRecord, DiscoverUser, DiscoverContact, DiscoverGroup, TagIndexStatus, TagLetterGroup, TagListQuery, TagListPage, TagScanProgress, AuditSummary, AuditListQuery, AuditListPage, AuditSetRequest, AuditPlanRow, AuditExportQuery, HealthSummary, HealthListQuery, HealthListPage, HealthSetRequest, HealthExportQuery, AuditOverview, HealthOverview, DayView, DayQuery, DayPhoto, DayPhotosQuery, DatePhotoIdsQuery, PrivacyScope, TimelineMonths, TimelineDays, TodaySummary, CameraRollQuery, CameraRollView } from '../shared/types'
 
 declare module '*.png' {
   const src: string
@@ -36,6 +36,11 @@ declare global {
       getHealthPhotoIds: (query: HealthExportQuery) => Promise<string[]>
       getAuditPhotoIds: (tag: string) => Promise<string[]>
       openBatchEditor: (ids: string[], part: number) => Promise<{ parts: number; count: number }>
+      getAlbumSummary: () => Promise<AlbumSummary>
+      listAlbumItems: (query: AlbumListQuery) => Promise<AlbumListPage>
+      getAlbumPhotoIds: (query: AlbumExportQuery) => Promise<string[]>
+      setAlbumStatus: (req: AlbumSetRequest) => Promise<void>
+      saveAlbumCsv: (query: AlbumExportQuery) => Promise<string | null>
       getBackupSummary: () => Promise<BackupSummary>
       listBackupPhotos: (query: BackupQuery) => Promise<HealthListPage>
       getBackupPhotos: (query: Omit<BackupQuery, 'offset' | 'limit'>) => Promise<{ id: string; title: string }[]>

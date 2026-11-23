@@ -278,12 +278,13 @@ export interface TagIndexStatus {
   hasSpellings: boolean           // true when the as-typed spellings were fetched ("New York")
   hasCatalog: boolean             // true when the scan also saved each photo's privacy and location (3.5), for On This Day and the Timeline
   hasCatalogV3: boolean           // true when it also saved the media type, upload date and description flags (3.6)
+  hasAlbums: boolean              // true when the albums and which photo is in which album have been read (3.7)
   hasPhotoMeta: boolean           // true when the scan also saved titles, descriptions, locations and thumbnails
 }
 
 export interface TagScanProgress {
   mode: 'full' | 'refresh'
-  phase: 'scanning' | 'finishing' | 'done' | 'cancelled' | 'error'
+  phase: 'scanning' | 'finishing' | 'albums' | 'done' | 'cancelled' | 'error'
   page: number
   pages: number
   photos: number
@@ -413,6 +414,24 @@ export interface HealthPhoto {
   status: 'open' | 'fine'
 }
 export interface HealthListPage { rows: HealthPhoto[]; total: number }
+
+// ── Album checks (3.7) ──────────────────────────────────────────────────────
+export type AlbumCondition = 'noAlbum' | 'empty' | 'noCollection' | 'oneItem' | 'noDesc' | 'dupTitle'
+export interface AlbumSummaryRow { condition: AlbumCondition; open: number; fine: number }
+export interface AlbumSummary {
+  hasData: boolean             // false until a Rebuild has read the albums
+  albums: number
+  photos: number               // photos and videos in the library list
+  scannedAt: number | null     // when the albums were last read (ms)
+  rows: AlbumSummaryRow[]
+}
+export type AlbumSort = 'newest' | 'oldest' | 'title' | 'titleDesc'
+export interface AlbumListQuery { condition: AlbumCondition; status: 'open' | 'fine'; search?: string; sort?: AlbumSort; offset: number; limit: number }
+export type AlbumExportQuery = Omit<AlbumListQuery, 'offset' | 'limit'>
+// One row of a list: a photo (Photos in no album) or an album (every other check)
+export interface AlbumItem { id: string; title: string; thumbUrl: string; detail: string; flickrUrl: string; status: 'open' | 'fine'; isPhoto: boolean }
+export interface AlbumListPage { rows: AlbumItem[]; total: number }
+export interface AlbumSetRequest { id: string; condition: AlbumCondition; status: 'open' | 'fine' }
 
 // ── Backup report (what is downloaded, from local records only) ─────────────
 // Which size a photo came down at, saved with its download record (older records have no label)

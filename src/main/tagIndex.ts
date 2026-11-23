@@ -7,8 +7,9 @@ import { loadToken } from './auth'
 import { loadSettings } from './settings'
 import { signedGet, clearTagSearchMemory } from './flickr'
 import { getDb } from './database'
-import { foldLatinAccents } from '../shared/tags'
+import { foldLatinAccents, cleanTag } from '../shared/tags'
 import { descriptionFlags } from '../shared/descriptionFlags'
+import { syncAlbums } from './albumSync'
 import type {
   FlickrTokenData, TagIndexStatus, TagScanProgress, TagListQuery, TagListPage, TagRow, TagLetterGroup
 } from '../shared/types'
@@ -53,7 +54,8 @@ export const PHOTO_META_DDL = `
     date_upload INTEGER,
     desc_flags INTEGER NOT NULL DEFAULT 0,
     geo_accuracy INTEGER NOT NULL DEFAULT 0,
-    date_unknown INTEGER NOT NULL DEFAULT 0
+    date_unknown INTEGER NOT NULL DEFAULT 0,
+    tags_verified INTEGER NOT NULL DEFAULT 0
   );
 `
 
@@ -70,6 +72,8 @@ export function addPhotoMetaColumns(db: Database.Database): void {
   // how exact the geotag is (0 when there is none) and Flickr's own flag for a date taken that is only a guess
   if (!have.has('geo_accuracy')) db.exec('ALTER TABLE photo_meta ADD COLUMN geo_accuracy INTEGER NOT NULL DEFAULT 0')
   if (!have.has('date_unknown')) db.exec('ALTER TABLE photo_meta ADD COLUMN date_unknown INTEGER NOT NULL DEFAULT 0')
+  // 3.7: 1 once a photo that looked untagged has been asked for on its own (Flickr's photo list can leave out the tags of a photo that has them)
+  if (!have.has('tags_verified')) db.exec('ALTER TABLE photo_meta ADD COLUMN tags_verified INTEGER NOT NULL DEFAULT 0')
 }
 
 // 0 public, 1 friends, 2 family, 3 friends and family, 4 private
@@ -185,12 +189,12 @@ function indexPhotos(db: Database.Database, photos: RawPhoto[], scanId: number, 
   `)
   const insertLink = db.prepare('INSERT OR IGNORE INTO tag_photo (photo_id, tag_id) VALUES (?, ?)')
   const upsertMeta = db.prepare(`
-    INSERT INTO photo_meta (photo_id, title, has_description, has_tags, has_location, thumb_url, date_taken, privacy, latitude, longitude, media, date_upload, desc_flags, geo_accuracy, date_unknown) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO photo_meta (photo_id, title, has_description, has_tags, has_location, thumb_url, date_taken, privacy, latitude, longitude, media, date_upload, desc_flags, geo_accuracy, date_unknown, tags_verified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
     ON CONFLICT(photo_id) DO UPDATE SET title = excluded.title, has_description = excluded.has_description, has_tags = excluded.has_tags,
       has_location = excluded.has_location, thumb_url = excluded.thumb_url, date_taken = excluded.date_taken,
       privacy = excluded.privacy, latitude = excluded.latitude, longitude = excluded.longitude,
       media = excluded.media, date_upload = excluded.date_upload, desc_flags = excluded.desc_flags,
-      geo_accuracy = excluded.geo_accuracy, date_unknown = excluded.date_unknown
+      geo_accuracy = excluded.geo_accuracy, date_unknown = excluded.date_unknown, tags_verified = 0
   `)
 
   db.transaction(() => {
@@ -216,6 +220,43 @@ function indexPhotos(db: Database.Database, photos: RawPhoto[], scanId: number, 
       }
     }
   })()
+}
+
+// Flickr's photo list sometimes returns no tags for a photo that has them (seen in 3.7 testing: 20 to 35 tags on the photo, none in the list).
+// So a photo that looks untagged is asked for on its own, once, before it is reported as having no tags. Returns false if cancelled.
+async function verifyUntagged(db: Database.Database, tokenData: FlickrTokenData, tagIds: Map<string, number>): Promise<boolean> {
+  const ids = (db.prepare('SELECT photo_id FROM photo_meta WHERE has_tags = 0 AND tags_verified = 0').all() as { photo_id: string }[]).map(r => r.photo_id)
+  const insertTag = db.prepare('INSERT INTO tag_names (name) VALUES (?)')
+  const deleteLinks = db.prepare('DELETE FROM tag_photo WHERE photo_id = ?')
+  const insertLink = db.prepare('INSERT OR IGNORE INTO tag_photo (photo_id, tag_id) VALUES (?, ?)')
+  const markChecked = db.prepare('UPDATE photo_meta SET tags_verified = 1 WHERE photo_id = ?')
+  const markTagged = db.prepare('UPDATE photo_meta SET has_tags = 1, tags_verified = 1 WHERE photo_id = ?')
+  let failures = 0
+  for (const id of ids) {
+    if (cancelRequested) return false
+    let tags: { _content?: string }[]
+    try {
+      const data = await flickrCall(tokenData, 'flickr.photos.getInfo', { photo_id: id })
+      tags = ((data.photo as { tags?: { tag?: { _content?: string }[] } } | undefined)?.tags?.tag) ?? []
+      failures = 0
+    } catch {
+      // A photo that cannot be read stays unchecked for next time; a run of failures (for example Flickr refusing calls) stops the check
+      if (++failures >= 5) return true
+      continue
+    }
+    const names = new Set(tags.map(t => cleanTag(t._content ?? '')).filter(Boolean))
+    db.transaction(() => {
+      if (names.size === 0) { markChecked.run(id); return }
+      deleteLinks.run(id)
+      for (const name of names) {
+        let tagId = tagIds.get(name)
+        if (tagId === undefined) { tagId = Number(insertTag.run(name).lastInsertRowid); tagIds.set(name, tagId) }
+        insertLink.run(id, tagId)
+      }
+      markTagged.run(id)
+    })()
+  }
+  return true
 }
 
 function loadTagIds(db: Database.Database): Map<string, number> {
@@ -320,6 +361,8 @@ async function runFullScan(db: Database.Database, tokenData: FlickrTokenData, se
     db.prepare('DELETE FROM photo_meta WHERE photo_id IN (SELECT photo_id FROM tag_indexed_photo WHERE scan_id != ?)').run(scanId)
     db.prepare('DELETE FROM tag_indexed_photo WHERE scan_id != ?').run(scanId)
   })()
+  // Photos the list showed without tags are asked for one by one before they count as untagged
+  if (!(await verifyUntagged(db, tokenData, tagIds))) { recomputeCounts(db); send({ mode: 'full', phase: 'cancelled', page: pages, pages, photos: photosDone, total }); return }
   recomputeCounts(db)
   setMeta(db, 'has_spellings', (await syncRawSpellings(db, tokenData)) ? 1 : 0)
   setMeta(db, 'scan_id', scanId)
@@ -331,6 +374,15 @@ async function runFullScan(db: Database.Database, tokenData: FlickrTokenData, se
   setMeta(db, 'has_scan_36', 1)   // media type, upload date, geotag accuracy and description flags are saved too (3.6)
   setMeta(db, 'flickr_total', total)
   clearTagSearchMemory()
+  // Which photo is in which album (3.7). The photo and tag data above is already saved, so a failure or a cancel here keeps it.
+  send({ mode: 'full', phase: 'albums', page: 0, pages: 0, photos: 0, total })
+  const albumsRead = await syncAlbums(db, (m, p) => flickrCall(tokenData, m, p), {
+    nsid: tokenData.nsid, mode: 'full', cancelled: () => cancelRequested,
+    progress: (done, albums) => send({ mode: 'full', phase: 'albums', page: done, pages: albums, photos: done, total: albums })
+  })
+  if (!albumsRead) { send({ mode: 'full', phase: 'cancelled', page: pages, pages, photos: photosDone, total }); return }
+  setMeta(db, 'has_albums_37', 1)
+  setMeta(db, 'albums_scanned_at', Date.now())
   send({ mode: 'full', phase: 'done', page: pages, pages, photos: photosDone, total })
 }
 
@@ -365,6 +417,8 @@ async function runRefresh(db: Database.Database, tokenData: FlickrTokenData, sen
   }
 
   send({ mode: 'refresh', phase: 'finishing', page: pages, pages, photos: photosDone, total: photosDone })
+  // Photos that look untagged (new or changed ones, and the first time any older ones) are asked for one by one
+  if (!(await verifyUntagged(db, tokenData, tagIds))) { recomputeCounts(db); send({ mode: 'refresh', phase: 'cancelled', page: pages, pages, photos: photosDone, total: photosDone }); return }
   recomputeCounts(db)
   setMeta(db, 'has_spellings', (await syncRawSpellings(db, tokenData)) ? 1 : 0)
 
@@ -374,6 +428,13 @@ async function runRefresh(db: Database.Database, tokenData: FlickrTokenData, sen
   setMeta(db, 'last_scan_start', startedAt)
   setMeta(db, 'last_scan_at', Date.now())
   clearTagSearchMemory()
+  // Albums that changed since the last read (only once a Rebuild has read them all). A problem here must not spoil the Update.
+  if (metaNumber(db, 'has_albums_37') === 1) {
+    try {
+      const read = await syncAlbums(db, (m, p) => flickrCall(tokenData, m, p), { nsid: tokenData.nsid, mode: 'refresh', cancelled: () => cancelRequested, progress: () => undefined })
+      if (read) setMeta(db, 'albums_scanned_at', Date.now())
+    } catch (err) { process.stderr.write(`[flickrfetch] Album update failed: ${err}\n`) }
+  }
   send({ mode: 'refresh', phase: 'done', page: pages, pages, photos: photosDone, total: photosDone })
 }
 
@@ -427,7 +488,8 @@ export function getTagIndexStatus(): TagIndexStatus {
     hasSpellings: metaNumber(db, 'has_spellings') === 1,
     hasPhotoMeta: metaNumber(db, 'has_photo_meta') === 1,
     hasCatalog: metaNumber(db, 'has_catalog_v2') === 1,
-    hasCatalogV3: metaNumber(db, 'has_scan_36') === 1
+    hasCatalogV3: metaNumber(db, 'has_scan_36') === 1,
+    hasAlbums: metaNumber(db, 'has_albums_37') === 1
   }
 }
 
