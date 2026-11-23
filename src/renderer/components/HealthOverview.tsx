@@ -14,8 +14,8 @@ const NAMES = (c: HealthCondition): string => ruleById(`photos:${c}`)?.name ?? c
 const PHRASES = (c: HealthCondition): string => ruleById(`photos:${c}`)?.phrase ?? c
 type Metric = 'anyGap' | HealthCondition
 // One colour per check, the same everywhere on this page; the light version is for "also missing something else"
-const PALETTE = ['#f59e0b', '#0063dc', '#8b5cf6', '#14b8a6', '#ec4899', '#84cc16', '#f97316', '#06b6d4']
-const colorOf = (c: HealthCondition): string => PALETTE[HEALTH_CONDITIONS.indexOf(c) % PALETTE.length]
+// (the golden angle spreads the hues, so neighbouring checks never look alike and every check keeps its own colour)
+const colorOf = (c: HealthCondition): string => `hsl(${Math.round((HEALTH_CONDITIONS.indexOf(c) * 137.5 + 38) % 360)} 68% 46%)`
 const lightOf = (c: HealthCondition): string => `color-mix(in srgb, ${colorOf(c)} 45%, white)`
 
 export default function HealthOverview({ refreshKey, onOpenList }: { refreshKey: number; onOpenList: (condition: HealthCondition, year?: string) => void }): React.JSX.Element {

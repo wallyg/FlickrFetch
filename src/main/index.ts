@@ -945,10 +945,12 @@ async function runDiscoverGroupBatch(groupId: string, albumTitle: string, target
   )
 }
 
-async function runPhotostreamBatch(albumTitle: string, track = true, smartMode?: 'updated' | 'never-downloaded', privacyFilter?: string, sort?: string, zipMode = false): Promise<void> {
+async function runPhotostreamBatch(albumTitle: string, track = true, smartMode?: 'updated' | 'never-downloaded', privacyFilter?: string, requestedSort?: string, zipMode = false): Promise<void> {
   if (!mainWindow) return
   const tokenData = loadToken()
   if (!tokenData) return
+  // Flickr's search call (needed for the interestingness order) stops at about 4,000 photos, so a full download uses posting order
+  const sort = requestedSort?.startsWith('interestingness') ? 'date-posted-desc' : requestedSort
 
   const { fileNaming, downloadFolder, showDockProgress, notifyOnComplete, conflictBehavior, downloadSize, openFinderOnComplete, metadata } = loadSettings()
 

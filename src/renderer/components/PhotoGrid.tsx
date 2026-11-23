@@ -657,7 +657,7 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
           <p style={styles.countLabel}>
             {loading && photos.length > 0 ? 'Updating…' : hasClientFilter
               ? `${filteredPhotos.length.toLocaleString()} matching · ${photos.length.toLocaleString()} of ${total.toLocaleString()} photos scanned${page < pages ? (loadingMore ? '' : ' · Scroll for more') : ''}`
-              : `${photos.length.toLocaleString()} of ${total.toLocaleString()} photos loaded${page < pages ? ' · Scroll for more' : ''}`
+              : `${photos.length.toLocaleString()} of ${total.toLocaleString()} photos loaded${page < pages ? ' · Scroll for more' : ''}${sort === 'interestingness-desc' ? ' · Flickr ranks about 4,000 photos at most' : ''}`
             }
           </p>
           {hasClientFilter && loadingMore && (

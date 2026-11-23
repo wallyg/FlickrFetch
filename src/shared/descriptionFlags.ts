@@ -2,6 +2,8 @@
 // list them without reading every description again). A description with nothing in it is not flagged here: that is
 // the plain "No description" check.
 
+import { decodeEntities } from './description'
+
 export const DESC_ONLY_LINK = 1       // nothing but a web address
 export const DESC_COPIES_TITLE = 2    // the same words as the title
 export const DESC_HAS_HTML = 4        // contains HTML markup
@@ -15,7 +17,8 @@ export function descriptionFlags(description: string, title: string, tags: Itera
   if (!text) return 0
   let flags = 0
   if (/<\/?[a-z][^>]*>/i.test(text)) flags |= DESC_HAS_HTML
-  const plain = text.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim()
+  // Tags come out first, then entities become letters (&amp; is &), so "Tom &amp; Jerry" matches the title "Tom & Jerry"
+  const plain = decodeEntities(text.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ')).replace(/\s+/g, ' ').trim()
   // Markup and nothing to read (a picture on its own is real content, so it does not count)
   if (!plain && flags & DESC_HAS_HTML && !/<img\b/i.test(text)) flags |= DESC_ONLY_MARKUP
   if (/^(https?:\/\/|www\.)\S+$/i.test(plain)) flags |= DESC_ONLY_LINK

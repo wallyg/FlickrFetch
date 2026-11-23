@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { TagIndexStatus, TagScanProgress } from '../../shared/types'
 import { Tooltip } from './PhotoGridShared'
 import { quietBtn } from '../ui/kit'
@@ -81,11 +81,14 @@ export function LibraryDataChip({ status, info, onUpdate, onRebuild }: { status:
 
 // "Not now" on the upgrade notice hides it until the app is opened again (a Rebuild is what makes it go for good)
 let upgradeNoticeHidden = false
+const noticeListeners = new Set<() => void>()   // every notice on screen follows the same flag
+const hideUpgradeNotice = (): void => { upgradeNoticeHidden = true; noticeListeners.forEach(l => l()) }
+const watchUpgradeNotice = (l: () => void): (() => void) => { noticeListeners.add(l); return () => { noticeListeners.delete(l) } }
 
 // Warnings under the data line: the library list and Flickr disagree, or the last scan failed
 export function ScanNotices({ status, scanError, onRebuild }: { status: TagIndexStatus; scanError: string | null; onRebuild: () => void }): React.JSX.Element {
   const libraryGap = status.flickrTotal !== null ? status.flickrTotal - status.indexedPhotos : 0
-  const [hidden, setHidden] = useState(upgradeNoticeHidden)
+  const hidden = useSyncExternalStore(watchUpgradeNotice, () => upgradeNoticeHidden)
   return (
     <>
       {(libraryGap < 0 || libraryGap > 10) && (
@@ -97,7 +100,7 @@ export function ScanNotices({ status, scanError, onRebuild }: { status: TagIndex
         <div style={{ ...styles.notice, display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
           <span style={{ flex: 1, minWidth: 260 }}>FlickrFetch has been updated since you last rebuilt your local library list. The new version checks a few more details about each photo, so some checks show zero until you rebuild. Press Rebuild once. It will take just a few minutes.</span>
           <button style={styles.secondaryBtn} onClick={onRebuild}>Rebuild…</button>
-          <button style={styles.linkBtn} onClick={() => { upgradeNoticeHidden = true; setHidden(true) }} title="Hide this until you next open FlickrFetch">Not now</button>
+          <button style={styles.linkBtn} onClick={hideUpgradeNotice} title="Hide this until you next open FlickrFetch">Not now</button>
         </div>
       )}
       {scanError && <div style={{ ...styles.notice, color: 'var(--ff-error)' }}>{scanError}</div>}

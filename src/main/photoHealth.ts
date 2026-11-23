@@ -28,6 +28,7 @@ function healthDb(): Database.Database {
   const db = getDb()
   if (!db) throw new Error('Database is not open')
   if (ready !== db) {
+    farKey = ''   // the temporary far-photos table belongs to the old connection, so it must be rebuilt
     db.exec(`
       ${PHOTO_META_DDL}
       CREATE TABLE IF NOT EXISTS photo_health_state (
@@ -142,14 +143,20 @@ const HEALTH_ORDER: Record<HealthSort, string> = {
   titleDesc: "(p.title = ''), ff_fold(p.title) DESC, p.photo_id DESC"
 }
 
-function queryRows(q: HealthExportQuery, limit: number, offset: number): { rows: HealthPhoto[]; total: number } {
-  const db = healthDb()
+// The part of a list query after SELECT: which photos (check, open or fine, title filter, year) and the values to bind
+function listBase(db: Database.Database, q: HealthExportQuery): { base: string; params: (string | number)[] } {
   const search = (q.search ?? '').trim()
   const filter = `${whereFor(db, q.condition)} AND ${q.status === 'fine' ? "s.status = 'fine'" : 's.status IS NULL'}${search ? " AND ff_fold(p.title) LIKE ? ESCAPE '\\'" : ''}${q.year ? ' AND substr(p.date_taken, 1, 4) = ?' : ''}`
   const base = `FROM photo_meta p LEFT JOIN photo_health_state s ON s.photo_id = p.photo_id AND s.condition = ? WHERE ${filter}`
   const params: (string | number)[] = [q.condition]
   if (search) params.push(`%${foldAccents(search).toLowerCase().replace(/[\\%_]/g, m => '\\' + m)}%`)
   if (q.year) params.push(q.year)
+  return { base, params }
+}
+
+function queryRows(q: HealthExportQuery, limit: number, offset: number): { rows: HealthPhoto[]; total: number } {
+  const db = healthDb()
+  const { base, params } = listBase(db, q)
   const total = (db.prepare(`SELECT COUNT(*) AS n ${base}`).get(...params) as { n: number }).n
   const raw = db.prepare(`SELECT p.photo_id, p.title, p.thumb_url, p.date_taken, s.status ${base} ORDER BY ${HEALTH_ORDER[q.sort ?? 'newest']} LIMIT ? OFFSET ?`)
     .all(...params, limit, offset) as Row[]
@@ -175,7 +182,9 @@ export function healthList(q: HealthListQuery): HealthListPage {
 
 // Every photo id in a list (not just the page on screen), newest first, for the batch editor
 export function healthIds(q: HealthExportQuery): string[] {
-  return queryRows(q, 1_000_000, 0).rows.map(r => r.photoId)
+  const db = healthDb()
+  const { base, params } = listBase(db, q)
+  return (db.prepare(`SELECT p.photo_id ${base} ORDER BY ${HEALTH_ORDER[q.sort ?? 'newest']}`).all(...params) as { photo_id: string }[]).map(r => r.photo_id)
 }
 
 export function healthSet(req: HealthSetRequest): void {

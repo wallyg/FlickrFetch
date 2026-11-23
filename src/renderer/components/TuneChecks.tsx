@@ -20,18 +20,18 @@ const CHOICES: { key: CleanupRuleState; label: string; hint: string }[] = [
 export default function TuneChecks({ stateOf, setState }: Props): React.JSX.Element {
   // How many items each check finds today, to help decide
   const [counts, setCounts] = useState<Record<string, number>>({})
-  const [tagLimit, setTagLimit] = useState<number>(65)
+  const [limitText, setLimitText] = useState<string>('65')   // what is typed in the box; it is checked and saved when you click away or press Enter
   const [words, setWords] = useState<string>(DEFAULT_GENERIC_WORDS.join('\n'))
-  useEffect(() => { void window.flickrAPI.getSettings().then(s => { setTagLimit(s.healthTagLimit ?? 65); setWords((s.auditGenericWords ?? DEFAULT_GENERIC_WORDS).join('\n')) }) }, [])
+  useEffect(() => { void window.flickrAPI.getSettings().then(s => { setLimitText(String(s.healthTagLimit ?? 65)); setWords((s.auditGenericWords ?? DEFAULT_GENERIC_WORDS).join('\n')) }) }, [])
   // The list of generic words: saved when you click away, one word per line
   const saveWords = (text: string): void => {
     const list = text.split('\n').map(w => w.trim()).filter(Boolean)
     void window.flickrAPI.setSettings({ auditGenericWords: list })
   }
-  // A number a check lets you change: saved at once; the counts and lists follow when Settings is closed
-  const changeNumber = (key: 'healthTagLimit', min: number, max: number, v: string): void => {
-    const n = Math.min(max, Math.max(min, Math.round(Number(v)) || min))
-    setTagLimit(n)
+  // A number a check lets you change: kept within its range and saved once typing is done; the counts and lists follow when Settings is closed
+  const commitNumber = (key: 'healthTagLimit', min: number, max: number, def: number, v: string): void => {
+    const n = Math.min(max, Math.max(min, Math.round(Number(v)) || def))
+    setLimitText(String(n))
     void window.flickrAPI.setSettings({ [key]: n })
   }
   useEffect(() => {
@@ -56,8 +56,10 @@ export default function TuneChecks({ stateOf, setState }: Props): React.JSX.Elem
             {r.number && (
               <label style={styles.numberRow}>
                 {r.number.label}
-                <input type="number" style={styles.numberInput} min={r.number.min} max={r.number.max} value={tagLimit}
-                  onChange={e => changeNumber(r.number!.key, r.number!.min, r.number!.max, e.target.value)} />
+                <input type="number" style={styles.numberInput} min={r.number.min} max={r.number.max} value={limitText}
+                  onChange={e => setLimitText(e.target.value)}
+                  onBlur={e => commitNumber(r.number!.key, r.number!.min, r.number!.max, r.number!.def, e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }} />
                 <span style={styles.example}>({r.number.min} to {r.number.max}; Flickr allows 75)</span>
               </label>
             )}

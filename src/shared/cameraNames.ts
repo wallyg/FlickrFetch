@@ -15,3 +15,11 @@ export function isCameraTitle(title: string): boolean {
   return t !== '' && CAMERA_TITLES.some(re => re.test(t))
 }
 
+// For tags, a short prefix glued straight to digits is usually a real word (p900 is a camera model, image2013 a year, mov1080 a video size),
+// so those need a separator (p_1000, image-2013). Names such as img1234 and dsc01234 still count.
+const AMBIGUOUS_TAG_PREFIX = /^(?:image|vid|mov|mvi|gp|sam|p)\d/i
+export function isCameraTag(tag: string): boolean {
+  const t = tag.trim()
+  return isCameraTitle(t) && !AMBIGUOUS_TAG_PREFIX.test(t)
+}
+

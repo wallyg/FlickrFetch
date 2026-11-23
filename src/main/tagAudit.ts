@@ -10,7 +10,7 @@ import { cleanTag, foldLatinAccents, GLUE_BOUNDARY_SOURCE } from '../shared/tags
 import { decodeEntities } from '../shared/description'
 import { loadSettings } from './settings'
 import { ruleState, DEFAULT_GENERIC_WORDS } from '../shared/cleanupRules'
-import { isCameraTitle } from '../shared/cameraNames'
+import { isCameraTag } from '../shared/cameraNames'
 import type {
   AuditCategory, AuditConfidence, AuditExportQuery, AuditFinding, AuditListPage, AuditListQuery, AuditPlanRow,
   AuditOverview, AuditSetRequest, AuditStatus, AuditSummary
@@ -291,7 +291,7 @@ export function detectFindings(tags: TagRecord[], genericWords: string[] = DEFAU
     if (t.count === 1) add(t, 'usedonce', '', 'on a single photo', 'low')
     if (exactGeneric.has(t.name) || startsGeneric.some(g => t.name.startsWith(g))) add(t, 'generic', '', 'a word that says nothing about the photo', 'medium')
     if (/^\d+$/.test(t.name) && !/^(?:19|20)\d\d$/.test(t.name)) add(t, 'numbers', '', 'digits only, not a year', 'medium')
-    if (isCameraTitle(t.name) || rawsOf(t).some(isCameraTitle)) add(t, 'filename', '', 'looks like a camera file name', 'high')
+    if (isCameraTag(t.name) || rawsOf(t).some(isCameraTag)) add(t, 'filename', '', 'looks like a camera file name', 'high')
   }
 
   // Strongest suspicion first; for stuck-together names the rarest come first (a slip is rarely repeated)

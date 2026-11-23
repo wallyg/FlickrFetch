@@ -7,7 +7,7 @@ import { ipcMain, shell } from 'electron'
 export const BATCH_SIZE = 500
 
 export function batchUrl(ids: string[]): string {
-  return `https://www.flickr.com/photos/organize/?start_tab=batch&ids=${ids.join(',')}`
+  return `https://www.flickr.com/photos/organize/?start_tab=batch&ids=${ids.filter(i => /^\d+$/.test(i)).join(',')}`
 }
 
 export function registerBatchIpc(): void {
