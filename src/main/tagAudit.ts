@@ -9,7 +9,8 @@ import { csvCell, saveCsvFile } from './csv'
 import { cleanTag, foldLatinAccents, GLUE_BOUNDARY_SOURCE } from '../shared/tags'
 import { decodeEntities } from '../shared/description'
 import { loadSettings } from './settings'
-import { ruleState } from '../shared/cleanupRules'
+import { ruleState, DEFAULT_GENERIC_WORDS } from '../shared/cleanupRules'
+import { isCameraTitle } from '../shared/cameraNames'
 import type {
   AuditCategory, AuditConfidence, AuditExportQuery, AuditFinding, AuditListPage, AuditListQuery, AuditPlanRow,
   AuditOverview, AuditSetRequest, AuditStatus, AuditSummary
@@ -23,7 +24,7 @@ interface TagRecord { id: number; name: string; display: string; count: number; 
 type Finding = Omit<AuditFinding, 'flickrUrl'>      // what the detection and the cache hold
 type Draft = Omit<Finding, 'status'>
 
-export const AUDIT_CATEGORIES: AuditCategory[] = ['glued', 'typo', 'notwin', 'noaccent', 'junk', 'runon', 'spelling']
+export const AUDIT_CATEGORIES: AuditCategory[] = ['glued', 'typo', 'notwin', 'noaccent', 'junk', 'runon', 'spelling', 'usedonce', 'generic', 'numbers', 'filename']
 
 // ── Word list (to tell real words from slips) ────────────────────────────────
 // The bundled public-domain list, plus the Mac's own list when it exists on this computer.
@@ -101,7 +102,7 @@ function tidyJunk(raw: string): string {
   return t
 }
 
-export function detectFindings(tags: TagRecord[]): Draft[] {
+export function detectFindings(tags: TagRecord[], genericWords: string[] = DEFAULT_GENERIC_WORDS): Draft[] {
   const out: Draft[] = []
   const add = (t: TagRecord, category: AuditCategory, replacement: string, evidence: string, confidence: AuditConfidence, display?: string): void => {
     out.push({ category, tag: t.name, display: display ?? t.display, count: t.count, confidence, replacement, evidence, spellings: t.raws.slice(0, 6) })
@@ -277,6 +278,22 @@ export function detectFindings(tags: TagRecord[]): Draft[] {
     add(t, 'spelling', t.display, `${t.raws.length} spellings, ${kind}`, lowers.size === 1 ? 'low' : 'medium')
   }
 
+  // 7. Tag use: generic words, numbers that are not years, camera file names, and tags on a single photo
+  const exactGeneric = new Set<string>()
+  const startsGeneric: string[] = []
+  for (const w of genericWords) {
+    const c = cleanTag(w.replace(/\*/g, ''))
+    if (!c) continue
+    if (w.trim().endsWith('*')) startsGeneric.push(c); else exactGeneric.add(c)
+  }
+  for (const t of tags) {
+    if (isMachine(t)) continue
+    if (t.count === 1) add(t, 'usedonce', '', 'on a single photo', 'low')
+    if (exactGeneric.has(t.name) || startsGeneric.some(g => t.name.startsWith(g))) add(t, 'generic', '', 'a word that says nothing about the photo', 'medium')
+    if (/^\d+$/.test(t.name) && !/^(?:19|20)\d\d$/.test(t.name)) add(t, 'numbers', '', 'digits only, not a year', 'medium')
+    if (isCameraTitle(t.name) || rawsOf(t).some(isCameraTitle)) add(t, 'filename', '', 'looks like a camera file name', 'high')
+  }
+
   // Strongest suspicion first; for stuck-together names the rarest come first (a slip is rarely repeated)
   out.sort((a, b) => order[a.confidence] - order[b.confidence] ||
     (a.category === 'glued' && b.category === 'glued' ? a.count - b.count : b.count - a.count))
@@ -309,7 +326,7 @@ function auditDb(): Database.Database {
   return db
 }
 
-let cache: { builtFor: number; computedAt: number; findings: Finding[]; ids: Map<string, number> } | null = null
+let cache: { builtFor: number; words: string; computedAt: number; findings: Finding[]; ids: Map<string, number> } | null = null
 
 function loadTagRecords(db: Database.Database): TagRecord[] {
   const byId = new Map<number, TagRecord>()
@@ -331,11 +348,13 @@ function indexStamp(db: Database.Database): number | null {
 function currentFindings(db: Database.Database): Finding[] | null {
   const stamp = indexStamp(db)
   if (stamp === null) return null
-  if (cache && cache.builtFor === stamp) return cache.findings
+  const genericWords = loadSettings().auditGenericWords ?? DEFAULT_GENERIC_WORDS
+  const wordsKey = genericWords.join('\n')
+  if (cache && cache.builtFor === stamp && cache.words === wordsKey) return cache.findings
   const states = new Map<string, StateRow>()
   for (const s of db.prepare('SELECT * FROM tag_audit_state').all() as StateRow[]) states.set(`${s.tag_name}|${s.category}`, s)
   const records = loadTagRecords(db)
-  const findings: Finding[] = detectFindings(records).map(d => {
+  const findings: Finding[] = detectFindings(records, genericWords).map(d => {
     const s = states.get(`${d.tag}|${d.category}`)
     return { ...d, status: (s && s.status !== 'fixed' ? s.status : 'open') as AuditStatus, replacement: s?.replacement || d.replacement }
   })
@@ -343,7 +362,7 @@ function currentFindings(db: Database.Database): Finding[] | null {
   const live = new Set(findings.map(f => `${f.tag}|${f.category}`))
   const markFixed = db.prepare("UPDATE tag_audit_state SET status = 'fixed', updated_at = ? WHERE tag_name = ? AND category = ?")
   for (const s of states.values()) if (s.status === 'plan' && !live.has(`${s.tag_name}|${s.category}`)) markFixed.run(Date.now(), s.tag_name, s.category)
-  cache = { builtFor: stamp, computedAt: Date.now(), findings, ids: new Map(records.map(r => [r.name, r.id])) }
+  cache = { builtFor: stamp, words: wordsKey, computedAt: Date.now(), findings, ids: new Map(records.map(r => [r.name, r.id])) }
   return findings
 }
 
@@ -394,13 +413,14 @@ function matchingRows(q: AuditExportQuery): Finding[] {
   if (q.sort && q.sort !== 'suggested') {
     const byName = (a: Finding, b: Finding): number => a.display.localeCompare(b.display, undefined, { sensitivity: 'base' })
     rows = [...rows].sort(q.sort === 'most' ? (a, b) => b.count - a.count || byName(a, b)
-      : q.sort === 'fewest' ? (a, b) => a.count - b.count || byName(a, b) : byName)
+      : q.sort === 'fewest' ? (a, b) => a.count - b.count || byName(a, b)
+      : q.sort === 'alphaDesc' ? (a, b) => byName(b, a) : byName)
   }
   return rows
 }
 
 // Every check can be On, Optional or Off (Tune checks), including the cosmetic spelling check, which is Optional by default
-const DASHBOARD_CATEGORIES: AuditCategory[] = ['notwin', 'noaccent', 'typo', 'glued', 'junk', 'runon', 'spelling']
+const DASHBOARD_CATEGORIES: AuditCategory[] = ['notwin', 'noaccent', 'typo', 'glued', 'junk', 'runon', 'spelling', 'generic', 'numbers', 'filename', 'usedonce']
 
 // The numbers behind the dashboard: how many tags and photos are affected, and how the work is going
 export function auditOverview(): AuditOverview {
@@ -494,6 +514,12 @@ const planLine = (display: string, replacement: string, count: number, category:
     ? `Use "${replacement}" for every spelling of "${display}" (${count.toLocaleString('en-US')} photo${count === 1 ? '' : 's'})`
     : `Replace "${display}" with ${replacement || 'nothing (delete it)'} (${count.toLocaleString('en-US')} photo${count === 1 ? '' : 's'})`
 
+// Every photo that carries this tag, for the batch editor
+export function auditPhotoIds(tag: string): string[] {
+  const db = auditDb()
+  return (db.prepare('SELECT tp.photo_id FROM tag_photo tp JOIN tag_names n ON n.id = tp.tag_id WHERE n.name = ? ORDER BY tp.photo_id DESC').all(tag) as { photo_id: string }[]).map(r => r.photo_id)
+}
+
 export function auditPlan(): AuditPlanRow[] {
   const db = auditDb()
   currentFindings(db)   // makes sure fixed items are noticed
@@ -529,6 +555,7 @@ export function registerAuditIpc(getWindow: () => BrowserWindow | null): void {
   ipcMain.handle('audit:overview', () => auditOverview())
   ipcMain.handle('audit:list', (_event, q: AuditListQuery) => auditList(q))
   ipcMain.handle('audit:set', (_event, req: AuditSetRequest) => auditSet(req))
+  ipcMain.handle('audit:photoIds', (_event, tag: string) => (typeof tag === 'string' ? auditPhotoIds(tag) : []))
   ipcMain.handle('audit:plan', () => auditPlan())
   ipcMain.handle('audit:copyPlan', () => { clipboard.writeText(planText()); return true })
   ipcMain.handle('audit:savePlanCsv', () => saveCsvFile(getWindow, 'tag-fix-plan.csv', PLAN_CSV_HEADER, planCsvRows()))

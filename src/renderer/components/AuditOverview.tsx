@@ -10,10 +10,12 @@ import { asButton } from '../ui/a11y'
 
 const NAMES: Record<AuditCategory, string> = {
   glued: 'Names stuck together', typo: 'Possible typos', notwin: 'Accented tags with no plain twin',
-  noaccent: 'Plain tags that may need accents', junk: 'Odd characters', runon: 'Run-ons', spelling: 'Typed more than one way'
+  noaccent: 'Plain tags that may need accents', junk: 'Odd characters', runon: 'Run-ons', spelling: 'Typed more than one way',
+  usedonce: 'Tags used only once', generic: 'Generic tags', numbers: 'Numbers only', filename: 'File-name tags'
 }
 const SHORT: Record<AuditCategory, string> = {
-  glued: 'Stuck together', typo: 'Typos', notwin: 'No plain twin', noaccent: 'Needs accents', junk: 'Odd characters', runon: 'Run-ons', spelling: 'Spelling'
+  glued: 'Stuck together', typo: 'Typos', notwin: 'No plain twin', noaccent: 'Needs accents', junk: 'Odd characters', runon: 'Run-ons', spelling: 'Spelling',
+  usedonce: 'Used once', generic: 'Generic', numbers: 'Numbers only', filename: 'File names'
 }
 
 export default function AuditOverview({ refreshKey, onOpenList }: { refreshKey: number; onOpenList: (category: AuditCategory) => void }): React.JSX.Element {

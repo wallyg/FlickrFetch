@@ -7,6 +7,20 @@ export interface Release {
 
 const changelog: Release[] = [
   {
+    version: '3.6',
+    date: 'November 2026',
+    highlights: [
+      'More photo checks — Health Check now finds photos taken in the future or after they were uploaded, placeholder dates (such as 1 January 1970), descriptions that are only a link, only code, a list of tags or a copy of the title, photos with only one tag, photos with too many tags (the limit is yours to set), photos located at 0, 0, and photos far from the others taken around the same time. Each one is an Issue, a Warning or Off, like the rest',
+      'More tag checks — Health Check also lists generic tags (photo, camera, iphone and so on; the word list is yours to edit), tags that are only numbers (years are left alone), tags that are really file names (IMG_1234), and, if you switch it on, tags used on a single photo',
+      'Videos counted as videos — On This Day, the Timeline and the camera roll now say "50 photos and 2 videos", videos show a small play badge, and collages leave them out',
+      'Backup report — a new Backup tab in Health Check shows how much of your library you have downloaded and the date of your last download, with lists of what is not downloaded, what is new since your last download, and what changed on Flickr after you downloaded it. Each list has a Download button. From now on FlickrFetch also remembers which size each photo came down at, so a fourth list shows photos saved smaller than the original (free Flickr accounts only get sizes up to 1024 px)',
+      'Fix in Flickr\'s batch editor — one click opens Flickr\'s own editor with the photos from a Health Check list, a tag, a day, a month or your selection already loaded (500 at a time). Right-click a photo for the same',
+      'Easier to read and use — Health Check list sidebars have clear section titles and scroll when long, every Health Check list has a Sort box above it (including Title Z to A), checks that cannot count until you rebuild show a dash, the Tags tab can sort Z to A, the Photostream can sort by Flickr\'s "most interesting", Cmd+F jumps to the Filter box in Health Check lists, and Open on Flickr is now a blue button on photo cards',
+      'First launch — the app is now signed as a whole, so a downloaded copy should say it cannot verify the developer (with Open Anyway) instead of calling itself damaged',
+      'One more scan — the new checks need your library list rebuilt once more (Health Check, then the data button, then Rebuild; a few minutes). Until then they show zero'
+    ]
+  },
+  {
     version: '3.5',
     date: 'November 2026',
     highlights: [

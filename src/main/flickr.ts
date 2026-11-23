@@ -506,7 +506,8 @@ function trimToRequestedTags<T extends Record<string, string>>(
 }
 
 export async function getPhotos(tokenData: FlickrTokenData, page: number = 1, sort: string = 'date-posted-desc', search?: PhotoSearchParams): Promise<PhotoPage> {
-  const useSearch = !!(search?.query || search?.tagQuery || search?.dateMin || search?.dateMax)
+  // Flickr's plain "my photos" call cannot rank by interestingness; its search call can
+  const useSearch = !!(search?.query || search?.tagQuery || search?.dateMin || search?.dateMax) || sort.startsWith('interestingness')
 
   const buildUrl = (tagQuery: string | undefined, withTags: boolean): string => {
     let url: string

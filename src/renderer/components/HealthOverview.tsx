@@ -4,21 +4,19 @@ import { BarRow, RingParts, COLORS, dash, pctLabel } from './DashboardParts'
 import type { RingPart } from './DashboardParts'
 import { asButton } from '../ui/a11y'
 import { selectedOn, chip as chipBase } from '../ui/kit'
+import { ruleById } from '../../shared/cleanupRules'
+import { HEALTH_CONDITIONS } from '../../shared/healthChecks'
 
 // The dashboard side of the metadata health report: how complete the library is, which gaps are
 // biggest, how they spread across the years, and where they bunch up.
 
-const NAMES: Record<HealthCondition, string> = {
-  title: 'No title, or a camera-file title', description: 'No description', tags: 'No tags', location: 'No location'
-}
-const PHRASES: Record<HealthCondition, string> = {
-  title: 'no title or a camera-file title', description: 'no description', tags: 'no tags', location: 'no location'
-}
+const NAMES = (c: HealthCondition): string => ruleById(`photos:${c}`)?.name ?? c
+const PHRASES = (c: HealthCondition): string => ruleById(`photos:${c}`)?.phrase ?? c
 type Metric = 'anyGap' | HealthCondition
-const METRICS: { key: Metric; label: string }[] = [
-  { key: 'anyGap', label: 'All gaps' }, { key: 'description', label: 'No description' }, { key: 'location', label: 'No location' },
-  { key: 'title', label: 'No title' }, { key: 'tags', label: 'No tags' }
-]
+// One colour per check, the same everywhere on this page; the light version is for "also missing something else"
+const PALETTE = ['#f59e0b', '#0063dc', '#8b5cf6', '#14b8a6', '#ec4899', '#84cc16', '#f97316', '#06b6d4']
+const colorOf = (c: HealthCondition): string => PALETTE[HEALTH_CONDITIONS.indexOf(c) % PALETTE.length]
+const lightOf = (c: HealthCondition): string => `color-mix(in srgb, ${colorOf(c)} 45%, white)`
 
 export default function HealthOverview({ refreshKey, onOpenList }: { refreshKey: number; onOpenList: (condition: HealthCondition, year?: string) => void }): React.JSX.Element {
   const [data, setData] = useState<Overview | null>(null)
@@ -31,27 +29,31 @@ export default function HealthOverview({ refreshKey, onOpenList }: { refreshKey:
   if (!data.hasData) return <div style={dash.wrap}><span style={dash.muted}>Rebuild your library list first (the data button, top right).</span></div>
 
   const fmt = (n: number): string => n.toLocaleString()
-  const GAP_COLORS: Record<HealthCondition, string> = { description: '#f59e0b', location: '#0063dc', title: '#8b5cf6', tags: '#14b8a6' }
-  const SHORT: Record<HealthCondition, string> = { description: 'description', location: 'location', title: 'title', tags: 'tags' }
   const pct = (a: number, b: number): string => (b > 0 ? `${Math.round((a / b) * 100)}%` : '0%')
   const frac = (n: number): number => (data.photos > 0 ? n / data.photos : 0)
   const mk = (n: number, color: string, short: string, legend: string): RingPart =>
     ({ n, color, short, fraction: frac(n), title: `${fmt(n)} photos (${pct(n, data.photos)} of your library): ${legend.toLowerCase()}` })
+  const onlyList = data.byType.map(t => t.condition).filter(c => data.onlyOne[c] > 0).sort((a, b) => data.onlyOne[b] - data.onlyOne[a])
+  const otherOnly = onlyList.slice(4).reduce((n, c) => n + data.onlyOne[c], 0)
   const ringParts: (RingPart & { legend: string })[] = [
     { ...mk(data.complete, COLORS.fixed, 'complete', 'Complete'), legend: 'Complete' },
-    ...(['description', 'location', 'title', 'tags'] as HealthCondition[]).map(c => ({ ...mk(data.onlyOne[c], GAP_COLORS[c], `only ${SHORT[c]}`, `Only ${PHRASES[c]}`), legend: `Only ${PHRASES[c]}` })),
+    // The four biggest single gaps get their own part of the ring; the rest are one "other" part
+    ...onlyList.slice(0, 4).map(c => ({ ...mk(data.onlyOne[c], colorOf(c), `only ${NAMES(c).toLowerCase().slice(0, 14)}`, `Only ${PHRASES(c)}`), legend: `Only ${PHRASES(c)}` })),
+    ...(otherOnly > 0 ? [{ ...mk(otherOnly, '#94a3b8', 'one other gap', 'Only one other kind of gap'), legend: 'Only one other kind of gap' }] : []),
     { ...mk(data.twoOrMore, '#ef4444', '2+ gaps', 'Two or more gaps'), legend: 'Two or more gaps' }
   ].filter((g, i) => i === 0 || g.n > 0)
   const stacked = metric === 'anyGap'   // All gaps: dark = photos with an Issue gap, light = photos with only a Warning gap
-  const share = (e: Overview['byYear'][number]): number => (e.total > 0 ? (e[metric] + (stacked ? e.warnOnly : 0)) / e.total : 0)
+  const share = (e: Overview['byYear'][number]): number => (e.total > 0 ? ((metric === 'anyGap' ? e.anyGap : e.by[metric]) + (stacked ? e.warnOnly : 0)) / e.total : 0)
   const reliable = data.byYear.filter(e => e.total >= 100)   // years with fewer photos are left out: their shares would jump around
   const topShare = Math.max(0.0001, ...reliable.map(share))
   const sortedTypes = data.byType.filter(t => t.state === 'on').sort((a, b) => b.open - a.open)
   const optionalTypes = data.byType.filter(t => t.state === 'optional').sort((a, b) => b.open - a.open)
-  const metrics = METRICS.filter(m => m.key === 'anyGap' || data.byType.some(t => t.condition === m.key))
+  // Buttons for the four biggest checks; the rest are in a list
+  const byBiggest = [...data.byType].sort((a, b) => b.open - a.open).map(t => t.condition)
+  const quick = byBiggest.slice(0, 4)
+  const rest = byBiggest.slice(4)
   const maxType = Math.max(1, ...data.byType.map(t => t.open))
 
-  const LIGHT: Record<HealthCondition, string> = { description: '#f9d28a', location: '#9fbdf0', title: '#c7b2fb', tags: '#9edfd7' }
   const clusters = more ? data.clusters : data.clusters.slice(0, 5)
 
   return (
@@ -77,10 +79,10 @@ export default function HealthOverview({ refreshKey, onOpenList }: { refreshKey:
         {sortedTypes.map(t => {
           const only = data.onlyOne[t.condition]
           return (
-            <BarRow key={t.condition} name={NAMES[t.condition]} max={data.photos} number={fmt(t.open)} onClick={() => onOpenList(t.condition)}
+            <BarRow key={t.condition} name={NAMES(t.condition)} max={data.photos} number={fmt(t.open)} onClick={() => onOpenList(t.condition)}
               parts={[
-                { value: only, color: GAP_COLORS[t.condition], title: `${fmt(only)} photos are missing only this` },
-                { value: t.open - only, color: LIGHT[t.condition], title: `${fmt(t.open - only)} photos are missing this and something else` }
+                { value: only, color: colorOf(t.condition), title: `${fmt(only)} photos have only this gap` },
+                { value: t.open - only, color: lightOf(t.condition), title: `${fmt(t.open - only)} photos have this and something else` }
               ]} />
           )
         })}
@@ -93,16 +95,24 @@ export default function HealthOverview({ refreshKey, onOpenList }: { refreshKey:
         <div style={dash.card}>
           <h3 style={dash.cardTitle}>Gaps by year taken <span style={dash.hint}>(share of that year's photos; hover a bar; years with under 100 photos left out)</span></h3>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
-            {metrics.map(m => (
-              <button key={m.key} style={{ ...styles.chip, ...(metric === m.key ? styles.chipOn : {}) }} onClick={() => setMetric(m.key)}>{m.label}</button>
+            <button style={{ ...styles.chip, ...(metric === 'anyGap' ? styles.chipOn : {}) }} onClick={() => setMetric('anyGap')}>All gaps</button>
+            {quick.map(c => (
+              <button key={c} style={{ ...styles.chip, ...(metric === c ? styles.chipOn : {}) }} onClick={() => setMetric(c)}>{NAMES(c)}</button>
             ))}
+            {rest.length > 0 && (
+              <select style={{ ...styles.chip, ...(rest.includes(metric as HealthCondition) ? styles.chipOn : {}) }} value={rest.includes(metric as HealthCondition) ? metric : ''} aria-label="Another check"
+                onChange={e => { if (e.target.value) setMetric(e.target.value as HealthCondition) }}>
+                <option value="">More checks…</option>
+                {rest.map(c => <option key={c} value={c}>{NAMES(c)}</option>)}
+              </select>
+            )}
           </div>
           <div style={styles.years} role="img" aria-label="Bars by year showing the share of photos with the chosen gap">
             {reliable.map(e => {
               const tall = Math.max(2, (share(e) / topShare) * 100)
               if (!stacked) {
                 return (
-                  <div key={e.year} title={`${e.year}: ${Math.round(share(e) * 100)}% (${fmt(e[metric])} of ${fmt(e.total)})`}
+                  <div key={e.year} title={`${e.year}: ${Math.round(share(e) * 100)}% (${fmt(e.by[metric])} of ${fmt(e.total)})`}
                     style={{ ...styles.bar, height: `${tall}%`, background: share(e) === topShare ? 'var(--ff-pink)' : '#0063dc' }} />
                 )
               }
@@ -136,7 +146,7 @@ export default function HealthOverview({ refreshKey, onOpenList }: { refreshKey:
           {data.clusters.length === 0 && <span style={dash.muted}>No year stands out.</span>}
           {clusters.map(c => (
             <div key={`${c.condition}|${c.year}`} style={dash.item} {...asButton(() => onOpenList(c.condition, c.year))}>
-              <span>{c.year}: {PHRASES[c.condition]}<div style={dash.muted}>{pct(c.count, c.total)} of that year's photos</div></span>
+              <span>{c.year}: {PHRASES(c.condition)}<div style={dash.muted}>{pct(c.count, c.total)} of that year's photos</div></span>
               <b style={{ whiteSpace: 'nowrap' }}>{fmt(c.count)} photos</b>
             </div>
           ))}
@@ -150,7 +160,7 @@ export default function HealthOverview({ refreshKey, onOpenList }: { refreshKey:
         <div style={{ ...dash.card, marginTop: 14 }}>
           <h3 style={dash.cardTitle}>Warnings to review <span style={dash.hint}>(could be better; never lowers the score above; click a row to open its list)</span></h3>
           {optionalTypes.map(t => (
-            <BarRow key={t.condition} name={NAMES[t.condition]} max={data.photos} number={fmt(t.open)} onClick={() => onOpenList(t.condition)}
+            <BarRow key={t.condition} name={NAMES(t.condition)} max={data.photos} number={fmt(t.open)} onClick={() => onOpenList(t.condition)}
               parts={[{ value: t.open, color: 'var(--ff-slate)', title: `${fmt(t.open)} photos` }]} />
           ))}
         </div>

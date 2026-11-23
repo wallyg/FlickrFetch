@@ -2,12 +2,14 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import AuditOverview from './AuditOverview'
 import { dash, SectionSwitch } from './DashboardParts'
-import RuleRail, { RailHead, RailRow } from './RuleRail'
+import RuleRail, { RailHead, RailRow, ListHead, SortBox } from './RuleRail'
 import { forgetOverview } from './LibraryOverview'
+import { useFindShortcut } from '../hooks/useFindShortcut'
 import { GLUE_BOUNDARY_SOURCE } from '../../shared/tags'
 import type { CleanupRuleState } from '../../shared/cleanupRules'
 import type { AuditCategory, AuditFinding, AuditPlanRow, AuditSort, AuditStatus, AuditSummary, TagMode } from '../../shared/types'
 import { quietBtn, primaryBtn, selectedOn, filterInput } from '../ui/kit'
+import BatchEditButton from './BatchEditButton'
 import BackToTop from '../ui/BackToTop'
 
 // The Audit view of the Tags tab: likely tag problems by type, each with an editable fix.
@@ -60,9 +62,29 @@ const CATEGORY_INFO: Record<AuditCategory, { name: string; blurb: string; label:
     name: 'Typed more than one way',
     blurb: 'Flickr treats these as one tag, but each photo keeps the spelling it was typed with. Pick the one to use everywhere.',
     label: 'Use this spelling'
+  },
+  usedonce: {
+    name: 'Tags used only once',
+    blurb: 'A tag that sits on a single photo. Often a typo or a one-off word, though some are real names worth keeping.',
+    label: 'Replace with'
+  },
+  generic: {
+    name: 'Generic tags',
+    blurb: 'Words that say nothing about the photo, such as photo, camera or iphone. You can change the list under Tune checks.',
+    label: 'Replace with'
+  },
+  numbers: {
+    name: 'Numbers only',
+    blurb: 'A tag made only of digits that is not a year. Years from 1900 to 2099 are left alone.',
+    label: 'Replace with'
+  },
+  filename: {
+    name: 'File-name tags',
+    blurb: 'A tag that is a file name from a camera or phone (IMG_1234, DSC01234) or a date-and-time stamp.',
+    label: 'Replace with'
   }
 }
-const ALL_CATEGORIES: AuditCategory[] = ['glued', 'typo', 'junk', 'runon', 'notwin', 'noaccent', 'spelling']
+const ALL_CATEGORIES: AuditCategory[] = ['glued', 'typo', 'junk', 'runon', 'notwin', 'noaccent', 'spelling', 'generic', 'numbers', 'filename', 'usedonce']
 const STATUS_LABELS: { key: AuditStatus; label: string }[] = [
   { key: 'open', label: 'Open' }, { key: 'plan', label: 'In plan' }, { key: 'fine', label: 'Marked fine' }, { key: 'fixed', label: 'Fixed' }
 ]
@@ -101,6 +123,8 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
   const requestRef = useRef(0)
   const pickedStart = useRef(false)
   const planRef = useRef<HTMLSpanElement>(null)
+  const filterRef = useRef<HTMLInputElement | null>(null)
+  useFindShortcut(!!toolbarLeft && section === 'lists', filterRef)   // Cmd+F while this list is showing goes to the Filter box
 
   const loadSummary = useCallback(async () => {
     const s = await window.flickrAPI.getAuditSummary()
@@ -130,6 +154,7 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
   // The front page asks for one list
   useEffect(() => {
     if (!openRequest) return
+    pickedStart.current = true   // a list that was asked for beats the first-look choice, even when this panel is only now opening
     setCategory(openRequest.category); setStatus('open'); setSection('lists')
   }, [openRequest?.nonce])
 
@@ -258,14 +283,7 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
           <RailHead first>Show</RailHead>
           {STATUS_LABELS.map(st => <RailRow key={st.key} selected={status === st.key} label={st.label} count={row ? row[st.key] : 0} onSelect={() => setStatus(st.key)} />)}
           <RailHead>Filter</RailHead>
-          <input style={filterInput} placeholder="Filter this list…" value={search} onChange={e => setSearch(e.target.value)} aria-label="Filter this list" />
-          <RailHead>Sort</RailHead>
-          <select style={styles.sortSelect} value={sort} onChange={e => setSort(e.target.value as AuditSort)} title="How this list is ordered" aria-label="Sort this list">
-            <option value="suggested">Suggested order</option>
-            <option value="most">Most photos</option>
-            <option value="fewest">Fewest photos</option>
-            <option value="alpha">A to Z</option>
-          </select>
+          <input ref={filterRef} style={filterInput} placeholder="Filter this list…" value={search} onChange={e => setSearch(e.target.value)} aria-label="Filter this list" />
           <RailHead>This list</RailHead>
           <button style={{ ...styles.secondaryBtn, width: '100%' }} title="Save every row of this list as a spreadsheet" onClick={async () => { setListSaved(await window.flickrAPI.saveAuditListCsv({ category, status, search, sort })) }}>Export this list</button>
           {listSaved && <div style={{ ...styles.muted, padding: '6px 9px 2px' }}>Saved to {listSaved.split('/').pop()} <button style={{ ...styles.viewBtn, marginLeft: 0 }} onClick={() => window.flickrAPI.showInFinder(listSaved)}>Show in Finder</button></div>}
@@ -273,10 +291,12 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
         </div>
 
         <div style={styles.main}>
-          <div style={{ ...styles.muted, margin: '2px 0 10px' }}>
+          <ListHead sort={<SortBox<AuditSort> value={sort} onChange={setSort} options={[
+            { value: 'suggested', label: 'Suggested order' }, { value: 'most', label: 'Most photos' }, { value: 'fewest', label: 'Fewest photos' },
+            { value: 'alpha', label: 'A to Z' }, { value: 'alphaDesc', label: 'Z to A' }]} />}>
             {blurbOpen ? info.blurb : `${info.blurb.split('. ')[0].replace(/\.$/, '')}.`}{' '}
             {info.blurb.includes('. ') && <button style={styles.viewBtn} onClick={() => setBlurbOpen(o => !o)}>{blurbOpen ? 'Less' : 'More'}</button>}
-          </div>
+          </ListHead>
 
           <div style={styles.list}>
             {loading && rows.length === 0 ? <div style={styles.muted}>Checking your tags…</div>
@@ -297,6 +317,7 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
                         style={styles.input}
                         value={drafts[key] ?? f.replacement}
                         disabled={f.status === 'fixed'}
+                        placeholder={f.replacement === '' ? 'Leave empty to delete this tag' : undefined}
                         onChange={e => setDrafts(d => ({ ...d, [key]: e.target.value }))}
                         aria-label="Edit the replacement tags"
                       />
@@ -313,6 +334,7 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
                         <button style={styles.secondaryBtn} onClick={() => void change(f, 'open')}>{f.status === 'plan' ? 'Remove from plan' : 'Undo'}</button>
                       )}
                       <button style={styles.secondaryBtn} onClick={() => onViewPhotos([f.display], 'any')}>View photos</button>
+                      <BatchEditButton key={`${f.tag}|${f.category}`} label="Batch editor" style={styles.secondaryBtn} getIds={() => window.flickrAPI.getAuditPhotoIds(f.tag)} />
                       {f.flickrUrl && <button style={styles.secondaryBtn} title="Open this tag's page on your Flickr account, to fix it there" onClick={() => window.flickrAPI.openExternal(f.flickrUrl)}>Open on Flickr ↗</button>}
                     </div>
                   </div>
@@ -334,13 +356,12 @@ const styles: Record<string, React.CSSProperties> = {
   muted: { fontSize: 13, color: 'var(--ff-text-secondary)' },
   empty: { padding: 40, textAlign: 'center', fontSize: 13, color: 'var(--ff-text-secondary)' },
   body: { flex: 1, minHeight: 0, display: 'flex', gap: 16, padding: '4px 24px 12px' },
-  railCol: { width: 230, flexShrink: 0, alignSelf: 'flex-start', display: 'flex', flexDirection: 'column', gap: 12 },
-  rail: { background: '#fff', border: '1px solid var(--ff-border)', borderRadius: 10, padding: 6 },
+  railCol: { width: 230, flexShrink: 0, alignSelf: 'flex-start', maxHeight: '100%', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12 },   // long lists of checks scroll inside this column
+  rail: { flexShrink: 0, background: '#fff', border: '1px solid var(--ff-border)', borderRadius: 10, padding: 6 },
   main: { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: 0 },
   statusRow: { display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, flexWrap: 'wrap' },
   statusChip: { border: '1px solid var(--ff-border)', borderRadius: 14, padding: '3px 11px', fontSize: 13, background: '#fff', color: 'var(--ff-text)', cursor: 'pointer' },
   statusChipOn: { ...selectedOn },
-  sortSelect: { width: '100%', margin: '0 0 2px', border: '1px solid var(--ff-border)', borderRadius: 6, padding: '5px 8px', fontSize: 13, background: '#fff', color: 'var(--ff-text)' },
   list: { flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: 4 },
   card: { background: '#fff', border: '1px solid var(--ff-border)', borderRadius: 10, padding: '10px 12px', marginBottom: 8 },
   l1: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' },

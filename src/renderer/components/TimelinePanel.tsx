@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import BatchEditButton from './BatchEditButton'
 import type { PrivacyScope, TimelineDays, TimelineMonths } from '../../shared/types'
 import { MONTHS, pad2, ScopeToggle } from './DateViewParts'
 import CameraRoll from './CameraRoll'
@@ -7,6 +8,7 @@ import BackToTop from '../ui/BackToTop'
 import { OpenIcon, DownloadIcon, CameraRollIcon } from '../ui/icons'
 import { quietBtn, primaryBtn, pillBtn } from '../ui/kit'
 import { asButton } from '../ui/a11y'
+import { itemsLabel } from '../../shared/counts'
 
 // Timeline: every month you took photos, shaded by how many. Click a month to see it day by day; click a day to
 // see its photos as a camera roll. A back button says where it goes, and arrows step to the next or previous
@@ -22,7 +24,7 @@ interface Props {
 }
 
 type Period = { year: number; month: number; day?: number }
-type Hover = { year: number; month: number; n: number } | null
+type Hover = { year: number; month: number; n: number; v: number } | null
 
 const lastDay = (y: number, m: number): number => new Date(y, m, 0).getDate()
 // On This Day leaves out today's own year (a photo from today is not a memory), so there is nothing to jump to
@@ -85,15 +87,16 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
 
   const grid = useMemo(() => {
     const map = new Map<string, number>()
+    const vmap = new Map<string, number>()   // how many of each month's items are videos
     let max = 1
     const years = new Set<number>()
     const withPhotos: { year: number; month: number }[] = []
     for (const c of data?.cells ?? []) {
-      map.set(`${c.year}-${c.month}`, c.count); years.add(c.year); if (c.count > max) max = c.count
+      map.set(`${c.year}-${c.month}`, c.count); vmap.set(`${c.year}-${c.month}`, c.videos); years.add(c.year); if (c.count > max) max = c.count
       if (c.count > 0) withPhotos.push({ year: c.year, month: c.month })
     }
     withPhotos.sort((a, b) => monthKey(a.year, a.month) - monthKey(b.year, b.month))
-    return { map, max, years: [...years].sort((a, b) => b - a), withPhotos }   // newest year first, so the busy recent years are on screen
+    return { map, vmap, max, years: [...years].sort((a, b) => b - a), withPhotos }   // newest year first, so the busy recent years are on screen
   }, [data])
 
   if (!data) return <div style={styles.pad}><span style={styles.muted}>Looking through your photos…</span></div>
@@ -196,7 +199,7 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
       ) : !drill ? (
         <>
           <div style={{ ...styles.muted, margin: '10px 0 6px', minHeight: 18, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <span>{hover ? <><b style={{ color: 'var(--ff-navy)' }}>{monthTitle(hover.year, hover.month)}</b>: {hover.n.toLocaleString()} photo{hover.n === 1 ? '' : 's'}</> : 'Click a month to see it day by day.'}</span>
+            <span>{hover ? <><b style={{ color: 'var(--ff-navy)' }}>{monthTitle(hover.year, hover.month)}</b>: {itemsLabel(hover.n, hover.v)}</> : 'Click a month to see it day by day.'}</span>
             <div style={{ ...styles.key, marginTop: 0, marginLeft: 'auto' }}>
               <span>Fewer</span>
               <span style={{ display: 'inline-flex', gap: 2 }}>
@@ -221,7 +224,7 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
                       style={{ height: 18, borderRadius: 3, background: shade(n), cursor: n ? 'pointer' : 'default', outline: came ? '2px solid var(--ff-pink)' : 'none', outlineOffset: 1,
                         display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '0 6px', fontSize: 10.5, lineHeight: 1, fontVariantNumeric: 'tabular-nums',
                         color: strength(n, grid.max) > 0.55 ? 'rgba(255,255,255,0.85)' : 'rgba(27,41,70,0.55)', userSelect: 'none' }}
-                      onMouseEnter={() => setHover({ year: y, month: m, n })}
+                      onMouseEnter={() => setHover({ year: y, month: m, n, v: grid.vmap.get(`${y}-${m}`) ?? 0 })}
                       onMouseLeave={() => setHover(null)}
                       {...(n ? asButton(() => openMonth(y, m)) : {})}
                       aria-label={n ? `${monthTitle(y, m)}, ${n.toLocaleString()} photo${n === 1 ? '' : 's'}` : undefined}
@@ -244,10 +247,11 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
               prev={monthStep(drill.year, drill.month, -1)}
               next={monthStep(drill.year, drill.month, 1)}
             />
-            <span style={styles.muted}>{monthCount(drill.year, drill.month).toLocaleString()} photo{monthCount(drill.year, drill.month) === 1 ? '' : 's'}{scopeNote}</span>
+            <span style={styles.muted}>{itemsLabel(monthCount(drill.year, drill.month), grid.vmap.get(`${drill.year}-${drill.month}`) ?? 0)}{scopeNote}</span>
             <div style={{ flex: 1 }} />
             <button style={styles.pill} title={scope === 'notpublic' ? 'The Photostream cannot show only not-public photos, so this opens every photo from that month' : 'See these in the Photostream'} onClick={() => onOpenRange(rangeOf(drill).from, rangeOf(drill).to, scope === 'public')}><span style={styles.icon}><OpenIcon /></span>{scope === 'notpublic' ? 'Open all in Photostream' : 'Open in Photostream'}</button>
             <button style={styles.pill} onClick={() => setRoll({ year: drill.year, month: drill.month })} title="The month's photos in date order, grouped by day"><span style={styles.icon}><CameraRollIcon /></span>Camera roll</button>
+            <BatchEditButton inline style={styles.pill} label="Batch editor" getIds={async () => { const r = rangeOf(drill); return (await window.flickrAPI.getDatePhotoIds({ kind: 'range', from: r.from, to: r.to, scope })).map(p => p.id) }} />
             <button style={{ ...styles.pill, ...styles.primary }} onClick={() => void download(drill)}><DownloadIcon />Download these {monthCount(drill.year, drill.month).toLocaleString()}</button>
           </div>
           <div style={styles.card}>

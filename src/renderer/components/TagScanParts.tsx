@@ -79,14 +79,25 @@ export function LibraryDataChip({ status, info, onUpdate, onRebuild }: { status:
   )
 }
 
+// "Not now" on the upgrade notice hides it until the app is opened again (a Rebuild is what makes it go for good)
+let upgradeNoticeHidden = false
+
 // Warnings under the data line: the library list and Flickr disagree, or the last scan failed
-export function ScanNotices({ status, scanError }: { status: TagIndexStatus; scanError: string | null }): React.JSX.Element {
+export function ScanNotices({ status, scanError, onRebuild }: { status: TagIndexStatus; scanError: string | null; onRebuild: () => void }): React.JSX.Element {
   const libraryGap = status.flickrTotal !== null ? status.flickrTotal - status.indexedPhotos : 0
+  const [hidden, setHidden] = useState(upgradeNoticeHidden)
   return (
     <>
       {(libraryGap < 0 || libraryGap > 10) && (
         <div style={styles.notice}>
           Flickr reports {status.flickrTotal?.toLocaleString()} photos but {status.indexedPhotos.toLocaleString()} are in your tag list. Photos may have been added or removed. Update picks up new and changed photos, but only a Rebuild drops deleted ones.
+        </div>
+      )}
+      {status.hasIndex && !status.hasCatalogV3 && !hidden && (
+        <div style={{ ...styles.notice, display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+          <span style={{ flex: 1, minWidth: 260 }}>FlickrFetch has been updated since you last rebuilt your local library list. The new version checks a few more details about each photo, so some checks show zero until you rebuild. Press Rebuild once. It will take just a few minutes.</span>
+          <button style={styles.secondaryBtn} onClick={onRebuild}>Rebuild…</button>
+          <button style={styles.linkBtn} onClick={() => { upgradeNoticeHidden = true; setHidden(true) }} title="Hide this until you next open FlickrFetch">Not now</button>
         </div>
       )}
       {scanError && <div style={{ ...styles.notice, color: 'var(--ff-error)' }}>{scanError}</div>}
@@ -111,7 +122,7 @@ export function ScanLine({ status, scanError, onRefresh, onFullRescan }: {
         <div style={{ flex: 1 }} />
         <LibraryDataChip status={status} info={'Tags are read from your photos once and kept on this computer.\n\nNothing here changes Flickr or your files.'} onUpdate={onRefresh} onRebuild={onFullRescan} />
       </div>
-      <ScanNotices status={status} scanError={scanError} />
+      <ScanNotices status={status} scanError={scanError} onRebuild={onFullRescan} />
     </>
   )
 }

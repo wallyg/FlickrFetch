@@ -1,4 +1,4 @@
-import type { FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery, DiscoverDownloadRecord, DiscoverUser, DiscoverContact, DiscoverGroup, TagIndexStatus, TagLetterGroup, TagListQuery, TagListPage, TagScanProgress, AuditSummary, AuditListQuery, AuditListPage, AuditSetRequest, AuditPlanRow, AuditExportQuery, HealthSummary, HealthListQuery, HealthListPage, HealthSetRequest, HealthExportQuery, AuditOverview, HealthOverview, DayView, DayQuery, DayPhoto, DayPhotosQuery, DatePhotoIdsQuery, PrivacyScope, TimelineMonths, TimelineDays, TodaySummary, CameraRollQuery, CameraRollView } from '../shared/types'
+import type { BackupQuery, BackupSummary, FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery, DiscoverDownloadRecord, DiscoverUser, DiscoverContact, DiscoverGroup, TagIndexStatus, TagLetterGroup, TagListQuery, TagListPage, TagScanProgress, AuditSummary, AuditListQuery, AuditListPage, AuditSetRequest, AuditPlanRow, AuditExportQuery, HealthSummary, HealthListQuery, HealthListPage, HealthSetRequest, HealthExportQuery, AuditOverview, HealthOverview, DayView, DayQuery, DayPhoto, DayPhotosQuery, DatePhotoIdsQuery, PrivacyScope, TimelineMonths, TimelineDays, TodaySummary, CameraRollQuery, CameraRollView } from '../shared/types'
 
 declare module '*.png' {
   const src: string
@@ -33,6 +33,12 @@ declare global {
       listTags: (query: TagListQuery) => Promise<TagListPage>
       countTagPhotos: (names: string[], mode: 'any' | 'all') => Promise<number>
       onTagScanProgress: (callback: (progress: TagScanProgress) => void) => () => void
+      getHealthPhotoIds: (query: HealthExportQuery) => Promise<string[]>
+      getAuditPhotoIds: (tag: string) => Promise<string[]>
+      openBatchEditor: (ids: string[], part: number) => Promise<{ parts: number; count: number }>
+      getBackupSummary: () => Promise<BackupSummary>
+      listBackupPhotos: (query: BackupQuery) => Promise<HealthListPage>
+      getBackupPhotos: (query: Omit<BackupQuery, 'offset' | 'limit'>) => Promise<{ id: string; title: string }[]>
       getAuditSummary: () => Promise<AuditSummary>
       getAuditOverview: () => Promise<AuditOverview>
       listAuditFindings: (query: AuditListQuery) => Promise<AuditListPage>

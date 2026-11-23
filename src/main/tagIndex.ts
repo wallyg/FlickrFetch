@@ -8,6 +8,7 @@ import { loadSettings } from './settings'
 import { signedGet, clearTagSearchMemory } from './flickr'
 import { getDb } from './database'
 import { foldLatinAccents } from '../shared/tags'
+import { descriptionFlags } from '../shared/descriptionFlags'
 import type {
   FlickrTokenData, TagIndexStatus, TagScanProgress, TagListQuery, TagListPage, TagRow, TagLetterGroup
 } from '../shared/types'
@@ -31,6 +32,8 @@ interface RawPhoto {
   latitude?: number | string; longitude?: number | string
   url_q?: string; datetaken?: string
   ispublic?: number | string; isfriend?: number | string; isfamily?: number | string
+  media?: string; dateupload?: string | number
+  accuracy?: string | number; datetakenunknown?: string | number
 }
 
 // One row per photo with what the Health report needs (also created by photoHealth.ts, so it lives here once)
@@ -45,7 +48,12 @@ export const PHOTO_META_DDL = `
     date_taken TEXT NOT NULL DEFAULT '',
     privacy INTEGER NOT NULL DEFAULT 0,
     latitude REAL,
-    longitude REAL
+    longitude REAL,
+    media TEXT NOT NULL DEFAULT 'photo',
+    date_upload INTEGER,
+    desc_flags INTEGER NOT NULL DEFAULT 0,
+    geo_accuracy INTEGER NOT NULL DEFAULT 0,
+    date_unknown INTEGER NOT NULL DEFAULT 0
   );
 `
 
@@ -55,6 +63,13 @@ export function addPhotoMetaColumns(db: Database.Database): void {
   if (!have.has('privacy')) db.exec('ALTER TABLE photo_meta ADD COLUMN privacy INTEGER NOT NULL DEFAULT 0')
   if (!have.has('latitude')) db.exec('ALTER TABLE photo_meta ADD COLUMN latitude REAL')
   if (!have.has('longitude')) db.exec('ALTER TABLE photo_meta ADD COLUMN longitude REAL')
+  // 3.6: photo or video, when it was uploaded, and what is wrong with the description
+  if (!have.has('media')) db.exec("ALTER TABLE photo_meta ADD COLUMN media TEXT NOT NULL DEFAULT 'photo'")
+  if (!have.has('date_upload')) db.exec('ALTER TABLE photo_meta ADD COLUMN date_upload INTEGER')
+  if (!have.has('desc_flags')) db.exec('ALTER TABLE photo_meta ADD COLUMN desc_flags INTEGER NOT NULL DEFAULT 0')
+  // how exact the geotag is (0 when there is none) and Flickr's own flag for a date taken that is only a guess
+  if (!have.has('geo_accuracy')) db.exec('ALTER TABLE photo_meta ADD COLUMN geo_accuracy INTEGER NOT NULL DEFAULT 0')
+  if (!have.has('date_unknown')) db.exec('ALTER TABLE photo_meta ADD COLUMN date_unknown INTEGER NOT NULL DEFAULT 0')
 }
 
 // 0 public, 1 friends, 2 family, 3 friends and family, 4 private
@@ -66,7 +81,7 @@ function privacyOf(p: RawPhoto): number {
 }
 
 // What each scan asks Flickr to include with every photo
-const SCAN_EXTRAS = 'tags,last_update,description,geo,url_q,date_taken,ispublic,isfriend,isfamily'
+const SCAN_EXTRAS = 'tags,last_update,description,geo,url_q,date_taken,ispublic,isfriend,isfamily,media,date_upload'
 
 // ── Schema and small helpers ─────────────────────────────────────────────────
 
@@ -170,10 +185,12 @@ function indexPhotos(db: Database.Database, photos: RawPhoto[], scanId: number, 
   `)
   const insertLink = db.prepare('INSERT OR IGNORE INTO tag_photo (photo_id, tag_id) VALUES (?, ?)')
   const upsertMeta = db.prepare(`
-    INSERT INTO photo_meta (photo_id, title, has_description, has_tags, has_location, thumb_url, date_taken, privacy, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO photo_meta (photo_id, title, has_description, has_tags, has_location, thumb_url, date_taken, privacy, latitude, longitude, media, date_upload, desc_flags, geo_accuracy, date_unknown) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(photo_id) DO UPDATE SET title = excluded.title, has_description = excluded.has_description, has_tags = excluded.has_tags,
       has_location = excluded.has_location, thumb_url = excluded.thumb_url, date_taken = excluded.date_taken,
-      privacy = excluded.privacy, latitude = excluded.latitude, longitude = excluded.longitude
+      privacy = excluded.privacy, latitude = excluded.latitude, longitude = excluded.longitude,
+      media = excluded.media, date_upload = excluded.date_upload, desc_flags = excluded.desc_flags,
+      geo_accuracy = excluded.geo_accuracy, date_unknown = excluded.date_unknown
   `)
 
   db.transaction(() => {
@@ -185,7 +202,10 @@ function indexPhotos(db: Database.Database, photos: RawPhoto[], scanId: number, 
       // Flickr reports 0, 0 for a photo with no location
       const hasLocation = Number(photo.latitude ?? 0) !== 0 || Number(photo.longitude ?? 0) !== 0
       upsertMeta.run(photo.id, photo.title ?? '', description.trim() ? 1 : 0, names.size > 0 ? 1 : 0, hasLocation ? 1 : 0, photo.url_q ?? '', photo.datetaken ?? '',
-        privacyOf(photo), hasLocation ? Number(photo.latitude) : null, hasLocation ? Number(photo.longitude) : null)
+        privacyOf(photo), hasLocation ? Number(photo.latitude) : null, hasLocation ? Number(photo.longitude) : null,
+        photo.media === 'video' ? 'video' : 'photo', Number(photo.dateupload) > 0 ? Number(photo.dateupload) : null,
+        descriptionFlags(description, photo.title ?? '', names),
+        Math.max(0, Number(photo.accuracy) || 0), Number(photo.datetakenunknown) === 1 ? 1 : 0)
       for (const name of names) {
         let id = tagIds.get(name)
         if (id === undefined) {
@@ -308,6 +328,7 @@ async function runFullScan(db: Database.Database, tokenData: FlickrTokenData, se
   setMeta(db, 'last_full_scan_at', Date.now())
   setMeta(db, 'has_photo_meta', 1)
   setMeta(db, 'has_catalog_v2', 1)   // privacy and coordinates are saved too (3.5)
+  setMeta(db, 'has_scan_36', 1)   // media type, upload date, geotag accuracy and description flags are saved too (3.6)
   setMeta(db, 'flickr_total', total)
   clearTagSearchMemory()
   send({ mode: 'full', phase: 'done', page: pages, pages, photos: photosDone, total })
@@ -405,7 +426,8 @@ export function getTagIndexStatus(): TagIndexStatus {
     flickrTotal: metaNumber(db, 'flickr_total'),
     hasSpellings: metaNumber(db, 'has_spellings') === 1,
     hasPhotoMeta: metaNumber(db, 'has_photo_meta') === 1,
-    hasCatalog: metaNumber(db, 'has_catalog_v2') === 1
+    hasCatalog: metaNumber(db, 'has_catalog_v2') === 1,
+    hasCatalogV3: metaNumber(db, 'has_scan_36') === 1
   }
 }
 
@@ -496,7 +518,7 @@ export function listTags(q: TagListQuery): TagListPage {
   const db = requireDb()
   const { sql, params } = buildWhere(q)
   const total = (db.prepare(`SELECT COUNT(*) AS n FROM tag_names WHERE ${sql}`).get(...params) as { n: number }).n
-  const order = q.sort === 'count' ? 'photo_count DESC, name ASC' : 'name ASC'
+  const order = q.sort === 'count' ? 'photo_count DESC, name ASC' : q.sort === 'alphaDesc' ? 'name DESC' : 'name ASC'
   const limit = Math.min(Math.max(q.limit ?? 200, 1), 1000)
   const offset = Math.max(q.offset ?? 0, 0)
   const rows = db.prepare(`

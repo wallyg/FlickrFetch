@@ -6,7 +6,7 @@ import { readFileSync, mkdirSync, rmSync, createWriteStream } from 'fs'
 import archiver from 'archiver'
 import { startOAuthFlow, verifyOAuth, loadToken, clearToken } from './auth'
 import { getUserInfo, getPhotos, getPhotoSizes, getPhotoInfo, getPhotoExif, getAlbums, getAlbumPhotos, getPublicAlbumPhotos, getCollectionTree, getDiscoverCollectionTree, resolveVideoUrl, getRecentlyUpdated, findDiscoverUser, getPublicPhotos, getUserPublicAlbums, getContacts, getUserGroups, getGroupPhotos, getInterestingness } from './flickr'
-import { downloadPhoto, downloadToFolder } from './downloader'
+import { downloadPhoto, downloadToFolder, describeSize } from './downloader'
 import { endExifTool } from './exiftool'
 import { loadSettings, saveSettings, resetSettings, ensureDownloadFolder } from './settings'
 import { registerTagIpc } from './tagIndex'
@@ -14,6 +14,8 @@ import { registerAuditIpc } from './tagAudit'
 import { registerHealthIpc } from './photoHealth'
 import { registerDatesIpc } from './dateViews'
 import { registerShareIpc } from './share'
+import { registerBatchIpc, batchUrl } from './batchEdit'
+import { registerBackupIpc } from './backupReport'
 import { ownerNsid, forgetOwnerNsid } from './owner'
 import { openDatabase, closeDatabase, writeBatchLog, writePhotoRecord, getPhotoRecord, getPhotoRecordsBatch, getBatchLog, clearBatchLog, clearAllHistory, searchPhotoRecords, deletePhotoRecord, deletePhotoRecords, clearPhotoRecords, writeDiscoverRecord, getDiscoverRecordsBatch, searchDiscoverRecords, deleteDiscoverRecord, deleteDiscoverRecords, clearDiscoverRecords } from './database'
 import type { AppSettings, FileNamingConfig, PhotoInfo, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams, MetadataSettings, DiscoverUser, DiscoverContact, DiscoverGroup } from '../shared/types'
@@ -283,7 +285,7 @@ ipcMain.handle('photos:download', async (_event, photoId: string, photoTitle: st
     const effectiveSize = downloadSize ?? globalDownloadSize
     const filename = buildFilename(fileNaming, photoId, photoTitle, photoInfo, undefined, effectiveSize)
     const filePath = await downloadPhoto(sizes, filename, mainWindow, activeDownloadController.signal, photoInfo, metadata, effectiveSize)
-    if (filePath && track) writePhotoRecord(photoId, lastUpdate, photoTitle, thumbnailUrl)
+    if (filePath && track) writePhotoRecord(photoId, lastUpdate, photoTitle, thumbnailUrl, describeSize(sizes, effectiveSize))
     return { filePath }
   } finally {
     activeDownloadController = null
@@ -328,6 +330,8 @@ registerAuditIpc(() => mainWindow)
 registerHealthIpc(() => mainWindow)
 registerDatesIpc(() => mainWindow)
 registerShareIpc(() => mainWindow)
+registerBatchIpc()
+registerBackupIpc()
 
 // Folder picker dialog
 ipcMain.handle('shell:pickFolder', async () => {
@@ -545,7 +549,7 @@ async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'p
         if (outcome.status === 'downloaded') {
           downloadedCount++
           if (!zipMode) lastFilePath = outcome.filePath
-          if (track) writePhotoRecord(photo.id, photo.lastUpdate ?? 0, photo.title, photo.thumbnailUrl)
+          if (track) writePhotoRecord(photo.id, photo.lastUpdate ?? 0, photo.title, photo.thumbnailUrl, describeSize(sizes, downloadSize))
           if (zipMode) manifestPhotos.push({ id: photo.id, title: photo.title, filename: basename(outcome.filePath) })
           sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: outcome.filePath, status: 'running', skippedCount, skippedSizeUnavailableCount, failedCount })
         } else if (outcome.reason === 'size-unavailable') {
@@ -668,7 +672,7 @@ async function runSelectedBatch(photos: { id: string; title: string }[], albumTi
         if (outcome.status === 'downloaded') {
           downloadedCount++
           if (!zipMode) lastFilePath = outcome.filePath
-          if (track) writePhotoRecord(photo.id, 0, photo.title, photo.thumbnailUrl)
+          if (track) writePhotoRecord(photo.id, 0, photo.title, photo.thumbnailUrl, describeSize(sizes, downloadSize))
           if (zipMode) manifestPhotos.push({ id: photo.id, title: photo.title, filename: basename(outcome.filePath) })
           sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: outcome.filePath, status: 'running', skippedCount, skippedSizeUnavailableCount, failedCount })
         } else if (outcome.reason === 'size-unavailable') {
@@ -1050,7 +1054,7 @@ async function runPhotostreamBatch(albumTitle: string, track = true, smartMode?:
         if (outcome.status === 'downloaded') {
           downloadedCount++
           if (!zipMode) lastFilePath = outcome.filePath
-          if (track) writePhotoRecord(photo.id, photo.lastUpdate ?? 0, photo.title, photo.thumbnailUrl)
+          if (track) writePhotoRecord(photo.id, photo.lastUpdate ?? 0, photo.title, photo.thumbnailUrl, describeSize(sizes, downloadSize))
           if (zipMode) manifestPhotos.push({ id: photo.id, title: photo.title, filename: basename(outcome.filePath) })
           sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: outcome.filePath, status: 'running', skippedCount, failedCount })
         } else {
@@ -1293,7 +1297,9 @@ ipcMain.on('photo:contextMenu', (_event, photoId: string) => {
   const url = nsid ? `https://www.flickr.com/photos/${nsid}/${photoId}` : `https://www.flickr.com/photo.gne?id=${photoId}`
   Menu.buildFromTemplate([
     { label: 'Open on Flickr', click: () => { void shell.openExternal(url) } },
-    { label: 'Copy Flickr link', click: () => clipboard.writeText(url) }
+    { label: 'Copy Flickr link', click: () => clipboard.writeText(url) },
+    { type: 'separator' },
+    { label: "Fix in Flickr's batch editor", click: () => { void shell.openExternal(batchUrl([photoId])) } }
   ]).popup({ window: mainWindow })
 })
 

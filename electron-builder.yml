@@ -18,6 +18,8 @@ extraResources:
   - from: resources/splash.png
     to: splash.png
 
+afterPack: scripts/adhocSign.cjs
+
 mac:
   icon: assets/brand/icon.icns
   target:

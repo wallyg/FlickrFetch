@@ -4,7 +4,7 @@ import { join } from 'path'
 import { pipeline } from 'stream/promises'
 import axios from 'axios'
 import { embedMetadata, shouldSkipGps } from './exiftool'
-import type { PhotoSize, PhotoInfo, DownloadSize, ConflictBehavior, MetadataSettings } from '../shared/types'
+import type { PhotoSize, PhotoInfo, DownloadSize, DownloadedSize, ConflictBehavior, MetadataSettings } from '../shared/types'
 
 const USER_AGENT = 'FlickrFetch/0.1.0 (Electron desktop app; https://github.com/flickrfetch)'
 
@@ -40,6 +40,15 @@ function pickSize(sizes: PhotoSize[], downloadSize: DownloadSize): PhotoSize | u
     default:
       return find('Original', 'Large 2048') ?? photoSizes[photoSizes.length - 1]
   }
+}
+
+// Which size a photo will come down at, to save with its download record. "Limited" = the original was asked for and Flickr
+// did not offer it (free accounts only get sizes up to 1024 px), so the copy is smaller than the original.
+export function describeSize(sizes: PhotoSize[], downloadSize: DownloadSize = 'original'): DownloadedSize {
+  const chosen = pickSize(sizes, downloadSize)
+  if (!chosen) return { label: '', width: 0, height: 0, limited: false }
+  const limited = downloadSize === 'original' && chosen.media === 'photo' && chosen.label !== 'Original'
+  return { label: chosen.label, width: chosen.width, height: chosen.height, limited }
 }
 
 // Named "<file>.<ext>.json" so a photo and video sharing a base name get separate sidecars.

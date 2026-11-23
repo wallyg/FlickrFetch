@@ -69,6 +69,8 @@ export interface AppSettings {
   onThisDayNotify?: boolean    // one macOS notification a day with today's On This Day (default off)
   autoUpdateWhen?: 'open' | 'daily' | 'off'   // quietly Update the library list: every time the app opens, once a day (default), or never
   autoUpdate?: boolean         // earlier form of the same setting (false = off); autoUpdateWhen wins when both exist
+  auditGenericWords?: string[] // the words the 'generic tags' check flags (a trailing * matches anything that starts that way); default list in cleanupRules.ts
+  healthTagLimit?: number      // the 'too many tags' check flags photos with at least this many tags (2 to 75, default 65)
   cleanupRules?: Record<string, 'off' | 'optional' | 'on'>   // per check in the Cleanup tab; see shared/cleanupRules.ts
 }
 
@@ -275,6 +277,7 @@ export interface TagIndexStatus {
   flickrTotal: number | null      // photo total reported by Flickr at the last check
   hasSpellings: boolean           // true when the as-typed spellings were fetched ("New York")
   hasCatalog: boolean             // true when the scan also saved each photo's privacy and location (3.5), for On This Day and the Timeline
+  hasCatalogV3: boolean           // true when it also saved the media type, upload date and description flags (3.6)
   hasPhotoMeta: boolean           // true when the scan also saved titles, descriptions, locations and thumbnails
 }
 
@@ -307,7 +310,7 @@ export interface TagListQuery {
   digits?: boolean             // true = tags that start with a digit
   text?: string                // text typed in the filter box
   operator?: TagTextOperator   // how text matches (default contains)
-  sort?: 'alpha' | 'count'
+  sort?: 'alpha' | 'alphaDesc' | 'count'
   includeMachine?: boolean     // machine tags (contain ':') are hidden unless true
   offset?: number
   limit?: number
@@ -325,7 +328,7 @@ export interface TagLetterGroup {
 }
 
 // ── Tag audit (read-only report of likely tag problems) ──────────────────────
-export type AuditCategory = 'glued' | 'typo' | 'notwin' | 'noaccent' | 'junk' | 'runon' | 'spelling'
+export type AuditCategory = 'glued' | 'typo' | 'notwin' | 'noaccent' | 'junk' | 'runon' | 'spelling' | 'usedonce' | 'generic' | 'numbers' | 'filename'
 export type AuditStatus = 'open' | 'plan' | 'fine' | 'fixed'
 export type AuditConfidence = 'high' | 'medium' | 'low'
 
@@ -345,7 +348,7 @@ export interface AuditFinding {
 export interface AuditSummaryRow { category: AuditCategory; open: number; plan: number; fine: number; fixed: number }
 export interface AuditSummary { computedAt: number; hasIndex: boolean; rows: AuditSummaryRow[] }
 
-export type AuditSort = 'suggested' | 'most' | 'fewest' | 'alpha'   // suggested = strongest suspicion first (today's order)
+export type AuditSort = 'suggested' | 'most' | 'fewest' | 'alpha' | 'alphaDesc'   // suggested = strongest suspicion first (today's order)
 
 export interface AuditListQuery {
   category: AuditCategory
@@ -378,14 +381,21 @@ export interface AuditPlanRow {
 }
 
 // ── Metadata health (photos with missing or weak metadata) ───────────────────
-export type HealthCondition = 'title' | 'description' | 'tags' | 'location'
+export type HealthCondition =
+  | 'title' | 'description' | 'tags' | 'tagsOne' | 'location'                  // missing
+  | 'dateFuture' | 'dateAfterUpload' | 'datePlaceholder'                       // dates
+  | 'descLink' | 'descCopy' | 'descMarkup' | 'descTags'                        // descriptions that are not real descriptions
+  | 'locNull' | 'locFar'                                                       // locations that look wrong
+  | 'tagsMany'                                                                 // too many tags
 
 export interface HealthSummaryRow { condition: HealthCondition; open: number; fine: number }
 export interface HealthSummary { hasData: boolean; photos: number; rows: HealthSummaryRow[] }
 
+export type HealthSort = 'newest' | 'oldest' | 'title' | 'titleDesc'   // by date taken, or by title
 export interface HealthListQuery {
   condition: HealthCondition
   status: 'open' | 'fine'
+  sort?: HealthSort
   search?: string
   year?: string         // only photos taken in this year (from a dashboard cluster)
   offset: number
@@ -403,6 +413,26 @@ export interface HealthPhoto {
   status: 'open' | 'fine'
 }
 export interface HealthListPage { rows: HealthPhoto[]; total: number }
+
+// ── Backup report (what is downloaded, from local records only) ─────────────
+// Which size a photo came down at, saved with its download record (older records have no label)
+export interface DownloadedSize { label: string; width: number; height: number; limited: boolean }   // limited: the original was asked for and Flickr gave a smaller size
+
+export type BackupList = 'not' | 'new' | 'changed' | 'smaller'
+export interface BackupSummary {
+  hasData: boolean
+  library: number              // photos and videos in the library list
+  downloaded: number           // of those, how many have a download record
+  notDownloaded: number
+  lastDownloadAt: number | null   // when something was last downloaded (ms); null if never
+  newSince: number             // uploaded after that moment and not downloaded
+  changed: number              // changed on Flickr since they were downloaded
+  unknownUpdate: number        // downloaded, but the record has no Flickr update time, so a change cannot be judged
+  smaller: number              // downloaded at a smaller size than the original, because Flickr did not offer the original
+  sizeUnknown: number          // downloaded before FlickrFetch recorded sizes, so the size is not known
+}
+export type BackupSort = 'uploaded' | 'uploadedOldest' | 'taken' | 'title' | 'titleDesc'   // newest upload first by default
+export interface BackupQuery { list: BackupList; search?: string; sort?: BackupSort; offset: number; limit: number }
 
 export interface HealthSetRequest { photoId: string; condition: HealthCondition; status: 'open' | 'fine' }
 
@@ -430,7 +460,7 @@ export interface HealthOverview {
   twoOrMore: number
   onlyOne: Record<HealthCondition, number>   // photos whose only gap is this one (with twoOrMore, adds up to withGap)
   byType: { condition: HealthCondition; state: 'optional' | 'on'; open: number }[]   // checks that are Off are left out; gap counts below cover the checks that are On
-  byYear: { year: string; total: number; anyGap: number; both: number; warnOnly: number; title: number; description: number; tags: number; location: number }[]
+  byYear: { year: string; total: number; anyGap: number; both: number; warnOnly: number; by: Record<HealthCondition, number> }[]   // by: photos with each gap in that year (checks that are Off are 0)
   clusters: { condition: HealthCondition; year: string; count: number; total: number }[]
 }
 
@@ -438,8 +468,8 @@ export interface HealthOverview {
 
 export type PrivacyScope = 'all' | 'public' | 'notpublic'   // "not public" = private, friends, family, or friends and family
 
-export interface DayPhoto { id: string; title: string; thumbUrl: string; dateTaken: string; privacy: number }   // privacy: 0 public, 1 friends, 2 family, 3 friends and family, 4 private
-export interface DayYearGroup { year: string; count: number; photos: DayPhoto[] }
+export interface DayPhoto { id: string; title: string; thumbUrl: string; dateTaken: string; privacy: number; media: 'photo' | 'video' }   // privacy: 0 public, 1 friends, 2 family, 3 friends and family, 4 private
+export interface DayYearGroup { year: string; count: number; videos: number; photos: DayPhoto[] }   // count includes the videos
 export interface DayInsights {
   topTags: { name: string; count: number; key: string }[]   // key: the tag as saved in the library, for filtering
   busiestHours: { hour: number; count: number }[]
@@ -454,7 +484,8 @@ export interface DayView {
   hasCatalog: boolean          // false until a Full rescan has saved each photo's privacy (3.5)
   month: number; day: number
   scope: PrivacyScope
-  total: number
+  total: number                // photos and videos
+  videos: number               // how many of the total are videos
   counts: { all: number; public: number; notPublic: number }
   years: DayYearGroup[]        // newest year first
   insights: DayInsights
@@ -468,13 +499,13 @@ export type DatePhotoIdsQuery =
 
 export interface TimelineMonths {
   hasData: boolean; hasCatalog: boolean; scope: PrivacyScope; total: number
-  cells: { year: number; month: number; count: number }[]
+  cells: { year: number; month: number; count: number; videos: number }[]
   counts: { all: number; public: number; notPublic: number }
 }
-export interface TimelineDays { year: number; month: number; days: { day: number; count: number }[] }
+export interface TimelineDays { year: number; month: number; days: { day: number; count: number; videos: number }[] }
 
 export interface TodaySummary {
-  month: number; day: number; total: number; yearCount: number
+  month: number; day: number; total: number; videos: number; yearCount: number
   firstYear: string; lastYear: string
   topYear: { year: string; count: number } | null
   topTags: { name: string; count: number; key: string }[]
@@ -485,5 +516,5 @@ export interface TodaySummary {
 
 // Camera roll (Timeline): the photos of a month or a day in calendar order, grouped by day
 export interface CameraRollQuery { from: string; to: string; scope: PrivacyScope; order: 'asc' | 'desc'; offset: number; limit: number }   // from and to: YYYY-MM-DD, inclusive; offset and limit count days
-export interface CameraRollDay { date: string; count: number; photos: DayPhoto[] }   // photos: up to 600 per day
-export interface CameraRollView { hasData: boolean; hasCatalog: boolean; scope: PrivacyScope; totalDays: number; totalPhotos: number; days: CameraRollDay[] }
+export interface CameraRollDay { date: string; count: number; videos: number; photos: DayPhoto[] }   // photos: up to 600 per day
+export interface CameraRollView { hasData: boolean; hasCatalog: boolean; scope: PrivacyScope; totalDays: number; totalPhotos: number; totalVideos: number; days: CameraRollDay[] }

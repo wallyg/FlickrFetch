@@ -3,23 +3,22 @@ import type { AuditCategory, AuditOverview, HealthCondition, HealthOverview } fr
 import { Ring, COLORS, dash, pctLabel } from './DashboardParts'
 import { quietBtn, chip } from '../ui/kit'
 import { asButton } from '../ui/a11y'
+import { ruleById } from '../../shared/cleanupRules'
 
 // The front page of Cleanup: one scorecard per report (counting only the checks that Need attention), the best
 // places to start across all of them, and a summary of the Optional checks. Everything here opens the matching list.
 
 const TAG_NAMES: Record<AuditCategory, string> = {
   glued: 'Names stuck together', typo: 'Possible typos', notwin: 'Accented tags with no plain twin',
-  noaccent: 'Plain tags that may need accents', junk: 'Odd characters', runon: 'Run-ons', spelling: 'Typed more than one way'
+  noaccent: 'Plain tags that may need accents', junk: 'Odd characters', runon: 'Run-ons', spelling: 'Typed more than one way',
+  usedonce: 'Tags used only once', generic: 'Generic tags', numbers: 'Numbers only', filename: 'File-name tags'
 }
 const TAG_SHORT: Record<AuditCategory, string> = {
-  glued: 'stuck together', typo: 'typo', notwin: 'no plain twin', noaccent: 'needs accents', junk: 'odd characters', runon: 'run-on', spelling: 'spelling'
+  glued: 'stuck together', typo: 'typo', notwin: 'no plain twin', noaccent: 'needs accents', junk: 'odd characters', runon: 'run-on', spelling: 'spelling',
+  usedonce: 'used once', generic: 'generic', numbers: 'numbers only', filename: 'file name'
 }
-const PHOTO_NAMES: Record<HealthCondition, string> = {
-  title: 'No title, or a camera-file title', description: 'No description', tags: 'No tags', location: 'No location'
-}
-const PHOTO_PHRASE: Record<HealthCondition, string> = {
-  title: 'no title or a camera-file title', description: 'no description', tags: 'no tags', location: 'no location'
-}
+const PHOTO_NAMES = (c: HealthCondition): string => ruleById(`photos:${c}`)?.name ?? c
+const PHOTO_PHRASE = (c: HealthCondition): string => ruleById(`photos:${c}`)?.phrase ?? c
 
 interface Props {
   refreshKey: number
@@ -62,7 +61,7 @@ export default function LibraryOverview({ refreshKey, offCount, onGoTags, onGoPh
   // Best places to start, from both reports, biggest first (by photos affected)
   const starts: { key: string; label: string; pill: string; count: number; open: () => void }[] = [
     ...audit.biggest.map(b => ({ key: `t|${b.category}|${b.display}`, label: b.display, pill: `tags · ${TAG_SHORT[b.category]}`, count: b.count, open: () => onOpenTags(b.category) })),
-    ...health.clusters.map(c => ({ key: `p|${c.condition}|${c.year}`, label: `${c.year}: ${PHOTO_PHRASE[c.condition]}`, pill: 'photos', count: c.count, open: () => onOpenPhotos(c.condition, c.year) }))
+    ...health.clusters.map(c => ({ key: `p|${c.condition}|${c.year}`, label: `${c.year}: ${PHOTO_PHRASE(c.condition)}`, pill: 'photos', count: c.count, open: () => onOpenPhotos(c.condition, c.year) }))
   ].sort((a, b) => b.count - a.count)
   const shown = more ? starts.slice(0, 12) : starts.slice(0, 5)
 
@@ -112,7 +111,7 @@ export default function LibraryOverview({ refreshKey, offCount, onGoTags, onGoPh
         {optionalTags.length + optionalPhotos.length === 0 && <span style={dash.muted}>Nothing to show.</span>}
         {optionalPhotos.map(t => (
           <div key={`p${t.condition}`} style={dash.item} {...asButton(() => onOpenPhotos(t.condition))}>
-            <span>{PHOTO_NAMES[t.condition]}<span style={dash.pill}>photos</span></span><b>{fmt(t.open)}</b>
+            <span>{PHOTO_NAMES(t.condition)}<span style={dash.pill}>photos</span></span><b>{fmt(t.open)}</b>
           </div>
         ))}
         {optionalTags.map(r => (

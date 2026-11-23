@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3'
 import { app } from 'electron'
 import { join } from 'path'
-import type { BatchLogEntry, PhotoDownloadRecord, DiscoverDownloadRecord } from '../shared/types'
+import type { BatchLogEntry, PhotoDownloadRecord, DiscoverDownloadRecord, DownloadedSize } from '../shared/types'
 
 let db: Database.Database | null = null
 
@@ -57,6 +57,11 @@ export function openDatabase(): void {
   const cols = (db.prepare("PRAGMA table_info(photo_download_record)").all() as Array<{ name: string }>).map(r => r.name)
   if (!cols.includes('title')) db.exec("ALTER TABLE photo_download_record ADD COLUMN title TEXT NOT NULL DEFAULT ''")
   if (!cols.includes('thumbnail_url')) db.exec("ALTER TABLE photo_download_record ADD COLUMN thumbnail_url TEXT NOT NULL DEFAULT ''")
+  // 3.6: the size each photo came down at ('' = recorded before sizes were kept)
+  if (!cols.includes('size_label')) db.exec("ALTER TABLE photo_download_record ADD COLUMN size_label TEXT NOT NULL DEFAULT ''")
+  if (!cols.includes('size_width')) db.exec('ALTER TABLE photo_download_record ADD COLUMN size_width INTEGER NOT NULL DEFAULT 0')
+  if (!cols.includes('size_height')) db.exec('ALTER TABLE photo_download_record ADD COLUMN size_height INTEGER NOT NULL DEFAULT 0')
+  if (!cols.includes('size_limited')) db.exec('ALTER TABLE photo_download_record ADD COLUMN size_limited INTEGER NOT NULL DEFAULT 0')
   const discoverCols = (db.prepare("PRAGMA table_info(discover_download_record)").all() as Array<{ name: string }>).map(r => r.name)
   if (!discoverCols.includes('source')) db.exec("ALTER TABLE discover_download_record ADD COLUMN source TEXT NOT NULL DEFAULT ''")
 }
@@ -97,17 +102,21 @@ export function writeBatchLog(entry: Omit<BatchLogEntry, 'id'>): number {
   return transaction() as number
 }
 
-export function writePhotoRecord(photoId: string, flickrLastUpdate: number, title = '', thumbnailUrl = ''): void {
+export function writePhotoRecord(photoId: string, flickrLastUpdate: number, title = '', thumbnailUrl = '', size?: DownloadedSize): void {
   if (!db) return
   db.prepare(`
-    INSERT INTO photo_download_record (photo_id, last_downloaded_at, flickr_last_update, title, thumbnail_url)
-    VALUES (@photoId, @now, @flickrLastUpdate, @title, @thumbnailUrl)
+    INSERT INTO photo_download_record (photo_id, last_downloaded_at, flickr_last_update, title, thumbnail_url, size_label, size_width, size_height, size_limited)
+    VALUES (@photoId, @now, @flickrLastUpdate, @title, @thumbnailUrl, @sizeLabel, @sizeWidth, @sizeHeight, @sizeLimited)
     ON CONFLICT(photo_id) DO UPDATE SET
       last_downloaded_at = excluded.last_downloaded_at,
       flickr_last_update = excluded.flickr_last_update,
       title = excluded.title,
-      thumbnail_url = excluded.thumbnail_url
-  `).run({ photoId, now: Date.now(), flickrLastUpdate, title, thumbnailUrl })
+      thumbnail_url = excluded.thumbnail_url,
+      size_label = excluded.size_label,
+      size_width = excluded.size_width,
+      size_height = excluded.size_height,
+      size_limited = excluded.size_limited
+  `).run({ photoId, now: Date.now(), flickrLastUpdate, title, thumbnailUrl, sizeLabel: size?.label ?? '', sizeWidth: size?.width ?? 0, sizeHeight: size?.height ?? 0, sizeLimited: size?.limited ? 1 : 0 })
 }
 
 function rowToRecord(row: Record<string, unknown>): PhotoDownloadRecord {

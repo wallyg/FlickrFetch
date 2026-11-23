@@ -4,7 +4,7 @@ import { MediaFilter, PhotoViewMode, DownloadFilter, PrivacyFilter, PrivacyLevel
 import EmptyState from './EmptyState'
 import BackToTop from '../ui/BackToTop'
 
-type SortOrder = 'date-posted-desc' | 'date-posted-asc' | 'date-taken-desc' | 'date-taken-asc'
+type SortOrder = 'date-posted-desc' | 'date-posted-asc' | 'date-taken-desc' | 'date-taken-asc' | 'interestingness-desc'
 
 
 interface PhotoGridProps {
@@ -494,6 +494,7 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
               <option value="date-posted-asc">Oldest posted</option>
               <option value="date-taken-desc">Newest taken</option>
               <option value="date-taken-asc">Oldest taken</option>
+              <option value="interestingness-desc">Most interesting (Flickr’s ranking)</option>
             </select>
 
           </div>

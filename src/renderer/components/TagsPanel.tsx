@@ -59,7 +59,7 @@ export default function TagsPanel({ active, onViewPhotos, onOpenCleanup }: TagsP
   const [levels, setLevels] = useState<string[]>([])
   const [text, setText] = useState('')
   const [operator, setOperator] = useState<TagTextOperator>('contains')
-  const [sort, setSort] = useState<'alpha' | 'count'>('alpha')
+  const [sort, setSort] = useState<TagListQuery['sort']>('alpha')
   const [includeMachine, setIncludeMachine] = useState(false)
   const [strips, setStrips] = useState<{ prefix: string; groups: TagLetterGroup[] }[]>([])
 
@@ -223,7 +223,7 @@ export default function TagsPanel({ active, onViewPhotos, onOpenCleanup }: TagsP
       <div style={styles.center}>
         <EmptyState
           title="Build your tag list"
-          body={"Flickr can't list tags by letter or count them, so FlickrFetch reads your photos once and keeps the tags on this computer. It takes a few minutes for a big library, nothing on Flickr is changed, and afterwards browsing is instant.\n\nLater, Update reads only the photos changed since your last update, usually a few seconds. Rebuild reads every photo again, which is worth doing after you delete photos."}
+          body={"Flickr can't list tags by letter or count them, so FlickrFetch reads your photos once and keeps the tags on this computer. It takes a few minutes for a big library, and afterwards browsing is instant.\n\nLater, Update reads only the photos changed since your last update, usually a few seconds. Rebuild reads every photo again, which is worth doing after you delete photos."}
         >
           <button style={styles.primaryBtn} onClick={() => void startScan('full')}>Scan my photos</button>
           {progress?.phase === 'cancelled' && <div style={styles.muted}>Scan cancelled. Nothing was saved.</div>}
@@ -285,8 +285,9 @@ export default function TagsPanel({ active, onViewPhotos, onOpenCleanup }: TagsP
           {text && <button style={styles.clearX} onClick={() => setText('')}>✕</button>}
         </div>
         <div style={styles.optionGroup}>
-          <select style={styles.select} value={sort} onChange={e => setSort(e.target.value as 'alpha' | 'count')}>
+          <select style={styles.select} value={sort} onChange={e => setSort(e.target.value as NonNullable<TagListQuery['sort']>)}>
             <option value="alpha">A → Z</option>
+            <option value="alphaDesc">Z → A</option>
             <option value="count">Most photos first</option>
           </select>
           <label style={styles.checkLabel} title={"Machine tags look like namespace:key=value.\nThey are added by apps."}>

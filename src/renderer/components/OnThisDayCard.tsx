@@ -3,6 +3,7 @@ import type { TodaySummary } from '../../shared/types'
 import { MONTHS } from './DateViewParts'
 import { quietBtn } from '../ui/kit'
 import { BarsIcon } from '../ui/icons'
+import { itemsLabel } from '../../shared/counts'
 
 // A one-line notice at the top of My Flickr: how many photos were taken on today's date in other years. Pointing at
 // the text opens a small card with the years, the top tags and a few photos. Quiet: it can be hidden for the day,
@@ -65,7 +66,7 @@ export default function OnThisDayCard({ refreshKey, onOpen }: { refreshKey: numb
       </div>
 
       <div ref={wrapRef} style={{ flex: 1, minWidth: 0, position: 'relative' }}>
-        <span style={styles.title}>On this day: {s.total.toLocaleString()} photo{s.total === 1 ? '' : 's'}</span>
+        <span style={styles.title}>On this day: {itemsLabel(s.total, s.videos)}</span>
         <button
           style={{ ...styles.cue, color: peek ? 'var(--ff-blue)' : 'var(--ff-text-secondary)' }}
           onMouseEnter={openPeek} onMouseLeave={closePeek} onFocus={openPeek} onBlur={closePeek}
@@ -77,7 +78,7 @@ export default function OnThisDayCard({ refreshKey, onOpen }: { refreshKey: numb
           <div id="otd-peek" style={styles.peek} role="tooltip" onMouseEnter={() => { if (peekTimer.current) clearTimeout(peekTimer.current) }} onMouseLeave={closePeek}>
             <div style={styles.peekHead}>{date}, across the years</div>
             <div style={styles.peekLine}>
-              {manyYears ? `${s.total.toLocaleString()} photos from ${s.yearCount} years, ${range}.` : `${s.total.toLocaleString()} photo${s.total === 1 ? '' : 's'} from ${range}.`}
+              {manyYears ? `${itemsLabel(s.total, s.videos)} from ${s.yearCount} years, ${range}.` : `${itemsLabel(s.total, s.videos)} from ${range}.`}
               {s.topYear && manyYears ? ` Most active: ${s.topYear.year} (${s.topYear.count.toLocaleString()}).` : ''}
             </div>
             {manyYears && s.years.length > 0 && (

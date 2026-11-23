@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import BatchEditButton from './BatchEditButton'
 import type { CameraRollDay, DayPhoto, PrivacyScope } from '../../shared/types'
 import { PhotoTile } from './DateViewParts'
+import { itemsLabel } from '../../shared/counts'
 import { quietBtn, primaryBtn, linkBtn, segGroup, selectedOn, segBtn as segBtnBase } from '../ui/kit'
 
 // Camera roll: the photos of one month or one day in calendar order, grouped by day, like the camera roll in
@@ -29,6 +31,7 @@ export default function CameraRoll({ from, to, title, scope, onOpenRange, onDown
   const [days, setDays] = useState<CameraRollDay[]>([])
   const [totalDays, setTotalDays] = useState(0)
   const [totalPhotos, setTotalPhotos] = useState(0)
+  const [totalVideos, setTotalVideos] = useState(0)
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<Map<string, DayPhoto>>(new Map())
   const reqRef = useRef(0)
@@ -39,7 +42,7 @@ export default function CameraRoll({ from, to, title, scope, onOpenRange, onDown
     const v = await window.flickrAPI.getCameraRoll({ from, to, scope, order, offset, limit: PAGE_DAYS })
     if (req !== reqRef.current) return
     setDays(prev => (offset === 0 ? v.days : [...prev, ...v.days]))
-    setTotalDays(v.totalDays); setTotalPhotos(v.totalPhotos)
+    setTotalDays(v.totalDays); setTotalPhotos(v.totalPhotos); setTotalVideos(v.totalVideos)
     setLoading(false)
   }, [from, to, scope, order])
 
@@ -60,7 +63,7 @@ export default function CameraRoll({ from, to, title, scope, onOpenRange, onDown
     <div>
       <div style={styles.bar}>
         {heading ?? <b style={{ color: 'var(--ff-navy)', fontSize: 15 }}>{title}</b>}
-        <span style={styles.muted}>{totalPhotos.toLocaleString()} photo{totalPhotos === 1 ? '' : 's'} on {totalDays.toLocaleString()} day{totalDays === 1 ? '' : 's'}{scopeNote}</span>
+        <span style={styles.muted}>{itemsLabel(totalPhotos, totalVideos)} on {totalDays.toLocaleString()} day{totalDays === 1 ? '' : 's'}{scopeNote}</span>
         <div style={{ flex: 1 }} />
         <div style={styles.seg}>
           {(['asc', 'desc'] as const).map(o => (
@@ -69,6 +72,7 @@ export default function CameraRoll({ from, to, title, scope, onOpenRange, onDown
         </div>
         {onSeeOnThisDay && <button style={styles.btn} onClick={onSeeOnThisDay} title="This date in every year">See in On This Day</button>}
         <button style={styles.btn} title={scope === 'notpublic' ? 'The Photostream cannot show only not-public photos, so this opens every photo from that period' : undefined} onClick={() => onOpenRange(from, to, scope === 'public')}>{scope === 'notpublic' ? 'Open all in Photostream' : 'Open in Photostream'}</button>
+        <BatchEditButton inline style={styles.btn} label="Batch editor" getIds={async () => (await window.flickrAPI.getDatePhotoIds({ kind: 'range', from, to, scope })).map(p => p.id)} />
         <button style={{ ...styles.btn, ...styles.primary }} disabled={totalPhotos === 0} onClick={() => void downloadAll()}>Download all {totalPhotos.toLocaleString()}</button>
       </div>
 
@@ -76,6 +80,7 @@ export default function CameraRoll({ from, to, title, scope, onOpenRange, onDown
         <div style={{ ...styles.bar, background: '#fff4f9', border: '1px solid #ffc2de', borderRadius: 8, padding: '6px 10px' }}>
           <span style={styles.muted}>{selected.size} selected</span>
           <button style={styles.btn} onClick={() => onDownload([...selected.values()].map(p => ({ id: p.id, title: p.title })), `Camera roll, ${title} (selected)`, 'Only the photos you selected')}>Download selected</button>
+          <BatchEditButton inline style={styles.btn} label="Batch editor" getIds={async () => [...selected.values()].map(p => p.id)} />
           <button style={styles.link} onClick={() => setSelected(new Map())}>Clear</button>
         </div>
       )}
@@ -86,7 +91,7 @@ export default function CameraRoll({ from, to, title, scope, onOpenRange, onDown
           <div key={d.date} style={{ margin: '14px 0 4px' }}>
             <div style={styles.dayHead}>
               <b style={{ fontSize: 15, color: 'var(--ff-navy)' }}>{dayHeading(d.date)}</b>
-              <span style={styles.muted}>{d.count.toLocaleString()} photo{d.count === 1 ? '' : 's'}</span>
+              <span style={styles.muted}>{itemsLabel(d.count, d.videos)}</span>
               <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: 12 }}>
                 <button style={styles.link} onClick={() => onOpenRange(d.date, d.date, scope === 'public')}>{scope === 'notpublic' ? 'Open all in Photostream' : 'Open in Photostream'}</button>
                 <button style={styles.link} onClick={() => void downloadDay(d.date, dayHeading(d.date))}>Download this day</button>

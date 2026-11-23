@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { IpcRendererEvent } from 'electron'
-import type { FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery, DiscoverDownloadRecord, DiscoverUser, DiscoverContact, DiscoverGroup, AuditSummary, AuditListQuery, AuditListPage, AuditSetRequest, AuditPlanRow, AuditExportQuery, HealthSummary, HealthListQuery, DayView, DayQuery, DayPhoto, DayPhotosQuery, DatePhotoIdsQuery, PrivacyScope, TimelineMonths, TimelineDays, TodaySummary, CameraRollQuery, CameraRollView, HealthListPage, HealthSetRequest, HealthExportQuery, AuditOverview, HealthOverview, TagIndexStatus, TagLetterGroup, TagListQuery, TagListPage, TagScanProgress } from '../shared/types'
+import type { BackupQuery, BackupSummary, FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery, DiscoverDownloadRecord, DiscoverUser, DiscoverContact, DiscoverGroup, AuditSummary, AuditListQuery, AuditListPage, AuditSetRequest, AuditPlanRow, AuditExportQuery, HealthSummary, HealthListQuery, DayView, DayQuery, DayPhoto, DayPhotosQuery, DatePhotoIdsQuery, PrivacyScope, TimelineMonths, TimelineDays, TodaySummary, CameraRollQuery, CameraRollView, HealthListPage, HealthSetRequest, HealthExportQuery, AuditOverview, HealthOverview, TagIndexStatus, TagLetterGroup, TagListQuery, TagListPage, TagScanProgress } from '../shared/types'
 
 // Expose a safe, limited API surface to the renderer process.
 // The renderer cannot access Node.js or Electron directly — only these methods.
@@ -92,6 +92,12 @@ contextBridge.exposeInMainWorld('flickrAPI', {
   saveAuditListCsv: (query: AuditExportQuery): Promise<string | null> => ipcRenderer.invoke('audit:saveListCsv', query),
 
   // Metadata health
+  getHealthPhotoIds: (query: HealthExportQuery): Promise<string[]> => ipcRenderer.invoke('health:ids', query),
+  getAuditPhotoIds: (tag: string): Promise<string[]> => ipcRenderer.invoke('audit:photoIds', tag),
+  openBatchEditor: (ids: string[], part: number): Promise<{ parts: number; count: number }> => ipcRenderer.invoke('batch:open', ids, part),
+  getBackupSummary: (): Promise<BackupSummary> => ipcRenderer.invoke('backup:summary'),
+  listBackupPhotos: (query: BackupQuery): Promise<HealthListPage> => ipcRenderer.invoke('backup:list', query),
+  getBackupPhotos: (query: Omit<BackupQuery, 'offset' | 'limit'>): Promise<{ id: string; title: string }[]> => ipcRenderer.invoke('backup:photos', query),
   getHealthSummary: (): Promise<HealthSummary> => ipcRenderer.invoke('health:summary'),
   getHealthOverview: (): Promise<HealthOverview> => ipcRenderer.invoke('health:overview'),
   listHealthPhotos: (query: HealthListQuery): Promise<HealthListPage> => ipcRenderer.invoke('health:list', query),

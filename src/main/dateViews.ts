@@ -6,6 +6,7 @@ import type Database from 'better-sqlite3'
 import { getDb } from './database'
 import { loadSettings } from './settings'
 import { addPhotoMetaColumns } from './tagIndex'
+import { itemsLabel } from '../shared/counts'
 import type {
   DayPhoto, DayYearGroup, DayInsights, DayView, DayQuery, DayPhotosQuery, DatePhotoIdsQuery, PrivacyScope,
   TimelineMonths, TimelineDays, TodaySummary, CameraRollQuery, CameraRollView, CameraRollDay
@@ -64,8 +65,10 @@ function dayCount(db: Database.Database, month: number, day: number, scope: Priv
   return (db.prepare(`SELECT COUNT(*) AS n FROM photo_meta p WHERE substr(p.date_taken, 6, 5) = ? AND ${yearRange(month, day)}${scopeSql(scope, catalog)}${t.sql}`).get(mmdd(month, day), ...t.params) as { n: number }).n
 }
 
-const toPhoto = (r: { photo_id: string; title: string; thumb_url: string; date_taken: string; privacy: number }): DayPhoto =>
-  ({ id: r.photo_id, title: r.title, thumbUrl: r.thumb_url, dateTaken: r.date_taken, privacy: r.privacy })
+const toPhoto = (r: { photo_id: string; title: string; thumb_url: string; date_taken: string; privacy: number; media: string }): DayPhoto =>
+  ({ id: r.photo_id, title: r.title, thumbUrl: r.thumb_url, dateTaken: r.date_taken, privacy: r.privacy, media: r.media === 'video' ? 'video' : 'photo' })
+// How many of a group of items are videos (the column is 'photo' until a Rebuild has read the media type)
+const VIDEOS = "COALESCE(SUM(p.media = 'video'), 0)"
 
 function insightsFor(db: Database.Database, month: number, day: number, scope: PrivacyScope, catalog: boolean, tag?: string): DayInsights {
   const md = mmdd(month, day)
@@ -96,7 +99,7 @@ function insightsFor(db: Database.Database, month: number, day: number, scope: P
 export function dayView(q: DayQuery): DayView {
   const db = readyDb()
   const empty: DayView = {
-    hasData: false, hasCatalog: false, month: q.month, day: q.day, scope: q.scope, total: 0,
+    hasData: false, hasCatalog: false, month: q.month, day: q.day, scope: q.scope, total: 0, videos: 0,
     counts: { all: 0, public: 0, notPublic: 0 }, years: [],
     insights: { topTags: [], hourCounts: Array.from({ length: 24 }, () => 0), busiestHours: [], earliestHour: null, latestHour: null, withLocation: 0 },
     prev: { month: q.month, day: q.day, count: 0 }, next: { month: q.month, day: q.day, count: 0 }
@@ -114,16 +117,16 @@ export function dayView(q: DayQuery): DayView {
     public: catalog ? dayCount(db, q.month, q.day, 'public', catalog, q.tag) : 0,
     notPublic: catalog ? dayCount(db, q.month, q.day, 'notpublic', catalog, q.tag) : 0
   }
-  const yearRows = db.prepare(`SELECT substr(p.date_taken, 1, 4) AS year, COUNT(*) AS n FROM photo_meta p WHERE ${where} GROUP BY year ORDER BY year DESC`).all(md, ...tg.params) as { year: string; n: number }[]
-  const pick = db.prepare(`SELECT p.photo_id, p.title, p.thumb_url, p.date_taken, p.privacy FROM photo_meta p WHERE ${where} AND substr(p.date_taken, 1, 4) = ? ORDER BY p.date_taken, p.photo_id LIMIT ?`)
+  const yearRows = db.prepare(`SELECT substr(p.date_taken, 1, 4) AS year, COUNT(*) AS n, ${VIDEOS} AS v FROM photo_meta p WHERE ${where} GROUP BY year ORDER BY year DESC`).all(md, ...tg.params) as { year: string; n: number; v: number }[]
+  const pick = db.prepare(`SELECT p.photo_id, p.title, p.thumb_url, p.date_taken, p.privacy, p.media FROM photo_meta p WHERE ${where} AND substr(p.date_taken, 1, 4) = ? ORDER BY p.date_taken, p.photo_id LIMIT ?`)
   const years: DayYearGroup[] = yearRows.map(y => ({
-    year: y.year, count: y.n,
+    year: y.year, count: y.n, videos: y.v,
     photos: (pick.all(md, ...tg.params, y.year, perYear) as Parameters<typeof toPhoto>[0][]).map(toPhoto)
   }))
   const prev = neighbour(q.month, q.day, -1), next = neighbour(q.month, q.day, 1)
   return {
     hasData: db.prepare('SELECT 1 FROM photo_meta LIMIT 1').get() !== undefined,
-    hasCatalog: catalog, month: q.month, day: q.day, scope, total: yearRows.reduce((n, y) => n + y.n, 0),
+    hasCatalog: catalog, month: q.month, day: q.day, scope, total: yearRows.reduce((n, y) => n + y.n, 0), videos: yearRows.reduce((n, y) => n + y.v, 0),
     counts, years, insights: insightsFor(db, q.month, q.day, scope, catalog, q.tag),
     prev: { ...prev, count: dayCount(db, prev.month, prev.day, scope, catalog) },
     next: { ...next, count: dayCount(db, next.month, next.day, scope, catalog) }
@@ -137,7 +140,7 @@ export function dayPhotos(q: DayPhotosQuery): DayPhoto[] {
   const catalog = hasCatalog(db)
   const tg = tagSql(q.tag)
   return (db.prepare(`
-    SELECT p.photo_id, p.title, p.thumb_url, p.date_taken, p.privacy FROM photo_meta p
+    SELECT p.photo_id, p.title, p.thumb_url, p.date_taken, p.privacy, p.media FROM photo_meta p
     WHERE substr(p.date_taken, 6, 5) = ? AND substr(p.date_taken, 1, 4) = ?${scopeSql(q.scope, catalog)}${tg.sql}
     ORDER BY p.date_taken, p.photo_id LIMIT ? OFFSET ?
   `).all(mmdd(q.month, q.day), q.year, ...tg.params, Math.min(Math.max(q.limit, 1), 1000), Math.max(q.offset, 0)) as Parameters<typeof toPhoto>[0][]).map(toPhoto)
@@ -163,12 +166,12 @@ export function timelineMonths(scope: PrivacyScope): TimelineMonths {
   if (!db) return { hasData: false, hasCatalog: false, scope, total: 0, cells: [], counts: { all: 0, public: 0, notPublic: 0 } }
   const catalog = hasCatalog(db)
   const eff: PrivacyScope = catalog ? scope : 'all'
-  const cells = db.prepare(`SELECT CAST(substr(p.date_taken, 1, 4) AS INTEGER) AS year, CAST(substr(p.date_taken, 6, 2) AS INTEGER) AS month, COUNT(*) AS n
-    FROM photo_meta p WHERE substr(p.date_taken, 1, 4) >= '${MIN_YEAR}'${scopeSql(eff, catalog)} GROUP BY year, month`).all() as { year: number; month: number; n: number }[]
+  const cells = db.prepare(`SELECT CAST(substr(p.date_taken, 1, 4) AS INTEGER) AS year, CAST(substr(p.date_taken, 6, 2) AS INTEGER) AS month, COUNT(*) AS n, ${VIDEOS} AS v
+    FROM photo_meta p WHERE substr(p.date_taken, 1, 4) >= '${MIN_YEAR}'${scopeSql(eff, catalog)} GROUP BY year, month`).all() as { year: number; month: number; n: number; v: number }[]
   const one = (s: string): number => (db.prepare(`SELECT COUNT(*) AS n FROM photo_meta p WHERE substr(p.date_taken, 1, 4) >= '${MIN_YEAR}'${s}`).get() as { n: number }).n
   return {
     hasData: cells.length > 0, hasCatalog: catalog, scope: eff, total: cells.reduce((n, c) => n + c.n, 0),
-    cells: cells.map(c => ({ year: c.year, month: c.month, count: c.n })),
+    cells: cells.map(c => ({ year: c.year, month: c.month, count: c.n, videos: c.v })),
     counts: { all: one(''), public: catalog ? one(scopeSql('public', true)) : 0, notPublic: catalog ? one(scopeSql('notpublic', true)) : 0 }
   }
 }
@@ -177,39 +180,39 @@ export function timelineDays(year: number, month: number, scope: PrivacyScope): 
   const db = readyDb()
   if (!db) return { year, month, days: [] }
   const catalog = hasCatalog(db)
-  const days = db.prepare(`SELECT CAST(substr(p.date_taken, 9, 2) AS INTEGER) AS day, COUNT(*) AS n FROM photo_meta p
-    WHERE substr(p.date_taken, 1, 7) = ?${scopeSql(scope, catalog)} GROUP BY day ORDER BY day`).all(`${year}-${pad(month)}`) as { day: number; n: number }[]
-  return { year, month, days: days.map(d => ({ day: d.day, count: d.n })) }
+  const days = db.prepare(`SELECT CAST(substr(p.date_taken, 9, 2) AS INTEGER) AS day, COUNT(*) AS n, ${VIDEOS} AS v FROM photo_meta p
+    WHERE substr(p.date_taken, 1, 7) = ?${scopeSql(scope, catalog)} GROUP BY day ORDER BY day`).all(`${year}-${pad(month)}`) as { day: number; n: number; v: number }[]
+  return { year, month, days: days.map(d => ({ day: d.day, count: d.n, videos: d.v })) }
 }
 
 // The photos between two dates in calendar order, grouped by day. Days are paged (offset and limit count days),
 // so a long range loads a screenful at a time.
 export function cameraRoll(q: CameraRollQuery): CameraRollView {
-  const empty: CameraRollView = { hasData: false, hasCatalog: false, scope: q.scope, totalDays: 0, totalPhotos: 0, days: [] }
+  const empty: CameraRollView = { hasData: false, hasCatalog: false, scope: q.scope, totalDays: 0, totalPhotos: 0, totalVideos: 0, days: [] }
   const db = readyDb()
   if (!db) return empty
   const catalog = hasCatalog(db)
   const scope = scopeSql(q.scope, catalog)
   const dir = q.order === 'asc' ? 'ASC' : 'DESC'
   const range = `substr(p.date_taken, 1, 4) >= '${MIN_YEAR}' AND substr(p.date_taken, 1, 10) >= ? AND substr(p.date_taken, 1, 10) <= ?${scope}`
-  const totals = db.prepare(`SELECT COUNT(DISTINCT substr(p.date_taken, 1, 10)) AS d, COUNT(*) AS n FROM photo_meta p WHERE ${range}`).get(q.from, q.to) as { d: number; n: number }
-  const dayRows = db.prepare(`SELECT substr(p.date_taken, 1, 10) AS d, COUNT(*) AS n FROM photo_meta p WHERE ${range} GROUP BY d ORDER BY d ${dir} LIMIT ? OFFSET ?`)
-    .all(q.from, q.to, Math.min(Math.max(q.limit, 1), 62), Math.max(q.offset, 0)) as { d: string; n: number }[]
+  const totals = db.prepare(`SELECT COUNT(DISTINCT substr(p.date_taken, 1, 10)) AS d, COUNT(*) AS n, ${VIDEOS} AS v FROM photo_meta p WHERE ${range}`).get(q.from, q.to) as { d: number; n: number; v: number }
+  const dayRows = db.prepare(`SELECT substr(p.date_taken, 1, 10) AS d, COUNT(*) AS n, ${VIDEOS} AS v FROM photo_meta p WHERE ${range} GROUP BY d ORDER BY d ${dir} LIMIT ? OFFSET ?`)
+    .all(q.from, q.to, Math.min(Math.max(q.limit, 1), 62), Math.max(q.offset, 0)) as { d: string; n: number; v: number }[]
   const days: CameraRollDay[] = []
   if (dayRows.length > 0) {
     const lo = dayRows.reduce((a, r) => (r.d < a ? r.d : a), dayRows[0].d), hi = dayRows.reduce((a, r) => (r.d > a ? r.d : a), dayRows[0].d)
     // At most 600 photos per day come out of SQLite (a day with thousands would otherwise all be loaded for every page)
-    const rows = db.prepare(`SELECT photo_id, title, thumb_url, date_taken, privacy FROM (
-        SELECT p.photo_id, p.title, p.thumb_url, p.date_taken, p.privacy,
+    const rows = db.prepare(`SELECT photo_id, title, thumb_url, date_taken, privacy, media FROM (
+        SELECT p.photo_id, p.title, p.thumb_url, p.date_taken, p.privacy, p.media,
           ROW_NUMBER() OVER (PARTITION BY substr(p.date_taken, 1, 10) ORDER BY p.date_taken ${dir}, p.photo_id ${dir}) AS rn
         FROM photo_meta p WHERE substr(p.date_taken, 1, 4) >= '${MIN_YEAR}' AND substr(p.date_taken, 1, 10) >= ? AND substr(p.date_taken, 1, 10) <= ?${scope}
       ) WHERE rn <= 600 ORDER BY date_taken ${dir}, photo_id ${dir}`)
       .all(lo, hi) as Parameters<typeof toPhoto>[0][]
     const byDay = new Map<string, DayPhoto[]>()
     for (const r of rows) { const d = r.date_taken.slice(0, 10); const a = byDay.get(d) ?? []; a.push(toPhoto(r)); byDay.set(d, a) }
-    for (const r of dayRows) days.push({ date: r.d, count: r.n, photos: byDay.get(r.d) ?? [] })
+    for (const r of dayRows) days.push({ date: r.d, count: r.n, videos: r.v, photos: byDay.get(r.d) ?? [] })
   }
-  return { hasData: totals.n > 0, hasCatalog: catalog, scope: catalog ? q.scope : 'all', totalDays: totals.d, totalPhotos: totals.n, days }
+  return { hasData: totals.n > 0, hasCatalog: catalog, scope: catalog ? q.scope : 'all', totalDays: totals.d, totalPhotos: totals.n, totalVideos: totals.v, days }
 }
 
 // ── Today's summary, the card and the daily notification ─────────────────────
@@ -234,7 +237,7 @@ export function todaySummary(): TodaySummary {
     summaryCache = {
       key,
       core: {
-        month: t.month, day: t.day, total: v.total, yearCount: v.years.length,
+        month: t.month, day: t.day, total: v.total, videos: v.videos, yearCount: v.years.length,
         firstYear: v.years.length ? v.years[v.years.length - 1].year : '',
         lastYear: v.years.length ? v.years[0].year : '',
         topYear: top ? { year: top.year, count: top.count } : null,
@@ -274,7 +277,7 @@ export function maybeNotifyToday(getWindow: () => BrowserWindow | null): void {
   writeState({ ...state, lastNotified: t.key })
   const range = s.firstYear && s.lastYear && s.firstYear !== s.lastYear ? `${s.firstYear} to ${s.lastYear}` : s.lastYear
   const body = `From ${s.yearCount} year${s.yearCount === 1 ? '' : 's'} of your photostream, ${range}. Click to see them.`
-  const n = new Notification({ title: `On this day: ${s.total} photo${s.total === 1 ? '' : 's'}`, body })
+  const n = new Notification({ title: `On this day: ${itemsLabel(s.total, s.videos)}`, body })
   n.on('click', () => {
     const win = getWindow()
     if (win) { if (win.isMinimized()) win.restore(); win.show(); win.focus(); win.webContents.send('otd:open') }

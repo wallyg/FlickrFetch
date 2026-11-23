@@ -1,10 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import BatchEditButton from './BatchEditButton'
 import type { DayPhoto, DayView, PrivacyScope } from '../../shared/types'
 import { MONTHS, pad2, hourLabel, ScopeToggle, PhotoTile } from './DateViewParts'
 import ShareDialog from './ShareDialog'
 import { primaryBtn, quietBtn, linkBtn, pillBtn, selectedOn } from '../ui/kit'
 import BackToTop from '../ui/BackToTop'
 import { asButton } from '../ui/a11y'
+import { itemsLabel } from '../../shared/counts'
 import { useTileSize, TILE_MIN, TILE_MAX } from '../hooks/useTileSize'
 import { OpenIcon, DownloadIcon } from '../ui/icons'
 
@@ -86,16 +88,17 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
   }
   const openYear = (year: string): void => onOpenRange(`${year}-${pad2(month)}-${pad2(day)}`, `${year}-${pad2(month)}-${pad2(day)}`, scope === 'public', tag?.label)
 
-  // Photos for a collage: the ones you ticked, otherwise one per year (newest years first)
+  // Photos for a collage: the ones you ticked, otherwise one per year (newest years first). Videos are left out.
+  const isStill = (p: DayPhoto): boolean => p.media !== 'video'
+  const pickedStills = [...selected.values()].filter(isStill)
   const startShare = (): void => {
     if (!data) return
-    const picked = [...selected.values()]
-    if (picked.length >= 2) setShare({ photos: picked, userPicked: true })
-    else setShare({ photos: data.years.slice(0, 6).map(y => y.photos[0]).filter(Boolean), userPicked: false })
+    if (pickedStills.length >= 2) setShare({ photos: pickedStills, userPicked: true })
+    else setShare({ photos: data.years.map(y => y.photos.find(isStill)).filter((p): p is DayPhoto => !!p).slice(0, 6), userPicked: false })
   }
 
   // One list that only changes when the photos do, so the collage maker is not restarted by every redraw of the page
-  const candidates = useMemo(() => (data ? data.years.flatMap(y => expanded[y.year] ?? y.photos) : []), [data, expanded])
+  const candidates = useMemo(() => (data ? data.years.flatMap(y => expanded[y.year] ?? y.photos).filter(p => p.media !== 'video') : []), [data, expanded])
 
   if (!data) return <div style={styles.pad}><span style={styles.muted}>Looking through your photos…</span></div>
   if (!data.hasData) return <div style={styles.pad}><span style={styles.muted}>Build your tag list first (Tags tab). It also keeps the dates On This Day needs.</span></div>
@@ -123,7 +126,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
         <div style={styles.headText}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
             <span style={styles.title}>On This Day</span>
-            <span style={styles.count} title="Uses the date each photo was taken">{data.total.toLocaleString()} photo{data.total === 1 ? '' : 's'}<span style={styles.countNote}>{scopeNote}</span></span>
+            <span style={styles.count} title="Uses the date each photo was taken">{itemsLabel(data.total, data.videos)}<span style={styles.countNote}>{scopeNote}</span></span>
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 8, position: 'relative', flexWrap: 'wrap' }}>
             <div style={styles.navSeg}>
@@ -143,10 +146,11 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
           </div>
         </div>
         <div style={styles.actions}>
-          <button style={styles.cta} disabled={data.total === 0} onClick={startShare}>
+          <button style={styles.cta} disabled={data.total - data.videos === 0} onClick={startShare} title={data.videos > 0 ? 'Videos are left out of collages' : undefined}>
             <span style={styles.stack} aria-hidden="true"><s style={{ ...styles.stackCard, left: 0, top: 6, transform: 'rotate(-12deg)' }} /><s style={{ ...styles.stackCard, left: 11, top: 0, transform: 'rotate(3deg)' }} /><s style={{ ...styles.stackCard, left: 22, top: 7, transform: 'rotate(15deg)' }} /></span>
             Make a shareable collage
           </button>
+          <BatchEditButton inline style={quietBtn} label="Batch editor" getIds={async () => (await window.flickrAPI.getDatePhotoIds({ kind: 'day', month, day, scope, tag: tag?.key })).map(p => p.id)} />
           <button style={quietBtn} disabled={data.total === 0} onClick={() => void download()}>Download all {data.total.toLocaleString()}</button>
         </div>
       </div>
@@ -177,7 +181,8 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
       {selected.size > 0 && (
         <div style={{ ...styles.row, justifyContent: 'flex-end' }}>
           <span style={styles.muted}>{selected.size} selected</span>
-          <button style={quietBtn} onClick={startShare} disabled={selected.size < 2}>Collage from selected</button>
+          <button style={quietBtn} onClick={startShare} disabled={pickedStills.length < 2} title={pickedStills.length < selected.size ? 'Videos are left out of collages' : undefined}>Collage from selected</button>
+          <BatchEditButton inline style={quietBtn} label="Batch editor" getIds={async () => [...selected.values()].map(p => p.id)} />
           <button style={quietBtn} onClick={downloadSelected}>Download selected</button>
           <button style={linkBtn} onClick={() => setSelected(new Map())}>Clear</button>
         </div>
@@ -237,7 +242,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
               <div key={g.year} id={`otd-year-${g.year}`} style={yi === 0 ? { margin: '16px 0 4px' } : { margin: '24px 0 4px', paddingTop: 18, borderTop: '1px solid var(--ff-line-strong)' }}>
                 <div style={styles.yearHead}>
                   <b style={{ fontSize: 17 }}>{g.year}</b>
-                  <span style={styles.muted}>{ago === 0 ? 'this year' : `${ago} year${ago === 1 ? '' : 's'} ago`} · {g.count.toLocaleString()} photo{g.count === 1 ? '' : 's'}</span>
+                  <span style={styles.muted}>{ago === 0 ? 'this year' : `${ago} year${ago === 1 ? '' : 's'} ago`} · {itemsLabel(g.count, g.videos)}</span>
                   <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: 8 }}>
                     <button style={pillBtn} onClick={() => openYear(g.year)} title={scope === 'notpublic' ? 'The Photostream cannot show only not-public photos, so this opens every photo from that date' : 'See these in the Photostream, with the usual detail view and download options'}><span style={iconBlue}><OpenIcon /></span>{scope === 'notpublic' ? 'Open all in Photostream' : 'Open in Photostream'}</button>
                     <button style={pillBtn} onClick={() => void download(g.year)}><span style={iconBlue}><DownloadIcon /></span>Download these {g.count.toLocaleString()}</button>

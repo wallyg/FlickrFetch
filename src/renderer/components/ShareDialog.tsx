@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import type { DayPhoto } from '../../shared/types'
 import logoImg from '../assets/logo-tray.png'
+import { itemsLabel } from '../../shared/counts'
 import { MONTHS } from './DateViewParts'
 import { quietBtn, selectedOn } from '../ui/kit'
 
@@ -254,11 +255,11 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
   const nonPublic = chosen.filter(p => p.privacy > 0).length
 
   // What the header says about the whole day (all of its photos, or only the public ones when that is ticked)
-  const [facts, setFacts] = useState<{ total: number; years: number; tags: string[] } | null>(null)   // tags: the day's most common, up to 8
+  const [facts, setFacts] = useState<{ total: number; videos: number; years: number; tags: string[] } | null>(null)   // tags: the day's most common, up to 8
   useEffect(() => {
     let cancelled = false
     void window.flickrAPI.getDayView({ month, day, scope: publicOnly ? 'public' : 'all', perYear: 1, tag }).then(v => {
-      if (!cancelled) setFacts({ total: v.total, years: v.years.length, tags: v.insights.topTags.map(t => t.name) })
+      if (!cancelled) setFacts({ total: v.total, videos: v.videos, years: v.years.length, tags: v.insights.topTags.map(t => t.name) })
     })
     return () => { cancelled = true }
   }, [month, day, publicOnly, tag])
@@ -369,9 +370,13 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
     const years = ready.map(p => Number(p.dateTaken.slice(0, 4)))
     const ago = n === 1 ? nowYear - years[0] : 0
     const line1 = n === 1 ? (ago <= 0 ? 'Today' : `${ago} year${ago === 1 ? '' : 's'} ago today`)
-      : facts ? `${facts.total.toLocaleString()} photo${facts.total === 1 ? '' : 's'} from ${facts.years} year${facts.years === 1 ? '' : 's'}`
+      : facts ? `${itemsLabel(facts.total, facts.videos)} from ${facts.years} year${facts.years === 1 ? '' : 's'}`
       : `${Math.min(...years)} to ${Math.max(...years)}`
-    ctx.font = `700 31px ${SANS}`; ctx.globalAlpha = 0.95; ctx.fillText(line1, hx, ty + 108)
+    // The day's whole count (photos and videos), shrunk a little if a long line would not fit
+    let l1Size = 31
+    ctx.font = `700 ${l1Size}px ${SANS}`
+    while (l1Size > 22 && ctx.measureText(line1).width > hMax) { l1Size -= 1; ctx.font = `700 ${l1Size}px ${SANS}` }
+    ctx.globalAlpha = 0.95; ctx.fillText(line1, hx, ty + 108)
     if (n > 1 && facts && facts.tags.length > 0) {
       // One row: up to five ordinary-length tags, spaced out; fewer only if the row would run out of room
       const iconW = 36

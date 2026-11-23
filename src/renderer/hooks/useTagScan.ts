@@ -44,7 +44,7 @@ export function useTagScan(): {
   }, [])
 
   const startFullRescan = useCallback(async (): Promise<void> => {
-    const ok = await window.flickrAPI.confirm('Rebuild from scratch?', 'This reads all your photos again to rebuild the tag list and the metadata report.\n\nIt takes a few minutes and changes nothing on Flickr.', 'Rebuild')
+    const ok = await window.flickrAPI.confirm('Rebuild from scratch?', 'This reads all your photos again to rebuild the tag list and the metadata report.\n\nIt takes a few minutes.', 'Rebuild')
     if (ok) void startScan('full')
   }, [startScan])
 

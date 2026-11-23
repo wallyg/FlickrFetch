@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
+import BatchEditButton from '../components/BatchEditButton'
 import type { FlickrUser, FlickrPhoto, FlickrAlbum, FlickrCollection, FlickrSet, BatchProgress, TagMode } from '../../shared/types'
 import PhotoGrid from '../components/PhotoGrid'
 import PhotoDetail from '../components/PhotoDetail'
@@ -730,6 +731,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
               {albumSelectedIds.size > 0 && (
                 <button style={styles.selectButton} onClick={() => setAlbumSelectedIds(new Set())}>Clear Selection</button>
               )}
+              {albumSelectedIds.size > 0 && <BatchEditButton inline style={styles.selectButton} label="Batch editor" getIds={async () => [...albumSelectedIds]} />}
               <button
                 style={{
                   ...styles.downloadAllButton,
@@ -753,6 +755,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             <button style={styles.selectButton} onClick={() => setPhotostreamSelectedIds(new Set())}>Clear Selection</button>
           )}
           <div style={{ flex: 1 }} />
+          {photostreamSelectedIds.size > 0 && <BatchEditButton inline style={styles.selectButton} label="Batch editor" getIds={async () => [...photostreamSelectedIds]} />}
           <button
             style={{ ...styles.downloadAllButton, ...(photostreamSelectedIds.size === 0 ? styles.downloadAllButtonDisabled : {}) }}
             disabled={photostreamSelectedIds.size === 0}
@@ -848,6 +851,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             <CleanupPanel
               settingsKey={settingsKey}
               onOpenSettings={() => openSettings('health')}
+              onDownload={startDateDownload}
               onViewPhotos={(tags, mode) => {
                 exitPhotostreamSelect()
                 setTagBackView('cleanup')
