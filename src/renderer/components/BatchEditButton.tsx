@@ -13,7 +13,12 @@ interface Props {
 }
 
 const SHOW_MS = 6000    // how long the note stays once there is nothing left to click
+const HINT_SHOW_MS = 14000   // longer when it carries the "close the earlier editor" hint
 const FADE_MS = 600
+
+// Flickr's editor can refuse a second list while an earlier editor tab is still open (seen in testing). FlickrFetch only hands the
+// photo ids to the browser, so from the second press in a session the note says what to try.
+let openedBefore = false
 
 export default function BatchEditButton({ getIds, label = "Fix in Flickr's batch editor", style, inline }: Props): React.JSX.Element {
   const [ids, setIds] = useState<string[] | null>(null)
@@ -21,6 +26,7 @@ export default function BatchEditButton({ getIds, label = "Fix in Flickr's batch
   const [parts, setParts] = useState(0)
   const [busy, setBusy] = useState(false)
   const [note, setNote] = useState<'hidden' | 'shown' | 'fading'>('hidden')
+  const [hint, setHint] = useState(false)
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
   const clearTimers = (): void => { timers.current.forEach(clearTimeout); timers.current = [] }
   useEffect(() => clearTimers, [])
@@ -30,11 +36,14 @@ export default function BatchEditButton({ getIds, label = "Fix in Flickr's batch
     try {
       const all = known ?? await getIds()
       setIds(all)
+      const repeat = openedBefore
       const r = await window.flickrAPI.openBatchEditor(all, p)
-      setPart(p); setParts(r.parts); setNote('shown')
+      if (r.count > 0) openedBefore = true
+      setPart(p); setParts(r.parts); setHint(repeat && r.count > 0); setNote('shown')
       clearTimers()
       if (p + 1 >= r.parts) {
-        timers.current = [setTimeout(() => setNote('fading'), SHOW_MS), setTimeout(() => setNote('hidden'), SHOW_MS + FADE_MS)]
+        const stay = repeat ? HINT_SHOW_MS : SHOW_MS
+        timers.current = [setTimeout(() => setNote('fading'), stay), setTimeout(() => setNote('hidden'), stay + FADE_MS)]
       }
     } finally { setBusy(false) }
   }
@@ -50,7 +59,8 @@ export default function BatchEditButton({ getIds, label = "Fix in Flickr's batch
         <div role="status" style={{ ...noteStyle, opacity: note === 'fading' ? 0 : 1 }}>
           {n === 0 ? 'Nothing to open here.' : parts > 1
             ? <>Opened part {part + 1} of {parts} ({Math.min(500, n - part * 500).toLocaleString()} of {n.toLocaleString()} photos). </>
-            : <>Opened {n.toLocaleString()} photo{n === 1 ? '' : 's'} in Flickr’s batch editor.</>}
+            : <>Opened {n.toLocaleString()} photo{n === 1 ? '' : 's'} in Flickr’s batch editor. </>}
+          {n > 0 && hint && <>If it did not load, close the earlier editor tab, wait a few seconds and press again. </>}
           {n > 0 && part + 1 < parts && <button style={linkBtn} onClick={() => void open(part + 1, ids)}>Open part {part + 2}</button>}
         </div>
       )}
