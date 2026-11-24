@@ -70,7 +70,7 @@ export default function TuneChecks({ stateOf, setState }: Props): React.JSX.Elem
       const c: Record<string, number> = {}
       for (const r of a.rows) c[`tags:${r.category}`] = r.open + r.plan
       for (const r of h.rows) c[`photos:${r.condition}`] = r.open
-      for (const r of al.rows) c[`albums:${r.condition}`] = r.open
+      for (const r of al.rows) c[`albums:${r.condition}`] = r.photos ?? r.open   // May not fit and May be missing count photos, as the Albums summary does
       setCounts(c)
     }).catch(() => { /* counts are only a hint */ })
   }, [])

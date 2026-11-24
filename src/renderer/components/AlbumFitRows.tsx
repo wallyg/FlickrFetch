@@ -80,7 +80,7 @@ export function MissingRow({ item, onFine, onKind }: { item: AlbumItem; onFine: 
         <div style={styles.actions}>
           {!fine && <button style={{ ...quietBtn }} aria-expanded={open} onClick={() => setOpen(o => !o)}>{open ? 'Hide the photos' : `Show the ${count.toLocaleString()} photo${count === 1 ? '' : 's'}`}</button>}
           {!fine && (open && photos && ticked.size === 0
-            ? <span style={styles.muted}>Tick a photo to open it in Flickr&apos;s organizer</span>
+            ? <span style={styles.muted}>{photos.length === 0 ? 'The photos could not be loaded' : "Tick a photo to open it in Flickr's organizer"}</span>
             : <BatchEditButton inline key={`${item.albumId}|${open && photos ? ticked.size : 'all'}`} style={actionStyles.fix}
                 label={open && photos ? `Open ${ticked.size.toLocaleString()} in Flickr's organizer` : `Open all ${count.toLocaleString()} in Flickr's organizer`}
                 getIds={() => (open && photos ? Promise.resolve([...ticked]) : window.flickrAPI.getAlbumFitPhotoIds(item.albumId))} />)}

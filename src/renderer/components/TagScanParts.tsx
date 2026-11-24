@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { TagIndexStatus, TagScanProgress } from '../../shared/types'
 import { Tooltip } from './PhotoGridShared'
 import { quietBtn } from '../ui/kit'
+import RichNote from '../ui/RichNote'
 
 // Pieces of the library scan shown in both the Tags tab and the Cleanup tab.
 
@@ -79,7 +80,7 @@ export function LibraryDataChip({ status, info, onUpdate, onRebuild, compact }: 
             <button style={{ ...styles.linkBtn, whiteSpace: 'nowrap', padding: 0, fontSize: 13 }} onClick={() => { setOpen(false); onRebuild() }}>Rebuild from scratch…</button>
             <span style={{ ...styles.muted, fontSize: 12 }}>Reads every photo again, three to five minutes. Use it after deleting photos, or if the counts look wrong.</span>
           </div>
-          <div style={{ ...styles.muted, fontSize: 12, marginTop: 10, whiteSpace: 'pre-line' }}>{info}</div>
+          <div style={{ ...styles.muted, fontSize: 12, marginTop: 10 }}><RichNote text={info} /></div>
         </div>
       )}
     </span>

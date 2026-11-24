@@ -127,7 +127,7 @@ function MissingRow({ f, onChange }: { f: AuditFinding; onChange: (f: AuditFindi
           <>
             <button style={styles.secondaryBtn} aria-expanded={open} onClick={() => setOpen(o => !o)}>{open ? 'Hide the photos' : `Show the ${f.count.toLocaleString()} photo${f.count === 1 ? '' : 's'}`}</button>
             {picking && ticked.size === 0
-              ? <span style={styles.muted}>Tick a photo to add the tag in the batch editor</span>
+              ? <span style={styles.muted}>{photos && photos.length === 0 ? 'The photos could not be loaded' : 'Tick a photo to add the tag in the batch editor'}</span>
               : <BatchEditButton key={`${f.tag}|${picking ? ticked.size : 'all'}`} label={picking ? `Add "${f.display}" to ${ticked.size.toLocaleString()} in the batch editor` : `Add "${f.display}" in the batch editor`} style={styles.secondaryBtn}
                   getIds={() => (picking ? Promise.resolve([...ticked]) : window.flickrAPI.getAuditPhotoIds(f.tag, 'missing'))} />}
             <button style={styles.secondaryBtn} onClick={() => onChange(f, 'fine')}>This one is fine</button>

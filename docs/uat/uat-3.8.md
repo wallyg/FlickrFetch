@@ -16,7 +16,7 @@
 
 ## F. New in the fix pass (try these first)
 Built after your first round of feedback; the clickable version has the same steps (F1 to F10).
-- [ ] F1 Tab order Overview, Photos, Albums, Tags, Backup; no pop-up on the tab bar; the (i) by the Updated chip explains how Health Check works.
+- [ ] F1 Tab order Overview, Photos, Albums, Tags, Backup; no pop-up on the tab bar; the Updated menu (click the chip) ends with a note on how Health Check works.
 - [ ] F2 Albums > Summary: two groups with rings, short legends, one row per check with its unit (May not fit and May be missing in photos, in N albums); Biggest warnings to heed.
 - [ ] F3 Albums > Lists left rail in the same two groups with dots.
 - [ ] F4 May not fit: Reason menu with counts; "Judged by ... Change" line; Open photo, Open in Flickr's organizer, Open album, This one is fine.

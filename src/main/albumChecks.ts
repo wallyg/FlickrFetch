@@ -193,7 +193,10 @@ export function registerAlbumsIpc(getWindow: () => BrowserWindow | null): void {
   ipcMain.handle('albums:fitIds', (_event, albumId: string) => (typeof albumId === 'string' ? fitPhotoIds(albumId) : []))
   ipcMain.handle('albums:fitPhotos', (_event, albumId: string) => (typeof albumId === 'string' ? fitPhotos(albumId) : []))
   ipcMain.handle('albums:kinds', () => fitKinds())
-  ipcMain.handle('albums:setKind', (_event, req: AlbumKindRequest) => fitSetKind(req.albumId, req.kind))
+  ipcMain.handle('albums:setKind', (_event, req: AlbumKindRequest) => {
+    // Only the four kinds, or 'auto' to go back to the app's pick
+    if (typeof req?.albumId === 'string' && ['auto', 'date', 'place', 'tag', 'anything'].includes(req.kind)) fitSetKind(req.albumId, req.kind)
+  })
   ipcMain.handle('albums:saveCsv', (_event, q: AlbumExportQuery) =>
     saveCsvFile(getWindow, `albums-${q.condition}-${q.status}.csv`, ['Title', 'Details', 'Flickr page'], csvRows(q)))
 }

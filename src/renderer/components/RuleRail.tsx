@@ -59,9 +59,13 @@ export default function RuleRail({ rules, stateOf, selectedId, onSelect, offText
   groups?: { title: string; ids: string[] }[]   // when given, the checks are grouped by what they are about (Issues first inside each group, marked by a dot) instead of under Issues and Warnings
 }): React.JSX.Element {
   let shown = 0
+  // A check that no group names still gets drawn, under a last group, so it can never go missing from the column
+  const named = new Set((groups ?? []).flatMap(g => g.ids))
+  const spare = rules.filter(r => !named.has(r.id))
+  const allGroups = groups && spare.length > 0 ? [...groups, { title: 'More checks', ids: spare.map(r => r.id) }] : groups
   return (
     <>
-      {groups && groups.map(g => {
+      {allGroups && allGroups.map(g => {
         const list = rules.filter(r => g.ids.includes(r.id) && stateOf(r.id) !== 'off').sort((a, b) => (stateOf(a.id) === 'on' ? 0 : 1) - (stateOf(b.id) === 'on' ? 0 : 1))
         if (list.length === 0) return null
         return (
@@ -71,7 +75,7 @@ export default function RuleRail({ rules, stateOf, selectedId, onSelect, offText
           </React.Fragment>
         )
       })}
-      {!groups && ([['on', 'Issues'], ['optional', 'Warnings']] as const).map(([st, heading]) => {
+      {!allGroups && ([['on', 'Issues'], ['optional', 'Warnings']] as const).map(([st, heading]) => {
         const list = rules.filter(r => stateOf(r.id) === st)
         if (list.length === 0) return null
         return (
