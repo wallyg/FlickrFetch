@@ -2,6 +2,7 @@ import React from 'react'
 import type { CleanupRuleState } from '../../shared/cleanupRules'
 import { asButton } from '../ui/a11y'
 import { railItem, railSel } from '../ui/kit'
+import HoverNote from '../ui/HoverNote'
 
 // The left column of a Health Check list view: the checks grouped under Issues and Warnings (Off ones are left out),
 // and single rows such as the Open / Fix choices. Shared by the Tags and Photos lists.
@@ -19,10 +20,10 @@ export function RailHead({ children, first }: { children: React.ReactNode; first
 }
 
 // The list's heading line: what the check means on the left, how the list is ordered on the right
-export function ListHead({ children, sort }: { children: React.ReactNode; sort: React.ReactNode }): React.JSX.Element {
+export function ListHead({ children, sort, tip }: { children: React.ReactNode; sort: React.ReactNode; tip?: string }): React.JSX.Element {
   return (
     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, margin: '2px 0 10px' }}>
-      <div style={{ flex: 1, minWidth: 0, fontSize: 13, color: 'var(--ff-text-secondary)' }}>{children}</div>
+      <div style={{ flex: 1, minWidth: 0, fontSize: 13, color: 'var(--ff-text-secondary)' }}><HoverNote text={tip} block>{children}</HoverNote></div>
       {sort}
     </div>
   )
@@ -40,25 +41,37 @@ export function SortBox<T extends string>({ value, onChange, options }: { value:
   )
 }
 
-export function RailRow({ selected, dim, label, count, pending, onSelect }: { selected: boolean; dim?: boolean; label: string; count: number; pending?: boolean; onSelect: () => void }): React.JSX.Element {
+export function RailRow({ selected, dim, label, count, pending, onSelect, dot }: { selected: boolean; dim?: boolean; label: string; count: number; pending?: boolean; onSelect: () => void; dot?: string }): React.JSX.Element {
   return (
     <div style={{ ...railItem, ...(selected ? railSel : {}), opacity: dim && !selected ? 0.55 : 1 }} {...asButton(onSelect)} aria-current={selected ? 'true' : undefined}>
-      <span>{label}</span>
+      <span style={{ display: 'flex', alignItems: 'baseline', gap: 7 }}>{dot && <i aria-hidden="true" style={{ width: 8, height: 8, borderRadius: '50%', background: dot, flex: 'none', display: 'inline-block' }} />}{label}</span>
       {pending ? <b style={{ fontWeight: 600 }} title="This check needs a Rebuild before it can count">–</b> : <b style={{ fontWeight: 600 }}>{count.toLocaleString()}</b>}
     </div>
   )
 }
 
-export default function RuleRail({ rules, stateOf, selectedId, onSelect, offText }: {
+export default function RuleRail({ rules, stateOf, selectedId, onSelect, offText, groups }: {
   rules: RailRule[]
   stateOf: (id: string) => CleanupRuleState
   selectedId: string
   onSelect: (id: string) => void
   offText: string
+  groups?: { title: string; ids: string[] }[]   // when given, the checks are grouped by what they are about (Issues first inside each group, marked by a dot) instead of under Issues and Warnings
 }): React.JSX.Element {
+  let shown = 0
   return (
     <>
-      {([['on', 'Issues'], ['optional', 'Warnings']] as const).map(([st, heading]) => {
+      {groups && groups.map(g => {
+        const list = rules.filter(r => g.ids.includes(r.id) && stateOf(r.id) !== 'off').sort((a, b) => (stateOf(a.id) === 'on' ? 0 : 1) - (stateOf(b.id) === 'on' ? 0 : 1))
+        if (list.length === 0) return null
+        return (
+          <React.Fragment key={g.title}>
+            <RailHead first={shown++ === 0}>{g.title}</RailHead>
+            {list.map(r => <RailRow key={r.id} selected={r.id === selectedId} dim={r.count === 0 || r.pending} label={r.name} count={r.count} pending={r.pending} dot={stateOf(r.id) === 'on' ? 'var(--ff-error)' : 'var(--ff-warning)'} onSelect={() => onSelect(r.id)} />)}
+          </React.Fragment>
+        )
+      })}
+      {!groups && ([['on', 'Issues'], ['optional', 'Warnings']] as const).map(([st, heading]) => {
         const list = rules.filter(r => stateOf(r.id) === st)
         if (list.length === 0) return null
         return (

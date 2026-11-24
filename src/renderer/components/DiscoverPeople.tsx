@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo } from 'react'
+import { useFindShortcut } from '../hooks/useFindShortcut'
 import type { FlickrPhoto, FlickrAlbum, FlickrCollection, DiscoverUser, DiscoverContact, PhotoSearchParams, SearchOperator, DateRangeField, TagMode } from '../../shared/types'
 import PhotoDetail from './PhotoDetail'
 import { AttributionNotice, DiscoverTile, DiscoverSelectBar } from './DiscoverExplore'
@@ -16,7 +17,9 @@ const ALBUM_COLUMNS: Record<GridSize, string> = {
 type PeopleView = 'home' | 'user-photos' | 'user-albums' | 'album-photos' | 'photo-detail'
 type UserTab = 'photos' | 'albums' | 'collections'
 
-export default function DiscoverPeople({ isActive }: { isActive: boolean }): React.JSX.Element {
+export default function DiscoverPeople({ isActive, findActive = true }: { isActive: boolean; findActive?: boolean }): React.JSX.Element {
+  const findRef = useRef<HTMLInputElement | null>(null)
+  useFindShortcut(findActive, findRef)   // Cmd+F goes to the contacts box on the People list
   const [view, setView] = useState<PeopleView>('home')
   const [searchQuery, setSearchQuery] = useState('')
   const [searching, setSearching] = useState(false)
@@ -115,15 +118,18 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
   const albumPhotosGridRef = useRef<HTMLDivElement>(null)
 
   const loadedContactsRef = useRef(false)
+  const pagingRef = useRef(false)   // a "load the next page" from the photo detail is running
 
+  const [contactsFailed, setContactsFailed] = useState(false)
+  const [contactsTry, setContactsTry] = useState(0)   // goes up on Try again, so the list is asked for again
   useEffect(() => {
     if (!isActive || loadedContactsRef.current) return
     loadedContactsRef.current = true
-    setContactsLoading(true)
+    setContactsLoading(true); setContactsFailed(false)
     window.flickrAPI.discoverGetContacts()
       .then(c => { setContacts(c); setContactsLoading(false) })
-      .catch(() => setContactsLoading(false))
-  }, [isActive])
+      .catch(() => { loadedContactsRef.current = false; setContactsLoading(false); setContactsFailed(true) })   // a failed load can be tried again
+  }, [isActive, contactsTry])
 
   // Real-time contact filter
   const filteredContacts = searchQuery.trim()
@@ -583,10 +589,11 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
           onNext={() => {
             if (detailIndex < currentPhotos.length - 1) {
               setDetailIndex(detailIndex + 1)
-            } else if (view === 'album-photos') {
-              loadMoreAlbumPhotos().then(() => setDetailIndex(di => di !== null ? di + 1 : di))
-            } else {
-              loadMorePhotos().then(() => setDetailIndex(di => di !== null ? di + 1 : di))
+            } else if (!pagingRef.current) {
+              // One page at a time: a second Next while the page is loading is ignored, and a failed load leaves you where you were
+              pagingRef.current = true
+              const more = view === 'album-photos' ? loadMoreAlbumPhotos() : loadMorePhotos()
+              more.then(() => setDetailIndex(di => di !== null ? di + 1 : di)).catch(() => { /* stays on this photo */ }).finally(() => { pagingRef.current = false })
             }
           }}
           onClose={() => setDetailIndex(null)}
@@ -1466,6 +1473,7 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
 
       <form onSubmit={handleSearch} style={s.searchForm}>
         <input
+          ref={findRef}
           style={s.searchInput}
           type="text"
           placeholder="Filter contacts or search Flickr by username…"
@@ -1486,7 +1494,10 @@ export default function DiscoverPeople({ isActive }: { isActive: boolean }): Rea
           {searchQuery.trim() ? `Contacts matching "${searchQuery}"` : 'Following'}
         </div>
         {contactsLoading && <div style={s.loadingState}>Loading contacts…</div>}
-        {!contactsLoading && filteredContacts.length === 0 && contacts.length === 0 && (
+        {!contactsLoading && contactsFailed && (
+          <div style={s.emptyState}>Your contacts could not be loaded. <button style={{ background: 'none', border: 'none', color: 'var(--ff-blue)', cursor: 'pointer', fontSize: 'inherit', textDecoration: 'underline', padding: 0 }} onClick={() => setContactsTry(n => n + 1)}>Try again</button></div>
+        )}
+        {!contactsLoading && !contactsFailed && filteredContacts.length === 0 && contacts.length === 0 && (
           <EmptyState title="You're not following anyone yet" body="People you follow on Flickr will show up here. You can also find someone by username above." />
         )}
         {!contactsLoading && filteredContacts.length === 0 && contacts.length > 0 && searchQuery.trim() && (

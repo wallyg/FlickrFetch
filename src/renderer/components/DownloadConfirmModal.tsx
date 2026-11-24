@@ -247,7 +247,8 @@ const s: Record<string, React.CSSProperties> = {
     cursor: 'pointer', color: '#555',
   },
   segBtnActive: {
-    background: 'var(--ff-blue)', color: '#fff',
+    background: 'var(--ff-tint)', color: 'var(--ff-pink-action)', fontWeight: 700,
+    boxShadow: 'inset 0 0 0 1px var(--ff-pink)',
   },
   segBtnLast: {
     borderRight: 'none',

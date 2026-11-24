@@ -1,12 +1,12 @@
 import { dialog, BrowserWindow } from 'electron'
-import { createWriteStream, unlinkSync, existsSync, writeFileSync } from 'fs'
+import { createWriteStream, unlinkSync, existsSync, writeFileSync, renameSync, readdirSync, statSync } from 'fs'
 import { join } from 'path'
 import { pipeline } from 'stream/promises'
 import axios from 'axios'
+import { USER_AGENT } from './userAgent'
 import { embedMetadata, shouldSkipGps } from './exiftool'
 import type { PhotoSize, PhotoInfo, DownloadSize, DownloadedSize, ConflictBehavior, MetadataSettings } from '../shared/types'
 
-const USER_AGENT = 'FlickrFetch/0.1.0 (Electron desktop app; https://github.com/flickrfetch)'
 
 function pickSize(sizes: PhotoSize[], downloadSize: DownloadSize): PhotoSize | undefined {
   const videoSizes = sizes.filter((s) => s.media === 'video')
@@ -64,6 +64,21 @@ function writeSidecar(filePath: string, info: PhotoInfo, settings: MetadataSetti
   }
 }
 
+// A download that was cut off (the app was quit or crashed) leaves name.ext.part behind. Once per folder per session, old ones of ours
+// (a photo or video extension, untouched for a day) are removed; anything else in the folder is left alone.
+const sweptFolders = new Set<string>()
+export function sweepStaleParts(folder: string): void {
+  if (sweptFolders.has(folder)) return
+  sweptFolders.add(folder)
+  try {
+    for (const name of readdirSync(folder)) {
+      if (!/\.(jpe?g|png|gif|webp|tiff?|mp4|mov|m4v|avi)\.part$/i.test(name)) continue
+      const file = join(folder, name)
+      if (Date.now() - statSync(file).mtimeMs > 24 * 3600 * 1000) unlinkSync(file)
+    }
+  } catch { /* the folder may not exist yet or may not be readable: nothing to clean */ }
+}
+
 function resolveConflict(basePath: string, behavior: ConflictBehavior): string | null {
   if (!existsSync(basePath)) return basePath
   if (behavior === 'overwrite') return basePath
@@ -77,7 +92,7 @@ function resolveConflict(basePath: string, behavior: ConflictBehavior): string |
     const candidate = `${stem}_${n}${ext}`
     if (!existsSync(candidate)) return candidate
   }
-  return basePath  // give up and overwrite after 999
+  return null  // 999 copies already: skip rather than overwrite one
 }
 
 const CONTENT_TYPE_EXT: Record<string, string> = {
@@ -128,6 +143,7 @@ export async function downloadPhoto(
     url: chosen.source,
     responseType: 'stream',
     signal,
+    timeout: 60000,   // no data for a minute: fail instead of hanging
     headers: { 'User-Agent': USER_AGENT }
   })
 
@@ -142,10 +158,14 @@ export async function downloadPhoto(
     }
   })
 
+  // Written under a temporary name and moved into place only when it is complete, so a failed or cancelled download never
+  // damages a file that was already there (overwrite mode) and never leaves half a photo under the real name
+  const partPath = `${filePath}.part`
   try {
-    await pipeline(response.data, createWriteStream(filePath))
+    await pipeline(response.data, createWriteStream(partPath))
+    renameSync(partPath, filePath)
   } catch (err) {
-    if (existsSync(filePath)) unlinkSync(filePath)
+    if (existsSync(partPath)) unlinkSync(partPath)
     throw err
   }
 
@@ -182,6 +202,7 @@ export async function downloadToFolder(
   if (!chosen) return { status: 'skipped', reason: 'size-unavailable' }
 
   const ext = resolveExtension(chosen.source)
+  sweepStaleParts(destFolder)
   const rawPath = join(destFolder, `${filename}.${ext}`)
   const filePath = resolveConflict(rawPath, conflictBehavior)
   if (filePath === null) return { status: 'skipped', reason: 'collision' }
@@ -191,13 +212,18 @@ export async function downloadToFolder(
     url: chosen.source,
     responseType: 'stream',
     signal,
+    timeout: 60000,   // no data for a minute: fail instead of hanging
     headers: { 'User-Agent': USER_AGENT }
   })
 
+  // Written under a temporary name and moved into place only when it is complete, so a failed or cancelled download never
+  // damages a file that was already there (overwrite mode) and never leaves half a photo under the real name
+  const partPath = `${filePath}.part`
   try {
-    await pipeline(response.data, createWriteStream(filePath))
+    await pipeline(response.data, createWriteStream(partPath))
+    renameSync(partPath, filePath)
   } catch (err) {
-    if (existsSync(filePath)) unlinkSync(filePath)
+    if (existsSync(partPath)) unlinkSync(partPath)
     throw err
   }
 

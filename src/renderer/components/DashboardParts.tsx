@@ -91,7 +91,8 @@ export function pctLabel(fraction: number): string {
   return `${Math.round(p)}%`
 }
 
-export const COLORS = { open: 'var(--ff-pink)', plan: '#0063dc', fine: '#cbd0d8', fixed: '#16a34a', neutral: '#0063dc' }
+// open = an Issue (red; pink is only for selection), warn = a Warning (amber), plan and neutral are blue, fixed is green
+export const COLORS = { open: 'var(--ff-error)', warn: 'var(--ff-warning)', plan: 'var(--ff-blue)', fine: '#cbd0d8', fixed: 'var(--ff-success)', neutral: 'var(--ff-blue)' }
 
 export const dash: Record<string, React.CSSProperties> = {
   wrap: { flex: 1, minHeight: 0, overflowY: 'auto', padding: '8px 24px 16px' },
@@ -104,7 +105,9 @@ export const dash: Record<string, React.CSSProperties> = {
   big: { fontSize: 12, color: 'var(--ff-text-secondary)', lineHeight: 1.5 },
   bigNum: { display: 'block', fontSize: 20, fontWeight: 600, color: 'var(--ff-text)' },
   item: { display: 'flex', justifyContent: 'space-between', gap: 10, padding: '7px 0', borderTop: '1px solid #f1efec', fontSize: 13, cursor: 'pointer', color: 'var(--ff-text)' },
-  pill: { fontSize: 11, borderRadius: 10, padding: '1px 8px', background: 'var(--ff-tint)', color: 'var(--ff-pink-action)', marginLeft: 6 },
+  pill: { fontSize: 11, borderRadius: 10, padding: '1px 8px', background: 'var(--ff-warm)', color: 'var(--ff-text-secondary)', marginLeft: 6 },   // a label, not a selection: pink is only for what is selected
+  legendRow: { display: 'flex', alignItems: 'baseline', gap: 8, fontSize: 13, padding: '2px 0', color: 'var(--ff-text)' },
+  legendSwatch: { display: 'inline-block', width: 10, height: 10, borderRadius: 3, flex: 'none', transform: 'translateY(1px)' },
   switchRow: { display: 'flex', alignItems: 'center', gap: 8, padding: '6px 24px 0' },
   seg: { ...segGroup },
   segBtn: { ...segBtnBase, padding: '4px 14px' },

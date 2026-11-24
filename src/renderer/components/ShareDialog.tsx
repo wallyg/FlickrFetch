@@ -476,7 +476,7 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
     if (nonPublic === 0) return true
     return window.flickrAPI.confirm(
       `${nonPublic} of these ${chosen.length} photo${chosen.length === 1 ? ' is' : 's are'} not public.`,
-      'Anyone you send this picture to can see them, and the short Flickr links only open for people Flickr lets see the photo.',
+      'Anyone you send this picture to can see them.\n\nThe short Flickr links only open for people Flickr lets see the photo.',
       'Make it anyway'
     )
   }

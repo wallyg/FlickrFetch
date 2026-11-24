@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useMemo } from 'react'
+import React, { useEffect, useState, useMemo, useRef } from 'react'
+import { useFindShortcut } from '../hooks/useFindShortcut'
 import type { BatchLogEntry, PhotoDownloadRecord, DiscoverDownloadRecord, FlickrAlbum } from '../../shared/types'
 import EmptyState from './EmptyState'
 
@@ -91,18 +92,25 @@ function ExpandableSection({ label, color, defaultExpanded, children }: {
   )
 }
 
+// Shown when a read of the download records fails, instead of waiting on Loading forever
+function LoadFailed({ onRetry }: { onRetry: () => void }): React.JSX.Element {
+  return <p style={styles.empty}>This could not be loaded. <button style={{ background: 'none', border: 'none', color: 'var(--ff-blue)', cursor: 'pointer', fontSize: 'inherit', textDecoration: 'underline', padding: 0 }} onClick={onRetry}>Try again</button></p>
+}
+
 function BatchesTab({ onClear }: { onClear: () => void }) {
   const [entries, setEntries] = useState<BatchLogEntry[]>([])
   const [loading, setLoading] = useState(true)
+  const [failed, setFailed] = useState(false)
+  const [attempt, setAttempt] = useState(0)
   const [confirming, setConfirming] = useState(false)
 
   useEffect(() => {
-    setLoading(true)
+    setLoading(true); setFailed(false)
     window.flickrAPI.getBatchLog().then(log => {
       setEntries(log.filter(e => !['discover', 'discover_people', 'discover_groups'].includes(e.sourceType)))
       setLoading(false)
-    })
-  }, [])
+    }).catch(() => { setFailed(true); setLoading(false) })
+  }, [attempt])
 
   async function handleClear() {
     if (!confirming) { setConfirming(true); return }
@@ -113,6 +121,7 @@ function BatchesTab({ onClear }: { onClear: () => void }) {
   }
 
   if (loading) return <p style={styles.empty}>Loading…</p>
+  if (failed) return <LoadFailed onRetry={() => setAttempt(n => n + 1)} />
 
   if (entries.length === 0) return (
     <EmptyState title="Your history starts here" body="Every batch you download shows up here, with what was saved and what was skipped. Batches are kept for 90 days." />
@@ -186,7 +195,7 @@ function BatchesTab({ onClear }: { onClear: () => void }) {
           style={confirming ? styles.confirmBtn : styles.clearBtn}
           onClick={handleClear}
         >
-          {confirming ? 'Tap again to confirm — clears all batch download history' : 'Clear batch download history'}
+          {confirming ? 'Click again to clear all batch history' : 'Clear batch download history'}
         </button>
         {confirming && (
           <button style={styles.cancelConfirm} onClick={() => setConfirming(false)}>Cancel</button>
@@ -212,6 +221,8 @@ function presetRange(preset: DatePreset): { min?: number; max?: number } {
 }
 
 function PhotosTab() {
+  const searchRef = useRef<HTMLInputElement | null>(null)
+  useFindShortcut(true, searchRef)   // this tab is only mounted while it is showing
   const [allRecords, setAllRecords]       = useState<PhotoDownloadRecord[]>([])
   const [loading, setLoading]             = useState(true)
   const [searchMode, setSearchMode]       = useState<'title' | 'id'>('title')
@@ -243,13 +254,15 @@ function PhotosTab() {
   const [clearDate, setClearDate]           = useState('')
 
   // Load all records on mount
+  const [failed, setFailed] = useState(false)
+  const [attempt, setAttempt] = useState(0)
   useEffect(() => {
-    setLoading(true)
+    setLoading(true); setFailed(false)
     window.flickrAPI.searchPhotoRecords({}).then(results => {
       setAllRecords(results)
       setLoading(false)
-    })
-  }, [])
+    }).catch(() => { setFailed(true); setLoading(false) })
+  }, [attempt])
 
   // ── Date filter ──
 
@@ -417,6 +430,7 @@ function PhotosTab() {
         {/* Search input */}
         <div style={styles.searchInputWrap}>
           <input
+            ref={searchRef}
             style={styles.searchInput}
             placeholder={searchMode === 'title' ? 'Search by title…' : 'Enter photo ID…'}
             value={searchMode === 'title' ? titleFilter : photoIdQuery}
@@ -513,6 +527,8 @@ function PhotosTab() {
       <div style={styles.tabBody}>
         {loading ? (
           <p style={styles.empty}>Loading records…</p>
+        ) : failed ? (
+          <LoadFailed onRetry={() => setAttempt(n => n + 1)} />
         ) : allRecords.length === 0 ? (
           <EmptyState title="No downloads recorded yet" body="Photos are tracked here as you download them." />
         ) : albumFilterLoading ? (
@@ -592,7 +608,7 @@ function PhotosTab() {
 
         {clearMode === 'confirm-preset' && (
           <div style={styles.clearChoiceRow}>
-            <span style={styles.clearWarning}>Clear download records from {clearPresetLabel}?</span>
+            <span style={styles.clearWarning}>Clear download records from the {clearPresetLabel}?<span style={styles.clearNote}>Your files are not deleted. Smart Download will treat these photos as never downloaded.</span></span>
             <button style={styles.confirmBtn} onClick={handleConfirmPresetClear}>Confirm</button>
             <button style={styles.cancelConfirm} onClick={() => setClearMode('idle')}>Cancel</button>
           </div>
@@ -600,7 +616,7 @@ function PhotosTab() {
 
         {clearMode === 'confirm-before' && (
           <div style={{ ...styles.clearChoiceRow, flexWrap: 'wrap' as const, gap: 6 }}>
-            <span style={styles.clearWarning}>Clear download records before:</span>
+            <span style={styles.clearWarning}>Clear download records before this date:<span style={styles.clearNote}>Your files are not deleted. Smart Download will treat these photos as never downloaded.</span></span>
             <input type="date" style={styles.dateInput} value={clearDate} onChange={e => setClearDate(e.target.value)} />
             <button style={styles.confirmBtn} onClick={handleConfirmClearBefore} disabled={!clearDate}>Confirm</button>
             <button style={styles.cancelConfirm} onClick={() => setClearMode('idle')}>Cancel</button>
@@ -609,7 +625,7 @@ function PhotosTab() {
 
         {clearMode === 'confirm-after' && (
           <div style={{ ...styles.clearChoiceRow, flexWrap: 'wrap' as const, gap: 6 }}>
-            <span style={styles.clearWarning}>Clear download records after:</span>
+            <span style={styles.clearWarning}>Clear download records after this date:<span style={styles.clearNote}>Your files are not deleted. Smart Download will treat these photos as never downloaded.</span></span>
             <input type="date" style={styles.dateInput} value={clearDate} onChange={e => setClearDate(e.target.value)} />
             <button style={styles.confirmBtn} onClick={handleConfirmClearAfter} disabled={!clearDate}>Confirm</button>
             <button style={styles.cancelConfirm} onClick={() => setClearMode('idle')}>Cancel</button>
@@ -618,7 +634,7 @@ function PhotosTab() {
 
         {clearMode === 'confirm-all' && (
           <div style={styles.clearChoiceRow}>
-            <span style={styles.clearWarning}>Clear all photo download records?</span>
+            <span style={styles.clearWarning}>Clear all photo download records?<span style={styles.clearNote}>Your files are not deleted. Smart Download will treat these photos as never downloaded.</span></span>
             <button style={styles.confirmBtn} onClick={handleConfirmClearAll}>Confirm</button>
             <button style={styles.cancelConfirm} onClick={() => setClearMode('idle')}>Cancel</button>
           </div>
@@ -633,15 +649,17 @@ function PhotosTab() {
 function DiscoverTab() {
   const [records, setRecords] = useState<DiscoverDownloadRecord[]>([])
   const [loading, setLoading] = useState(true)
+  const [failed, setFailed] = useState(false)
+  const [attempt, setAttempt] = useState(0)
   const [confirming, setConfirming] = useState(false)
 
   useEffect(() => {
-    setLoading(true)
+    setLoading(true); setFailed(false)
     window.flickrAPI.searchDiscoverRecords({}).then(results => {
       setRecords(results)
       setLoading(false)
-    })
-  }, [])
+    }).catch(() => { setFailed(true); setLoading(false) })
+  }, [attempt])
 
   async function handleClear() {
     if (!confirming) { setConfirming(true); return }
@@ -651,6 +669,7 @@ function DiscoverTab() {
   }
 
   if (loading) return <p style={styles.empty}>Loading…</p>
+  if (failed) return <LoadFailed onRetry={() => setAttempt(n => n + 1)} />
 
   if (records.length === 0) return (
     <EmptyState title="No Discover downloads yet" body="Photos you download from People, Groups, and Explore will appear here." />
@@ -972,6 +991,7 @@ const styles: Record<string, React.CSSProperties> = {
     background: 'none', border: '1px solid #fca5a5', borderRadius: 6,
     padding: '5px 9px', fontSize: 11, color: '#dc2626', cursor: 'pointer',
   },
+  clearNote: { display: 'block', marginTop: 2, fontSize: 11, fontWeight: 400, color: '#888' },
   clearWarning: {
     fontSize: 12, color: '#6b7280',
   },

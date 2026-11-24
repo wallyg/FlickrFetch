@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { CleanupRuleState } from '../../shared/cleanupRules'
-import type { HealthCondition, HealthPhoto, HealthSort, HealthSummary } from '../../shared/types'
+import type { DuplicateSort, HealthCondition, HealthPhoto, HealthSort, HealthSummary } from '../../shared/types'
 import HealthOverview from './HealthOverview'
 import { dash, SectionSwitch } from './DashboardParts'
 import RuleRail, { RailHead, RailRow, ListHead, SortBox } from './RuleRail'
@@ -9,7 +9,10 @@ import { forgetOverview } from './LibraryOverview'
 import { quietBtn, primaryBtn, selectedOn, filterInput } from '../ui/kit'
 import BatchEditButton from './BatchEditButton'
 import BackToTop from '../ui/BackToTop'
-import { ruleById } from '../../shared/cleanupRules'
+import { ruleById, logicOf } from '../../shared/cleanupRules'
+import SelectBar from './SelectBar'
+import DuplicatesList from './DuplicatesList'
+import { askFineReason } from '../ui/fineReason'
 import { useFindShortcut } from '../hooks/useFindShortcut'
 import { HEALTH_CONDITIONS } from '../../shared/healthChecks'
 
@@ -25,6 +28,14 @@ interface HealthPanelProps {
   needsRebuild?: boolean   // the library list was built before 3.6, so some checks cannot count yet
 }
 
+// The left column groups the checks by what they are about (Issues first inside each group)
+const PHOTO_GROUPS: { title: string; ids: string[] }[] = [
+  { title: 'Titles and descriptions', ids: ['title', 'description', 'descLink', 'descCopy', 'descMarkup', 'descTags'].map(c => `photos:${c}`) },
+  { title: 'Tags', ids: ['tags', 'tagsOne', 'tagsMany'].map(c => `photos:${c}`) },
+  { title: 'Dates', ids: ['dateFuture', 'dateAfterUpload', 'datePlaceholder'].map(c => `photos:${c}`) },
+  { title: 'Locations', ids: ['location', 'locNull', 'locFar', 'locTitle'].map(c => `photos:${c}`) },
+  { title: 'Duplicates', ids: ['duplicates'].map(c => `photos:${c}`) }
+]
 const PAGE = 100
 
 const INFO = (c: HealthCondition): { name: string; blurb: string } => {
@@ -41,7 +52,12 @@ export default function HealthPanel({ refreshKey, onFullRescan, toolbarLeft, sta
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<'open' | 'fine'>('open')
   const [sort, setSort] = useState<HealthSort>('newest')
+  const [reason, setReason] = useState<'' | 'none' | 'camera'>('')   // No title or camera-file title: show only one kind
+  const [reasons, setReasons] = useState<{ none: number; camera: number } | undefined>(undefined)
+  const [dupSort, setDupSort] = useState<DuplicateSort>('gap')   // Possible duplicates is ordered its own way
   const [rows, setRows] = useState<HealthPhoto[]>([])
+  const [selected, setSelected] = useState<Set<string>>(new Set())   // photos ticked for the batch editor
+  useEffect(() => { setSelected(new Set()) }, [condition, status, search, sort, dupSort, year])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [saved, setSaved] = useState<string | null>(null)
@@ -66,14 +82,17 @@ export default function HealthPanel({ refreshKey, onFullRescan, toolbarLeft, sta
   }, [openRequest?.nonce])
 
   const loadRows = useCallback(async (offset: number): Promise<void> => {
+    if (condition === 'duplicates') { setRows([]); setTotal(0); setLoading(false); return }   // groups are read by DuplicatesList
     const req = ++requestRef.current
     if (offset === 0) setLoading(true)
-    const page = await window.flickrAPI.listHealthPhotos({ condition, status, search, sort, year: year || undefined, offset, limit: PAGE })
+    const page = await window.flickrAPI.listHealthPhotos({ condition, status, search, sort, year: year || undefined, reason: condition === 'title' && reason ? reason : undefined, offset, limit: PAGE })
     if (req !== requestRef.current) return
     setRows(prev => (offset === 0 ? page.rows : [...prev, ...page.rows]))
     setTotal(page.total)
+    setReasons(page.reasons)
     setLoading(false)
-  }, [condition, status, year, search, sort])
+  }, [condition, status, year, search, sort, reason])
+  useEffect(() => { setReason('') }, [condition, status])
 
   useEffect(() => {
     if (summary && !summary.hasData) return
@@ -83,8 +102,10 @@ export default function HealthPanel({ refreshKey, onFullRescan, toolbarLeft, sta
 
   const mark = async (p: HealthPhoto, next: 'open' | 'fine'): Promise<void> => {
     await window.flickrAPI.setHealthStatus({ photoId: p.photoId, condition, status: next })
+    if (next === 'fine') askFineReason({ checkId: `photos:${condition}`, key: p.photoId, label: p.title || '(no title)' })
     forgetOverview()
     setRows(prev => prev.filter(r => r.photoId !== p.photoId))
+    setSelected(prev => { if (!prev.has(p.photoId)) return prev; const next = new Set(prev); next.delete(p.photoId); return next })   // a photo that left the list is no longer ticked
     setTotal(t => Math.max(0, t - 1))
     await loadSummary()
   }
@@ -121,6 +142,7 @@ export default function HealthPanel({ refreshKey, onFullRescan, toolbarLeft, sta
             selectedId={`photos:${condition}`}
             onSelect={id => { setCondition(id.slice(7) as HealthCondition); setStatus('open'); setYear('') }}
             offText="Every photo check is switched off (Tune checks)."
+            groups={PHOTO_GROUPS}
           />
         </div>
 
@@ -130,10 +152,10 @@ export default function HealthPanel({ refreshKey, onFullRescan, toolbarLeft, sta
           <RailHead>Filter</RailHead>
           <input ref={filterRef} style={filterInput} placeholder="Filter by title…" value={search} onChange={e => setSearch(e.target.value)} aria-label="Filter by title" />
           <RailHead>This list</RailHead>
-          <button style={{ ...styles.secondaryBtn, width: '100%' }} title="Save every photo in this list as a spreadsheet" onClick={async () => { setSaved(await window.flickrAPI.saveHealthCsv({ condition, status, search, sort, year: year || undefined })) }}>Export this list</button>
+          <button style={{ ...styles.secondaryBtn, width: '100%' }} title="Save every photo in this list as a spreadsheet" onClick={async () => { setSaved(await window.flickrAPI.saveHealthCsv({ condition, status, search, sort, year: year || undefined, reason: condition === 'title' && reason ? reason : undefined })) }}>Export this list</button>
           <div style={{ marginTop: 6 }}>
             <BatchEditButton key={`${condition}|${status}|${search}|${year}`} style={{ ...styles.secondaryBtn, width: '100%' }}
-              getIds={() => window.flickrAPI.getHealthPhotoIds({ condition, status, search, sort, year: year || undefined })} />
+              getIds={() => window.flickrAPI.getHealthPhotoIds({ condition, status, search, sort, year: year || undefined, reason: condition === 'title' && reason ? reason : undefined })} />
           </div>
           {saved && <div style={{ ...styles.muted, padding: '6px 9px 2px' }}>Saved to {saved.split('/').pop()} <button style={styles.linkBtn} onClick={() => window.flickrAPI.showInFinder(saved)}>Show in Finder</button></div>}
         </div>
@@ -141,15 +163,34 @@ export default function HealthPanel({ refreshKey, onFullRescan, toolbarLeft, sta
 
         <div style={styles.main}>
           {year && <div style={styles.statusRow}><button style={styles.statusChip} title="Show every year again" onClick={() => setYear('')}>Taken in {year} ✕</button></div>}
-          <ListHead sort={<SortBox<HealthSort> value={sort} onChange={setSort} options={[
+          <ListHead sort={condition === 'title' && reasons ? (
+            <span style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--ff-text-secondary)' }}>Reason
+                <select style={{ border: '1px solid var(--ff-border)', borderRadius: 6, padding: '5px 8px', fontSize: 13, background: '#fff', color: 'var(--ff-text)' }} value={reason} aria-label="Show only one kind of title problem" onChange={e => setReason(e.target.value as '' | 'none' | 'camera')}>
+                  <option value="">All ({(reasons.none + reasons.camera).toLocaleString()})</option>
+                  <option value="none">No title ({reasons.none.toLocaleString()})</option>
+                  <option value="camera">Camera-file title ({reasons.camera.toLocaleString()})</option>
+                </select>
+              </label>
+              <SortBox<HealthSort> value={sort} onChange={setSort} options={[
+                { value: 'newest', label: 'Newest taken first' }, { value: 'oldest', label: 'Oldest taken first' },
+                { value: 'title', label: 'Title A to Z' }, { value: 'titleDesc', label: 'Title Z to A' }]} />
+            </span>
+          ) : condition === 'duplicates'
+            ? <SortBox<DuplicateSort> value={dupSort} onChange={setDupSort} options={[{ value: 'gap', label: 'Biggest gap between uploads' }, { value: 'newest', label: 'Newest taken first' }, { value: 'oldest', label: 'Oldest taken first' }]} />
+            : <SortBox<HealthSort> value={sort} onChange={setSort} options={[
             { value: 'newest', label: 'Newest taken first' }, { value: 'oldest', label: 'Oldest taken first' },
-            { value: 'title', label: 'Title A to Z' }, { value: 'titleDesc', label: 'Title Z to A' }]} />}>{INFO(condition).blurb}</ListHead>
+            { value: 'title', label: 'Title A to Z' }, { value: 'titleDesc', label: 'Title Z to A' }]} />} tip={logicOf(`photos:${condition}`)}>{INFO(condition).blurb}</ListHead>
 
-          <div style={styles.list}>
+          {condition === 'duplicates' && <DuplicatesList status={status} search={search} sort={dupSort} selected={selected} setSelected={setSelected} refreshKey={refreshKey} onChanged={() => void loadSummary()} />}
+          {condition !== 'duplicates' && <SelectBar count={selected.size} shown={rows.length} ids={() => [...selected]} onClear={() => setSelected(new Set())} onSelectAll={() => setSelected(new Set(rows.map(r => r.photoId)))} />}
+          {condition !== 'duplicates' && <div style={styles.list}>
             {loading && rows.length === 0 ? <div style={styles.muted}>Checking your photos…</div>
               : rows.length === 0 ? <div style={styles.muted}>{needsRebuild && ruleById(`photos:${condition}`)?.needsRebuild ? 'This check needs a Rebuild before it can find anything. Press Rebuild in the notice at the top.' : status === 'open' ? 'Nothing left to fix here.' : 'Nothing here.'}</div>
               : rows.map(p => (
                 <div key={p.photoId} style={{ ...styles.card, ...(p.status === 'fine' ? { opacity: 0.6 } : {}) }}>
+                  <input type="checkbox" style={styles.tick} checked={selected.has(p.photoId)} aria-label="Select this photo"
+                    onChange={e => setSelected(prev => { const next = new Set(prev); if (e.target.checked) next.add(p.photoId); else next.delete(p.photoId); return next })} />
                   {p.thumbUrl ? <img src={p.thumbUrl} alt="" loading="lazy" style={styles.thumb} /> : <div style={styles.thumb} />}
                   <div style={styles.cardBody}>
                     <div style={styles.l1}>
@@ -157,8 +198,11 @@ export default function HealthPanel({ refreshKey, onFullRescan, toolbarLeft, sta
                       {p.kind && <span style={styles.pill}>{p.kind}</span>}
                     </div>
                     <div style={styles.muted}>{p.dateTaken ? `Taken ${p.dateTaken.slice(0, 10)}` : 'No date taken'}</div>
+                    {p.hint && <div style={{ ...styles.muted, marginTop: 3 }}>{p.hint}</div>}
                     <div style={styles.actions}>
                       <button style={styles.mainActionBtn} onClick={() => window.flickrAPI.openExternal(p.flickrUrl)}>Open on Flickr ↗</button>
+                      {p.hintMapUrl && <button style={styles.secondaryBtn} onClick={() => window.flickrAPI.openExternal(p.hintMapUrl as string)}>Show on a map ↗</button>}
+                      {p.status === 'open' && <BatchEditButton inline key={p.photoId} style={styles.secondaryBtn} label="Batch editor" getIds={async () => [p.photoId]} />}
                       {p.status === 'open'
                         ? <button style={styles.secondaryBtn} onClick={() => void mark(p, 'fine')}>This one is fine</button>
                         : <button style={styles.secondaryBtn} onClick={() => void mark(p, 'open')}>Undo</button>}
@@ -167,7 +211,7 @@ export default function HealthPanel({ refreshKey, onFullRescan, toolbarLeft, sta
                 </div>
               ))}
             {rows.length < total && <button style={styles.moreBtn} onClick={() => void loadRows(rows.length)}>Show more ({(total - rows.length).toLocaleString()} left)</button>}
-          </div>
+          </div>}
           <BackToTop />
         </div>
       </div>
@@ -191,6 +235,7 @@ const styles: Record<string, React.CSSProperties> = {
   statusChipOn: { ...selectedOn },
   list: { flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: 4 },
   card: { display: 'flex', gap: 12, background: '#fff', border: '1px solid var(--ff-border)', borderRadius: 10, padding: 10, marginBottom: 8 },
+  tick: { alignSelf: 'flex-start', marginTop: 4, flexShrink: 0, cursor: 'pointer' },
   thumb: { width: 76, height: 76, borderRadius: 6, objectFit: 'cover', background: '#eee', flexShrink: 0 },
   cardBody: { flex: 1, minWidth: 0 },
   l1: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' },

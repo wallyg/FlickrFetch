@@ -71,6 +71,10 @@ export interface AppSettings {
   autoUpdate?: boolean         // earlier form of the same setting (false = off); autoUpdateWhen wins when both exist
   auditGenericWords?: string[] // the words the 'generic tags' check flags (a trailing * matches anything that starts that way); default list in cleanupRules.ts
   healthTagLimit?: number      // the 'too many tags' check flags photos with at least this many tags (2 to 75, default 65)
+  duplicates?: Partial<DuplicateSettings>   // the number behind the Possible duplicates check (Tune checks)
+  locationHints?: Partial<LocationHintSettings>   // the numbers behind the location and title hints in the Photos checks (Tune checks)
+  missingTags?: Partial<MissingTagSettings>   // the numbers behind the "Photos missing a tag" check (Tune checks)
+  albumFit?: Partial<AlbumFitSettings>   // the numbers behind the Album fit lists (Tune checks); anything missing uses its default
   cleanupRules?: Record<string, 'off' | 'optional' | 'on'>   // per check in the Cleanup tab; see shared/cleanupRules.ts
 }
 
@@ -329,7 +333,7 @@ export interface TagLetterGroup {
 }
 
 // ── Tag audit (read-only report of likely tag problems) ──────────────────────
-export type AuditCategory = 'glued' | 'typo' | 'notwin' | 'noaccent' | 'junk' | 'runon' | 'spelling' | 'usedonce' | 'generic' | 'numbers' | 'filename'
+export type AuditCategory = 'glued' | 'typo' | 'notwin' | 'noaccent' | 'junk' | 'runon' | 'spelling' | 'usedonce' | 'generic' | 'numbers' | 'filename' | 'missing' | 'plural' | 'possessive'   // missing: a tag that photos probably lack (the row is the tag to add; its photos are the ones missing it)
 export type AuditStatus = 'open' | 'plan' | 'fine' | 'fixed'
 export type AuditConfidence = 'high' | 'medium' | 'low'
 
@@ -344,7 +348,10 @@ export interface AuditFinding {
   spellings: string[]
   status: AuditStatus
   flickrUrl: string       // this tag's page on your Flickr account (a handy place to fix it by hand)
+  clues?: AuditClue[]     // Photos missing a tag: how many of the photos each clue points to
 }
+// habit: a tag it always travels with (top: the most common one); album; titlePlace: the place its title starts with; near: photos taken right beside it; titleName: the title contains the tag's name
+export interface AuditClue { key: 'habit' | 'album' | 'titlePlace' | 'near' | 'titleName'; n: number; top?: string }
 
 export interface AuditSummaryRow { category: AuditCategory; open: number; plan: number; fine: number; fixed: number }
 export interface AuditSummary { computedAt: number; hasIndex: boolean; rows: AuditSummaryRow[] }
@@ -356,10 +363,11 @@ export interface AuditListQuery {
   status: AuditStatus
   search?: string
   sort?: AuditSort
+  reason?: string         // Odd characters: show only one kind of problem (the reason text of the rows)
   offset: number
   limit: number
 }
-export interface AuditListPage { rows: AuditFinding[]; total: number }
+export interface AuditListPage { rows: AuditFinding[]; total: number; reasons?: Record<string, number> }   // reasons: Odd characters, how many rows each reason has (before the reason filter)
 
 export type AuditExportQuery = Omit<AuditListQuery, 'offset' | 'limit'>
 
@@ -386,7 +394,7 @@ export type HealthCondition =
   | 'title' | 'description' | 'tags' | 'tagsOne' | 'location'                  // missing
   | 'dateFuture' | 'dateAfterUpload' | 'datePlaceholder'                       // dates
   | 'descLink' | 'descCopy' | 'descMarkup' | 'descTags'                        // descriptions that are not real descriptions
-  | 'locNull' | 'locFar'                                                       // locations that look wrong
+  | 'locNull' | 'locFar' | 'locTitle' | 'duplicates'                                                       // locations that look wrong
   | 'tagsMany'                                                                 // too many tags
 
 export interface HealthSummaryRow { condition: HealthCondition; open: number; fine: number }
@@ -399,6 +407,7 @@ export interface HealthListQuery {
   sort?: HealthSort
   search?: string
   year?: string         // only photos taken in this year (from a dashboard cluster)
+  reason?: 'none' | 'camera'   // No title or camera-file title: only photos with no title, or only camera-file titles
   offset: number
   limit: number
 }
@@ -412,26 +421,116 @@ export interface HealthPhoto {
   kind: string          // for titles: 'No title' or 'Camera-file title'
   flickrUrl: string
   status: 'open' | 'fine'
+  hint?: string         // a suggestion worked out from the photos taken beside it (a location, a title start), with why
+  hintMapUrl?: string   // a map showing the suggested place, or the geotag that looks wrong
 }
-export interface HealthListPage { rows: HealthPhoto[]; total: number }
+export interface HealthListPage { rows: HealthPhoto[]; total: number; reasons?: { none: number; camera: number } }   // reasons: No title or camera-file title, how many rows of each kind (before the reason filter)
+
+// Possible duplicates (#157): photos with the same date taken, to the second, uploaded at different times
+export interface DuplicatePhoto {
+  photoId: string; title: string; thumbUrl: string
+  uploadedAt: number        // seconds since 1970
+  tags: number; albums: number | null   // albums: null when the album list has not been read yet
+  privacy: number           // 0 public, 1 friends, 2 family, 3 friends and family, 4 private
+  flickrUrl: string; status: 'open' | 'fine'
+}
+export interface DuplicateGroup { taken: string; gapSeconds: number; photos: DuplicatePhoto[] }
+export type DuplicateSort = 'gap' | 'newest' | 'oldest'
+export interface DuplicateQuery { status: 'open' | 'fine'; search?: string; sort?: DuplicateSort; offset: number; limit: number }
+export interface DuplicatePage { groups: DuplicateGroup[]; total: number; photos: number }   // total: groups in this list; photos: photos in them
+export interface DuplicateSettings { gapMinutes: number }   // how far apart (in minutes) two uploads must be to count as a possible duplicate
+export interface DuplicateStats { groups: number; photos: number }
 
 // ── Album checks (3.7) ──────────────────────────────────────────────────────
-export type AlbumCondition = 'noAlbum' | 'empty' | 'noCollection' | 'oneItem' | 'noDesc' | 'dupTitle'
-export interface AlbumSummaryRow { condition: AlbumCondition; open: number; fine: number }
+export type AlbumCondition = 'noAlbum' | 'empty' | 'noCollection' | 'oneItem' | 'noDesc' | 'dupTitle' | 'misfit' | 'missing'
+// What an album is organised by, which decides how photos are judged against it (3.8). 'anything' is left alone.
+export type AlbumKind = 'date' | 'place' | 'tag' | 'anything'
+// photos and albums: for May not fit and May be missing, the DISTINCT photos and the albums involved (open is the number of rows in the list)
+export interface AlbumSummaryRow { condition: AlbumCondition; open: number; fine: number; photos?: number; albums?: number }
+export interface AlbumGroupCount { total: number; issue: number; warning: number }   // of the whole: how many have an Issue, how many only a Warning
+export interface AlbumBiggest { condition: 'misfit' | 'missing'; albumId: string; title: string; photos: number }
 export interface AlbumSummary {
   hasData: boolean             // false until a Rebuild has read the albums
   albums: number
   photos: number               // photos and videos in the library list
   scannedAt: number | null     // when the albums were last read (ms)
   rows: AlbumSummaryRow[]
+  groups: { albums: AlbumGroupCount; photos: AlbumGroupCount }   // Your albums, and Photos and their albums
+  issues: AlbumBiggest[]       // the albums with the most photos flagged by a check set to Issue (at most 5)
+  warnings: AlbumBiggest[]     // the same for a check set to Warning
 }
 export type AlbumSort = 'newest' | 'oldest' | 'title' | 'titleDesc'
-export interface AlbumListQuery { condition: AlbumCondition; status: 'open' | 'fine'; search?: string; sort?: AlbumSort; offset: number; limit: number }
+export type MisfitReason = 'date' | 'place' | 'tag' | 'wrong' | 'double'
+export interface AlbumListQuery { condition: AlbumCondition; status: 'open' | 'fine'; search?: string; sort?: AlbumSort; reason?: MisfitReason; offset: number; limit: number }
 export type AlbumExportQuery = Omit<AlbumListQuery, 'offset' | 'limit'>
 // One row of a list: a photo (Photos in no album) or an album (every other check)
-export interface AlbumItem { id: string; title: string; thumbUrl: string; detail: string; flickrUrl: string; status: 'open' | 'fine'; isPhoto: boolean }
-export interface AlbumListPage { rows: AlbumItem[]; total: number }
+export interface AlbumItem {
+  id: string; title: string; thumbUrl: string; detail: string; flickrUrl: string; status: 'open' | 'fine'; isPhoto: boolean
+  // Album fit rows (3.8) only: why it was suggested, the album concerned and what it is organised by
+  why: string; albumId: string; albumUrl: string; kind: AlbumKind | ''; kindGuessed: boolean
+  description?: string   // the album's own description, on May be missing rows (only when it has one)
+  count?: number         // May be missing rows: how many photos are suggested for this album
+}
+export interface AlbumListPage { rows: AlbumItem[]; total: number; reasons?: Record<'all' | MisfitReason, number> }   // reasons: May not fit only, how many rows each reason has (before the reason filter)
+export interface AlbumFitPhoto { photoId: string; title: string; thumbUrl: string; flickrUrl: string }
+// One album in Tune checks > How each album is judged
+export interface AlbumKindRow { albumId: string; title: string; photos: number; kind: AlbumKind; pick: AlbumKind; overridden: boolean; why: string }
 export interface AlbumSetRequest { id: string; condition: AlbumCondition; status: 'open' | 'fine' }
+export interface AlbumKindRequest { albumId: string; kind: AlbumKind | 'auto' }
+// Why something was marked "This one is fine" (#189)
+export interface FineReasonRequest { checkId: string; key: string; label: string; reason: string; note?: string }
+export interface FineReasonSummaryRow { checkId: string; reason: string; count: number }
+
+// The numbers behind the Photos hints (defaults in locationHints.ts)
+export interface LocationHintSettings {
+  minutes: number   // photos taken within this many minutes of a photo are "beside" it
+  meters: number    // a location is suggested only when those photos are within this many metres of each other
+}
+// What the hints find with the current numbers
+export interface LocationHintStats { locations: number; noLocation: number; titles: number; farTitles: number }
+
+// The numbers behind "Photos missing a tag" (defaults in missingTags.ts)
+export interface MissingTagSettings {
+  agree: number        // how many of the four clues must agree before a tag is suggested
+  implication: number  // percent: photos with tag A carry tag B at least this often
+  albumShare: number   // percent of an album's photos that carry a tag before the rest are suggested it
+  titleShare: number   // percent of the photos with the same title place that carry a tag before the rest are suggested it
+}
+// What the check finds with the current numbers
+export interface MissingTagStats { tags: number; photos: number; suggestions: number }
+
+// The numbers behind Album fit, all adjustable in Tune checks (defaults in albumFit.ts)
+export interface AlbumFitSettings {
+  share: number      // percent of an album that must sit in its cluster (dates or tags) before its outliers are called out
+  gapDays: number    // photos at most this many days apart belong to one visit
+  isolated: number   // a run of this many photos or fewer, away from every visit, is on its own
+  farTimes: number   // out of place when further from the middle than this many times the album's own spread...
+  farKm: number      // ...and at least this many km beyond that spread
+  titleShare: number // May belong: percent of the photos sharing a title place that must be in an album before the rest are suggested for it
+  titleMin: number   // ...and the title place must be used on at least this many photos
+  nearShare: number  // May belong: percent of the photos taken nearby (in time and place) that must be in an album
+  nearMin: number    // ...out of at least this many nearby photos
+  nearMinutes: number // "nearby" means taken within this many minutes...
+  nearMeters: number  // ...and this many metres
+  bothOnly: number   // 1: suggest only when the title place and the nearby photos agree
+  titleMode: number  // 1: use the place a title starts with, but only when enough titles have one (see titleAutoMin); 0: never use titles
+  titleAutoMin: number // Automatic: titles are used only when at least this percent of photos start their title with a place
+  wrongOn: number    // May not fit: 1 = flag a photo filed in a different place's album than its title (or the photos beside it) says; 0 = off
+  doubleOn: number   // May not fit: 1 = flag a photo that is in two albums for different places; 0 = off
+  vouchShare: number // May not fit: a photo is left alone when at least this percent of its nearby photos are in the same album (0 turns this off)
+}
+// What Album fit found with the current numbers, to calibrate them
+export interface AlbumFitStats {
+  judged: number                                // albums with enough photos to be judged
+  byKind: Record<AlbumKind, number>             // how those albums were sorted (date, place, tag, left alone)
+  misfitPhotos: number; misfitAlbums: number    // may not fit: distinct photos (a photo can fit two albums badly), and albums involved
+  byReason: { date: number; place: number; tag: number; wrong: number; double: number }
+  missingAlbums: number; missingPhotos: number  // may belong: albums, and suggested photos in all
+  misfitMarked: number; misfitMarkedStill: number   // photos you marked fine in May not fit, and how many of those the current numbers still flag
+  missingMarked: number; missingMarkedStill: number // the same for albums marked fine in May belong
+  titledPercent: number; titlesOn: boolean      // share of photos whose title starts with a place, and whether the title rules are in use
+  missingBoth: number                           // of those photos, how many are backed by both the title place and the nearby photos
+}
 
 // ── Backup report (what is downloaded, from local records only) ─────────────
 // Which size a photo came down at, saved with its download record (older records have no label)
@@ -469,13 +568,15 @@ export interface AuditOverview {
   optionalPhotos: number
   byType: { category: AuditCategory; state: 'optional' | 'on'; open: number; plan: number; fine: number; fixed: number; photos: number }[]   // checks that are Off are left out
   biggest: { display: string; category: AuditCategory; count: number }[]
+  biggestWarnings: { display: string; category: AuditCategory; count: number }[]   // the same for checks set to Warning (at most 10)
 }
 
 export interface HealthOverview {
   hasData: boolean
   photos: number
   complete: number             // photos with nothing missing
-  withGap: number
+  withGap: number              // photos with a gap from a check set to Issue
+  warnOnly: number             // photos with no Issue gap but a gap from a check set to Warning
   twoOrMore: number
   onlyOne: Record<HealthCondition, number>   // photos whose only gap is this one (with twoOrMore, adds up to withGap)
   byType: { condition: HealthCondition; state: 'optional' | 'on'; open: number }[]   // checks that are Off are left out; gap counts below cover the checks that are On

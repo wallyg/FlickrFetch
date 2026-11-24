@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from 'react'
+import { useFindShortcut } from '../hooks/useFindShortcut'
 import type { FlickrPhoto, PhotoPage, SearchOperator, DateRangeField, TagMode, LicenseFilter } from '../../shared/types'
 import { MediaFilter, DownloadFilter, PrivacyFilter, PrivacyLevel, PRIVACY_OPTIONS, PRIVACY_LABELS, JustifiedIcon, GridIcon, ListIcon, PrivacyIcon, Chip, Tooltip, PhotoListRow, DownloadFilterSelect, LicenseFilterSelect, matchesLicenseFilter, LICENSE_FILTER_LABEL, getPrivacyLevel, sharedStyles, DateMode, getPresetDates, formatDateChip, loadRowHeight, saveRowHeight, computeJustifiedRows, DOWNLOAD_FILTER_LABEL } from './PhotoGridShared'
 import { cleanTag } from '../../shared/tags'
@@ -24,6 +25,7 @@ type SortOrder = 'album-order' | 'newest-posted' | 'oldest-posted' | 'date-desc'
 
 interface AlbumPhotoGridProps {
   albumId: string
+  findActive?: boolean   // this album is the screen being shown, so Cmd+F goes to its title search
   onPhotoSelect: (photo: FlickrPhoto) => void
   selectMode?: boolean
   selectedIds?: Set<string>
@@ -43,7 +45,7 @@ interface AlbumPhotoGridProps {
   handledTagRequest?: React.MutableRefObject<number>
 }
 
-export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, selectedIds, onToggleSelect, onPhotosLoaded, onPageInfo, onFilteredPhotosChange, onMediaFilterChange, onPrivacyFilterChange, onExtraFiltersChange, tagFilterRequest, onSearchWholePhotostream, handledTagRequest }: AlbumPhotoGridProps): React.JSX.Element {
+export default function AlbumPhotoGrid({ albumId, findActive, onPhotoSelect, selectMode, selectedIds, onToggleSelect, onPhotosLoaded, onPageInfo, onFilteredPhotosChange, onMediaFilterChange, onPrivacyFilterChange, onExtraFiltersChange, tagFilterRequest, onSearchWholePhotostream, handledTagRequest }: AlbumPhotoGridProps): React.JSX.Element {
   const [photos, setPhotos] = useState<FlickrPhoto[]>([])
   const [pageInfo, setPageInfo] = useState<Pick<PhotoPage, 'page' | 'pages' | 'total'> | null>(null)
   const [loading, setLoading] = useState(true)
@@ -62,6 +64,8 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
   const [rowHeight, setRowHeight] = useState<number>(loadRowHeight)
   const [containerWidth, setContainerWidth] = useState(0)
   const gridContainerRef = useRef<HTMLDivElement>(null)
+  const searchRef = useRef<HTMLInputElement | null>(null)
+  useFindShortcut(findActive === true, searchRef)
 
   // All filters are client-side — album API doesn't support server-side search
   const [titleQuery, setTitleQuery] = useState('')
@@ -343,6 +347,7 @@ export default function AlbumPhotoGrid({ albumId, onPhotoSelect, selectMode, sel
                 <option value="exact">Exact match</option>
               </select>
               <input
+                ref={searchRef}
                 style={styles.searchInput}
                 type="text"
                 placeholder="Search…"

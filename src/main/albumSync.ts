@@ -28,6 +28,17 @@ export const ALBUMS_DDL = `
     updated_at INTEGER NOT NULL,
     PRIMARY KEY (album_id, condition)
   );
+  CREATE TABLE IF NOT EXISTS album_kind (
+    album_id TEXT PRIMARY KEY,
+    kind TEXT NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS album_fit_state (
+    key TEXT NOT NULL,
+    condition TEXT NOT NULL,
+    status TEXT NOT NULL,
+    updated_at INTEGER NOT NULL,
+    PRIMARY KEY (key, condition)
+  );
   CREATE TABLE IF NOT EXISTS photo_health_state (
     photo_id TEXT NOT NULL,
     condition TEXT NOT NULL,
@@ -145,6 +156,8 @@ export async function syncAlbums(db: Database.Database, call: FlickrCall, opts: 
       db.prepare('DELETE FROM album WHERE id = ?').run(id)
       clearLinks.run(id)
       db.prepare('DELETE FROM album_health_state WHERE album_id = ?').run(id)
+      db.prepare('DELETE FROM album_kind WHERE album_id = ?').run(id)
+      db.prepare('DELETE FROM album_fit_state WHERE key = ? OR key LIKE ?').run(id, `%|${id}`)   // marks fine for a May belong album, or a photo in it
     }
   })()
   return true

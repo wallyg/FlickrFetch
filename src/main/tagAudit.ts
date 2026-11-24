@@ -9,11 +9,16 @@ import { csvCell, saveCsvFile } from './csv'
 import { cleanTag, foldLatinAccents, GLUE_BOUNDARY_SOURCE } from '../shared/tags'
 import { decodeEntities } from '../shared/description'
 import { loadSettings } from './settings'
+import { photoCards } from './photoCards'
 import { ruleState, DEFAULT_GENERIC_WORDS } from '../shared/cleanupRules'
+import { detectMissingTags, missingSettings } from './missingTags'
+import { detectPlurals } from './pluralTags'
+import { detectPossessives } from './possessiveTags'
+import { clearFineReason } from './fineReasons'
 import { isCameraTag } from '../shared/cameraNames'
 import type {
   AuditCategory, AuditConfidence, AuditExportQuery, AuditFinding, AuditListPage, AuditListQuery, AuditPlanRow,
-  AuditOverview, AuditSetRequest, AuditStatus, AuditSummary
+  AuditOverview, AuditSetRequest, AuditStatus, AuditSummary, MissingTagStats
 } from '../shared/types'
 
 // Tag audit: reads the local tag index and lists likely problems by type. Read-only: nothing here
@@ -24,7 +29,7 @@ interface TagRecord { id: number; name: string; display: string; count: number; 
 type Finding = Omit<AuditFinding, 'flickrUrl'>      // what the detection and the cache hold
 type Draft = Omit<Finding, 'status'>
 
-export const AUDIT_CATEGORIES: AuditCategory[] = ['glued', 'typo', 'notwin', 'noaccent', 'junk', 'runon', 'spelling', 'usedonce', 'generic', 'numbers', 'filename']
+export const AUDIT_CATEGORIES: AuditCategory[] = ['glued', 'typo', 'notwin', 'noaccent', 'junk', 'runon', 'spelling', 'usedonce', 'generic', 'numbers', 'filename', 'missing', 'plural', 'possessive']
 
 // ── Word list (to tell real words from slips) ────────────────────────────────
 // The bundled public-domain list, plus the Mac's own list when it exists on this computer.
@@ -102,6 +107,8 @@ function tidyJunk(raw: string): string {
   return t
 }
 
+const GLUE_PIECE_MIN_PHOTOS = 20   // names stuck together: each piece must be a tag used on at least this many photos
+
 export function detectFindings(tags: TagRecord[], genericWords: string[] = DEFAULT_GENERIC_WORDS): Draft[] {
   const out: Draft[] = []
   const add = (t: TagRecord, category: AuditCategory, replacement: string, evidence: string, confidence: AuditConfidence, display?: string): void => {
@@ -136,15 +143,21 @@ export function detectFindings(tags: TagRecord[], genericWords: string[] = DEFAU
       const segments: string[] = []
       let current = ''
       let hit: string | null = null
+      let hitPieces: string[] = []
       for (const word of raw.split(/\s+/).filter(Boolean)) {
         // garbled characters ("GeneviÃ¨ve") look like a capital after a letter but belong in Odd characters
         const pieces = word.length >= 8 && (tokenFreq.get(word) ?? 0) <= 2 && !MOJIBAKE.test(word) ? gluePieces(word) : null
         if (!pieces) { current = current ? `${current} ${word}` : word; continue }
-        hit = hit ?? word
+        if (!hit) { hit = word; hitPieces = pieces }
         current = current ? `${current} ${pieces[0]}` : pieces[0]
         for (const p of pieces.slice(1)) { segments.push(current); current = p }
       }
       if (!hit) continue
+      // A comma was probably lost only if every piece is a tag you also use on its own; and if the tag is also typed with the gap,
+      // it is one tag spelled two ways (Typed more than one way), not two tags run together
+      if (!hitPieces.every(p => (byName.get(cleanTag(p))?.count ?? 0) >= GLUE_PIECE_MIN_PHOTOS)) continue
+      const spaced = hitPieces.join(' ').toLowerCase()
+      if (rawsOf(t).some(r => r.toLowerCase().includes(spaced))) continue
       segments.push(current)
       // A name used on several photos was probably written that way on purpose (CubaOcho, DinoLand)
       const longEnough = raw.split(/\s+/).length >= 4 || raw.length >= 30
@@ -172,6 +185,7 @@ export function detectFindings(tags: TagRecord[], genericWords: string[] = DEFAU
   }
   for (const t of tags) {
     if (isMachine(t) || t.count > 12 || t.name.length < 10 || !alnumOnly(t.name)) continue
+    if (words.has(t.name)) continue   // a real word such as cheesecake or storehouse, not several tags run together
     if (!rawsOf(t).some(alnumOnly)) continue
     const seg = segment(t.name)
     if (seg && seg.length >= 2 && seg.every(x => x.length >= 2)) {
@@ -326,7 +340,7 @@ function auditDb(): Database.Database {
   return db
 }
 
-let cache: { builtFor: number; words: string; computedAt: number; findings: Finding[]; ids: Map<string, number> } | null = null
+let cache: { builtFor: number; words: string; computedAt: number; findings: Finding[]; ids: Map<string, number>; missingIds: Map<string, string[]>; missingSuggestions: number } | null = null
 
 function loadTagRecords(db: Database.Database): TagRecord[] {
   const byId = new Map<number, TagRecord>()
@@ -345,24 +359,45 @@ function indexStamp(db: Database.Database): number | null {
 }
 
 // Runs the detection when the tag list has changed since the last run, then applies the user's marks.
+// The tag-by-tag findings depend only on the tag list and the generic words; the missing-tag findings also depend on albums, titles and
+// their own numbers. They are kept apart so changing one number does not rerun every check.
+let baseCache: { stamp: number; words: string; drafts: Draft[]; records: TagRecord[] } | null = null
+let missingCache: { stamp: number; key: string; result: ReturnType<typeof detectMissingTags> } | null = null
+
 function currentFindings(db: Database.Database): Finding[] | null {
   const stamp = indexStamp(db)
   if (stamp === null) return null
   const genericWords = loadSettings().auditGenericWords ?? DEFAULT_GENERIC_WORDS
+  const albumsStamp = (db.prepare("SELECT value FROM tag_index_meta WHERE key = 'albums_scanned_at'").get() as { value: string } | undefined)?.value ?? ''
   const wordsKey = genericWords.join('\n')
-  if (cache && cache.builtFor === stamp && cache.words === wordsKey) return cache.findings
+  // The missing-tag numbers, the album numbers they share (nearby photos, titles) and the album scan all change the missing-tag answer
+  const missingKey = `${missingSettings().key}|${albumsStamp}|${JSON.stringify(loadSettings().albumFit ?? {})}`
+  const fullKey = `${wordsKey}|${missingKey}`
+  if (cache && cache.builtFor === stamp && cache.words === fullKey) return cache.findings
   const states = new Map<string, StateRow>()
   for (const s of db.prepare('SELECT * FROM tag_audit_state').all() as StateRow[]) states.set(`${s.tag_name}|${s.category}`, s)
-  const records = loadTagRecords(db)
-  const findings: Finding[] = detectFindings(records, genericWords).map(d => {
+  if (!baseCache || baseCache.stamp !== stamp || baseCache.words !== wordsKey) {
+    const records = loadTagRecords(db)
+    baseCache = { stamp, words: wordsKey, records, drafts: [...detectFindings(records, genericWords), ...detectPlurals(db), ...detectPossessives(db)] }
+  }
+  if (!missingCache || missingCache.stamp !== stamp || missingCache.key !== missingKey) missingCache = { stamp, key: missingKey, result: detectMissingTags(db) }
+  const { records, drafts } = baseCache
+  const missing = missingCache.result
+  const findings: Finding[] = [...drafts, ...missing.drafts].map(d => {
     const s = states.get(`${d.tag}|${d.category}`)
     return { ...d, status: (s && s.status !== 'fixed' ? s.status : 'open') as AuditStatus, replacement: s?.replacement || d.replacement }
   })
   // A plan item whose problem no longer shows up has been fixed
   const live = new Set(findings.map(f => `${f.tag}|${f.category}`))
   const markFixed = db.prepare("UPDATE tag_audit_state SET status = 'fixed', updated_at = ? WHERE tag_name = ? AND category = ?")
-  for (const s of states.values()) if (s.status === 'plan' && !live.has(`${s.tag_name}|${s.category}`)) markFixed.run(Date.now(), s.tag_name, s.category)
-  cache = { builtFor: stamp, words: wordsKey, computedAt: Date.now(), findings, ids: new Map(records.map(r => [r.name, r.id])) }
+  // These checks depend on rules and on other tags, so they are fixed only when the tag itself is gone; a rule that merely stops flagging a tag is not a fix
+  const names = new Set(records.map(r => r.name))
+  for (const s of states.values()) {
+    if (s.status !== 'plan' || live.has(`${s.tag_name}|${s.category}`)) continue
+    if ((s.category === 'glued' || s.category === 'runon' || s.category === 'plural' || s.category === 'possessive') && names.has(s.tag_name)) continue
+    markFixed.run(Date.now(), s.tag_name, s.category)
+  }
+  cache = { builtFor: stamp, words: fullKey, computedAt: Date.now(), findings, ids: new Map(records.map(r => [r.name, r.id])), missingIds: missing.photoIds, missingSuggestions: missing.suggestions }
   return findings
 }
 
@@ -408,6 +443,7 @@ function matchingRows(q: AuditExportQuery): Finding[] {
   } else {
     rows = findings.filter(f => f.category === q.category && f.status === q.status && match(f))
   }
+  if (q.reason && q.category === 'junk') rows = rows.filter(f => f.evidence === q.reason)   // Odd characters, one kind of problem
   // Suggested keeps the order the detection gave (strongest suspicion first); the others reorder the whole list,
   // so paging and the export follow it too. Ties fall back to A to Z.
   if (q.sort && q.sort !== 'suggested') {
@@ -420,13 +456,13 @@ function matchingRows(q: AuditExportQuery): Finding[] {
 }
 
 // Every check can be On, Optional or Off (Tune checks), including the cosmetic spelling check, which is Optional by default
-const DASHBOARD_CATEGORIES: AuditCategory[] = ['notwin', 'noaccent', 'typo', 'glued', 'junk', 'runon', 'spelling', 'generic', 'numbers', 'filename', 'usedonce']
+const DASHBOARD_CATEGORIES: AuditCategory[] = ['notwin', 'noaccent', 'typo', 'glued', 'junk', 'runon', 'spelling', 'plural', 'possessive', 'missing', 'generic', 'numbers', 'filename', 'usedonce']
 
 // The numbers behind the dashboard: how many tags and photos are affected, and how the work is going
 export function auditOverview(): AuditOverview {
   const db = auditDb()
   const findings = currentFindings(db)
-  const empty: AuditOverview = { hasIndex: false, totalTags: 0, totalPhotos: 0, flaggedTags: 0, flaggedPhotos: 0, optionalTags: 0, optionalPhotos: 0, plan: 0, fine: 0, fixed: 0, byType: [], biggest: [] }
+  const empty: AuditOverview = { hasIndex: false, totalTags: 0, totalPhotos: 0, flaggedTags: 0, flaggedPhotos: 0, optionalTags: 0, optionalPhotos: 0, plan: 0, fine: 0, fixed: 0, byType: [], biggest: [], biggestWarnings: [] }
   if (!findings) return empty
   const totalTags = (db.prepare('SELECT COUNT(*) AS n FROM tag_names WHERE photo_count > 0').get() as { n: number }).n
   const totalPhotos = (db.prepare('SELECT COUNT(*) AS n FROM tag_indexed_photo').get() as { n: number }).n
@@ -440,6 +476,8 @@ export function auditOverview(): AuditOverview {
     db.transaction(() => { for (const n of tagNames) { const id = ids.get(n); if (id !== undefined) fillPick.run(id) } })()
     return (db.prepare('SELECT COUNT(DISTINCT tp.photo_id) AS n FROM tag_photo tp JOIN audit_pick k ON k.tag_id = tp.tag_id').get() as { n: number }).n
   }
+  // Photos missing a tag count the photos that lack it, not the photos that carry it, so they are counted apart from the tag problems
+  const photosMissing = (tagNames: string[]): number => new Set(tagNames.flatMap(n => cache?.missingIds.get(n) ?? [])).size
   // Checks that are Off are left out; Optional ones are shown but do not count towards the headline
   const cleanupRules = loadSettings().cleanupRules
   const stateOf = (c: AuditCategory): 'off' | 'optional' | 'on' => ruleState(cleanupRules, `tags:${c}`)
@@ -457,12 +495,13 @@ export function auditOverview(): AuditOverview {
       plan: stateCount(category, 'plan'),
       fine: stateCount(category, 'fine'),
       fixed: stateCount(category, 'fixed'),
-      photos: photosFor([...new Set(mine.map(f => f.tag))])
+      photos: category === 'missing' ? photosMissing([...new Set(mine.map(f => f.tag))]) : photosFor([...new Set(mine.map(f => f.tag))])
     }
   })
-  const flaggedNames = [...new Set(liveOn.map(f => f.tag))]
+  // Suggestions of a tag to add are not tag problems, so they stay out of the headline counts of tags and photos with problems
+  const flaggedNames = [...new Set(liveOn.filter(f => f.category !== 'missing').map(f => f.tag))]
   const flagged = new Set(flaggedNames)
-  const optionalNames = [...new Set(live.filter(f => stateOf(f.category) === 'optional' && !flagged.has(f.tag)).map(f => f.tag))]
+  const optionalNames = [...new Set(live.filter(f => f.category !== 'missing' && stateOf(f.category) === 'optional' && !flagged.has(f.tag)).map(f => f.tag))]
   return {
     hasIndex: true,
     totalTags, totalPhotos,
@@ -474,15 +513,20 @@ export function auditOverview(): AuditOverview {
     fine: byType.reduce((n, r) => n + r.fine, 0),
     fixed: byType.reduce((n, r) => n + r.fixed, 0),
     byType,
-    biggest: [...liveOn].sort((a, b) => b.count - a.count).slice(0, 10).map(f => ({ display: f.display, category: f.category, count: f.count }))
+    biggest: [...liveOn].filter(f => f.category !== 'missing').sort((a, b) => b.count - a.count).slice(0, 10).map(f => ({ display: f.display, category: f.category, count: f.count })),
+    biggestWarnings: live.filter(f => stateOf(f.category) === 'optional').sort((a, b) => b.count - a.count).slice(0, 10).map(f => ({ display: f.display, category: f.category, count: f.count }))
   }
 }
 
 export function auditList(q: AuditListQuery): AuditListPage {
-  const rows = matchingRows(q)
+  const all = matchingRows({ ...q, reason: undefined })
+  // Odd characters has seven kinds of problem; the menu shows how many rows each has and can show just one
+  let reasons: Record<string, number> | undefined
+  if (q.category === 'junk') { reasons = {}; for (const f of all) reasons[f.evidence] = (reasons[f.evidence] ?? 0) + 1 }
+  const rows = q.reason ? matchingRows(q) : all
   const offset = Math.max(q.offset, 0)
   const page = rows.slice(offset, offset + Math.min(Math.max(q.limit, 1), 500))
-  return { rows: page.map(f => ({ ...f, flickrUrl: tagUrl(f.tag) })), total: rows.length }
+  return { rows: page.map(f => ({ ...f, flickrUrl: tagUrl(f.tag) })), total: rows.length, ...(reasons ? { reasons } : {}) }
 }
 
 // Every row of the list, with no page limit, for export
@@ -496,6 +540,7 @@ export function auditSet(req: AuditSetRequest): void {
   if (!finding) return
   if (req.status === 'open') {
     db.prepare('DELETE FROM tag_audit_state WHERE tag_name = ? AND category = ?').run(req.tag, req.category)
+    clearFineReason(`tags:${req.category}`, `${req.category}|${req.tag}`)
     finding.status = 'open'
     return
   }
@@ -514,10 +559,18 @@ const planLine = (display: string, replacement: string, count: number, category:
     ? `Use "${replacement}" for every spelling of "${display}" (${count.toLocaleString('en-US')} photo${count === 1 ? '' : 's'})`
     : `Replace "${display}" with ${replacement || 'nothing (delete it)'} (${count.toLocaleString('en-US')} photo${count === 1 ? '' : 's'})`
 
-// Every photo that carries this tag, for the batch editor
-export function auditPhotoIds(tag: string): string[] {
+// Every photo that carries this tag, for the batch editor; for the "missing" check, the photos that should have it but do not
+export function auditPhotoIds(tag: string, category?: AuditCategory): string[] {
   const db = auditDb()
+  if (category === 'missing') { currentFindings(db); return cache?.missingIds.get(tag) ?? [] }
   return (db.prepare('SELECT tp.photo_id FROM tag_photo tp JOIN tag_names n ON n.id = tp.tag_id WHERE n.name = ? ORDER BY tp.photo_id DESC').all(tag) as { photo_id: string }[]).map(r => r.photo_id)
+}
+
+// What the missing-tag check finds with the current numbers, for the live counts in Tune checks
+export function missingStats(): MissingTagStats {
+  const db = auditDb()
+  const f = currentFindings(db)
+  return { tags: f ? f.filter(x => x.category === 'missing').length : 0, photos: new Set([...(cache?.missingIds.values() ?? [])].flat()).size, suggestions: cache?.missingSuggestions ?? 0 }
 }
 
 export function auditPlan(): AuditPlanRow[] {
@@ -555,7 +608,9 @@ export function registerAuditIpc(getWindow: () => BrowserWindow | null): void {
   ipcMain.handle('audit:overview', () => auditOverview())
   ipcMain.handle('audit:list', (_event, q: AuditListQuery) => auditList(q))
   ipcMain.handle('audit:set', (_event, req: AuditSetRequest) => auditSet(req))
-  ipcMain.handle('audit:photoIds', (_event, tag: string) => (typeof tag === 'string' ? auditPhotoIds(tag) : []))
+  ipcMain.handle('audit:photoIds', (_event, tag: string, category?: AuditCategory) => (typeof tag === 'string' ? auditPhotoIds(tag, category === 'missing' ? 'missing' : undefined) : []))
+  ipcMain.handle('photos:cards', (_event, ids: string[]) => (Array.isArray(ids) ? photoCards(ids) : []))
+  ipcMain.handle('audit:missingStats', () => missingStats())
   ipcMain.handle('audit:plan', () => auditPlan())
   ipcMain.handle('audit:copyPlan', () => { clipboard.writeText(planText()); return true })
   ipcMain.handle('audit:savePlanCsv', () => saveCsvFile(getWindow, 'tag-fix-plan.csv', PLAN_CSV_HEADER, planCsvRows()))

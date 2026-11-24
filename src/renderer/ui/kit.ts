@@ -49,7 +49,8 @@ export const railItem: CSSProperties = {
   display: 'flex', justifyContent: 'space-between', gap: 8, padding: '7px 9px', borderRadius: 6, fontSize: 13, cursor: 'pointer', color: 'var(--ff-text)'
 }
 
-export const railSel: CSSProperties = { background: 'var(--ff-tint)', color: 'var(--ff-pink-action)', fontWeight: 600 }
+// The selected row changes colour and background only: a bolder weight made long names wrap onto a second line when selected
+export const railSel: CSSProperties = { background: 'var(--ff-tint)', color: 'var(--ff-pink-action)' }
 
 // A small text box for filtering a list
 export const filterInput: CSSProperties = {

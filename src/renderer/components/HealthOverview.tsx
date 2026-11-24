@@ -23,9 +23,16 @@ export default function HealthOverview({ refreshKey, onOpenList }: { refreshKey:
   const [metric, setMetric] = useState<Metric>('anyGap')
   const [hot, setHot] = useState<number | null>(null)   // the ring part under the mouse
   const [more, setMore] = useState(false)               // Best places to start: five, or all
-  useEffect(() => { void window.flickrAPI.getHealthOverview().then(setData) }, [refreshKey])
+  const [failed, setFailed] = useState(false)
+  const [attempt, setAttempt] = useState(0)
+  useEffect(() => {
+    let stale = false   // an older answer arriving after a newer request is ignored
+    setFailed(false)
+    void window.flickrAPI.getHealthOverview().then(d => { if (!stale) setData(d) }).catch(() => { if (!stale) setFailed(true) })
+    return () => { stale = true }
+  }, [refreshKey, attempt])
 
-  if (!data) return <div style={dash.wrap}><span style={dash.muted}>Checking your photos…</span></div>
+  if (!data) return <div style={dash.wrap}><span style={dash.muted}>{failed ? <>This could not be loaded. <button style={{ background: 'none', border: 'none', color: 'var(--ff-blue)', cursor: 'pointer', fontSize: 'inherit', textDecoration: 'underline', padding: 0 }} onClick={() => setAttempt(n => n + 1)}>Try again</button></> : 'Checking your photos…'}</span></div>
   if (!data.hasData) return <div style={dash.wrap}><span style={dash.muted}>Rebuild your library list first (the data button, top right).</span></div>
 
   const fmt = (n: number): string => n.toLocaleString()
@@ -33,15 +40,17 @@ export default function HealthOverview({ refreshKey, onOpenList }: { refreshKey:
   const frac = (n: number): number => (data.photos > 0 ? n / data.photos : 0)
   const mk = (n: number, color: string, short: string, legend: string): RingPart =>
     ({ n, color, short, fraction: frac(n), title: `${fmt(n)} photos (${pct(n, data.photos)} of your library): ${legend.toLowerCase()}` })
-  const onlyList = data.byType.map(t => t.condition).filter(c => data.onlyOne[c] > 0).sort((a, b) => data.onlyOne[b] - data.onlyOne[a])
-  const otherOnly = onlyList.slice(4).reduce((n, c) => n + data.onlyOne[c], 0)
-  const ringParts: (RingPart & { legend: string })[] = [
-    { ...mk(data.complete, COLORS.fixed, 'complete', 'Complete'), legend: 'Complete' },
-    // The four biggest single gaps get their own part of the ring; the rest are one "other" part
-    ...onlyList.slice(0, 4).map(c => ({ ...mk(data.onlyOne[c], colorOf(c), `only ${NAMES(c).toLowerCase().slice(0, 14)}`, `Only ${PHRASES(c)}`), legend: `Only ${PHRASES(c)}` })),
-    ...(otherOnly > 0 ? [{ ...mk(otherOnly, '#94a3b8', 'one other gap', 'Only one other kind of gap'), legend: 'Only one other kind of gap' }] : []),
-    { ...mk(data.twoOrMore, '#ef4444', '2+ gaps', 'Two or more gaps'), legend: 'Two or more gaps' }
-  ].filter((g, i) => i === 0 || g.n > 0)
+  const fineN = Math.max(0, data.photos - data.withGap - data.warnOnly)
+  const ringParts: RingPart[] = [
+    mk(fineN, COLORS.fixed, 'fine', 'Fine'),
+    mk(data.warnOnly, COLORS.warn, 'warning', 'Only a Warning gap'),
+    mk(data.withGap, COLORS.open, 'issue', 'An Issue gap')
+  ]
+  const legend: { color: string; n: number; label: string; detail: string; tip: string }[] = [
+    { color: COLORS.open, n: data.withGap, label: 'Issue', detail: pct(data.withGap, data.photos), tip: data.twoOrMore > 0 ? `${fmt(data.twoOrMore)} of these are missing more than one thing` : 'Photos with a gap from a check set to Issue' },
+    { color: COLORS.warn, n: data.warnOnly, label: 'Warning', detail: pct(data.warnOnly, data.photos), tip: 'Photos with no Issue, only a gap from a check set to Warning. Warnings never lower the score' },
+    { color: COLORS.fixed, n: fineN, label: 'Fine', detail: pct(fineN, data.photos), tip: 'Nothing missing' }
+  ]
   const stacked = metric === 'anyGap'   // All gaps: dark = photos with an Issue gap, light = photos with only a Warning gap
   const share = (e: Overview['byYear'][number]): number => (e.total > 0 ? ((metric === 'anyGap' ? e.anyGap : e.by[metric]) + (stacked ? e.warnOnly : 0)) / e.total : 0)
   const reliable = data.byYear.filter(e => e.total >= 100)   // years with fewer photos are left out: their shares would jump around
@@ -63,18 +72,21 @@ export default function HealthOverview({ refreshKey, onOpenList }: { refreshKey:
         <div style={dash.ringWrap}>
           <RingParts label={pctLabel(data.photos > 0 ? data.complete / data.photos : 1)} parts={ringParts} active={hot} onActive={setHot} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', gap: 36, flexWrap: 'wrap' }}>
-              <div style={dash.big}><b style={dash.bigNum}>{fmt(data.complete)}</b>photos with nothing missing</div>
-              <div style={dash.big}><b style={dash.bigNum}>{fmt(data.withGap)}</b>photos with a gap</div>
-              {sortedTypes.length > 1 && <div style={dash.big}><b style={dash.bigNum}>{fmt(data.twoOrMore)}</b>missing more than one thing</div>}
+            <div style={dash.big}><b style={{ ...dash.bigNum, display: 'inline', marginRight: 6 }}>{fmt(data.photos)}</b>photos in your library</div>
+            <div style={{ marginTop: 8 }}>
+              {legend.map(l => (
+                <div key={l.label} style={dash.legendRow} title={l.tip}>
+                  <i style={{ ...dash.legendSwatch, background: l.color }} />
+                  <b>{fmt(l.n)}</b><span>{l.label}</span><span style={dash.muted}>· {l.detail}</span>
+                </div>
+              ))}
             </div>
-            <div style={{ ...dash.muted, marginTop: 10 }}>Out of {fmt(data.photos)} photos, counting only the checks set to Issue. Hover the ring to see what it is made of.</div>
           </div>
         </div>
       </div>
 
       <div style={{ ...dash.card, marginTop: 14 }}>
-        <h3 style={dash.cardTitle}>Issues by type <span style={dash.hint}>(each kind of gap, by photos affected; click a row to open its list; hover a bar for numbers)</span></h3>
+        <h3 style={dash.cardTitle}>Issues by type</h3>
         {sortedTypes.length === 0 && <span style={dash.muted}>No check is set to Issue (see Tune checks).</span>}
         {sortedTypes.map(t => {
           const only = data.onlyOne[t.condition]
@@ -87,13 +99,13 @@ export default function HealthOverview({ refreshKey, onOpenList }: { refreshKey:
           )
         })}
         {sortedTypes.length > 1 && <div style={{ ...dash.muted, marginTop: 8 }}>
-          The dark part of a bar is photos missing only that. The light part is photos that are also missing something else. All bars use one scale: the width is the share of your whole library.
+          Dark: photos missing only that. Light: photos also missing something else. Bar width is the share of your whole library.
         </div>}
       </div>
 
       <div style={dash.grid}>
         <div style={dash.card}>
-          <h3 style={dash.cardTitle}>Gaps by year taken <span style={dash.hint}>(share of that year's photos; hover a bar; years with under 100 photos left out)</span></h3>
+          <h3 style={dash.cardTitle}>Gaps by year taken <span style={dash.hint}>(share of that year's photos; years under 100 photos left out)</span></h3>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
             <button style={{ ...styles.chip, ...(metric === 'anyGap' ? styles.chipOn : {}) }} onClick={() => setMetric('anyGap')}>All gaps</button>
             {quick.map(c => (
@@ -142,7 +154,7 @@ export default function HealthOverview({ refreshKey, onOpenList }: { refreshKey:
           </div>
         </div>
         <div style={dash.card}>
-          <h3 style={dash.cardTitle}>Biggest Issues to address <span style={dash.hint}>(years where one gap is unusually common; click for its list)</span></h3>
+          <h3 style={dash.cardTitle}>Biggest issues to address <span style={dash.hint}>(years where one gap is unusually common)</span></h3>
           {data.clusters.length === 0 && <span style={dash.muted}>No year stands out.</span>}
           {clusters.map(c => (
             <div key={`${c.condition}|${c.year}`} style={dash.item} {...asButton(() => onOpenList(c.condition, c.year))}>
@@ -158,7 +170,7 @@ export default function HealthOverview({ refreshKey, onOpenList }: { refreshKey:
 
       {optionalTypes.length > 0 && (
         <div style={{ ...dash.card, marginTop: 14 }}>
-          <h3 style={dash.cardTitle}>Warnings to review <span style={dash.hint}>(could be better; never lowers the score above; click a row to open its list)</span></h3>
+          <h3 style={dash.cardTitle}>Biggest warnings to heed <span style={dash.hint}>(by photos affected; never lowers the score)</span></h3>
           {optionalTypes.map(t => (
             <BarRow key={t.condition} name={NAMES(t.condition)} max={data.photos} number={fmt(t.open)} onClick={() => onOpenList(t.condition)}
               parts={[{ value: t.open, color: 'var(--ff-slate)', title: `${fmt(t.open)} photos` }]} />

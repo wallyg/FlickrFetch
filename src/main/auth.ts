@@ -5,9 +5,13 @@ import * as crypto from 'crypto'
 import OAuth from 'oauth-1.0a'
 import axios from 'axios'
 import { FLICKR_API_KEY, FLICKR_API_SECRET } from './config'
+import { USER_AGENT } from './userAgent'
 import type { FlickrTokenData } from '../shared/types'
 
 const TOKEN_FILE = join(app.getPath('userData'), 'token.enc')
+
+// A request that gets no answer for this long fails instead of hanging
+const HTTP_TIMEOUT_MS = 30000
 
 const REQUEST_TOKEN_URL = 'https://www.flickr.com/services/oauth/request_token'
 const AUTHORIZE_URL = 'https://www.flickr.com/services/oauth/authorize'
@@ -18,7 +22,6 @@ const CALLBACK_URL = 'oob'
 
 // Identify ourselves to Flickr instead of sending the default "axios/x.x.x" user agent,
 // which CloudFront WAF blocks as an automated tool.
-const USER_AGENT = 'FlickrFetch/0.1.0 (Electron desktop app; https://github.com/flickrfetch)'
 
 // Holds the request token and secret in memory between startOAuthFlow and verifyOAuth
 let pendingRequestToken: string | null = null
@@ -43,6 +46,7 @@ export async function startOAuthFlow(): Promise<string> {
   const headers = oauth.toHeader(oauth.authorize(requestData))
 
   const response = await axios.post(REQUEST_TOKEN_URL, null, {
+    timeout: HTTP_TIMEOUT_MS,
     headers: {
       ...headers,
       'User-Agent': USER_AGENT,
@@ -90,14 +94,10 @@ export async function verifyOAuth(verifierCode: string): Promise<FlickrTokenData
   const token = { key: oauthToken, secret: tokenSecret }
   const headers = oauth.toHeader(oauth.authorize(requestData, token))
 
-  // DEBUG
-  process.stderr.write(`[flickrfetch] verifyOAuth token: ${oauthToken.substring(0, 8)}...\n`)
-  process.stderr.write(`[flickrfetch] verifyOAuth verifier: "${verifierCode}"\n`)
-  process.stderr.write(`[flickrfetch] verifyOAuth url: ${accessTokenUrl}\n`)
-
   let response
   try {
     response = await axios.post(accessTokenUrl, null, {
+      timeout: HTTP_TIMEOUT_MS,
       headers: {
         ...headers,
         'User-Agent': USER_AGENT,
@@ -105,13 +105,11 @@ export async function verifyOAuth(verifierCode: string): Promise<FlickrTokenData
       }
     })
   } catch (err: unknown) {
-    const e = err as { response?: { status?: number; data?: string } }
-    process.stderr.write(`[flickrfetch] verifyOAuth HTTP error: ${e.response?.status}\n`)
-    process.stderr.write(`[flickrfetch] verifyOAuth response body: ${e.response?.data}\n`)
+    // Only the status is logged: the response and the verifier code are secrets
+    const e = err as { response?: { status?: number } }
+    process.stderr.write(`[flickrfetch] sign-in failed: HTTP ${e.response?.status ?? 'no response'}\n`)
     throw err
   }
-
-  process.stderr.write(`[flickrfetch] verifyOAuth SUCCESS: ${response.status} ${response.data}\n`)
 
   const params = new URLSearchParams(response.data)
   const accessToken = params.get('oauth_token')
@@ -136,35 +134,30 @@ export async function verifyOAuth(verifierCode: string): Promise<FlickrTokenData
   return tokenData
 }
 
-// Encrypt and save the token to disk
-function persistToken(tokenData: FlickrTokenData): void {
-  const json = JSON.stringify(tokenData)
+// Kept in memory only when this computer cannot encrypt it (then it is never written to disk)
+let memoryToken: FlickrTokenData | null = null
 
-  if (safeStorage.isEncryptionAvailable()) {
-    const encrypted = safeStorage.encryptString(json)
-    writeFileSync(TOKEN_FILE, encrypted.toString('base64'), 'utf-8')
-  } else {
-    console.warn('safeStorage not available — storing token unencrypted')
-    writeFileSync(TOKEN_FILE, Buffer.from(json).toString('base64'), 'utf-8')
+// Encrypt and save the token to disk, readable by this user only
+function persistToken(tokenData: FlickrTokenData): void {
+  if (!safeStorage.isEncryptionAvailable()) {
+    console.warn('safeStorage not available: the sign-in is kept for this session only and not saved')
+    memoryToken = tokenData
+    return
   }
+  memoryToken = null
+  const encrypted = safeStorage.encryptString(JSON.stringify(tokenData))
+  writeFileSync(TOKEN_FILE, encrypted.toString('base64'), { encoding: 'utf-8', mode: 0o600 })
 }
 
 // Read and decrypt the stored token, or return null if not found
 export function loadToken(): FlickrTokenData | null {
+  if (memoryToken) return memoryToken
   if (!existsSync(TOKEN_FILE)) return null
 
   try {
-    const raw = readFileSync(TOKEN_FILE, 'utf-8')
-    const buf = Buffer.from(raw, 'base64')
-
-    let json: string
-    if (safeStorage.isEncryptionAvailable()) {
-      json = safeStorage.decryptString(buf)
-    } else {
-      json = buf.toString('utf-8')
-    }
-
-    return JSON.parse(json) as FlickrTokenData
+    const buf = Buffer.from(readFileSync(TOKEN_FILE, 'utf-8'), 'base64')
+    if (!safeStorage.isEncryptionAvailable()) return null   // an old unencrypted file is not trusted
+    return JSON.parse(safeStorage.decryptString(buf)) as FlickrTokenData
   } catch (err) {
     console.error('Failed to load token:', err)
     return null
@@ -173,6 +166,7 @@ export function loadToken(): FlickrTokenData | null {
 
 // Delete the stored token (sign out)
 export function clearToken(): void {
+  memoryToken = null
   if (existsSync(TOKEN_FILE)) {
     unlinkSync(TOKEN_FILE)
   }
@@ -188,5 +182,6 @@ export function getOAuthHeader(
 ): Record<string, string> {
   const token = { key: tokenData.accessToken, secret: tokenData.accessTokenSecret }
   const requestData = { url, method }
-  return oauth.toHeader(oauth.authorize(requestData, token)) as Record<string, string>
+  const header = oauth.toHeader(oauth.authorize(requestData, token))
+  return { Authorization: header.Authorization }
 }

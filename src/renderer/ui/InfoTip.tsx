@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react'
+import RichNote from './RichNote'
 
 // The small (i) that explains something when you point at it. It opens below the icon, or above it when the text
 // would run past the bottom of the scrolling area it sits in. Used in Settings.
@@ -26,7 +27,7 @@ export default function InfoTip({ text, direction }: { text: string; direction?:
   return (
     <div ref={wrap} style={styles.wrap} onMouseEnter={open} onMouseLeave={() => setShow(false)}>
       <div style={styles.icon}>i</div>
-      {show && <div style={up ? { ...styles.bubble, top: 'auto', bottom: 'calc(100% + 7px)' } : styles.bubble}>{text}</div>}
+      {show && <div style={up ? { ...styles.bubble, top: 'auto', bottom: 'calc(100% + 7px)' } : styles.bubble}><RichNote text={text} /></div>}
     </div>
   )
 }
@@ -34,5 +35,5 @@ export default function InfoTip({ text, direction }: { text: string; direction?:
 const styles: Record<string, React.CSSProperties> = {
   wrap: { position: 'relative', display: 'inline-flex', alignItems: 'center' },
   icon: { width: '15px', height: '15px', borderRadius: '50%', background: '#ece8e2', color: '#888', fontSize: '9px', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'default', userSelect: 'none' },
-  bubble: { position: 'absolute', top: 'calc(100% + 7px)', left: '0', background: '#1a1a1a', color: '#f0ede8', fontSize: '12px', lineHeight: '1.45', padding: '7px 10px', borderRadius: '6px', whiteSpace: 'pre-line', pointerEvents: 'none', zIndex: 200, width: '240px', textAlign: 'left', boxShadow: '0 2px 8px rgba(0,0,0,0.25)' }
+  bubble: { position: 'absolute', top: 'calc(100% + 7px)', left: '0', background: '#1a1a1a', color: '#f0ede8', fontSize: '12px', lineHeight: '1.45', padding: '7px 10px', borderRadius: '6px', pointerEvents: 'none', zIndex: 200, width: '300px', textAlign: 'left', boxShadow: '0 2px 8px rgba(0,0,0,0.25)' }
 }

@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
+import { useRememberScroll } from '../hooks/useRememberScroll'
 import type { AuditCategory, HealthCondition, TagMode } from '../../shared/types'
 import { CLEANUP_RULES } from '../../shared/cleanupRules'
 import EmptyState from './EmptyState'
@@ -26,6 +27,18 @@ interface Props {
 
 type View = 'overview' | 'tags' | 'photos' | 'albums' | 'backup'
 
+// Two switches (outline, 24 grid): the Tune checks button, since it turns each check on, off or to a warning. Big enough to read when it is alone on the button.
+function SwitchesIcon({ size }: { size: number }): React.JSX.Element {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="2" y="3" width="20" height="8" rx="4" />
+      <circle cx="17" cy="7" r="2" />
+      <rect x="2" y="13" width="20" height="8" rx="4" />
+      <circle cx="7" cy="17" r="2" />
+    </svg>
+  )
+}
+
 export default function CleanupPanel({ onViewPhotos, onDownload, settingsKey, onOpenSettings }: Props): React.JSX.Element {
   const scan = useTagScan()
   const rules = useCleanupRules(settingsKey)
@@ -39,6 +52,20 @@ export default function CleanupPanel({ onViewPhotos, onDownload, settingsKey, on
   // Slots in the toolbar where the report's own controls (Overview | Lists, Plan) are placed, so everything shares one row
   const [leftSlot, setLeftSlot] = useState<HTMLElement | null>(null)
   const [rightSlot, setRightSlot] = useState<HTMLElement | null>(null)
+  // When the window is narrow the toolbar keeps to one row: Tune checks becomes just the gear and the data chip drops the word Updated
+  const toolbarRef = useRef<HTMLDivElement | null>(null)
+  const wrapRef = useRef<HTMLDivElement | null>(null)
+  useRememberScroll(wrapRef, `${view}|${scan.scanning}`)   // Overview, Photos, Albums, Tags and Backup each keep their place, also after a scan
+  const [narrow, setNarrow] = useState(false)
+  useEffect(() => {
+    const el = toolbarRef.current
+    if (!el) return
+    const watch = (): void => setNarrow(el.clientWidth < 1080)
+    watch()
+    const ro = new ResizeObserver(watch)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [scan.status !== null])
 
   if (!scan.status) return <div style={styles.center}><span style={styles.muted}>Loading…</span></div>
   if (!scan.status.hasIndex) {
@@ -55,15 +82,19 @@ export default function CleanupPanel({ onViewPhotos, onDownload, settingsKey, on
     )
   }
 
-  const info = view === 'tags'
-    ? 'Checked against your tag list.\n\nNothing here changes Flickr or your files.'
-    : view === 'photos'
-      ? 'Nothing here changes Flickr or your files.\n\nFix titles, descriptions, tags and locations on Flickr, then press Update.'
-      : view === 'albums'
-        ? 'Worked out from the album list FlickrFetch keeps on this computer.\n\nNothing here changes Flickr or your files. Fix things on Flickr, then press Update.'
-        : view === 'backup'
-          ? 'Worked out from FlickrFetch’s own download records and your library list.\n\nNothing here changes Flickr or your files.'
-          : 'Nothing here changes Flickr or your files.'
+  // The (i) on the data chip: how Health Check works (the same for every tab), then one line on what this tab adds
+  const info = [
+    '# How Health Check works',
+    'FlickrFetch keeps a snapshot of your photos, tags and albums on this computer. Health Check runs a set of audits against that snapshot, so results come quickly.',
+    'Each audit can be Off, a Warning or an Issue (change them in Tune checks).',
+    'Health Check never changes anything unless you choose to. For now you fix things on Flickr, then press Update to refresh the snapshot.',
+    '',
+    view === 'tags' ? 'Tags: checked against your tag list.'
+      : view === 'photos' ? 'Photos: fix titles, descriptions, tags and locations on Flickr, then press Update.'
+      : view === 'albums' ? 'Albums: uses the album list the snapshot keeps. A Rebuild reads every album.'
+      : view === 'backup' ? 'Backup: also uses FlickrFetch’s own download records.'
+      : 'Overview: the front page across all the reports.'
+  ].join('\n')
   const refreshKey = (scan.status.lastScanAt ?? 0) + rules.version   // a changed check or a new scan means fresh numbers
   const offCount = CLEANUP_RULES.filter(r => rules.stateOf(r.id) === 'off').length
   const rebuild = (): void => void scan.startFullRescan()
@@ -73,17 +104,17 @@ export default function CleanupPanel({ onViewPhotos, onDownload, settingsKey, on
   return (
     <>
     {scan.scanning && <ScanProgressCard progress={scan.progress} />}
-    <div style={{ ...styles.wrap, ...(scan.scanning ? { display: 'none' } : {}) }}>
-      <div style={styles.toolbar}>
-        <div style={styles.segGroup} title={"Overview: the front page across both reports.\nTags: likely typos, stuck-together names and accent problems in your tags.\nPhotos: photos with a missing title, description, tags or location.\nAlbums: photos in no album, and empty or untidy albums.\nBackup: what you have and have not downloaded."}>
-          {([['overview', 'Overview'], ['tags', 'Tags'], ['photos', 'Photos'], ['albums', 'Albums'], ['backup', 'Backup']] as const).map(([v, label]) => (
+    <div ref={wrapRef} style={{ ...styles.wrap, ...(scan.scanning ? { display: 'none' } : {}) }}>
+      <div ref={toolbarRef} style={styles.toolbar}>
+        <div style={styles.segGroup}>
+          {([['overview', 'Overview'], ['photos', 'Photos'], ['albums', 'Albums'], ['tags', 'Tags'], ['backup', 'Backup']] as const).map(([v, label]) => (
             <button key={v} style={{ ...styles.seg, ...(view === v ? styles.segActive : {}) }} onClick={() => { setTagReq(null); setPhotoReq(null); goTo(v) }}>{label}</button>
           ))}
         </div>
         <span ref={setLeftSlot} style={styles.slot} />
         <div style={{ flex: 1 }} />
-        <button style={quietBtn} onClick={onOpenSettings} title="Choose which checks are an Issue, a Warning or Off (opens Settings)">⚙ Tune checks</button>
-        <LibraryDataChip status={scan.status} info={info} onUpdate={() => void scan.startScan('refresh')} onRebuild={rebuild} />
+        <button style={quietBtn} onClick={onOpenSettings} aria-label="Tune checks" title="Tune checks: choose which checks are an Issue, a Warning or Off (opens Settings)"><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><SwitchesIcon size={narrow ? 20 : 17} />{narrow ? '' : 'Tune checks'}</span></button>
+        <LibraryDataChip status={scan.status} info={info} compact={narrow} onUpdate={() => void scan.startScan('refresh')} onRebuild={rebuild} />
         <span ref={setRightSlot} style={styles.slot} />
       </div>
       <ScanNotices status={scan.status} scanError={scan.scanError} onRebuild={rebuild} />

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { quietBtn, linkBtn } from '../ui/kit'
+import HoverNote from '../ui/HoverNote'
 
 // "Fix in Flickr's batch editor": opens Flickr's own editor with these photos already in its tray. FlickrFetch changes nothing
 // on Flickr. A long list goes in parts of 500 (the most the editor takes at once), one part per click. The note under the
@@ -51,10 +52,11 @@ export default function BatchEditButton({ getIds, label = "Fix in Flickr's batch
   const n = ids?.length ?? 0
   return (
     <div style={{ display: 'flex', flexDirection: inline ? 'row' : 'column', flexWrap: 'wrap', gap: inline ? 10 : 6, alignItems: inline ? 'center' : 'flex-start' }}>
-      <button style={style ?? quietBtn} disabled={busy} onClick={() => void open(0)}
-        title={"Opens Flickr's batch editor with these photos loaded, so you can change them there. FlickrFetch does not edit anything.\nIt takes 500 photos at a time."}>
-        {busy ? 'Opening…' : label} <span aria-hidden>↗</span>
-      </button>
+      <HoverNote mark={false} block={style?.width === '100%'} text={"Opens Flickr's batch editor with these photos loaded, so you can change them there. FlickrFetch does not edit anything.\nIt takes 500 photos at a time."}>
+        <button style={style ?? quietBtn} disabled={busy} onClick={() => void open(0)}>
+          {busy ? 'Opening…' : label} <span aria-hidden>↗</span>
+        </button>
+      </HoverNote>
       {ids && note !== 'hidden' && (
         <div role="status" style={{ ...noteStyle, opacity: note === 'fading' ? 0 : 1 }}>
           {n === 0 ? 'Nothing to open here.' : parts > 1

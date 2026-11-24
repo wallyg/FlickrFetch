@@ -1,3 +1,4 @@
+import FineReasonHost from './components/FineReasonHost'
 import React, { useEffect, useState } from 'react'
 import type { AuthState, FlickrUser } from '../shared/types'
 import LoginPage from './pages/LoginPage'
@@ -40,7 +41,7 @@ export default function App(): React.JSX.Element {
   }
 
   if (authState.status === 'authenticated' && authState.user) {
-    return <MainPage user={authState.user} onSignOut={handleSignOut} />
+    return <><MainPage user={authState.user} onSignOut={handleSignOut} /><FineReasonHost /></>
   }
 
   return (

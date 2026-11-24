@@ -38,12 +38,12 @@ export default function DiscoverPage({ isActive }: { isActive: boolean }): React
         {/* Mount and unmount People lazily — keep alive once visited */}
         {(tab === 'people' || peopleVisited) && (
           <div style={tab === 'people' ? s.paneVisible : s.paneHidden}>
-            <DiscoverPeople isActive={isActive} />
+            <DiscoverPeople isActive={isActive} findActive={isActive && tab === 'people'} />
           </div>
         )}
         {(tab === 'groups' || groupsVisited) && (
           <div style={tab === 'groups' ? s.paneVisible : s.paneHidden}>
-            <DiscoverGroups />
+            <DiscoverGroups findActive={isActive && tab === 'groups'} />
           </div>
         )}
         {(tab === 'explore' || exploreVisited) && (

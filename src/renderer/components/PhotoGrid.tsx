@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { useFindShortcut } from '../hooks/useFindShortcut'
 import type { FlickrPhoto, PhotoSearchParams, SearchOperator, DateRangeField, TagMode, LicenseFilter } from '../../shared/types'
 import { MediaFilter, PhotoViewMode, DownloadFilter, PrivacyFilter, PrivacyLevel, PRIVACY_OPTIONS, PRIVACY_LABELS, GRID_COLUMNS, JustifiedIcon, GridIcon, ListIcon, PrivacyIcon, Tooltip, Chip, PhotoListRow, DownloadFilterSelect, LicenseFilterSelect, matchesLicenseFilter, LICENSE_FILTER_LABEL, sameSearchParams, getPrivacyLevel, sharedStyles, DateMode, getPresetDates, formatDateChip, loadPhotoViewMode, savePhotoViewMode, loadRowHeight, saveRowHeight, computeJustifiedRows, DOWNLOAD_FILTER_LABEL } from './PhotoGridShared'
 import EmptyState from './EmptyState'
@@ -28,9 +29,10 @@ interface PhotoGridProps {
   dateSearchRequest?: { from: string; to: string; publicOnly?: boolean; tag?: string; backLabel?: string; nonce: number } | null
   handledDateRequest?: React.MutableRefObject<number>
   onBackToDates?: () => void
+  active?: boolean   // this tab is showing (Cmd+F then jumps to the search box)
 }
 
-export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onToggleSelect, onPhotosLoaded, onPageInfo, onSortChange, onFilteredPhotosChange, onFiltersActiveChange, tagSearchRequest, onBackToTags, backToTagsLabel, handledTagRequest, dateSearchRequest, handledDateRequest, onBackToDates }: PhotoGridProps): React.JSX.Element {
+export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onToggleSelect, onPhotosLoaded, onPageInfo, onSortChange, onFilteredPhotosChange, onFiltersActiveChange, tagSearchRequest, onBackToTags, backToTagsLabel, handledTagRequest, dateSearchRequest, handledDateRequest, onBackToDates , active = true}: PhotoGridProps): React.JSX.Element {
   const [photos, setPhotos] = useState<FlickrPhoto[]>([])
   const [page, setPage] = useState(1)
   const [pages, setPages] = useState(1)
@@ -52,6 +54,8 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
   const [rowHeight, setRowHeight] = useState<number>(loadRowHeight)
   const [containerWidth, setContainerWidth] = useState(0)
   const gridContainerRef = useRef<HTMLDivElement>(null)
+  const searchRef = useRef<HTMLInputElement | null>(null)
+  useFindShortcut(active, searchRef)
   const autoLoadCountRef = useRef(0)
   const [autoLoadCapped, setAutoLoadCapped] = useState(false)
   const [scanAllMode, setScanAllMode] = useState(false)
@@ -413,6 +417,7 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
                     <option value="__id__">Photo ID…</option>
                   </select>
                   <input
+                    ref={searchRef}
                     style={styles.searchInput}
                     type="text"
                     placeholder="Search…"
@@ -438,6 +443,7 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
                     <option value="__id__">Photo ID…</option>
                   </select>
                   <input
+                    ref={searchRef}
                     style={styles.searchInput}
                     type="text"
                     placeholder="Enter photo ID…"

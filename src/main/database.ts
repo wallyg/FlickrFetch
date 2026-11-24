@@ -136,11 +136,18 @@ export function getPhotoRecord(photoId: string): PhotoDownloadRecord | null {
   return rowToRecord(row)
 }
 
+// SQLite allows only so many ? in one statement, so a long list of photo ids is run in chunks
+const ID_CHUNK = 500
+function inChunks<T>(ids: string[], run: (chunk: string[], marks: string) => T[]): T[] {
+  const out: T[] = []
+  for (let i = 0; i < ids.length; i += ID_CHUNK) { const chunk = ids.slice(i, i + ID_CHUNK); out.push(...run(chunk, chunk.map(() => '?').join(','))) }
+  return out
+}
+
 export function getPhotoRecordsBatch(photoIds: string[]): Map<string, PhotoDownloadRecord> {
   const map = new Map<string, PhotoDownloadRecord>()
   if (!db || photoIds.length === 0) return map
-  const placeholders = photoIds.map(() => '?').join(',')
-  const rows = (db.prepare(`SELECT * FROM photo_download_record WHERE photo_id IN (${placeholders})`).all(...photoIds)) as Record<string, unknown>[]
+  const rows = inChunks(photoIds, (chunk, marks) => db!.prepare(`SELECT * FROM photo_download_record WHERE photo_id IN (${marks})`).all(...chunk) as Record<string, unknown>[])
   for (const row of rows) {
     const rec = rowToRecord(row)
     map.set(rec.photoId, rec)
@@ -182,8 +189,10 @@ export function deletePhotoRecord(photoId: string): void {
 
 export function deletePhotoRecords(photoIds: string[]): void {
   if (!db || photoIds.length === 0) return
-  const placeholders = photoIds.map(() => '?').join(',')
-  db.prepare(`DELETE FROM photo_download_record WHERE photo_id IN (${placeholders})`).run(...photoIds)
+  for (let i = 0; i < photoIds.length; i += ID_CHUNK) {
+    const chunk = photoIds.slice(i, i + ID_CHUNK)
+    db.prepare(`DELETE FROM photo_download_record WHERE photo_id IN (${chunk.map(() => '?').join(',')})`).run(...chunk)
+  }
 }
 
 export function clearPhotoRecords(beforeMs?: number, afterMs?: number): void {
@@ -261,8 +270,7 @@ export function writeDiscoverRecord(photoId: string, flickrLastUpdate: number, t
 export function getDiscoverRecordsBatch(photoIds: string[]): Map<string, DiscoverDownloadRecord> {
   const map = new Map<string, DiscoverDownloadRecord>()
   if (!db || photoIds.length === 0) return map
-  const placeholders = photoIds.map(() => '?').join(',')
-  const rows = (db.prepare(`SELECT * FROM discover_download_record WHERE photo_id IN (${placeholders})`).all(...photoIds)) as Record<string, unknown>[]
+  const rows = inChunks(photoIds, (chunk, marks) => db!.prepare(`SELECT * FROM discover_download_record WHERE photo_id IN (${marks})`).all(...chunk) as Record<string, unknown>[])
   for (const row of rows) {
     const rec = rowToDiscoverRecord(row)
     map.set(rec.photoId, rec)
@@ -295,8 +303,10 @@ export function deleteDiscoverRecord(photoId: string): void {
 
 export function deleteDiscoverRecords(photoIds: string[]): void {
   if (!db || photoIds.length === 0) return
-  const placeholders = photoIds.map(() => '?').join(',')
-  db.prepare(`DELETE FROM discover_download_record WHERE photo_id IN (${placeholders})`).run(...photoIds)
+  for (let i = 0; i < photoIds.length; i += ID_CHUNK) {
+    const chunk = photoIds.slice(i, i + ID_CHUNK)
+    db.prepare(`DELETE FROM discover_download_record WHERE photo_id IN (${chunk.map(() => '?').join(',')})`).run(...chunk)
+  }
 }
 
 export function clearDiscoverRecords(beforeMs?: number, afterMs?: number): void {

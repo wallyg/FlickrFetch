@@ -1,9 +1,5 @@
-import type { AlbumExportQuery, AlbumListPage, AlbumListQuery, AlbumSetRequest, AlbumSummary, BackupQuery, BackupSummary, FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery, DiscoverDownloadRecord, DiscoverUser, DiscoverContact, DiscoverGroup, TagIndexStatus, TagLetterGroup, TagListQuery, TagListPage, TagScanProgress, AuditSummary, AuditListQuery, AuditListPage, AuditSetRequest, AuditPlanRow, AuditExportQuery, HealthSummary, HealthListQuery, HealthListPage, HealthSetRequest, HealthExportQuery, AuditOverview, HealthOverview, DayView, DayQuery, DayPhoto, DayPhotosQuery, DatePhotoIdsQuery, PrivacyScope, TimelineMonths, TimelineDays, TodaySummary, CameraRollQuery, CameraRollView } from '../shared/types'
+import type { AuditCategory, DuplicateQuery, DuplicatePage, DuplicateStats, FineReasonRequest, FineReasonSummaryRow, LocationHintStats, MissingTagStats, AlbumFitStats, AlbumFitPhoto, AlbumKindRow, AlbumKindRequest, AlbumExportQuery, AlbumListPage, AlbumListQuery, AlbumSetRequest, AlbumSummary, BackupQuery, BackupSummary, FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery, DiscoverDownloadRecord, DiscoverUser, DiscoverContact, DiscoverGroup, TagIndexStatus, TagLetterGroup, TagListQuery, TagListPage, TagScanProgress, AuditSummary, AuditListQuery, AuditListPage, AuditSetRequest, AuditPlanRow, AuditExportQuery, HealthSummary, HealthListQuery, HealthListPage, HealthSetRequest, HealthExportQuery, AuditOverview, HealthOverview, DayView, DayQuery, DayPhoto, DayPhotosQuery, DatePhotoIdsQuery, PrivacyScope, TimelineMonths, TimelineDays, TodaySummary, CameraRollQuery, CameraRollView } from '../shared/types'
 
-declare module '*.png' {
-  const src: string
-  export default src
-}
 
 // Tells TypeScript about the window.flickrAPI object injected by the preload script
 declare global {
@@ -34,12 +30,25 @@ declare global {
       countTagPhotos: (names: string[], mode: 'any' | 'all') => Promise<number>
       onTagScanProgress: (callback: (progress: TagScanProgress) => void) => () => void
       getHealthPhotoIds: (query: HealthExportQuery) => Promise<string[]>
-      getAuditPhotoIds: (tag: string) => Promise<string[]>
+      getAuditPhotoIds: (tag: string, category?: AuditCategory) => Promise<string[]>
+      getPhotoCards: (ids: string[]) => Promise<AlbumFitPhoto[]>
+      setFineReason: (req: FineReasonRequest) => Promise<void>
+      getFineSummary: () => Promise<FineReasonSummaryRow[]>
+      saveFineReasonsCsv: () => Promise<string | null>
+      getDuplicateGroups: (q: DuplicateQuery) => Promise<DuplicatePage>
+      getDuplicateStats: () => Promise<DuplicateStats>
+      getLocationHintStats: () => Promise<LocationHintStats>
+      getMissingTagStats: () => Promise<MissingTagStats>
       openBatchEditor: (ids: string[], part: number) => Promise<{ parts: number; count: number }>
       getAlbumSummary: () => Promise<AlbumSummary>
       listAlbumItems: (query: AlbumListQuery) => Promise<AlbumListPage>
       getAlbumPhotoIds: (query: AlbumExportQuery) => Promise<string[]>
       setAlbumStatus: (req: AlbumSetRequest) => Promise<void>
+      getAlbumFitStats: () => Promise<AlbumFitStats>
+      getAlbumFitPhotoIds: (albumId: string) => Promise<string[]>
+      getAlbumFitPhotos: (albumId: string) => Promise<AlbumFitPhoto[]>
+      getAlbumKinds: () => Promise<AlbumKindRow[]>
+      setAlbumKind: (req: AlbumKindRequest) => Promise<void>
       saveAlbumCsv: (query: AlbumExportQuery) => Promise<string | null>
       getBackupSummary: () => Promise<BackupSummary>
       listBackupPhotos: (query: BackupQuery) => Promise<HealthListPage>

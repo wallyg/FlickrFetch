@@ -7,16 +7,19 @@ import archiver from 'archiver'
 import { startOAuthFlow, verifyOAuth, loadToken, clearToken } from './auth'
 import { getUserInfo, getPhotos, getPhotoSizes, getPhotoInfo, getPhotoExif, getAlbums, getAlbumPhotos, getPublicAlbumPhotos, getCollectionTree, getDiscoverCollectionTree, resolveVideoUrl, getRecentlyUpdated, findDiscoverUser, getPublicPhotos, getUserPublicAlbums, getContacts, getUserGroups, getGroupPhotos, getInterestingness } from './flickr'
 import { downloadPhoto, downloadToFolder, describeSize } from './downloader'
+import { changedSinceSaved } from './smartFilter'
 import { endExifTool } from './exiftool'
 import { loadSettings, saveSettings, resetSettings, ensureDownloadFolder } from './settings'
 import { registerTagIpc } from './tagIndex'
 import { registerAuditIpc } from './tagAudit'
 import { registerHealthIpc } from './photoHealth'
+import { registerFineIpc } from './fineReasons'
 import { registerAlbumsIpc } from './albumChecks'
 import { registerDatesIpc } from './dateViews'
 import { registerShareIpc } from './share'
 import { registerBatchIpc, batchUrl } from './batchEdit'
 import { registerBackupIpc } from './backupReport'
+import { safeFolderName } from './safeName'
 import { ownerNsid, forgetOwnerNsid } from './owner'
 import { openDatabase, closeDatabase, writeBatchLog, writePhotoRecord, getPhotoRecord, getPhotoRecordsBatch, getBatchLog, clearBatchLog, clearAllHistory, searchPhotoRecords, deletePhotoRecord, deletePhotoRecords, clearPhotoRecords, writeDiscoverRecord, getDiscoverRecordsBatch, searchDiscoverRecords, deleteDiscoverRecord, deleteDiscoverRecords, clearDiscoverRecords } from './database'
 import type { AppSettings, FileNamingConfig, PhotoInfo, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams, MetadataSettings, DiscoverUser, DiscoverContact, DiscoverGroup } from '../shared/types'
@@ -186,6 +189,17 @@ function createWindow(): void {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
 
+  // The window only ever shows the app itself. A link or script that tries to open or go to a web page is sent to the browser instead,
+  // so a web page can never load inside the window (where it would be handed the app's own functions).
+  const appUrl = process.env['ELECTRON_RENDERER_URL']
+  const external = (url: string): void => { if (/^https?:\/\//i.test(url)) void shell.openExternal(url) }
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => { external(url); return { action: 'deny' } })
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    if (url.startsWith('file://') || (appUrl && url.startsWith(appUrl))) return
+    event.preventDefault()
+    external(url)
+  })
+
   mainWindow.on('closed', () => {
     mainWindow = null
   })
@@ -204,7 +218,8 @@ ipcMain.handle('auth:start', async () => {
       throw new Error('Flickr is rate-limiting requests. Please wait 30 seconds and try again.')
     }
     if (status === 401) {
-      throw new Error('Invalid API key or secret. Please check your config.ts.')
+      process.stderr.write('[flickrfetch] auth:start was refused with HTTP 401 (check the API key and secret)\n')
+      throw new Error('Flickr refused the sign-in request. Please try again in a little while.')
     }
     throw new Error('Could not connect to Flickr. Check your internet connection and try again.')
   }
@@ -212,7 +227,6 @@ ipcMain.handle('auth:start', async () => {
 
 // Step 2: Exchange the verifier code the user typed in for an access token
 ipcMain.handle('auth:verify', async (_event, verifierCode: string) => {
-  process.stderr.write(`[flickrfetch] auth:verify called, code: "${verifierCode.trim()}"\n`)
   try {
     const tokenData = await verifyOAuth(verifierCode.trim())
     const user = await getUserInfo(tokenData)
@@ -329,6 +343,7 @@ ipcMain.handle('video:resolveUrl', (_event, sourceUrl: string) => resolveVideoUr
 registerTagIpc(() => mainWindow)
 registerAuditIpc(() => mainWindow)
 registerHealthIpc(() => mainWindow)
+registerFineIpc(() => mainWindow)
 registerAlbumsIpc(() => mainWindow)
 registerDatesIpc(() => mainWindow)
 registerShareIpc(() => mainWindow)
@@ -441,6 +456,7 @@ async function runNextBatch(): Promise<void> {
     } satisfies BatchProgress)
   }
   activeBatchController = null
+  activeBatchAlbumId = null   // a batch that failed must not stay marked as running
   runNextBatch()
 }
 
@@ -451,8 +467,8 @@ async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'p
 
   activeBatchAlbumId = albumId
   const { fileNaming, downloadFolder, showDockProgress, notifyOnComplete, conflictBehavior, downloadSize, openFinderOnComplete, metadata } = loadSettings()
-  const safeAlbumTitle = albumTitle.replace(/[/\\:*?"<>|]/g, '_').trim()
-  const safeCollectionTitle = collectionTitle?.replace(/[/\\:*?"<>|]/g, '_').trim()
+  const safeAlbumTitle = safeFolderName(albumTitle)
+  const safeCollectionTitle = collectionTitle ? safeFolderName(collectionTitle) : undefined
   const zipParentDir = safeCollectionTitle ? join(downloadFolder, safeCollectionTitle) : downloadFolder
   const albumFolder = safeCollectionTitle ? join(zipParentDir, safeAlbumTitle) : join(downloadFolder, safeAlbumTitle)
 
@@ -477,7 +493,7 @@ async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'p
 
   let page = 1
   let pages = 1
-  const allPhotos: { id: string; title: string; ispublic?: number; isfriend?: number; isfamily?: number; lastUpdate?: number }[] = []
+  const allPhotos: { id: string; title: string; ispublic?: number; isfriend?: number; isfamily?: number; lastUpdate?: number; thumbnailUrl?: string }[] = []
 
   do {
     const result = await getAlbumPhotos(albumId, tokenData, page, mediaType)
@@ -505,10 +521,7 @@ async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'p
     if (smartMode === 'never-downloaded') {
       privacyFiltered = privacyFiltered.filter(p => !recordMap.has(p.id))
     } else if (smartMode === 'updated') {
-      privacyFiltered = privacyFiltered.filter(p => {
-        const rec = recordMap.get(p.id)
-        return rec != null && (p.lastUpdate ?? 0) > rec.flickrLastUpdate
-      })
+      privacyFiltered = privacyFiltered.filter(p => changedSinceSaved(recordMap.get(p.id), p))
     }
   }
 
@@ -606,14 +619,14 @@ async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'p
   }
 }
 
-async function runSelectedBatch(photos: { id: string; title: string }[], albumTitle: string, track = true, zipMode = false): Promise<void> {
+async function runSelectedBatch(photos: { id: string; title: string; thumbnailUrl?: string }[], albumTitle: string, track = true, zipMode = false): Promise<void> {
   if (!mainWindow) return
   const tokenData = loadToken()
   if (!tokenData) return
 
   const { fileNaming, downloadFolder, showDockProgress, notifyOnComplete, conflictBehavior, downloadSize, openFinderOnComplete, metadata } = loadSettings()
   const baseTitle = albumTitle.replace(/ \(\d+ selected\)$/, '')
-  const safeBaseTitle = baseTitle.replace(/[/\\:*?"<>|]/g, '_').trim()
+  const safeBaseTitle = safeFolderName(baseTitle)
   const targetFolder = baseTitle === 'Photostream'
     ? downloadFolder
     : join(downloadFolder, safeBaseTitle)
@@ -733,7 +746,7 @@ function discoverMetadata(metadata: MetadataSettings): MetadataSettings {
   return { ...metadata, embedCreator: true, embedLicense: true, embedPhotoUrl: true, embedPhotoId: true }
 }
 
-async function runDiscoverSelectedBatch(photos: { id: string; title: string }[], albumTitle: string, targetFolder: string, track = true): Promise<void> {
+async function runDiscoverSelectedBatch(photos: { id: string; title: string; thumbnailUrl?: string }[], albumTitle: string, targetFolder: string, track = true): Promise<void> {
   if (!mainWindow) return
   const tokenData = loadToken()
   if (!tokenData) return
@@ -858,10 +871,7 @@ async function runDiscoverPublicBatch(
     if (smartMode === 'never-downloaded') {
       filteredPhotos = filteredPhotos.filter(p => !recordMap.has(p.id))
     } else {
-      filteredPhotos = filteredPhotos.filter(p => {
-        const rec = recordMap.get(p.id)
-        return rec != null && (p.lastUpdate ?? 0) > rec.flickrLastUpdate
-      })
+      filteredPhotos = filteredPhotos.filter(p => changedSinceSaved(recordMap.get(p.id), p))
     }
   }
 
@@ -975,7 +985,7 @@ async function runPhotostreamBatch(albumTitle: string, track = true, smartMode?:
   }
 
   // Collect all photos from photostream
-  const allPhotos: { id: string; title: string; lastUpdate?: number }[] = []
+  const allPhotos: { id: string; title: string; lastUpdate?: number; thumbnailUrl?: string }[] = []
 
   if (smartMode === 'updated') {
     // Use recentlyUpdated API — 90-day window
@@ -1015,10 +1025,7 @@ async function runPhotostreamBatch(albumTitle: string, track = true, smartMode?:
     if (smartMode === 'never-downloaded') {
       filteredPhotos = filteredPhotos.filter(p => !recordMap.has(p.id))
     } else {
-      filteredPhotos = filteredPhotos.filter(p => {
-        const rec = recordMap.get(p.id)
-        return rec != null && (p.lastUpdate ?? 0) > rec.flickrLastUpdate
-      })
+      filteredPhotos = filteredPhotos.filter(p => changedSinceSaved(recordMap.get(p.id), p))
     }
   }
 
@@ -1181,21 +1188,21 @@ ipcMain.handle('discover:downloadPhoto', async (_event, photoId: string, photoTi
 
 ipcMain.handle('batch:startDiscoverUser', (_event, nsid: string, username: string, displayTitle: string, track = true, smartMode?: 'updated' | 'never-downloaded') => {
   const { downloadFolder } = loadSettings()
-  const safeUsername = username.replace(/[/\\:*?"<>|]/g, '_').trim()
+  const safeUsername = safeFolderName(username)
   const discoverFolder = join(downloadFolder, 'Users', safeUsername)
   enqueueBatch({ type: 'discover-user', albumTitle: displayTitle, discoverNsid: nsid, discoverFolder, track, smartMode })
 })
 
 ipcMain.handle('batch:startDiscoverGroup', (_event, groupId: string, groupName: string, displayTitle: string, track = true, smartMode?: 'updated' | 'never-downloaded') => {
   const { downloadFolder } = loadSettings()
-  const safeGroupName = groupName.replace(/[/\\:*?"<>|]/g, '_').trim()
+  const safeGroupName = safeFolderName(groupName)
   const discoverFolder = join(downloadFolder, 'Groups', safeGroupName)
   enqueueBatch({ type: 'discover-group', albumTitle: displayTitle, discoverGroupId: groupId, discoverFolder, track, smartMode })
 })
 
 ipcMain.handle('batch:startDiscoverSelected', (_event, photos: { id: string; title: string }[], displayTitle: string, folderParts: string[], track = true) => {
   const { downloadFolder } = loadSettings()
-  const safeParts = folderParts.map((s: string) => s.replace(/[/\\:*?"<>|]/g, '_').trim()).filter(Boolean)
+  const safeParts = folderParts.map((s: string) => safeFolderName(s)).filter(Boolean)
   const discoverFolder = join(downloadFolder, ...safeParts)
   ensureDownloadFolder(discoverFolder)
   enqueueBatch({ type: 'discover-selected', photos, albumTitle: displayTitle, discoverFolder, track })

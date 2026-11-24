@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
+import { useRememberScroll } from '../hooks/useRememberScroll'
 import BatchEditButton from '../components/BatchEditButton'
 import type { FlickrUser, FlickrPhoto, FlickrAlbum, FlickrCollection, FlickrSet, BatchProgress, TagMode } from '../../shared/types'
 import PhotoGrid from '../components/PhotoGrid'
+import type { PrivacyFilter } from '../components/PhotoGridShared'
 import PhotoDetail from '../components/PhotoDetail'
 import SettingsModal from '../components/SettingsModal'
 import type { SettingsTab } from '../components/SettingsModal'
@@ -55,6 +57,11 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
   const [appMode, setAppMode] = useState<'you' | 'discover'>('you')
   const [showAvatarPopover, setShowAvatarPopover] = useState(false)
   const [view, setView] = useState<MainView>('photostream')
+  // Each tab keeps how far you had scrolled when you click away and come back
+  const youMainRef = useRef<HTMLElement | null>(null)
+  const discoverMainRef = useRef<HTMLElement | null>(null)
+  useRememberScroll(youMainRef, `${appMode}|${view}`)
+  useRememberScroll(discoverMainRef, appMode)
   const [selectedAlbum, setSelectedAlbum] = useState<FlickrAlbum | null>(null)
   const [photoDetailIndex, setPhotoDetailIndex] = useState<number | null>(null)
   const [photoDetailSource, setPhotoDetailSource] = useState<'photostream' | 'album'>('photostream')
@@ -113,7 +120,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
   const [albumMediaFilter, setAlbumMediaFilter] = useState<'all' | 'photo' | 'video'>('all')
   const [albumExtraFilters, setAlbumExtraFilters] = useState(false)
   const [photostreamFiltersActive, setPhotostreamFiltersActive] = useState(false)
-  const [albumPrivacyFilter, setAlbumPrivacyFilter] = useState<'all' | 'public' | 'friends' | 'family' | 'private'>('all')
+  const [albumPrivacyFilter, setAlbumPrivacyFilter] = useState<PrivacyFilter>('all')
   const handleResetRecords = useCallback(async () => {
     if (!selectedAlbum) return
     setShowResetConfirm(false)
@@ -783,14 +790,15 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
         </div>
       )}
 
-      <main style={{ ...styles.main, display: appMode === 'discover' ? 'flex' : 'none', flexDirection: 'column' }}>
+      <main ref={discoverMainRef} style={{ ...styles.main, display: appMode === 'discover' ? 'flex' : 'none', flexDirection: 'column' }}>
         <DiscoverPage isActive={appMode === 'discover'} />
       </main>
 
-      <main style={{ ...styles.main, ...(appMode === 'discover' ? { display: 'none' } : {}) }}>
+      <main ref={youMainRef} style={{ ...styles.main, ...(appMode === 'discover' ? { display: 'none' } : {}) }}>
         <div style={view === 'photostream' ? styles.tabPane : styles.tabPaneHidden}>
           <PhotoGrid
             key={photostreamRefreshKey}
+            active={appMode === 'you' && view === 'photostream'}
             onPhotoSelect={handlePhotostreamPhotoSelect}
             selectMode={photostreamSelectMode}
             selectedIds={photostreamSelectedIds}
@@ -863,12 +871,12 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
         )}
         {albumsVisited && (
           <div style={view === 'albums' ? styles.tabPane : styles.tabPaneHidden}>
-            <AlbumList onAlbumSelect={handleAlbumSelect} active={view === 'albums'} />
+            <AlbumList onAlbumSelect={handleAlbumSelect} active={appMode === 'you' && view === 'albums'} />
           </div>
         )}
         {collectionsVisited && (
           <div style={view === 'collections' ? styles.tabPane : styles.tabPaneHidden}>
-            <CollectionList onCollectionSelect={handleCollectionSelect} />
+            <CollectionList onCollectionSelect={handleCollectionSelect} active={appMode === 'you' && view === 'collections'} />
           </div>
         )}
         {currentCollection && (
@@ -884,6 +892,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
           <div style={view === 'album-detail' ? styles.tabPane : styles.tabPaneHidden}>
             <AlbumPhotoGrid
               albumId={selectedAlbum.id}
+              findActive={appMode === 'you' && view === 'album-detail'}
               onPhotoSelect={handleAlbumPhotoSelect}
               selectMode={albumSelectMode}
               selectedIds={albumSelectedIds}
@@ -924,11 +933,11 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
           <div style={styles.confirmCard}>
             <p style={styles.confirmTitle}>Reset download records?</p>
             <p style={styles.confirmBody}>
-              This will remove the download record for all {((selectedAlbum.photoCount ?? 0) + (selectedAlbum.videoCount ?? 0)).toLocaleString()} items in &ldquo;{selectedAlbum.title}&rdquo;.<br /><br />Smart Download will treat them as never downloaded.
+              This removes the download record for all {((selectedAlbum.photoCount ?? 0) + (selectedAlbum.videoCount ?? 0)).toLocaleString()} items in &ldquo;{selectedAlbum.title}&rdquo;.<br /><br />Smart Download will then treat them as never downloaded.<br /><br />Your downloaded files are not touched.
             </p>
             <div style={styles.confirmActions}>
               <button style={styles.confirmCancel} onClick={() => setShowResetConfirm(false)}>Cancel</button>
-              <button style={styles.confirmDestructive} onClick={handleResetRecords}>Reset</button>
+              <button style={styles.confirmDestructive} onClick={handleResetRecords}>Reset records</button>
             </div>
           </div>
         </div>
@@ -937,10 +946,10 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
         <div style={styles.confirmOverlay}>
           <div style={styles.confirmCard}>
             <p style={styles.confirmTitle}>Sign out of Flickr?</p>
-            <p style={styles.confirmBody}>You&rsquo;ll need to reconnect your Flickr account to use FlickrFetch.</p>
+            <p style={styles.confirmBody}>You&rsquo;ll need to reconnect your Flickr account to use FlickrFetch.<br /><br />Your downloaded photos and your download history stay on this computer.</p>
             <div style={styles.confirmActions}>
               <button style={styles.confirmCancel} onClick={() => setShowSignOutConfirm(false)}>Cancel</button>
-              <button style={styles.confirmDestructive} onClick={() => { setShowSignOutConfirm(false); onSignOut() }}>Sign Out</button>
+              <button style={styles.confirmDestructive} onClick={() => { setShowSignOutConfirm(false); onSignOut() }}>Sign out</button>
             </div>
           </div>
         </div>

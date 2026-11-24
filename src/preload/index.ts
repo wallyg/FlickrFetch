@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { IpcRendererEvent } from 'electron'
-import type { AlbumExportQuery, AlbumListPage, AlbumListQuery, AlbumSetRequest, AlbumSummary, BackupQuery, BackupSummary, FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery, DiscoverDownloadRecord, DiscoverUser, DiscoverContact, DiscoverGroup, AuditSummary, AuditListQuery, AuditListPage, AuditSetRequest, AuditPlanRow, AuditExportQuery, HealthSummary, HealthListQuery, DayView, DayQuery, DayPhoto, DayPhotosQuery, DatePhotoIdsQuery, PrivacyScope, TimelineMonths, TimelineDays, TodaySummary, CameraRollQuery, CameraRollView, HealthListPage, HealthSetRequest, HealthExportQuery, AuditOverview, HealthOverview, TagIndexStatus, TagLetterGroup, TagListQuery, TagListPage, TagScanProgress } from '../shared/types'
+import type { AuditCategory, DuplicateQuery, DuplicatePage, DuplicateStats, FineReasonRequest, FineReasonSummaryRow, LocationHintStats, MissingTagStats, AlbumFitStats, AlbumFitPhoto, AlbumKindRow, AlbumKindRequest, AlbumExportQuery, AlbumListPage, AlbumListQuery, AlbumSetRequest, AlbumSummary, BackupQuery, BackupSummary, FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery, DiscoverDownloadRecord, DiscoverUser, DiscoverContact, DiscoverGroup, AuditSummary, AuditListQuery, AuditListPage, AuditSetRequest, AuditPlanRow, AuditExportQuery, HealthSummary, HealthListQuery, DayView, DayQuery, DayPhoto, DayPhotosQuery, DatePhotoIdsQuery, PrivacyScope, TimelineMonths, TimelineDays, TodaySummary, CameraRollQuery, CameraRollView, HealthListPage, HealthSetRequest, HealthExportQuery, AuditOverview, HealthOverview, TagIndexStatus, TagLetterGroup, TagListQuery, TagListPage, TagScanProgress } from '../shared/types'
 
 // Expose a safe, limited API surface to the renderer process.
 // The renderer cannot access Node.js or Electron directly — only these methods.
@@ -93,12 +93,25 @@ contextBridge.exposeInMainWorld('flickrAPI', {
 
   // Metadata health
   getHealthPhotoIds: (query: HealthExportQuery): Promise<string[]> => ipcRenderer.invoke('health:ids', query),
-  getAuditPhotoIds: (tag: string): Promise<string[]> => ipcRenderer.invoke('audit:photoIds', tag),
+  getAuditPhotoIds: (tag: string, category?: AuditCategory): Promise<string[]> => ipcRenderer.invoke('audit:photoIds', tag, category),
+  getPhotoCards: (ids: string[]): Promise<AlbumFitPhoto[]> => ipcRenderer.invoke('photos:cards', ids),
+  setFineReason: (req: FineReasonRequest): Promise<void> => ipcRenderer.invoke('fine:setReason', req),
+  getFineSummary: (): Promise<FineReasonSummaryRow[]> => ipcRenderer.invoke('fine:summary'),
+  saveFineReasonsCsv: (): Promise<string | null> => ipcRenderer.invoke('fine:saveCsv'),
+  getDuplicateGroups: (q: DuplicateQuery): Promise<DuplicatePage> => ipcRenderer.invoke('health:duplicates', q),
+  getDuplicateStats: (): Promise<DuplicateStats> => ipcRenderer.invoke('health:duplicateStats'),
+  getLocationHintStats: (): Promise<LocationHintStats> => ipcRenderer.invoke('health:hintStats'),
+  getMissingTagStats: (): Promise<MissingTagStats> => ipcRenderer.invoke('audit:missingStats'),
   openBatchEditor: (ids: string[], part: number): Promise<{ parts: number; count: number }> => ipcRenderer.invoke('batch:open', ids, part),
   getAlbumSummary: (): Promise<AlbumSummary> => ipcRenderer.invoke('albums:summary'),
   listAlbumItems: (query: AlbumListQuery): Promise<AlbumListPage> => ipcRenderer.invoke('albums:list', query),
   getAlbumPhotoIds: (query: AlbumExportQuery): Promise<string[]> => ipcRenderer.invoke('albums:ids', query),
   setAlbumStatus: (req: AlbumSetRequest): Promise<void> => ipcRenderer.invoke('albums:set', req),
+  getAlbumFitStats: (): Promise<AlbumFitStats> => ipcRenderer.invoke('albums:fitStats'),
+  getAlbumFitPhotoIds: (albumId: string): Promise<string[]> => ipcRenderer.invoke('albums:fitIds', albumId),
+  getAlbumFitPhotos: (albumId: string): Promise<AlbumFitPhoto[]> => ipcRenderer.invoke('albums:fitPhotos', albumId),
+  getAlbumKinds: (): Promise<AlbumKindRow[]> => ipcRenderer.invoke('albums:kinds'),
+  setAlbumKind: (req: AlbumKindRequest): Promise<void> => ipcRenderer.invoke('albums:setKind', req),
   saveAlbumCsv: (query: AlbumExportQuery): Promise<string | null> => ipcRenderer.invoke('albums:saveCsv', query),
   getBackupSummary: (): Promise<BackupSummary> => ipcRenderer.invoke('backup:summary'),
   listBackupPhotos: (query: BackupQuery): Promise<HealthListPage> => ipcRenderer.invoke('backup:list', query),

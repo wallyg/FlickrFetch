@@ -1,11 +1,17 @@
 import axios from 'axios'
 import { FLICKR_API_KEY } from './config'
 import { getOAuthHeader } from './auth'
+import { USER_AGENT } from './userAgent'
 import { cleanTag, foldAccents } from '../shared/tags'
 import type { FlickrTokenData, FlickrUser, FlickrPhoto, PhotoPage, PhotoSize, PhotoInfo, FlickrAlbum, AlbumPage, FlickrCollection, FlickrSet, CameraExif, PhotoSearchParams, DiscoverUser, DiscoverContact, DiscoverGroup } from '../shared/types'
 
+// Every Flickr call goes through this client: a request that gets no answer for 30 seconds fails instead of hanging
+const http = axios.create({ timeout: 30000 })
+
+// A title search that needs the title itself (starts with, ends with, exact) reads up to this many pages of 100 results
+const OPERATOR_SEARCH_PAGES = 10
+
 const FLICKR_API_BASE = 'https://www.flickr.com/services/rest/'
-const USER_AGENT = 'FlickrFetch/0.1.0 (Electron desktop app; https://github.com/flickrfetch)'
 const DEFAULT_AVATAR = 'https://www.flickr.com/images/buddyicon.gif'
 
 interface FlickrPersonResponse {
@@ -40,7 +46,7 @@ export async function getUserInfo(tokenData: FlickrTokenData): Promise<FlickrUse
       `&nojsoncallback=1`
 
     const authHeader = getOAuthHeader(url, 'GET', tokenData)
-    const response = await axios.get(url, {
+    const response = await http.get(url, {
       headers: { ...authHeader, 'User-Agent': USER_AGENT }
     })
 
@@ -78,7 +84,7 @@ export async function getPhotoInfo(photoId: string, tokenData: FlickrTokenData):
     `&nojsoncallback=1`
 
   const authHeader = getOAuthHeader(url, 'GET', tokenData)
-  const response = await axios.get(url, {
+  const response = await http.get(url, {
     headers: { ...authHeader, 'User-Agent': USER_AGENT }
   })
 
@@ -147,9 +153,18 @@ export async function getPhotoInfo(photoId: string, tokenData: FlickrTokenData):
 // Follow Flickr's video redirect chain and return the final streamable CDN URL.
 // Flickr "play" URLs redirect to vp.flickr.com with the secret as implicit auth.
 // We fetch only bytes 0-0 so we don't download the video, just resolve the final URL.
-export async function resolveVideoUrl(sourceUrl: string): Promise<string> {
+// Only Flickr's own https addresses are followed; anything else is handed back untouched
+function isFlickrHttps(url: string): boolean {
   try {
-    const response = await axios.get(sourceUrl, {
+    const u = new URL(url)
+    return u.protocol === 'https:' && /(^|\.)(flickr\.com|staticflickr\.com)$/i.test(u.hostname)
+  } catch { return false }
+}
+
+export async function resolveVideoUrl(sourceUrl: string): Promise<string> {
+  if (!isFlickrHttps(sourceUrl)) return sourceUrl
+  try {
+    const response = await http.get(sourceUrl, {
       maxRedirects: 10,
       responseType: 'arraybuffer',
       headers: {
@@ -175,7 +190,7 @@ export async function getPhotoSizes(photoId: string, tokenData: FlickrTokenData)
     `&nojsoncallback=1`
 
   const authHeader = getOAuthHeader(url, 'GET', tokenData)
-  const response = await axios.get(url, {
+  const response = await http.get(url, {
     headers: { ...authHeader, 'User-Agent': USER_AGENT }
   })
 
@@ -205,7 +220,7 @@ export async function getAlbums(tokenData: FlickrTokenData, page: number = 1): P
     `&nojsoncallback=1`
 
   const authHeader = getOAuthHeader(url, 'GET', tokenData)
-  const response = await axios.get(url, {
+  const response = await http.get(url, {
     headers: { ...authHeader, 'User-Agent': USER_AGENT }
   })
 
@@ -255,7 +270,7 @@ export async function getPublicAlbumPhotos(albumId: string, ownerNsid: string, t
     `&nojsoncallback=1`
 
   const authHeader = getOAuthHeader(url, 'GET', tokenData)
-  const response = await axios.get(url, {
+  const response = await http.get(url, {
     headers: { ...authHeader, 'User-Agent': USER_AGENT }
   })
 
@@ -297,7 +312,7 @@ export async function getAlbumPhotos(albumId: string, tokenData: FlickrTokenData
     `&nojsoncallback=1`
 
   const authHeader = getOAuthHeader(url, 'GET', tokenData)
-  const response = await axios.get(url, {
+  const response = await http.get(url, {
     headers: { ...authHeader, 'User-Agent': USER_AGENT }
   })
 
@@ -402,7 +417,7 @@ export async function getCollectionTree(tokenData: FlickrTokenData): Promise<Fli
     `&nojsoncallback=1`
 
   const authHeader = getOAuthHeader(treeUrl, 'GET', tokenData)
-  const response = await axios.get(treeUrl, {
+  const response = await http.get(treeUrl, {
     headers: { ...authHeader, 'User-Agent': USER_AGENT }
   })
 
@@ -447,7 +462,7 @@ export function clearTagSearchMemory(): void {
 
 export async function signedGet(url: string, tokenData: FlickrTokenData): Promise<{ data: Record<string, any> }> { // eslint-disable-line @typescript-eslint/no-explicit-any
   const authHeader = getOAuthHeader(url, 'GET', tokenData)
-  return axios.get(url, { headers: { ...authHeader, 'User-Agent': USER_AGENT }, timeout: 30000 })
+  return http.get(url, { headers: { ...authHeader, 'User-Agent': USER_AGENT }, timeout: 30000 })
 }
 
 async function searchUnderstandsTag(tokenData: FlickrTokenData, ownerId: string, tag: string): Promise<boolean> {
@@ -535,7 +550,7 @@ export async function getPhotos(tokenData: FlickrTokenData, page: number = 1, so
         if (search?.dateMax) url += `&max_taken_date=${encodeURIComponent(search.dateMax + ' 23:59:59')}`
       } else if (search?.dateField === 'posted') {
         if (search?.dateMin) {
-          const ts = Math.floor(new Date(search.dateMin).getTime() / 1000)
+          const ts = Math.floor(new Date(search.dateMin + 'T00:00:00').getTime() / 1000)
           url += `&min_upload_date=${ts}`
         }
         if (search?.dateMax) {
@@ -614,7 +629,7 @@ export async function getPhotoExif(photoId: string, tokenData: FlickrTokenData):
     `&nojsoncallback=1`
 
   const authHeader = getOAuthHeader(url, 'GET', tokenData)
-  const response = await axios.get(url, {
+  const response = await http.get(url, {
     headers: { ...authHeader, 'User-Agent': USER_AGENT }
   })
 
@@ -685,7 +700,7 @@ export async function findDiscoverUser(query: string, tokenData: FlickrTokenData
       `&url=${encodeURIComponent('https://www.flickr.com/photos/' + encodeURIComponent(cleanQuery) + '/')}` +
       `&format=json&nojsoncallback=1`
     const authHeader = getOAuthHeader(lookupUrl, 'GET', tokenData)
-    const r = await axios.get(lookupUrl, { headers: { ...authHeader, 'User-Agent': USER_AGENT } })
+    const r = await http.get(lookupUrl, { headers: { ...authHeader, 'User-Agent': USER_AGENT } })
     if (r.data.stat === 'ok') nsid = r.data.user.id
   } catch { /* fall through */ }
 
@@ -696,7 +711,7 @@ export async function findDiscoverUser(query: string, tokenData: FlickrTokenData
       `&username=${encodeURIComponent(query.trim())}` +
       `&format=json&nojsoncallback=1`
     const authHeader = getOAuthHeader(findUrl, 'GET', tokenData)
-    const r = await axios.get(findUrl, { headers: { ...authHeader, 'User-Agent': USER_AGENT } })
+    const r = await http.get(findUrl, { headers: { ...authHeader, 'User-Agent': USER_AGENT } })
     if (r.data.stat !== 'ok') throw new Error(r.data.message ?? 'User not found')
     nsid = r.data.user.nsid
   }
@@ -706,7 +721,7 @@ export async function findDiscoverUser(query: string, tokenData: FlickrTokenData
     `&user_id=${encodeURIComponent(nsid!)}` +
     `&format=json&nojsoncallback=1`
   const authHeader2 = getOAuthHeader(infoUrl, 'GET', tokenData)
-  const r2 = await axios.get(infoUrl, { headers: { ...authHeader2, 'User-Agent': USER_AGENT } })
+  const r2 = await http.get(infoUrl, { headers: { ...authHeader2, 'User-Agent': USER_AGENT } })
   if (r2.data.stat !== 'ok') throw new Error(r2.data.message ?? 'Could not get user info')
 
   const person = r2.data.person
@@ -729,7 +744,7 @@ export async function getDiscoverCollectionTree(nsid: string, tokenData: FlickrT
     `&nojsoncallback=1`
 
   const authHeader = getOAuthHeader(treeUrl, 'GET', tokenData)
-  const response = await axios.get(treeUrl, {
+  const response = await http.get(treeUrl, {
     headers: { ...authHeader, 'User-Agent': USER_AGENT }
   })
 
@@ -755,13 +770,13 @@ export async function getDiscoverCollectionTree(nsid: string, tokenData: FlickrT
 }
 
 export async function getPublicPhotos(nsid: string, tokenData: FlickrTokenData, page: number = 1, sort: string = 'date-posted-desc', search?: PhotoSearchParams): Promise<PhotoPage> {
-  const buildUrl = (tagQuery: string | undefined, withTags: boolean): string => {
+  const buildUrl = (tagQuery: string | undefined, withTags: boolean, pg: number = page): string => {
     let url = `${FLICKR_API_BASE}?method=flickr.photos.search` +
       `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
       `&user_id=${encodeURIComponent(nsid)}` +
       `&extras=${encodeURIComponent('url_q,url_m,date_taken,date_upload,last_update,media,license' + (withTags ? ',tags' : ''))}` +
       `&sort=${encodeURIComponent(sort)}` +
-      `&per_page=100&page=${page}&format=json&nojsoncallback=1`
+      `&per_page=100&page=${pg}&format=json&nojsoncallback=1`
 
     if (search?.query) url += `&text=${encodeURIComponent(search.query)}`
     if (tagQuery) url += `&tags=${encodeURIComponent(tagQuery)}&tag_mode=${search?.tagMode ?? 'any'}`
@@ -775,30 +790,34 @@ export async function getPublicPhotos(nsid: string, tokenData: FlickrTokenData, 
     return url
   }
 
-  const { response, folded } = await searchWithTagFallback(tokenData, nsid, search?.tagQuery, buildUrl)
-  if (response.data.stat !== 'ok') throw new Error(response.data.message ?? 'unknown error')
-  const data = response.data.photos
-  const trimmed = trimToRequestedTags(data.photo as Record<string, string>[], search, sort, page, Number(data.total), folded)
-  let photos = mapPublicPhotos(trimmed.records)
-
-  if (search?.query && search.operator && search.operator !== 'contains') {
-    const q = search.query.toLowerCase()
-    photos = photos.filter(p => {
-      const t = p.title.toLowerCase()
-      if (search.operator === 'starts') return t.startsWith(q)
-      if (search.operator === 'ends') return t.endsWith(q)
-      if (search.operator === 'exact') return t === q
-      return true
-    })
+  // One page of results, with the tag trimming applied
+  const readPage = async (pg: number): Promise<{ photos: FlickrPhoto[]; page: number; pages: number; total: number }> => {
+    const { response, folded } = await searchWithTagFallback(tokenData, nsid, search?.tagQuery, (t, w) => buildUrl(t, w, pg))
+    if (response.data.stat !== 'ok') throw new Error(response.data.message ?? 'unknown error')
+    const data = response.data.photos
+    const trimmed = trimToRequestedTags(data.photo as Record<string, string>[], search, sort, pg, Number(data.total), folded)
+    return { photos: mapPublicPhotos(trimmed.records), page: Number(data.page), pages: Number(data.pages), total: trimmed.total }
   }
 
   const operatorFiltered = !!(search?.query && search.operator && search.operator !== 'contains')
-  return {
-    photos,
-    page: Number(data.page),
-    pages: operatorFiltered ? 1 : Number(data.pages),
-    total: operatorFiltered ? photos.length : trimmed.total,
-  }
+  if (!operatorFiltered) return readPage(page)
+
+  // Starts with, ends with and exact are decided on the title here, after Flickr's broader text search, so several pages of results are read
+  // (up to OPERATOR_SEARCH_PAGES) and the matches from all of them are returned together
+  const q = (search?.query ?? '').toLowerCase()
+  const matches: FlickrPhoto[] = []
+  let pg = 1
+  let pages = 1
+  do {
+    const r = await readPage(pg)
+    pages = r.pages
+    for (const p of r.photos) {
+      const t = p.title.toLowerCase()
+      if ((search?.operator === 'starts' && t.startsWith(q)) || (search?.operator === 'ends' && t.endsWith(q)) || (search?.operator === 'exact' && t === q)) matches.push(p)
+    }
+    pg++
+  } while (pg <= Math.min(pages, OPERATOR_SEARCH_PAGES))
+  return { photos: matches, page: 1, pages: 1, total: matches.length }
 }
 
 export async function getUserPublicAlbums(nsid: string, tokenData: FlickrTokenData, page: number = 1): Promise<AlbumPage> {
@@ -807,7 +826,7 @@ export async function getUserPublicAlbums(nsid: string, tokenData: FlickrTokenDa
     `&user_id=${encodeURIComponent(nsid)}` +
     `&per_page=50&page=${page}&format=json&nojsoncallback=1`
   const authHeader = getOAuthHeader(url, 'GET', tokenData)
-  const response = await axios.get(url, { headers: { ...authHeader, 'User-Agent': USER_AGENT } })
+  const response = await http.get(url, { headers: { ...authHeader, 'User-Agent': USER_AGENT } })
   if (response.data.stat !== 'ok') throw new Error(response.data.message ?? 'unknown error')
   const data = response.data.photosets
   const albums: FlickrAlbum[] = (data.photoset as Record<string, unknown>[]).map(s => ({
@@ -822,19 +841,25 @@ export async function getUserPublicAlbums(nsid: string, tokenData: FlickrTokenDa
 }
 
 export async function getContacts(tokenData: FlickrTokenData): Promise<DiscoverContact[]> {
-  const url = `${FLICKR_API_BASE}?method=flickr.contacts.getList` +
-    `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
-    `&per_page=200&format=json&nojsoncallback=1`
-  const authHeader = getOAuthHeader(url, 'GET', tokenData)
-  const response = await axios.get(url, { headers: { ...authHeader, 'User-Agent': USER_AGENT } })
-  if (response.data.stat !== 'ok') throw new Error(response.data.message ?? 'unknown error')
-  const contacts = response.data.contacts.contact as Record<string, string>[]
-  return contacts.map(c => ({
-    nsid: c.nsid,
-    username: c.username || '',
-    realname: c.realname || '',
-    avatarUrl: buildAvatarUrlFromParts(c.nsid, c.iconfarm, c.iconserver),
-  }))
+  const all: DiscoverContact[] = []
+  let page = 1
+  let pages = 1
+  // Flickr returns the people you follow in pages of 200; read every page
+  while (page <= pages) {
+    const url = `${FLICKR_API_BASE}?method=flickr.contacts.getList` +
+      `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
+      `&per_page=200&page=${page}&format=json&nojsoncallback=1`
+    const authHeader = getOAuthHeader(url, 'GET', tokenData)
+    const response = await http.get(url, { headers: { ...authHeader, 'User-Agent': USER_AGENT } })
+    if (response.data.stat !== 'ok') throw new Error(response.data.message ?? 'unknown error')
+    const data = response.data.contacts
+    pages = Number(data.pages) || 1
+    for (const c of (data.contact ?? []) as Record<string, string>[]) {
+      all.push({ nsid: c.nsid, username: c.username || '', realname: c.realname || '', avatarUrl: buildAvatarUrlFromParts(c.nsid, c.iconfarm, c.iconserver) })
+    }
+    page++
+  }
+  return all
 }
 
 export async function getUserGroups(tokenData: FlickrTokenData): Promise<DiscoverGroup[]> {
@@ -843,7 +868,7 @@ export async function getUserGroups(tokenData: FlickrTokenData): Promise<Discove
     `&user_id=${encodeURIComponent(tokenData.nsid)}` +
     `&format=json&nojsoncallback=1`
   const authHeader = getOAuthHeader(url, 'GET', tokenData)
-  const response = await axios.get(url, { headers: { ...authHeader, 'User-Agent': USER_AGENT } })
+  const response = await http.get(url, { headers: { ...authHeader, 'User-Agent': USER_AGENT } })
   if (response.data.stat !== 'ok') throw new Error(response.data.message ?? 'unknown error')
   const groups = response.data.groups.group as Record<string, unknown>[]
   return groups.map(g => ({
@@ -863,7 +888,7 @@ export async function getGroupPhotos(groupId: string, tokenData: FlickrTokenData
     `&extras=${encodeURIComponent('url_q,url_m,date_taken,date_upload,last_update,media,ownername,tags,license')}` +
     `&per_page=100&page=${page}&format=json&nojsoncallback=1`
   const authHeader = getOAuthHeader(url, 'GET', tokenData)
-  const response = await axios.get(url, { headers: { ...authHeader, 'User-Agent': USER_AGENT } })
+  const response = await http.get(url, { headers: { ...authHeader, 'User-Agent': USER_AGENT } })
   if (response.data.stat !== 'ok') throw new Error(response.data.message ?? 'unknown error')
   const data = response.data.photos
   return { photos: mapPublicPhotos(data.photo), page: Number(data.page), pages: Number(data.pages), total: Number(data.total) }
@@ -875,7 +900,7 @@ export async function getInterestingness(tokenData: FlickrTokenData, page: numbe
     `&extras=${encodeURIComponent('url_q,url_m,date_taken,date_upload,last_update,media,ownername')}` +
     `&per_page=100&page=${page}&format=json&nojsoncallback=1`
   const authHeader = getOAuthHeader(url, 'GET', tokenData)
-  const response = await axios.get(url, { headers: { ...authHeader, 'User-Agent': USER_AGENT } })
+  const response = await http.get(url, { headers: { ...authHeader, 'User-Agent': USER_AGENT } })
   if (response.data.stat !== 'ok') throw new Error(response.data.message ?? 'unknown error')
   const data = response.data.photos
   return { photos: mapPublicPhotos(data.photo), page: Number(data.page), pages: Number(data.pages), total: Number(data.total) }
@@ -894,7 +919,7 @@ export async function getRecentlyUpdated(tokenData: FlickrTokenData, minDate: nu
     `&nojsoncallback=1`
 
   const authHeader = getOAuthHeader(url, 'GET', tokenData)
-  const response = await axios.get(url, {
+  const response = await http.get(url, {
     headers: { ...authHeader, 'User-Agent': USER_AGENT }
   })
 

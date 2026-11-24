@@ -1,3 +1,5 @@
+import { clearFineReason } from './fineReasons'
+import { hintFor, hintStats, titleFarIds, titleFarKey } from './locationHints'
 import { ipcMain } from 'electron'
 import type { BrowserWindow } from 'electron'
 import type Database from 'better-sqlite3'
@@ -11,7 +13,7 @@ import { loadSettings } from './settings'
 import { ruleState, ruleById } from '../shared/cleanupRules'
 import { HEALTH_CONDITIONS } from '../shared/healthChecks'
 import { DESC_ONLY_LINK, DESC_COPIES_TITLE, DESC_ONLY_MARKUP, DESC_LOOKS_LIKE_TAGS } from '../shared/descriptionFlags'
-import type {
+import type { DuplicateGroup, DuplicatePhoto, DuplicateQuery, DuplicatePage, DuplicateStats,
   HealthCondition, HealthExportQuery, HealthListPage, HealthListQuery, HealthOverview, HealthPhoto, HealthSetRequest, HealthSort, HealthSummary
 } from '../shared/types'
 
@@ -39,11 +41,13 @@ function healthDb(): Database.Database {
         PRIMARY KEY (photo_id, condition)
       );
       CREATE TEMP TABLE IF NOT EXISTS health_far (photo_id TEXT PRIMARY KEY);
+      CREATE TEMP TABLE IF NOT EXISTS health_titlefar (photo_id TEXT PRIMARY KEY);
     `)
     // Lower-case and accent-free, so the title filter finds "Québec" when you type "quebec" (SQLite's own LIKE only ignores case for plain English letters)
     db.function('ff_fold', { deterministic: true }, (t: unknown) => (typeof t === 'string' ? foldAccents(t).toLowerCase() : ''))
     db.function('ff_camera_title', { deterministic: true }, (t: unknown) => (typeof t === 'string' && isCameraTitle(t) ? 1 : 0))
     addPhotoMetaColumns(db)
+    farKey = ''; titleFarStamp = ''   // the temporary tables above start empty on a new connection
     ready = db
   }
   return db
@@ -56,6 +60,71 @@ const PLACEHOLDER_DAYS = "'1970-01-01', '1904-01-01', '1980-01-01', '2000-01-01'
 function tagLimit(): number {
   const n = Number(loadSettings().healthTagLimit)
   return Number.isInteger(n) && n >= 2 && n <= 75 ? n : 65
+}
+
+// ── Possible duplicates (#157) ───────────────────────────────────────────────
+// A group is photos with the same real date taken (to the second) uploaded at least a number of minutes apart. A burst is uploaded together,
+// so it is not a group; a re-upload of one file is. Photos timed exactly at midnight carry a made-up time, so they are left out.
+function dupGapSeconds(): number {
+  const m = Number(loadSettings().duplicates?.gapMinutes)
+  return (Number.isFinite(m) ? Math.min(10080, Math.max(1, Math.round(m))) : 10) * 60
+}
+const DUP_REAL = "length(p.date_taken) >= 19 AND substr(p.date_taken, 12, 8) <> '00:00:00' AND p.date_upload IS NOT NULL"
+const dupGroupsSql = (): string => `(SELECT p.date_taken FROM photo_meta p WHERE ${DUP_REAL} GROUP BY p.date_taken HAVING COUNT(*) > 1 AND MAX(p.date_upload) - MIN(p.date_upload) >= ${dupGapSeconds()})`
+
+interface DupRow { taken: string; n: number; gap: number; fine: number }
+function dupGroupRows(db: Database.Database, search: string): DupRow[] {
+  const pattern = search ? `%${foldAccents(search).toLowerCase().replace(/[\\%_]/g, m => '\\' + m)}%` : null
+  const sql = `SELECT p.date_taken AS taken, COUNT(*) AS n, MAX(p.date_upload) - MIN(p.date_upload) AS gap,
+      SUM(CASE WHEN s.status = 'fine' THEN 1 ELSE 0 END) AS fine${pattern ? ", MAX(CASE WHEN ff_fold(p.title) LIKE ? ESCAPE '\\' THEN 1 ELSE 0 END) AS hit" : ''}
+    FROM photo_meta p LEFT JOIN photo_health_state s ON s.photo_id = p.photo_id AND s.condition = 'duplicates'
+    WHERE ${DUP_REAL} GROUP BY p.date_taken HAVING COUNT(*) > 1 AND gap >= ${dupGapSeconds()}${pattern ? ' AND hit = 1' : ''}`
+  return (pattern ? db.prepare(sql).all(pattern) : db.prepare(sql).all()) as DupRow[]
+}
+
+export function duplicateStats(): DuplicateStats {
+  const rows = dupGroupRows(healthDb(), '')
+  return { groups: rows.length, photos: rows.reduce((n, r) => n + r.n, 0) }
+}
+
+export function duplicateGroups(q: DuplicateQuery): DuplicatePage {
+  const db = healthDb()
+  const wantFine = q.status === 'fine'
+  const rows = dupGroupRows(db, (q.search ?? '').trim()).filter(r => (r.fine === r.n) === wantFine)
+  const sort = q.sort ?? 'gap'
+  rows.sort(sort === 'oldest' ? (a, b) => (a.taken < b.taken ? -1 : 1) : sort === 'newest' ? (a, b) => (a.taken < b.taken ? 1 : -1) : (a, b) => b.gap - a.gap || (a.taken < b.taken ? 1 : -1))
+  const page = rows.slice(Math.max(q.offset, 0), Math.max(q.offset, 0) + Math.min(Math.max(q.limit, 1), 100))
+  const out: DuplicateGroup[] = []
+  if (page.length) {
+    const marks = page.map(() => '?').join(',')
+    const photos = db.prepare(`SELECT p.photo_id, p.title, p.thumb_url, p.date_taken, p.date_upload, p.privacy, s.status,
+        (SELECT COUNT(*) FROM tag_photo t WHERE t.photo_id = p.photo_id) AS tags
+      FROM photo_meta p LEFT JOIN photo_health_state s ON s.photo_id = p.photo_id AND s.condition = 'duplicates'
+      WHERE ${DUP_REAL} AND p.date_taken IN (${marks}) ORDER BY p.date_taken, p.date_upload, p.photo_id`).all(...page.map(r => r.taken)) as { photo_id: string; title: string; thumb_url: string; date_taken: string; date_upload: number; privacy: number; status: string | null; tags: number }[]
+    // How many albums each photo is in (null until the album list has been read)
+    const albumCount = new Map<string, number>()
+    let albumsKnown = true
+    try {
+      for (let i = 0; i < photos.length; i += 500) {
+        const chunk = photos.slice(i, i + 500).map(p => p.photo_id)
+        for (const r of db.prepare(`SELECT photo_id, COUNT(*) AS n FROM album_photo WHERE photo_id IN (${chunk.map(() => '?').join(',')}) GROUP BY photo_id`).all(...chunk) as { photo_id: string; n: number }[]) albumCount.set(r.photo_id, r.n)
+      }
+    } catch { albumsKnown = false }
+    const owner = ownerNsid()
+    const byTaken = new Map<string, DuplicatePhoto[]>()
+    for (const p of photos) {
+      const list = byTaken.get(p.date_taken) ?? []
+      list.push({
+        photoId: p.photo_id, title: p.title, thumbUrl: p.thumb_url, uploadedAt: p.date_upload, tags: p.tags,
+        albums: albumsKnown ? (albumCount.get(p.photo_id) ?? 0) : null, privacy: p.privacy,
+        flickrUrl: owner ? `https://www.flickr.com/photos/${owner}/${p.photo_id}` : `https://www.flickr.com/photo.gne?id=${p.photo_id}`,
+        status: p.status === 'fine' ? 'fine' : 'open'
+      })
+      byTaken.set(p.date_taken, list)
+    }
+    for (const r of page) out.push({ taken: r.taken, gapSeconds: r.gap, photos: byTaken.get(r.taken) ?? [] })
+  }
+  return { groups: out, total: rows.length, photos: rows.reduce((n, r) => n + r.n, 0) }
 }
 
 // The SQL test for one check, on a photo_meta row aliased p
@@ -77,6 +146,8 @@ function whereFor(db: Database.Database, c: HealthCondition): string {
     // Flickr sends 0, 0 for "no location", so a real geotag at 0, 0 is told apart by its accuracy (set only when a place was chosen)
     case 'locNull': return '(p.has_location = 0 AND p.geo_accuracy > 0)'
     case 'locFar': refreshFar(db); return 'p.photo_id IN (SELECT photo_id FROM health_far)'
+    case 'locTitle': refreshTitleFar(db); return 'p.photo_id IN (SELECT photo_id FROM health_titlefar)'
+    case 'duplicates': return `(p.date_upload IS NOT NULL AND p.date_taken IN ${dupGroupsSql()})`
     case 'tagsMany': return `(SELECT COUNT(*) FROM tag_photo tp WHERE tp.photo_id = p.photo_id) >= ${tagLimit()}`
   }
 }
@@ -112,6 +183,17 @@ function refreshFar(db: Database.Database): void {
   farKey = key
 }
 
+// Geotags far from the place their title names, worked out in locationHints.ts and kept in a temporary table
+let titleFarStamp = ''
+function refreshTitleFar(db: Database.Database): void {
+  const key = titleFarKey(db)
+  if (key === titleFarStamp) return
+  const insert = db.prepare('INSERT OR IGNORE INTO health_titlefar (photo_id) VALUES (?)')
+  const ids = titleFarIds(db)
+  db.transaction(() => { db.exec('DELETE FROM health_titlefar'); for (const id of ids) insert.run(id) })()
+  titleFarStamp = key
+}
+
 function hasData(db: Database.Database): boolean {
   const row = db.prepare("SELECT value FROM tag_index_meta WHERE key = 'has_photo_meta'").get() as { value: string } | undefined
   return row?.value === '1'
@@ -133,7 +215,7 @@ export function healthSummary(): HealthSummary {
   return { hasData: true, photos, rows }
 }
 
-interface Row { photo_id: string; title: string; thumb_url: string; date_taken: string; status: string | null }
+interface Row { photo_id: string; title: string; thumb_url: string; date_taken: string; latitude: number | null; longitude: number | null; status: string | null }
 
 // Empty titles go last when sorting by title
 const HEALTH_ORDER: Record<HealthSort, string> = {
@@ -146,7 +228,7 @@ const HEALTH_ORDER: Record<HealthSort, string> = {
 // The part of a list query after SELECT: which photos (check, open or fine, title filter, year) and the values to bind
 function listBase(db: Database.Database, q: HealthExportQuery): { base: string; params: (string | number)[] } {
   const search = (q.search ?? '').trim()
-  const filter = `${whereFor(db, q.condition)} AND ${q.status === 'fine' ? "s.status = 'fine'" : 's.status IS NULL'}${search ? " AND ff_fold(p.title) LIKE ? ESCAPE '\\'" : ''}${q.year ? ' AND substr(p.date_taken, 1, 4) = ?' : ''}`
+  const filter = `${whereFor(db, q.condition)} AND ${q.status === 'fine' ? "s.status = 'fine'" : 's.status IS NULL'}${search ? " AND ff_fold(p.title) LIKE ? ESCAPE '\\'" : ''}${q.year ? ' AND substr(p.date_taken, 1, 4) = ?' : ''}${q.condition === 'title' && q.reason === 'none' ? " AND p.title = ''" : q.condition === 'title' && q.reason === 'camera' ? " AND p.title <> ''" : ''}`
   const base = `FROM photo_meta p LEFT JOIN photo_health_state s ON s.photo_id = p.photo_id AND s.condition = ? WHERE ${filter}`
   const params: (string | number)[] = [q.condition]
   if (search) params.push(`%${foldAccents(search).toLowerCase().replace(/[\\%_]/g, m => '\\' + m)}%`)
@@ -154,25 +236,36 @@ function listBase(db: Database.Database, q: HealthExportQuery): { base: string; 
   return { base, params }
 }
 
-function queryRows(q: HealthExportQuery, limit: number, offset: number): { rows: HealthPhoto[]; total: number } {
+function queryRows(q: HealthExportQuery, limit: number, offset: number): { rows: HealthPhoto[]; total: number; reasons?: HealthListPage['reasons'] } {
   const db = healthDb()
   const { base, params } = listBase(db, q)
   const total = (db.prepare(`SELECT COUNT(*) AS n ${base}`).get(...params) as { n: number }).n
-  const raw = db.prepare(`SELECT p.photo_id, p.title, p.thumb_url, p.date_taken, s.status ${base} ORDER BY ${HEALTH_ORDER[q.sort ?? 'newest']} LIMIT ? OFFSET ?`)
+  const raw = db.prepare(`SELECT p.photo_id, p.title, p.thumb_url, p.date_taken, p.latitude, p.longitude, s.status ${base} ORDER BY ${HEALTH_ORDER[q.sort ?? 'newest']} LIMIT ? OFFSET ?`)
     .all(...params, limit, offset) as Row[]
   const owner = ownerNsid()
   const kind = ruleById(`photos:${q.condition}`)?.kind ?? ''
+  // No title or camera-file title: how many rows of each kind, so the Reason menu can show them
+  let reasons: HealthListPage['reasons']
+  if (q.condition === 'title') {
+    const b = listBase(db, { ...q, reason: undefined })
+    const n = (extra: string): number => (db.prepare(`SELECT COUNT(*) AS n ${b.base}${extra}`).get(...b.params) as { n: number }).n
+    reasons = { none: n(" AND p.title = ''"), camera: n(" AND p.title <> ''") }
+  }
   return {
+    ...(reasons ? { reasons } : {}),
     total,
-    rows: raw.map(r => ({
+    rows: raw.map(r => {
+      const hint = hintFor(db, q.condition, r.photo_id, r.date_taken, r.latitude !== null && r.longitude !== null ? { lat: r.latitude, lon: r.longitude } : null)
+      return {
+      hint: hint?.text, hintMapUrl: hint?.mapUrl,
       photoId: r.photo_id,
       title: r.title,
       thumbUrl: r.thumb_url,
       dateTaken: r.date_taken,
       kind: q.condition === 'title' ? (r.title.trim() === '' ? 'No title' : 'Camera-file title') : kind,
       flickrUrl: owner ? `https://www.flickr.com/photos/${owner}/${r.photo_id}` : `https://www.flickr.com/photo.gne?id=${r.photo_id}`,
-      status: r.status === 'fine' ? 'fine' : 'open'
-    }))
+      status: (r.status === 'fine' ? 'fine' : 'open') as 'fine' | 'open'
+    } })
   }
 }
 
@@ -191,6 +284,7 @@ export function healthSet(req: HealthSetRequest): void {
   const db = healthDb()
   if (req.status === 'open') {
     db.prepare('DELETE FROM photo_health_state WHERE photo_id = ? AND condition = ?').run(req.photoId, req.condition)
+    clearFineReason(`photos:${req.condition}`, req.photoId)
   } else {
     db.prepare(`
       INSERT INTO photo_health_state (photo_id, condition, status, updated_at) VALUES (?, ?, 'fine', ?)
@@ -203,7 +297,7 @@ export function healthSet(req: HealthSetRequest): void {
 export function healthOverview(): HealthOverview {
   const db = healthDb()
   const none = Object.fromEntries(HEALTH_CONDITIONS.map(c => [c, 0])) as Record<HealthCondition, number>
-  if (!hasData(db)) return { hasData: false, photos: 0, complete: 0, withGap: 0, twoOrMore: 0, onlyOne: { ...none }, byType: [], byYear: [], clusters: [] }
+  if (!hasData(db)) return { hasData: false, photos: 0, complete: 0, withGap: 0, warnOnly: 0, twoOrMore: 0, onlyOne: { ...none }, byType: [], byYear: [], clusters: [] }
   // Checks that are Off are left out entirely; Warnings are listed but do not count towards "complete"
   const cleanupRules = loadSettings().cleanupRules
   const stateOf = (c: HealthCondition): 'off' | 'optional' | 'on' => ruleState(cleanupRules, `photos:${c}`)
@@ -217,7 +311,7 @@ export function healthOverview(): HealthOverview {
   const years = new Map<string, YearRow>()
   const totals = { ...none }
   const onlyOne = { ...none }
-  let withGap = 0, twoOrMore = 0
+  let withGap = 0, twoOrMore = 0, warnOnly = 0
   for (const r of rows) {
     const y = String(r.y) || 'Unknown'
     const e = years.get(y) ?? { year: y, total: 0, anyGap: 0, both: 0, warnOnly: 0, by: { ...none } }
@@ -230,7 +324,7 @@ export function healthOverview(): HealthOverview {
       if (stateOf(c) === 'on') { issues++; only = issues === 1 ? c : null } else warns++
     })
     // A photo counts once, as an Issue, if it has any Issue gap; warnOnly holds those with only warnings
-    if (issues > 0) { e.anyGap++; withGap++; if (warns > 0) e.both++ } else if (warns > 0) e.warnOnly++
+    if (issues > 0) { e.anyGap++; withGap++; if (warns > 0) e.both++ } else if (warns > 0) { e.warnOnly++; warnOnly++ }
     if (issues > 1) twoOrMore++
     if (issues === 1 && only) onlyOne[only]++
     years.set(y, e)
@@ -251,7 +345,7 @@ export function healthOverview(): HealthOverview {
   const excess = (c: HealthOverview['clusters'][number]): number => c.count - (totals[c.condition] / Math.max(photos, 1)) * c.total
   clusters.sort((a, b) => excess(b) - excess(a))
   return {
-    hasData: true, photos, complete: photos - withGap, withGap, twoOrMore, onlyOne,
+    hasData: true, photos, complete: photos - withGap, withGap, warnOnly, twoOrMore, onlyOne,
     byType: conds.map(condition => ({ condition, state: stateOf(condition) as 'optional' | 'on', open: totals[condition] })),
     byYear, clusters: clusters.slice(0, 10)
   }
@@ -263,6 +357,9 @@ export function healthCsvRows(q: HealthExportQuery): string[][] {
 
 export function registerHealthIpc(getWindow: () => BrowserWindow | null): void {
   ipcMain.handle('health:summary', () => healthSummary())
+  ipcMain.handle('health:hintStats', () => hintStats(healthDb()))
+  ipcMain.handle('health:duplicates', (_event, q: DuplicateQuery) => duplicateGroups(q))
+  ipcMain.handle('health:duplicateStats', () => duplicateStats())
   ipcMain.handle('health:overview', () => healthOverview())
   ipcMain.handle('health:list', (_event, q: HealthListQuery) => healthList(q))
   ipcMain.handle('health:ids', (_event, q: HealthExportQuery) => healthIds(q))

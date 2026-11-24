@@ -355,6 +355,13 @@ async function runFullScan(db: Database.Database, tokenData: FlickrTokenData, se
   }
 
   send({ mode: 'full', phase: 'finishing', page: pages, pages, photos: photosDone, total })
+  // Photos not seen in this scan are removed below, so first make sure the scan really saw (nearly) every photo Flickr reported. If photos were
+  // uploaded or removed while it ran the pages shift, and a page answer that is cut short ends the scan early: in both cases keep what is stored.
+  const seen = (db.prepare('SELECT COUNT(*) AS n FROM tag_indexed_photo WHERE scan_id = ?').get(scanId) as { n: number }).n
+  if (seen < total - Math.max(5, Math.ceil(total * 0.005))) {
+    recomputeCounts(db)
+    throw new Error(`Flickr's list changed while it was being read (${seen.toLocaleString('en-US')} of ${total.toLocaleString('en-US')} photos), so nothing was removed from your list. Run Rebuild again.`)
+  }
   db.transaction(() => {
     // Anything not seen in this scan is gone from Flickr
     db.prepare('DELETE FROM tag_photo WHERE photo_id IN (SELECT photo_id FROM tag_indexed_photo WHERE scan_id != ?)').run(scanId)

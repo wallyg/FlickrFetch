@@ -7,6 +7,33 @@ export interface Release {
 
 const changelog: Release[] = [
   {
+    version: '3.8',
+    date: 'November 2026',
+    highlights: [
+      'Cmd+F (Ctrl+F on Windows) now jumps to the search box on Photostream, Collections, History, and the Discover People and Groups tabs, and only the tab you are looking at answers it.',
+      'Health Check is easier to read — every check now has a one-line description and short rules you can open (ⓘ), Issues are red and Warnings amber, the tabs run Overview, Photos, Albums, Tags, Backup, and the Albums summary splits into your albums and the photos in them. May not fit can be shown by reason, and each May be missing suggestion can be opened to see the photos, untick the ones that do not belong, and open the rest in Flickr\'s organizer.',
+      'Tune checks is shorter to move around — jump chips for Photos, Albums and Tags, and every check folds to one line (switch coloured by what it means, a mark on the ones you changed).',
+      'Clearer wording in the sign-out, reset-records and History clear boxes: what happens on one line, what is not affected on the next. The Problem screen is split into shorter paragraphs.',
+      'Album fit — two new lists in the Albums tab. "May not fit its album" shows photos taken long before or after the rest of their album, or far from where the rest were taken; a photo is left alone when the photos taken right beside it are in the same album. "May be missing from an album" suggests photos whose title starts with a place most of whose photos are in the album, or that were taken right beside photos already in it, with a button to open them in Flickr\'s batch editor. Each suggestion says why, and nothing is added or removed for you',
+      'What an album is about — FlickrFetch guesses whether each album is organised by date, place or subject (or by nothing in particular) from its own photos and lets you change it album by album in Tune checks (How each album is judged), or from a suggestion. Both lists are Warnings and can be Off in Tune checks. No new scan is needed',
+      'Wrong place — "May not fit its album" now also flags a photo filed in another place\'s album (its title, or the photos taken right beside it, point to a neighbouring district\'s album) and a photo that sits in two albums for different places. Both can be switched off in Tune checks',
+      'Location hints — in Photos, a photo with no location now suggests where it was taken, from photos taken within a few minutes of it that agree with each other (with a map link), and a photo with no title or a camera-file title suggests how its title could start. A new Warning, "Far from the place its title names", lists geotags far from the city their title says. Nothing is changed for you: add the location or title in Flickr',
+      'Reasons for "This one is fine" — after you mark something fine, a small bar at the bottom offers a few quick reasons for that check (or your own words), and you can skip it. The reasons stay on this computer, show under each check in Tune checks, and can be saved as a spreadsheet, so the checks can be tuned from what you actually dismiss. Undo removes the reason too',
+      'Singular and plural — a new Warning in the Tags tab for the rare form of a tag you mostly use the other way (alleys beside alley). It is flagged only when the two are never on the same photo and the photos keep similar company, so tags you use both ways on purpose, possessives and different words are left alone. Fix it by replacing the rare tag on Flickr',
+      'Possessive on its own — a new Warning in the Tags tab for a one-word possessive tag such as Cliff\'s, which is usually either the plain name (Cliff) or missing its second word (Cliff\'s Amusement Park). Names of restaurants, bars and shops, and longer names, are left alone',
+      'Download updated photos no longer fetches again photos you saved through a selection, and a failed sign-in request gives a plain message instead of telling you to check a file',
+      'Possible duplicates — a new Warning in the Photos tab that groups photos with the same date and time taken, to the second, that were uploaded at different times (a re-upload matches; a burst does not). Each group shows its photos side by side with upload time, tags, albums and privacy, marks the first upload, and lets you open them on Flickr, send them to the batch editor, or mark the group Not duplicates. Nothing is deleted. The minimum gap between uploads is a number in Tune checks',
+      'A safer Rebuild — if Flickr\'s list changes while FlickrFetch is reading it (a photo uploaded mid-scan, say), your list is now left as it was and you are asked to run Rebuild again, instead of photos being dropped from it. Discover now lists everyone you follow (not just the first 200), and title searches there look through up to 1,000 results',
+      'Fewer lost changes and dead ends — a setting changed just before you close Settings is now saved, and History and Discover show a Try again instead of waiting forever when something fails to load; pressing Next twice at the end of a Discover page no longer skips a photo',
+      'Safer downloads and sign-in — a download that fails or is cancelled no longer damages a copy already on your disk, a stalled connection now times out instead of hanging, folder names from Flickr can no longer step outside your download folder, and the sign-in no longer writes your token to the log',
+      'Photos missing a tag on the Tags overview, and a fifth clue: a title that names the tag (such as "Eiffel Tower at night" and the tag Eiffel Tower)',
+      'Fewer false alarms in Tags — "Names stuck together" now flags a tag only when every piece is also a tag you use on its own, and "Run-ons" skips real words such as cheesecake',
+      'Photos missing a tag — a new Warning in the Tags tab. It suggests a tag for photos that most similar photos carry: a tag that nearly always comes with another (brooklyn and nyc), the same album, the same title place, or photos taken right beside it. A tag is suggested only when at least two of these agree. Each row is one tag with a button that opens the photos in Flickr\'s batch editor so you can add it there',
+      'How each check decides — hover the name of any check in Tune checks (ⓘ) or in the lists to see exactly how it works, in plain words',
+      'Tune checks shows the numbers behind the Album fit lists and the new missing-tag check, with live counts, so you can calibrate them. Titles that start with a place are optional: an automatic setting switches those rules off when too few of your titles have one'
+    ]
+  },
+  {
     version: '3.7',
     date: 'November 2026',
     highlights: [

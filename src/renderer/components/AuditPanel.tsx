@@ -6,10 +6,14 @@ import RuleRail, { RailHead, RailRow, ListHead, SortBox } from './RuleRail'
 import { forgetOverview } from './LibraryOverview'
 import { useFindShortcut } from '../hooks/useFindShortcut'
 import { GLUE_BOUNDARY_SOURCE } from '../../shared/tags'
+import { logicOf, ruleById } from '../../shared/cleanupRules'
 import type { CleanupRuleState } from '../../shared/cleanupRules'
-import type { AuditCategory, AuditFinding, AuditPlanRow, AuditSort, AuditStatus, AuditSummary, TagMode } from '../../shared/types'
+import type { AlbumFitPhoto, AuditCategory, AuditClue, AuditFinding, AuditPlanRow, AuditSort, AuditStatus, AuditSummary, TagMode } from '../../shared/types'
 import { quietBtn, primaryBtn, selectedOn, filterInput } from '../ui/kit'
 import BatchEditButton from './BatchEditButton'
+import PhotoStrip from './PhotoStrip'
+import HoverNote from '../ui/HoverNote'
+import { askFineReason } from '../ui/fineReason'
 import BackToTop from '../ui/BackToTop'
 
 // The Audit view of the Tags tab: likely tag problems by type, each with an editable fix.
@@ -27,64 +31,54 @@ interface AuditPanelProps {
 
 const PAGE = 100
 
-const CATEGORY_INFO: Record<AuditCategory, { name: string; blurb: string; label: string }> = {
-  glued: {
-    name: 'Names stuck together',
-    blurb: 'A lowercase letter runs straight into a capital, with no gap. Usually two or three tags pasted together after a comma or quote went missing. The red mark shows where they probably join.',
-    label: 'Becomes these tags'
-  },
-  typo: {
-    name: 'Possible typos',
-    blurb: 'A rare tag one letter away from a popular one, where the odd word is not a real word and appears almost nowhere else in your tags.',
-    label: 'Rename to'
-  },
-  notwin: {
-    name: 'Accented tags with no plain twin',
-    blurb: 'You usually keep both spellings (Québec and Quebec). These accented tags have no plain version, and Flickr search cannot find accented tags, so searches miss these photos.',
-    label: 'Keep both'
-  },
-  noaccent: {
-    name: 'Plain tags that may need accents',
-    blurb: 'A tag with no accents whose words your other tags usually accent. Judged only from your own spellings, so check each one. The accented version does not exist as a tag yet.',
-    label: 'Keep both'
-  },
-  junk: {
-    name: 'Odd characters',
-    blurb: 'Stray quote marks, web code, garbled characters, or punctuation at the start or end of a spelling.',
-    label: 'Retype as'
-  },
-  runon: {
-    name: 'Run-ons',
-    blurb: 'A tag typed with no spaces or punctuation that spells out two or more of your popular tags.',
-    label: 'Split into'
-  },
-  spelling: {
-    name: 'Typed more than one way',
-    blurb: 'Flickr treats these as one tag, but each photo keeps the spelling it was typed with. Pick the one to use everywhere.',
-    label: 'Use this spelling'
-  },
-  usedonce: {
-    name: 'Tags used only once',
-    blurb: 'A tag that sits on a single photo. Often a typo or a one-off word, though some are real names worth keeping.',
-    label: 'Replace with'
-  },
-  generic: {
-    name: 'Generic tags',
-    blurb: 'Words that say nothing about the photo, such as photo, camera or iphone. You can change the list under Tune checks.',
-    label: 'Replace with'
-  },
-  numbers: {
-    name: 'Numbers only',
-    blurb: 'A tag made only of digits that is not a year. Years from 1900 to 2099 are left alone.',
-    label: 'Replace with'
-  },
-  filename: {
-    name: 'File-name tags',
-    blurb: 'A tag that is a file name from a camera or phone (IMG_1234, DSC01234) or a date-and-time stamp.',
-    label: 'Replace with'
-  }
+// The words on the left of each row's box (the name and the description of each check come from the rules, shared with Tune checks)
+const ROW_LABEL: Record<AuditCategory, string> = {
+  glued: 'Becomes these tags',
+  typo: 'Rename to',
+  notwin: 'Keep both',
+  noaccent: 'Keep both',
+  junk: 'Retype as',
+  runon: 'Split into',
+  spelling: 'Use this spelling',
+  usedonce: 'Replace with',
+  generic: 'Replace with',
+  numbers: 'Replace with',
+  possessive: 'Use instead',
+  plural: 'Use this tag',
+  missing: '',
+  filename: 'Replace with'
 }
-const ALL_CATEGORIES: AuditCategory[] = ['glued', 'typo', 'junk', 'runon', 'notwin', 'noaccent', 'spelling', 'generic', 'numbers', 'filename', 'usedonce']
+// Only this check says something on a second line (the spellings that were typed); on the others it only repeated what the row already shows.
+// Odd characters shows its reason beside the name (and can be filtered by it), Singular and plural its other form beside the box, Photos missing a tag its clues behind Why?
+const SHOWS_EVIDENCE: AuditCategory[] = ['spelling']
+const CATEGORY_INFO: Record<AuditCategory, { name: string; blurb: string; label: string }> = Object.fromEntries(
+  (Object.keys(ROW_LABEL) as AuditCategory[]).map(c => [c, { name: ruleById(`tags:${c}`)?.name ?? c, blurb: ruleById(`tags:${c}`)?.blurb ?? '', label: ROW_LABEL[c] }])
+) as Record<AuditCategory, { name: string; blurb: string; label: string }>
+// How sure a row is, in plain words. Neutral marks (green, amber and red already mean Fine, Warning and Issue). Shown only on the checks where it differs
+// from row to row; on the others every row has the same level, so the mark would say nothing. The exact rule for each check is in its (i) note.
+const CONF_VARIES: AuditCategory[] = ['glued', 'typo', 'runon', 'notwin', 'noaccent', 'spelling', 'plural', 'possessive', 'missing']
+const CONF_LABEL: Record<string, string> = { high: 'Very likely', medium: 'Possible', low: 'Unlikely' }
+const CONFIDENCE_HINT: Record<string, string> = {
+  high: 'Very likely a real problem. See the (i) note for how this check decides.',
+  medium: 'Possible: worth a look, it could be on purpose. See the (i) note for how this check decides.',
+  low: 'Unlikely to be a problem: check before changing it. See the (i) note for how this check decides.'
+}
+// What each clue means, for the Why? note on a Photos missing a tag row
+const CLUE_TEXT: Record<AuditClue['key'], (n: string, top?: string) => string> = {
+  habit: (n, top) => `${n} carry a tag that nearly always comes with this one${top ? ` (most often ${top})` : ''}`,
+  album: n => `${n} are in an album where nearly every photo has this tag`,
+  titlePlace: n => `${n} start their title with a place where nearly every photo has this tag`,
+  near: n => `${n} were taken right beside photos that all have it`,
+  titleName: n => `${n} have a title that contains its name`
+}
+// The left column groups the checks by what they are about (Issues first inside each group)
+const TAG_GROUPS: { title: string; ids: string[] }[] = [
+  { title: 'Typos and joined-up words', ids: ['glued', 'runon', 'typo', 'junk', 'plural', 'possessive', 'spelling'].map(c => `tags:${c}`) },
+  { title: 'Accents', ids: ['notwin', 'noaccent'].map(c => `tags:${c}`) },
+  { title: 'Tags that say nothing', ids: ['generic', 'numbers', 'filename', 'usedonce'].map(c => `tags:${c}`) },
+  { title: 'Gaps', ids: ['missing'].map(c => `tags:${c}`) }
+]
+const ALL_CATEGORIES: AuditCategory[] = ['glued', 'typo', 'junk', 'runon', 'notwin', 'noaccent', 'spelling', 'generic', 'numbers', 'filename', 'usedonce', 'plural', 'possessive', 'missing']
 const STATUS_LABELS: { key: AuditStatus; label: string }[] = [
   { key: 'open', label: 'Open' }, { key: 'plan', label: 'In plan' }, { key: 'fine', label: 'Marked fine' }, { key: 'fixed', label: 'Fixed' }
 ]
@@ -104,6 +98,48 @@ function GluedName({ text }: { text: string }): React.JSX.Element {
   return <>{parts}</>
 }
 
+// A Photos missing a tag row: the tag, how sure, how many photos may need it, why (on hover), and the photos themselves on request
+function MissingRow({ f, onChange }: { f: AuditFinding; onChange: (f: AuditFinding, next: 'open' | 'plan' | 'fine') => void }): React.JSX.Element {
+  const [open, setOpen] = useState(false)
+  const [photos, setPhotos] = useState<AlbumFitPhoto[] | null>(null)
+  const [ticked, setTicked] = useState<Set<string>>(new Set())
+  useEffect(() => {
+    if (!open || photos) return
+    let alive = true
+    void window.flickrAPI.getAuditPhotoIds(f.tag, 'missing').then(ids => window.flickrAPI.getPhotoCards(ids))
+      .then(p => { if (alive) { setPhotos(p); setTicked(new Set(p.map(x => x.photoId))) } }).catch(() => { if (alive) setPhotos([]) })
+    return () => { alive = false }
+  }, [open, photos, f.tag])
+  const toggle = (id: string, on: boolean): void => setTicked(prev => { const n = new Set(prev); if (on) n.add(id); else n.delete(id); return n })
+  const why = ['# Why these photos', ...(f.clues ?? []).map(c => `- ${CLUE_TEXT[c.key](c.n.toLocaleString(), c.top)}`), 'A photo can have several of these. A tag is suggested only when at least two agree.'].join('\n')
+  const picking = open && photos !== null
+  return (
+    <div style={{ ...styles.card, ...(f.status === 'fine' ? { opacity: 0.6 } : {}) }}>
+      <div style={styles.l1}>
+        <span style={styles.tagName}>{f.display}</span>
+        {CONF_VARIES.includes('missing') && <span title={CONFIDENCE_HINT[f.confidence]} style={{ ...styles.pill, ...(f.confidence === 'high' ? styles.confVery : f.confidence === 'low' ? styles.pillLow : styles.confPossible) }}>{CONF_LABEL[f.confidence]}</span>}
+        <span style={styles.count}>{f.count.toLocaleString()} photo{f.count === 1 ? '' : 's'} may need it</span>
+      </div>
+      <div style={styles.ev}><HoverNote text={why} block={false}>Why these photos?</HoverNote></div>
+      {open && (!photos ? <div style={{ ...styles.muted, marginTop: 8 }}>Loading the photos…</div> : <PhotoStrip photos={photos} ticked={ticked} onToggle={toggle} />)}
+      <div style={styles.actions}>
+        {f.status === 'open' && (
+          <>
+            <button style={styles.secondaryBtn} aria-expanded={open} onClick={() => setOpen(o => !o)}>{open ? 'Hide the photos' : `Show the ${f.count.toLocaleString()} photo${f.count === 1 ? '' : 's'}`}</button>
+            {picking && ticked.size === 0
+              ? <span style={styles.muted}>Tick a photo to add the tag in the batch editor</span>
+              : <BatchEditButton key={`${f.tag}|${picking ? ticked.size : 'all'}`} label={picking ? `Add "${f.display}" to ${ticked.size.toLocaleString()} in the batch editor` : `Add "${f.display}" in the batch editor`} style={styles.secondaryBtn}
+                  getIds={() => (picking ? Promise.resolve([...ticked]) : window.flickrAPI.getAuditPhotoIds(f.tag, 'missing'))} />}
+            <button style={styles.secondaryBtn} onClick={() => onChange(f, 'fine')}>This one is fine</button>
+          </>
+        )}
+        {f.status === 'fine' && <button style={styles.secondaryBtn} onClick={() => onChange(f, 'open')}>Undo</button>}
+        {f.flickrUrl && <button style={styles.secondaryBtn} title="Open this tag's page on your Flickr account" onClick={() => window.flickrAPI.openExternal(f.flickrUrl)}>Open on Flickr ↗</button>}
+      </div>
+    </div>
+  )
+}
+
 export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, toolbarRight, stateOf, openRequest }: AuditPanelProps): React.JSX.Element {
   const [summary, setSummary] = useState<AuditSummary | null>(null)
   const [section, setSection] = useState<'overview' | 'lists'>('overview')
@@ -111,7 +147,8 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
   const [status, setStatus] = useState<AuditStatus>('open')
   const [sort, setSort] = useState<AuditSort>('suggested')
   const [search, setSearch] = useState('')
-  const [blurbOpen, setBlurbOpen] = useState(false)   // the explanation of a problem type folds to its first sentence
+  const [reason, setReason] = useState('')   // Odd characters: show only one kind of problem
+  const [reasons, setReasons] = useState<Record<string, number> | undefined>(undefined)
   const [rows, setRows] = useState<AuditFinding[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -161,14 +198,15 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
   const loadRows = useCallback(async (offset: number): Promise<void> => {
     const req = ++requestRef.current
     if (offset === 0) setLoading(true)
-    const page = await window.flickrAPI.listAuditFindings({ category, status, search, sort, offset, limit: PAGE })
+    const page = await window.flickrAPI.listAuditFindings({ category, status, search, sort, reason: category === 'junk' && reason ? reason : undefined, offset, limit: PAGE })
     if (req !== requestRef.current) return
     setRows(prev => (offset === 0 ? page.rows : [...prev, ...page.rows]))
     setTotal(page.total)
+    setReasons(page.reasons)
     setLoading(false)
-  }, [category, status, sort, search])
+  }, [category, status, sort, search, reason])
+  useEffect(() => { setReason('') }, [category, status])
 
-  useEffect(() => { setBlurbOpen(false) }, [category])
 
   useEffect(() => {
     const t = setTimeout(() => void loadRows(0), search ? 200 : 0)   // typing waits a moment so every key does not search
@@ -201,6 +239,7 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
   const keyOf = (f: AuditFinding): string => `${f.category}|${f.tag}`
   const change = async (f: AuditFinding, next: 'open' | 'plan' | 'fine'): Promise<void> => {
     await window.flickrAPI.setAuditStatus({ tag: f.tag, category: f.category, status: next, replacement: drafts[keyOf(f)] ?? f.replacement })
+    if (next === 'fine') askFineReason({ checkId: `tags:${f.category}`, key: `${f.category}|${f.tag}`, label: f.display })
     forgetOverview()
     setRows(prev => prev.filter(r => keyOf(r) !== keyOf(f)))   // it moves to another status list
     setTotal(t => Math.max(0, t - 1))
@@ -276,6 +315,7 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
             selectedId={`tags:${category}`}
             onSelect={id => { setCategory(id.slice(5) as AuditCategory); setStatus('open') }}
             offText="Every tag check is switched off (Tune checks)."
+            groups={TAG_GROUPS}
           />
         </div>
 
@@ -285,17 +325,23 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
           <RailHead>Filter</RailHead>
           <input ref={filterRef} style={filterInput} placeholder="Filter this list…" value={search} onChange={e => setSearch(e.target.value)} aria-label="Filter this list" />
           <RailHead>This list</RailHead>
-          <button style={{ ...styles.secondaryBtn, width: '100%' }} title="Save every row of this list as a spreadsheet" onClick={async () => { setListSaved(await window.flickrAPI.saveAuditListCsv({ category, status, search, sort })) }}>Export this list</button>
+          <button style={{ ...styles.secondaryBtn, width: '100%' }} title="Save every row of this list as a spreadsheet" onClick={async () => { setListSaved(await window.flickrAPI.saveAuditListCsv({ category, status, search, sort, reason: category === 'junk' && reason ? reason : undefined })) }}>Export this list</button>
           {listSaved && <div style={{ ...styles.muted, padding: '6px 9px 2px' }}>Saved to {listSaved.split('/').pop()} <button style={{ ...styles.viewBtn, marginLeft: 0 }} onClick={() => window.flickrAPI.showInFinder(listSaved)}>Show in Finder</button></div>}
         </div>
         </div>
 
         <div style={styles.main}>
-          <ListHead sort={<SortBox<AuditSort> value={sort} onChange={setSort} options={[
+          <ListHead sort={<span style={{ display: 'flex', gap: 12, alignItems: 'center' }}>{category === 'junk' && reasons && (
+            <label style={styles.reasonBox}>Reason
+              <select style={styles.reasonSelect} value={reason} aria-label="Show only one kind of problem" onChange={e => setReason(e.target.value)}>
+                <option value="">All ({Object.values(reasons).reduce((n, x) => n + x, 0).toLocaleString()})</option>
+                {Object.entries(reasons).sort((a, b) => b[1] - a[1]).map(([k, n]) => <option key={k} value={k}>{k.charAt(0).toUpperCase() + k.slice(1)} ({n.toLocaleString()})</option>)}
+              </select>
+            </label>
+          )}<SortBox<AuditSort> value={sort} onChange={setSort} options={[
             { value: 'suggested', label: 'Suggested order' }, { value: 'most', label: 'Most photos' }, { value: 'fewest', label: 'Fewest photos' },
-            { value: 'alpha', label: 'A to Z' }, { value: 'alphaDesc', label: 'Z to A' }]} />}>
-            {blurbOpen ? info.blurb : `${info.blurb.split('. ')[0].replace(/\.$/, '')}.`}{' '}
-            {info.blurb.includes('. ') && <button style={styles.viewBtn} onClick={() => setBlurbOpen(o => !o)}>{blurbOpen ? 'Less' : 'More'}</button>}
+            { value: 'alpha', label: 'A to Z' }, { value: 'alphaDesc', label: 'Z to A' }]} /></span>} tip={logicOf(`tags:${category}`)}>
+            {info.blurb}
           </ListHead>
 
           <div style={styles.list}>
@@ -303,11 +349,13 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
               : rows.length === 0 ? <div style={styles.muted}>{status === 'open' ? 'Nothing left to review here.' : 'Nothing here.'}</div>
               : rows.map(f => {
                 const key = keyOf(f)
+                if (category === 'missing') return <MissingRow key={key} f={f} onChange={(x, st) => void change(x, st)} />
                 return (
                   <div key={key} style={{ ...styles.card, ...(f.status === 'fine' ? { opacity: 0.6 } : {}) }}>
                     <div style={styles.l1}>
                       <span style={styles.tagName}>{category === 'glued' ? <GluedName text={f.display} /> : f.display}</span>
-                      {f.status !== 'fixed' && <span style={{ ...styles.pill, ...(f.confidence === 'high' ? styles.pillHigh : f.confidence === 'low' ? styles.pillLow : styles.pillMed) }}>{f.confidence === 'high' ? 'High' : f.confidence === 'low' ? 'Low' : 'Medium'}</span>}
+                      {f.status !== 'fixed' && CONF_VARIES.includes(category) && <span title={CONFIDENCE_HINT[f.confidence]} style={{ ...styles.pill, ...(f.confidence === 'high' ? styles.confVery : f.confidence === 'low' ? styles.pillLow : styles.confPossible) }}>{CONF_LABEL[f.confidence]}</span>}
+                      {category === 'junk' && f.status !== 'fixed' && <span style={styles.reasonLabel}>{f.evidence}</span>}
                       {f.status === 'fixed' && <span style={{ ...styles.pill, ...styles.pillHigh }}>Fixed</span>}
                       <span style={styles.count}>{f.count.toLocaleString()} photo{f.count === 1 ? '' : 's'}</span>
                     </div>
@@ -321,8 +369,9 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
                         onChange={e => setDrafts(d => ({ ...d, [key]: e.target.value }))}
                         aria-label="Edit the replacement tags"
                       />
+                      {category === 'plural' && f.status !== 'fixed' && <span style={styles.muted}>{f.evidence}</span>}
                     </div>
-                    <div style={styles.ev}>{f.evidence}{f.spellings.length > 1 && category === 'spelling' ? ` · ${f.spellings.join(' · ')}` : ''}</div>
+                    {(SHOWS_EVIDENCE.includes(category) || f.status === 'fixed') && <div style={styles.ev}>{f.evidence}{f.spellings.length > 1 && category === 'spelling' ? ` · ${f.spellings.join(' · ')}` : ''}</div>}
                     <div style={styles.actions}>
                       {f.status === 'open' && (
                         <>
@@ -334,7 +383,7 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
                         <button style={styles.secondaryBtn} onClick={() => void change(f, 'open')}>{f.status === 'plan' ? 'Remove from plan' : 'Undo'}</button>
                       )}
                       <button style={styles.secondaryBtn} onClick={() => onViewPhotos([f.display], 'any')}>View photos</button>
-                      <BatchEditButton key={`${f.tag}|${f.category}`} label="Batch editor" style={styles.secondaryBtn} getIds={() => window.flickrAPI.getAuditPhotoIds(f.tag)} />
+                      <BatchEditButton key={`${f.tag}|${f.category}`} label="Batch editor" style={styles.secondaryBtn} getIds={() => window.flickrAPI.getAuditPhotoIds(f.tag, f.category)} />
                       {f.flickrUrl && <button style={styles.secondaryBtn} title="Open this tag's page on your Flickr account, to fix it there" onClick={() => window.flickrAPI.openExternal(f.flickrUrl)}>Open on Flickr ↗</button>}
                     </div>
                   </div>
@@ -368,9 +417,13 @@ const styles: Record<string, React.CSSProperties> = {
   tagName: { fontSize: 14, fontWeight: 600, color: 'var(--ff-text)', overflowWrap: 'anywhere' },
   glue: { display: 'inline-block', width: 2, height: 15, background: 'var(--ff-error)', verticalAlign: -3, margin: '0 1px' },
   pill: { fontSize: 11, borderRadius: 10, padding: '1px 8px' },
-  pillHigh: { background: 'var(--ff-success-bg)', color: 'var(--ff-success)' },
-  pillMed: { background: '#fef3c7', color: '#92400e' },
+  pillHigh: { background: 'var(--ff-success-bg)', color: 'var(--ff-success)' },   // Fixed
+  confVery: { background: 'var(--ff-navy)', color: '#fff' },
+  confPossible: { background: 'transparent', color: 'var(--ff-navy)', boxShadow: 'inset 0 0 0 1px var(--ff-navy)' },
   pillLow: { background: '#eee', color: '#667085' },
+  reasonLabel: { fontSize: 12, color: 'var(--ff-text-secondary)', background: 'var(--ff-warm)', borderRadius: 10, padding: '1px 8px' },
+  reasonBox: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--ff-text-secondary)' },
+  reasonSelect: { border: '1px solid var(--ff-border)', borderRadius: 6, padding: '5px 8px', fontSize: 13, background: '#fff', color: 'var(--ff-text)' },
   count: { marginLeft: 'auto', fontSize: 12, color: 'var(--ff-text-secondary)', whiteSpace: 'nowrap' },
   l2: { display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, flexWrap: 'wrap' },
   input: { flex: 1, minWidth: 220, border: '1px solid var(--ff-border)', borderRadius: 6, padding: '5px 9px', fontSize: 13, background: '#fff', color: 'var(--ff-text)' },

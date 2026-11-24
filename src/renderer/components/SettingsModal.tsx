@@ -179,17 +179,27 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
     setTimeout(() => setResetDone(false), 2000)
   }, [applySettings])
 
+  // Nothing is saved until the settings have been read, so a failed read says so (and can be tried again) instead of silently dropping changes
+  const [loadFailed, setLoadFailed] = useState(false)
+  const [loadTry, setLoadTry] = useState(0)
   useEffect(() => {
     window.flickrAPI.getSettings().then((settings: AppSettings) => {
       applySettings(settings)
       hasLoadedRef.current = true
-    })
-  }, [])
+      setLoadFailed(false)
+    }).catch(() => setLoadFailed(true))
+  }, [loadTry])
+
+  // A change made less than 300 ms before the window closes is still saved: the pending save runs when this unmounts
+  const saveRef = useRef<() => void>(() => {})
+  const saveDueRef = useRef(false)
+  useEffect(() => () => { if (saveDueRef.current) saveRef.current() }, [])
 
   // Auto-save with 300ms debounce whenever any setting changes after initial load
   useEffect(() => {
     if (!hasLoadedRef.current) return
-    const timer = setTimeout(() => {
+    const save = (): void => {
+      saveDueRef.current = false
       const fileNaming: FileNamingConfig = {
         core, separator: sep,
         date: { position: datePos, format: dateFmt },
@@ -209,7 +219,10 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
         fileNaming, downloadFolder, showDockProgress, notifyOnComplete,
         conflictBehavior, downloadSize, openFinderOnComplete, metadata, onThisDayCard, onThisDayNotify
       })
-    }, 300)
+    }
+    saveRef.current = save
+    saveDueRef.current = true
+    const timer = setTimeout(save, 300)
     return () => clearTimeout(timer)
   }, [
     core, sep, datePos, dateFmt, seqPos, customPos, customText,
@@ -342,6 +355,12 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
                 </div>
               </div>
             </>
+          )}
+
+          {loadFailed && (
+            <div style={{ ...s.section, color: 'var(--ff-error)', fontSize: 13 }} role="alert">
+              Your settings could not be read, so changes are not being saved. <button style={{ background: 'none', border: 'none', color: 'var(--ff-blue)', cursor: 'pointer', fontSize: 13, textDecoration: 'underline', padding: 0 }} onClick={() => setLoadTry(n => n + 1)}>Try again</button>
+            </div>
           )}
 
           {/* ── HEALTH CHECK TAB ── */}

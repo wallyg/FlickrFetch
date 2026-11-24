@@ -11,11 +11,11 @@ import { ruleById } from '../../shared/cleanupRules'
 const TAG_NAMES: Record<AuditCategory, string> = {
   glued: 'Names stuck together', typo: 'Possible typos', notwin: 'Accented tags with no plain twin',
   noaccent: 'Plain tags that may need accents', junk: 'Odd characters', runon: 'Run-ons', spelling: 'Typed more than one way',
-  usedonce: 'Tags used only once', generic: 'Generic tags', numbers: 'Numbers only', filename: 'File-name tags'
+  usedonce: 'Tags used only once', generic: 'Generic tags', numbers: 'Numbers only', filename: 'File-name tags', missing: 'Photos missing a tag', plural: 'Singular and plural', possessive: 'Possessive on its own'
 }
 const TAG_SHORT: Record<AuditCategory, string> = {
   glued: 'stuck together', typo: 'typo', notwin: 'no plain twin', noaccent: 'needs accents', junk: 'odd characters', runon: 'run-on', spelling: 'spelling',
-  usedonce: 'used once', generic: 'generic', numbers: 'numbers only', filename: 'file name'
+  usedonce: 'used once', generic: 'generic', numbers: 'numbers only', filename: 'file name', missing: 'missing a tag', plural: 'singular and plural', possessive: 'possessive on its own'
 }
 const PHOTO_NAMES = (c: HealthCondition): string => ruleById(`photos:${c}`)?.name ?? c
 const PHOTO_PHRASE = (c: HealthCondition): string => ruleById(`photos:${c}`)?.phrase ?? c
@@ -40,17 +40,20 @@ export default function LibraryOverview({ refreshKey, offCount, onGoTags, onGoPh
   const [audit, setAudit] = useState<AuditOverview | null>(same?.audit ?? null)
   const [health, setHealth] = useState<HealthOverview | null>(same?.health ?? null)
   const [more, setMore] = useState(false)
+  const [failed, setFailed] = useState(false)
+  const [attempt, setAttempt] = useState(0)
   useEffect(() => {
     if (lastOverview?.key === refreshKey) { setAudit(lastOverview.audit); setHealth(lastOverview.health); return }
     let cancelled = false
+    setFailed(false)
     void Promise.all([window.flickrAPI.getAuditOverview(), window.flickrAPI.getHealthOverview()]).then(([a, h]) => {
       lastOverview = { key: refreshKey, audit: a, health: h }
       if (!cancelled) { setAudit(a); setHealth(h) }
-    })
+    }).catch(() => { if (!cancelled) setFailed(true) })
     return () => { cancelled = true }
-  }, [refreshKey])
+  }, [refreshKey, attempt])
 
-  if (!audit || !health) return <div style={dash.wrap}><span style={dash.muted}>Checking your library…</span></div>
+  if (!audit || !health) return <div style={dash.wrap}><span style={dash.muted}>{failed ? <>This could not be loaded. <button style={{ background: 'none', border: 'none', color: 'var(--ff-blue)', cursor: 'pointer', fontSize: 'inherit', textDecoration: 'underline', padding: 0 }} onClick={() => setAttempt(n => n + 1)}>Try again</button></> : 'Checking your library…'}</span></div>
 
   const fmt = (n: number): string => n.toLocaleString()
   const tagsOn = audit.byType.filter(r => r.state === 'on')

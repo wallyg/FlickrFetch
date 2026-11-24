@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { segGroup as kitSegGroup, segBtn as kitSegBtn, selectedOn as kitSelectedOn } from '../ui/kit'
 import type { FlickrPhoto, LicenseFilter, PhotoSearchParams } from '../../shared/types'
 export type { LicenseFilter }
 
@@ -441,9 +442,9 @@ export const sharedStyles: Record<string, React.CSSProperties> = {
   idStatus: { fontSize: '11px', color: '#9ca3af', padding: '0 6px', flexShrink: 0 },
   idStatusErr: { fontSize: '11px', color: '#ef4444', padding: '0 6px', flexShrink: 0 },
   idOpenDetailBtn: { background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: 'var(--ff-blue)', padding: '0 6px', flexShrink: 0 } as React.CSSProperties,
-  segGroup: { display: 'flex', border: '1px solid #ddd', borderRadius: '6px', overflow: 'hidden' },
-  seg: { background: 'none', border: 'none', borderRight: '1px solid #ddd', padding: '5px 10px', fontSize: '12px', color: '#666', cursor: 'pointer', lineHeight: 1 },
-  segActive: { backgroundColor: '#111', color: '#fff', fontWeight: '600' },
+  segGroup: { ...kitSegGroup },
+  seg: { ...kitSegBtn, padding: '5px 10px', fontSize: '12px', lineHeight: 1 },
+  segActive: { ...kitSelectedOn },
   sortSelect: { fontSize: '12px', color: '#555', border: '1px solid #ddd', borderRadius: '6px', padding: '5px 8px', background: 'none', cursor: 'pointer' },
   segGroupDensity: { display: 'flex', alignItems: 'center', gap: '2px', marginLeft: 'auto' },
   densityBtn: { background: 'none', border: 'none', padding: '4px 5px', cursor: 'pointer', borderRadius: '5px', display: 'flex', alignItems: 'center', color: '#bbb' },

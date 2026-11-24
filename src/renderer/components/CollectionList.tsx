@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
+import { useFindShortcut } from '../hooks/useFindShortcut'
 import type { FlickrCollection } from '../../shared/types'
 import BackToTop from '../ui/BackToTop'
 
@@ -6,9 +7,12 @@ type SearchOperator = 'contains' | 'starts' | 'ends' | 'exact'
 
 interface CollectionListProps {
   onCollectionSelect: (collection: FlickrCollection) => void
+  active?: boolean   // this tab is showing (Cmd+F then jumps to the search box)
 }
 
-export default function CollectionList({ onCollectionSelect }: CollectionListProps): React.JSX.Element {
+export default function CollectionList({ onCollectionSelect, active = true }: CollectionListProps): React.JSX.Element {
+  const searchRef = useRef<HTMLInputElement | null>(null)
+  useFindShortcut(active, searchRef)
   const [collections, setCollections] = useState<FlickrCollection[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -61,6 +65,7 @@ export default function CollectionList({ onCollectionSelect }: CollectionListPro
             <option value="exact">Exact</option>
           </select>
           <input
+            ref={searchRef}
             style={styles.searchInput}
             type="text"
             placeholder="Search collections…"

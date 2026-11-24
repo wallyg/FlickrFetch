@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo } from 'react'
+import { useFindShortcut } from '../hooks/useFindShortcut'
 import type { FlickrPhoto, DiscoverGroup, TagMode } from '../../shared/types'
 import PhotoDetail from './PhotoDetail'
 import { AttributionNotice, DiscoverTile, DiscoverSelectBar } from './DiscoverExplore'
@@ -6,10 +7,13 @@ import SmartDownloadButton from './SmartDownloadButton'
 import { GridIcon, ListIcon, JustifiedIcon, ChevronLeftIcon, ChevronRightIcon, sharedStyles as ss, type PhotoViewMode, type MediaFilter, type DownloadFilter, type LicenseFilter, PhotoListRow, DownloadFilterSelect, LicenseFilterSelect, matchesLicenseFilter, DOWNLOAD_FILTER_LABEL, LICENSE_FILTER_LABEL, DRAWER_LABEL_WIDTH, Chip, loadPhotoViewMode, savePhotoViewMode, loadRowHeight, saveRowHeight, computeJustifiedRows } from './PhotoGridShared'
 import EmptyState from './EmptyState'
 import WaveHeader, { DISCOVER_GUTTER } from './WaveHeader'
+import HoverNote from '../ui/HoverNote'
 
 type GroupView = 'list' | 'pool'
 
-export default function DiscoverGroups(): React.JSX.Element {
+export default function DiscoverGroups({ findActive = true }: { findActive?: boolean }): React.JSX.Element {
+  const findRef = useRef<HTMLInputElement | null>(null)
+  useFindShortcut(findActive, findRef)   // Cmd+F goes to whichever search box this tab is showing (the groups filter, or a group's title search)
   const [view, setView] = useState<GroupView>('list')
   const [groups, setGroups] = useState<DiscoverGroup[]>([])
   const [loading, setLoading] = useState(true)
@@ -344,14 +348,15 @@ export default function DiscoverGroups(): React.JSX.Element {
             </div>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               {!selectMode && filtersActive && (
+                <HoverNote mark={false} text={"Filters are on, so only the photos shown below are downloaded.\n\nClear the filters to download the whole group."}>
                 <button
                   style={{ ...s.selectBtn, borderColor: 'var(--ff-pink)', color: 'var(--ff-pink-action)' }}
                   disabled={downloading || filteredPoolPhotos.length === 0}
-                  title={"Filters are on, so only the photos shown below are downloaded.\n\nClear the filters to download the whole group."}
                   onClick={handleDownloadShown}
                 >
                   {downloading ? 'Starting…' : `Download ${filteredPoolPhotos.length.toLocaleString()} shown`}
                 </button>
+                </HoverNote>
               )}
               {!selectMode && !filtersActive && (
                 <SmartDownloadButton
@@ -426,6 +431,7 @@ export default function DiscoverGroups(): React.JSX.Element {
                     <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.5"/><path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
                   </span>
                   <input
+                    ref={findRef}
                     style={ss.searchInput}
                     placeholder="Search titles…"
                     value={poolSearchInput}
@@ -704,6 +710,7 @@ export default function DiscoverGroups(): React.JSX.Element {
 
         {!loading && groups.length > 5 && (
           <input
+            ref={findRef}
             style={s.filterInput}
             type="text"
             placeholder="Filter groups…"

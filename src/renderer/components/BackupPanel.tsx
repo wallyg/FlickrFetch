@@ -36,7 +36,14 @@ export default function BackupPanel({ refreshKey, toolbarLeft, onDownload }: Pro
   const filterRef = useRef<HTMLInputElement | null>(null)
   useFindShortcut(!!toolbarLeft && section === 'lists', filterRef)
 
-  useEffect(() => { void window.flickrAPI.getBackupSummary().then(setSummary) }, [refreshKey])
+  const [summaryFailed, setSummaryFailed] = useState(false)
+  const [attempt, setAttempt] = useState(0)
+  useEffect(() => {
+    let stale = false
+    setSummaryFailed(false)
+    void window.flickrAPI.getBackupSummary().then(s => { if (!stale) setSummary(s) }).catch(() => { if (!stale) setSummaryFailed(true) })
+    return () => { stale = true }
+  }, [refreshKey, attempt])
 
   const loadRows = useCallback(async (offset: number): Promise<void> => {
     const req = ++requestRef.current
@@ -84,7 +91,7 @@ export default function BackupPanel({ refreshKey, toolbarLeft, onDownload }: Pro
         <div style={dash.wrap}>
           <div style={dash.card}>
             <h3 style={dash.cardTitle}>How much of your library is downloaded? <span style={dash.hint}>(from FlickrFetch’s own records)</span></h3>
-            {!summary ? <div style={dash.muted}>Counting…</div> : (
+            {!summary ? <div style={dash.muted}>{summaryFailed ? <>This could not be loaded. <button style={{ background: 'none', border: 'none', color: 'var(--ff-blue)', cursor: 'pointer', fontSize: 'inherit', textDecoration: 'underline', padding: 0 }} onClick={() => setAttempt(n => n + 1)}>Try again</button></> : 'Counting…'}</div> : (
               <>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
                   <span style={{ fontSize: 26, fontWeight: 600, color: 'var(--ff-text)' }}>{summary.downloaded.toLocaleString()}</span>
