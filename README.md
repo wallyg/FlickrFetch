@@ -70,7 +70,7 @@ Metadata that lives only on a website disappears when the website does, or when 
 
 1. Download the `.dmg` from the [latest release](https://github.com/wallyg/FlickrFetch/releases/latest).
 2. Open it and drag FlickrFetch to Applications.
-3. **The app isn't code-signed yet**, so macOS will likely stop you the first time. Open **System Settings → Privacy & Security**, scroll down, and click **Open Anyway**.
+3. **The app isn't notarized by Apple yet**, so the first time you open it macOS says "FlickrFetch" Not Opened. Click **Done** (not Move to Trash), then open **System Settings → Privacy & Security**, scroll down, and click **Open Anyway**.
 4. If macOS still refuses to open it, run this once in Terminal:
    ```
    xattr -cr /Applications/FlickrFetch.app
@@ -83,7 +83,7 @@ FlickrFetch is a personal project that has grown up. Here's what it doesn't do y
 
 - **Free Flickr accounts get smaller photos.** Since May 2025, Flickr restricts original and large downloads on free accounts (Creative Commons photos are exempt). FlickrFetch has only been tested with a Pro account, so on a free account you may get smaller sizes than you asked for, without a warning.
 - **Mac only, Apple Silicon only.** No Intel Mac or Windows build.
-- **Not code-signed**, hence the install step above.
+- **Not notarized by Apple**, hence the install step above.
 - **Smart Sync trusts its own history.** It doesn't yet re-check that files are still on disk, so if you move or delete downloads, it may think they're still there.
 - **No automatic or background syncing.** Downloads run when you start them.
 - **Health Check suggests, you decide.** Its checks are rules of thumb and some will be wrong for your library. Mark those "This one is fine", or switch a check off. Nothing on Flickr changes until you change it there.
