@@ -2,7 +2,7 @@
 
 **Your Flickr. Your Photos. Your Way.**
 
-A Mac app that downloads your Flickr photos and videos, with your titles, tags, descriptions, dates, location and license written into the files themselves. Flickr Pro accounts get originals; see [Honest limits](#honest-limits) for what free accounts get.
+A Mac app that downloads your Flickr photos and videos, with your titles, tags, descriptions, dates, location and license written into the files themselves. Flickr Pro accounts get originals; see [Honest limits](#honest-limits) for what free accounts get. It also checks your library for tidy-ups: typos in tags, missing titles and locations, photos in the wrong album, and possible duplicates.
 
 ![FlickrFetch — original resolution, preserved metadata, your local archive](assets/brand/social-preview.png)
 
@@ -53,6 +53,12 @@ Metadata that lives only on a website disappears when the website does, or when 
 **Discover**
 - Browse other photographers' public photos, groups and Explore, and filter by license to find things you're free to reuse. Please respect each photo's license and Flickr's terms.
 
+**Health Check**
+- Checks your tags, photos and albums against a snapshot of your library kept on your Mac: tags stuck together, typos, odd characters, missing titles, descriptions and locations, dates that cannot be right, photos that look out of place in their album or may be missing from one, and photos that may be duplicates
+- Every check can be an Issue, a Warning, or Off, and each one has plain rules you can read (the ⓘ)
+- Suggestions only: fixes happen on Flickr, and a button opens Flickr's organizer with the right photos ready
+- A Backup view of what you have downloaded, what is new since your last download, and what has changed
+
 ## Privacy and safety
 
 - **Read-only.** FlickrFetch asks Flickr for read access only. It cannot change or delete anything on your account.
@@ -80,13 +86,13 @@ FlickrFetch is a personal project that has grown up. Here's what it doesn't do y
 - **Not code-signed**, hence the install step above.
 - **Smart Sync trusts its own history.** It doesn't yet re-check that files are still on disk, so if you move or delete downloads, it may think they're still there.
 - **No automatic or background syncing.** Downloads run when you start them.
+- **Health Check suggests, you decide.** Its checks are rules of thumb and some will be wrong for your library. Mark those "This one is fine", or switch a check off. Nothing on Flickr changes until you change it there.
 
 ## What's next
 
 Under consideration for v4.0, with the theme "a backup you can trust":
 
-- A coverage view showing what's backed up and what's missing, by album and by year
-- Archive verification that finds damaged or missing files
+- A view of your archive on disk, not just on Flickr, that finds damaged or missing files and copes with a photo that belongs to several albums
 
 See the [open issues](https://github.com/wallyg/FlickrFetch/issues) for everything on the list. If something here would make you use FlickrFetch, or something's missing that stops you, [open an issue](https://github.com/wallyg/FlickrFetch/issues/new) and say so. It genuinely changes what gets built.
 
