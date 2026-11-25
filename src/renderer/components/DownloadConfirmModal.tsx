@@ -173,7 +173,7 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 500,
   },
   modal: {
-    backgroundColor: '#fff', borderRadius: '12px', width: '420px', maxWidth: '90vw',
+    backgroundColor: 'var(--ff-surface)', borderRadius: '12px', width: '420px', maxWidth: '90vw',
     boxShadow: '0 20px 60px rgba(0,0,0,0.22)', overflow: 'hidden',
   },
   header: {
@@ -203,7 +203,7 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: '12px', lineHeight: 1.5, color: 'var(--ff-text-secondary)', backgroundColor: 'var(--ff-tint)', borderRadius: '8px', padding: '8px 12px', margin: '10px 0 0',
   },
   summaryCard: {
-    backgroundColor: '#f8f7f5', borderRadius: '8px', padding: '10px 12px',
+    backgroundColor: 'var(--ff-cream)', borderRadius: '8px', padding: '10px 12px',
     marginTop: '12px',
   },
   settingsRow: {
@@ -251,7 +251,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   segBtn: {
     padding: '5px 12px', fontSize: '13px', fontWeight: '500',
-    background: '#fff', border: 'none', borderRight: '1px solid #d8d4ce',
+    background: 'var(--ff-surface)', border: 'none', borderRight: '1px solid #d8d4ce',
     cursor: 'pointer', color: '#555',
   },
   segBtnActive: {
@@ -285,7 +285,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   confirmBtn: {
     background: 'var(--ff-pink-action)', border: 'none', borderRadius: '7px',
-    fontSize: '13px', color: '#fff', fontWeight: '600', cursor: 'pointer',
+    fontSize: '13px', color: 'var(--ff-white)', fontWeight: '600', cursor: 'pointer',
     padding: '7px 20px',
   },
 }

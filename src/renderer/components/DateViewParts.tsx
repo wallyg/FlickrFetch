@@ -57,13 +57,13 @@ export function PhotoTile({ photo, selected, onClick }: { photo: DayPhoto; selec
         <span style={{ position: 'absolute', left: 5, top: 5, zIndex: 2, fontSize: 11, background: 'rgba(255,255,255,0.9)', borderRadius: 8, padding: '0 5px' }} title="Not public">🔒</span>
       )}
       {photo.media === 'video' && (
-        <span style={{ position: 'absolute', right: 5, bottom: 26, zIndex: 2, fontSize: 10, background: 'rgba(0,0,0,0.65)', color: '#fff', borderRadius: 8, padding: '1px 7px' }} title="Video">▶ Video</span>
+        <span style={{ position: 'absolute', right: 5, bottom: 26, zIndex: 2, fontSize: 10, background: 'rgba(0,0,0,0.65)', color: 'var(--ff-white)', borderRadius: 8, padding: '1px 7px' }} title="Video">▶ Video</span>
       )}
       {selected && (
-        <span style={{ position: 'absolute', right: 5, top: 5, zIndex: 2, fontSize: 11, background: 'var(--ff-pink)', color: '#fff', borderRadius: 8, padding: '0 6px' }}>✓</span>
+        <span style={{ position: 'absolute', right: 5, top: 5, zIndex: 2, fontSize: 11, background: 'var(--ff-pink)', color: 'var(--ff-white)', borderRadius: 8, padding: '0 6px' }}>✓</span>
       )}
       <img src={photo.thumbUrl} alt="" loading="lazy" style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', display: 'block' }} />
-      <span style={{ display: 'block', fontSize: 11, padding: '3px 5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', background: '#fff', color: 'var(--ff-text)' }}>
+      <span style={{ display: 'block', fontSize: 11, padding: '3px 5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', background: 'var(--ff-surface)', color: 'var(--ff-text)' }}>
         {photo.title || '(no title)'}
       </span>
     </div>

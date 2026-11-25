@@ -248,12 +248,12 @@ export default function DiscoverExplore({ onDownload }: Props): React.JSX.Elemen
                           )}
                           {!selectMode && (
                             <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.65)', padding: '6px 8px', opacity: hoveredId === photo.id ? 1 : 0, transition: 'opacity 0.15s ease' }}>
-                              <span style={{ color: '#fff', fontSize: '12px', lineHeight: '1.3', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as React.CSSProperties}>{photo.title}</span>
+                              <span style={{ color: 'var(--ff-white)', fontSize: '12px', lineHeight: '1.3', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as React.CSSProperties}>{photo.title}</span>
                             </div>
                           )}
                           {selectMode && (
                             <div style={{ position: 'absolute', top: '6px', right: '6px', width: '20px', height: '20px', borderRadius: '50%', border: `2px solid ${isSelected ? 'var(--ff-pink)' : 'rgba(255,255,255,0.9)'}`, backgroundColor: isSelected ? 'var(--ff-pink)' : 'rgba(255,255,255,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              {isSelected && <span style={{ color: '#fff', fontSize: '11px', fontWeight: 700 }}>✓</span>}
+                              {isSelected && <span style={{ color: 'var(--ff-white)', fontSize: '11px', fontWeight: 700 }}>✓</span>}
                             </div>
                           )}
                         </div>
@@ -370,7 +370,7 @@ const sb: Record<string, React.CSSProperties> = {
     padding: '5px 12px', fontSize: '13px', color: '#555', cursor: 'pointer', flexShrink: 0,
   },
   downloadBtn: {
-    backgroundColor: 'var(--ff-pink-action)', color: '#fff', border: 'none',
+    backgroundColor: 'var(--ff-pink-action)', color: 'var(--ff-white)', border: 'none',
     borderRadius: '6px', padding: '6px 14px', fontSize: '13px', fontWeight: 600,
     cursor: 'pointer', flexShrink: 0,
   },
@@ -383,13 +383,13 @@ const sb: Record<string, React.CSSProperties> = {
 
 const s: Record<string, React.CSSProperties> = {
   container: { display: 'flex', flexDirection: 'column', gap: '16px', padding: `0 ${DISCOVER_GUTTER}px 32px` },
-  stickyHeader: { position: 'sticky' as const, top: 0, zIndex: 10, background: '#fff', paddingBottom: '8px' },
+  stickyHeader: { position: 'sticky' as const, top: 0, zIndex: 10, background: 'var(--ff-surface)', paddingBottom: '8px' },
   headerRow: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', paddingTop: '20px' },
   heading: { margin: 0, fontSize: '18px', fontWeight: 600, color: '#1a1a1a' },
   subheading: { margin: '4px 0 0', fontSize: '13px', color: '#888' },
   attrNotice: {
     display: 'flex', alignItems: 'flex-start', gap: '8px',
-    background: '#fdf8f0', border: '1px solid #f0dfc0', borderRadius: '8px',
+    background: 'var(--ff-cream)', border: '1px solid #f0dfc0', borderRadius: '8px',
     padding: '10px 14px', fontSize: '12px', color: '#7a5a1a', lineHeight: 1.5
   },
   lockIcon: { fontSize: '14px', flexShrink: 0, marginTop: '1px' },
@@ -397,7 +397,7 @@ const s: Record<string, React.CSSProperties> = {
   justifiedContainer: { padding: '0' },
   tile: {
     position: 'relative', aspectRatio: '1', overflow: 'hidden',
-    cursor: 'pointer', borderRadius: '4px', background: '#f0f0f0',
+    cursor: 'pointer', borderRadius: '4px', background: 'var(--ff-grey-100)',
   },
   tileHover: { opacity: 0.9 },
   tileSelected: { outline: '3px solid var(--ff-pink)', outlineOffset: '-3px' },
@@ -407,7 +407,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   check: {
     width: '20px', height: '20px', borderRadius: '50%', background: 'var(--ff-pink)',
-    color: '#fff', fontSize: '11px', fontWeight: 700,
+    color: 'var(--ff-white)', fontSize: '11px', fontWeight: 700,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
   },
   thumb: { width: '100%', height: '100%', objectFit: 'cover', display: 'block' },
@@ -417,14 +417,14 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
     padding: '8px',
   },
-  overlayTitle: { color: '#fff', fontSize: '11px', fontWeight: 500, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  overlayTitle: { color: 'var(--ff-white)', fontSize: '11px', fontWeight: 500, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
   videoTag: { color: '#ccc', fontSize: '10px', marginTop: '2px' },
   loadMoreRow: { display: 'flex', justifyContent: 'center', paddingTop: '8px' },
   loadMoreBtn: {
     padding: '8px 24px', borderRadius: '8px', border: '1px solid #ddd',
-    background: '#fff', cursor: 'pointer', fontSize: '13px', color: '#444'
+    background: 'var(--ff-surface)', cursor: 'pointer', fontSize: '13px', color: '#444'
   },
   loadingState: { textAlign: 'center', color: '#888', fontSize: '14px', paddingTop: '48px' },
   errorState: { textAlign: 'center', color: 'var(--ff-error)', fontSize: '14px', paddingTop: '48px' },
-  selectToggleBtn: { padding: '6px 14px', borderRadius: '8px', border: '1px solid #ddd', background: '#fff', cursor: 'pointer', fontSize: '13px', color: '#444', flexShrink: 0 },
+  selectToggleBtn: { padding: '6px 14px', borderRadius: '8px', border: '1px solid #ddd', background: 'var(--ff-surface)', cursor: 'pointer', fontSize: '13px', color: '#444', flexShrink: 0 },
 }

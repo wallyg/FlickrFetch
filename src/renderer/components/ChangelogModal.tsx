@@ -71,7 +71,7 @@ const styles: Record<string, React.CSSProperties> = {
     zIndex: 300
   },
   card: {
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--ff-surface)',
     borderRadius: '16px',
     width: '480px',
     maxWidth: '90vw',

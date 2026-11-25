@@ -110,7 +110,7 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
   if (!data.hasData) return <div style={styles.pad}><span style={styles.muted}>Build your tag list first (Tags tab). It also keeps the dates the Timeline needs.</span></div>
 
   const strength = (n: number, max: number): number => (n === 0 ? 0 : 0.14 + 0.86 * Math.sqrt(n / max))
-  const shade = (n: number, max: number = grid.max): string => (n === 0 ? '#f1efec' : `rgba(0, 99, 220, ${strength(n, max).toFixed(2)})`)
+  const shade = (n: number, max: number = grid.max): string => (n === 0 ? 'var(--ff-warm)' : `rgba(0, 99, 220, ${strength(n, max).toFixed(2)})`)
   const dayMax = Math.max(1, ...(days?.days.map(d => d.count) ?? [1]))   // each month's calendar is shaded against its own busiest day
   const scopeNote = extraNote(media, albums, privacy)
 
@@ -213,7 +213,7 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
             <div style={{ ...styles.key, marginTop: 0, marginLeft: 'auto' }}>
               <span>Fewer</span>
               <span style={{ display: 'inline-flex', gap: 2 }}>
-                {[0, 0.05, 0.2, 0.45, 1].map(f => <i key={f} style={{ width: 24, height: 11, borderRadius: 2, display: 'block', background: f === 0 ? '#f1efec' : shade(f * grid.max) }} />)}
+                {[0, 0.05, 0.2, 0.45, 1].map(f => <i key={f} style={{ width: 24, height: 11, borderRadius: 2, display: 'block', background: f === 0 ? 'var(--ff-warm)' : shade(f * grid.max) }} />)}
               </span>
               <span>More</span>
               <span style={{ marginLeft: 6 }}>Grey means none.</span>
@@ -274,7 +274,7 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
                   <div
                     key={d}
                     title={`${n.toLocaleString()} photo${n === 1 ? '' : 's'}, ${MONTHS[drill.month - 1]} ${d}, ${drill.year}`}
-                    style={{ height: 46, borderRadius: 6, background: shade(n, dayMax), position: 'relative', padding: '3px 5px', fontSize: 11, color: strength(n, dayMax) > 0.55 ? '#fff' : 'var(--ff-navy)', cursor: n ? 'pointer' : 'default' }}
+                    style={{ height: 46, borderRadius: 6, background: shade(n, dayMax), position: 'relative', padding: '3px 5px', fontSize: 11, color: strength(n, dayMax) > 0.55 ? 'var(--ff-white)' : 'var(--ff-navy)', cursor: n ? 'pointer' : 'default' }}
                     {...(n ? asButton(() => setRoll({ year: drill.year, month: drill.month, day: d })) : {})}
                   >
                     {d}
@@ -299,7 +299,7 @@ const styles: Record<string, React.CSSProperties> = {
   muted: { fontSize: 12, color: 'var(--ff-text-secondary)' },
   row: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
   link: { background: 'none', border: 'none', color: 'var(--ff-blue)', fontSize: 13, cursor: 'pointer', padding: 0 },
-  card: { background: '#fff', border: '1px solid var(--ff-border)', borderRadius: 12, padding: `14px ${CARD_PAD}px` },
+  card: { background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 12, padding: `14px ${CARD_PAD}px` },
   hm: { display: 'grid', gridTemplateColumns: `${LABEL_W}px repeat(12, 1fr)`, gap: GAP, marginBottom: GAP, alignItems: 'center' },
   hl: { fontSize: 11, color: 'var(--ff-text-secondary)' },
   hc: { fontSize: 10, color: 'var(--ff-text-secondary)', textAlign: 'center' },

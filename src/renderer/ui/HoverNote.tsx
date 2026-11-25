@@ -25,6 +25,6 @@ export default function HoverNote({ text, children, block, mark = true }: { text
 
 const bubble: React.CSSProperties = {
   position: 'absolute', top: '100%', left: 0, marginTop: 6, zIndex: 40, width: 'max-content', maxWidth: 'min(440px, 80vw)',
-  background: 'var(--ff-navy)', color: '#fff', fontSize: 12, fontWeight: 400, lineHeight: 1.5, padding: '10px 12px', borderRadius: 8,
+  background: 'var(--ff-navy)', color: 'var(--ff-white)', fontSize: 12, fontWeight: 400, lineHeight: 1.5, padding: '10px 12px', borderRadius: 8,
   boxShadow: '0 8px 24px rgba(0,0,0,0.25)', textAlign: 'left', pointerEvents: 'none'
 }

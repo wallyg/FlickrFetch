@@ -93,14 +93,14 @@ export function MissingRow({ item, onFine, onKind }: { item: AlbumItem; onFine: 
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  card: { display: 'flex', gap: 12, background: '#fff', border: '1px solid var(--ff-border)', borderRadius: 10, padding: 10, marginBottom: 8 },
+  card: { display: 'flex', gap: 12, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 10, padding: 10, marginBottom: 8 },
   thumb: { width: 76, height: 76, borderRadius: 6, objectFit: 'cover', background: '#eee', flexShrink: 0 },
   body: { flex: 1, minWidth: 0 },
   title: { fontSize: 14, fontWeight: 600, color: 'var(--ff-text)', overflowWrap: 'anywhere' },
   muted: { fontSize: 13, color: 'var(--ff-text-secondary)' },
   description: { fontSize: 13, fontStyle: 'italic', color: 'var(--ff-text-secondary)', marginTop: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
   judged: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 8, fontSize: 12, color: 'var(--ff-text-secondary)' },
-  select: { border: '1px solid var(--ff-border)', borderRadius: 6, padding: '2px 6px', fontSize: 12, background: '#fff', color: 'var(--ff-text)' },
+  select: { border: '1px solid var(--ff-border)', borderRadius: 6, padding: '2px 6px', fontSize: 12, background: 'var(--ff-surface)', color: 'var(--ff-text)' },
   small: { background: 'none', border: 'none', padding: 0, fontSize: 12, color: 'var(--ff-blue)', textDecoration: 'underline', cursor: 'pointer' },
   actions: { display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, flexWrap: 'wrap' }
 }

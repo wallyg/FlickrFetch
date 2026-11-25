@@ -34,7 +34,7 @@ export function SortBox<T extends string>({ value, onChange, options }: { value:
     <label style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--ff-text-secondary)' }}>
       Sort
       <select value={value} onChange={e => onChange(e.target.value as T)} title="How this list is ordered" aria-label="Sort this list"
-        style={{ border: '1px solid var(--ff-border)', borderRadius: 6, padding: '5px 8px', fontSize: 13, background: '#fff', color: 'var(--ff-text)' }}>
+        style={{ border: '1px solid var(--ff-border)', borderRadius: 6, padding: '5px 8px', fontSize: 13, background: 'var(--ff-surface)', color: 'var(--ff-text)' }}>
         {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
     </label>

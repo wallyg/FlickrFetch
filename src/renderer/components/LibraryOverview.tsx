@@ -133,5 +133,5 @@ export default function LibraryOverview({ refreshKey, offCount, onGoTags, onGoPh
 
 const styles: Record<string, React.CSSProperties> = {
   cards: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 14 },
-  score: { background: '#fff', border: '1px solid var(--ff-border)', borderRadius: 12, padding: '14px 16px', cursor: 'pointer', minWidth: 0 }
+  score: { background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 12, padding: '14px 16px', cursor: 'pointer', minWidth: 0 }
 }

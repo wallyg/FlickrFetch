@@ -52,9 +52,9 @@ export default function FineReasonHost(): React.JSX.Element | null {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  bar: { position: 'fixed', left: '50%', bottom: 22, transform: 'translateX(-50%)', zIndex: 100, maxWidth: 'min(860px, calc(100vw - 48px))', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8, padding: '9px 14px', background: 'var(--ff-navy)', color: '#fff', borderRadius: 12, fontSize: 13, boxShadow: '0 10px 30px rgba(0,0,0,0.3)' },
+  bar: { position: 'fixed', left: '50%', bottom: 22, transform: 'translateX(-50%)', zIndex: 100, maxWidth: 'min(860px, calc(100vw - 48px))', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8, padding: '9px 14px', background: 'var(--ff-navy)', color: 'var(--ff-white)', borderRadius: 12, fontSize: 13, boxShadow: '0 10px 30px rgba(0,0,0,0.3)' },
   lead: { fontWeight: 600, marginRight: 4 },
-  chip: { ...quietBtn, background: 'rgba(255,255,255,0.12)', borderColor: 'rgba(255,255,255,0.35)', color: '#fff', fontSize: 12, padding: '4px 10px' },
+  chip: { ...quietBtn, background: 'rgba(255,255,255,0.12)', borderColor: 'rgba(255,255,255,0.35)', color: 'var(--ff-white)', fontSize: 12, padding: '4px 10px' },
   skip: { background: 'none', border: 'none', color: 'rgba(255,255,255,0.75)', fontSize: 12, textDecoration: 'underline', cursor: 'pointer', marginLeft: 4 },
-  input: { width: 300, border: '1px solid rgba(255,255,255,0.4)', borderRadius: 6, padding: '4px 8px', fontSize: 13, background: '#fff', color: 'var(--ff-text)' }
+  input: { width: 300, border: '1px solid rgba(255,255,255,0.4)', borderRadius: 6, padding: '4px 8px', fontSize: 13, background: 'var(--ff-surface)', color: 'var(--ff-text)' }
 }

@@ -143,13 +143,13 @@ const styles: Record<string, React.CSSProperties> = {
   header: { display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 24px 6px', fontSize: '13px', color: 'var(--ff-text)' },
   headline: { fontSize: '14px' },
   muted: { color: 'var(--ff-text-secondary)', fontSize: '13px' },
-  notice: { margin: '0 24px 6px', padding: '8px 12px', background: '#fff', border: '1px solid var(--ff-border)', borderRadius: '8px', fontSize: '13px', color: 'var(--ff-text-secondary)' },
+  notice: { margin: '0 24px 6px', padding: '8px 12px', background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: '8px', fontSize: '13px', color: 'var(--ff-text-secondary)' },
   secondaryBtn: { ...quietBtn, padding: '5px 12px' },
   linkBtn: { background: 'none', border: 'none', color: 'var(--ff-blue)', fontSize: '13px', cursor: 'pointer', padding: '4px 6px' },
-  progressCard: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', width: '360px', padding: '28px', background: '#fff', border: '1px solid var(--ff-border)', borderRadius: '12px' },
+  progressCard: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', width: '360px', padding: '28px', background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: '12px' },
   cardTitle: { fontSize: '15px', fontWeight: 700, color: 'var(--ff-navy)' },
   barTrack: { width: '100%', height: '8px', background: '#eee', borderRadius: '4px', overflow: 'hidden' },
   barFill: { height: '100%', background: 'var(--ff-pink)', transition: 'width 0.3s' },
-  updateBtn: { background: 'var(--ff-pink-action)', color: '#fff', border: '1px solid var(--ff-pink-action)', borderRadius: '6px', padding: '6px 14px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' },
-  dataPanel: { position: 'absolute', top: 'calc(100% + 6px)', right: 0, width: 370, background: '#fff', border: '1px solid var(--ff-line-strong)', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,0.18)', padding: '14px 16px', zIndex: 20 }
+  updateBtn: { background: 'var(--ff-pink-action)', color: 'var(--ff-white)', border: '1px solid var(--ff-pink-action)', borderRadius: '6px', padding: '6px 14px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' },
+  dataPanel: { position: 'absolute', top: 'calc(100% + 6px)', right: 0, width: 370, background: 'var(--ff-surface)', border: '1px solid var(--ff-line-strong)', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,0.18)', padding: '14px 16px', zIndex: 20 }
 }

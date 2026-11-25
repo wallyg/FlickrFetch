@@ -8,12 +8,12 @@ import type { CSSProperties } from 'react'
 // Titles are navy; navy is not used as a button colour.
 
 export const primaryBtn: CSSProperties = {
-  background: 'var(--ff-pink-action)', color: '#fff', border: '1px solid var(--ff-pink-action)',
+  background: 'var(--ff-pink-action)', color: 'var(--ff-white)', border: '1px solid var(--ff-pink-action)',
   borderRadius: 6, padding: '5px 13px', fontSize: 13, fontWeight: 600, cursor: 'pointer'
 }
 
 export const quietBtn: CSSProperties = {
-  background: '#fff', color: 'var(--ff-text)', border: '1px solid var(--ff-line-strong)',
+  background: 'var(--ff-surface)', color: 'var(--ff-text)', border: '1px solid var(--ff-line-strong)',
   borderRadius: 6, padding: '4px 11px', fontSize: 13, cursor: 'pointer'
 }
 
@@ -34,15 +34,15 @@ export const selectedOn: CSSProperties = {
 
 export const chip: CSSProperties = {
   border: '1px solid var(--ff-border)', borderRadius: 14, padding: '3px 11px', fontSize: 13,
-  background: '#fff', color: 'var(--ff-text)', cursor: 'pointer'
+  background: 'var(--ff-surface)', color: 'var(--ff-text)', cursor: 'pointer'
 }
 
 export const segGroup: CSSProperties = {
-  display: 'inline-flex', gap: 2, padding: 2, border: '1px solid var(--ff-line-strong)', borderRadius: 10, background: '#fff'
+  display: 'inline-flex', gap: 2, padding: 2, border: '1px solid var(--ff-line-strong)', borderRadius: 10, background: 'var(--ff-surface)'
 }
 
 export const segBtn: CSSProperties = {
-  border: 'none', borderRadius: 7, padding: '4px 12px', fontSize: 13, color: 'var(--ff-text-secondary)', background: '#fff', cursor: 'pointer'
+  border: 'none', borderRadius: 7, padding: '4px 12px', fontSize: 13, color: 'var(--ff-text-secondary)', background: 'var(--ff-surface)', cursor: 'pointer'
 }
 
 export const railItem: CSSProperties = {
@@ -55,5 +55,5 @@ export const railSel: CSSProperties = { background: 'var(--ff-tint)', color: 'va
 // A small text box for filtering a list
 export const filterInput: CSSProperties = {
   width: '100%', boxSizing: 'border-box', border: '1px solid var(--ff-border)', borderRadius: 6, padding: '5px 8px',
-  fontSize: 13, background: '#fff', color: 'var(--ff-text)'
+  fontSize: 13, background: 'var(--ff-surface)', color: 'var(--ff-text)'
 }

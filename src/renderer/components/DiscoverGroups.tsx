@@ -667,12 +667,12 @@ export default function DiscoverGroups({ findActive = true }: { findActive?: boo
                             )}
                             {!selectMode && (
                               <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.65)', padding: '6px 8px', opacity: hoveredId === photo.id ? 1 : 0, transition: 'opacity 0.15s ease' }}>
-                                <span style={{ color: '#fff', fontSize: '12px', lineHeight: '1.3', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as React.CSSProperties}>{photo.title}</span>
+                                <span style={{ color: 'var(--ff-white)', fontSize: '12px', lineHeight: '1.3', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as React.CSSProperties}>{photo.title}</span>
                               </div>
                             )}
                             {selectMode && (
                               <div style={{ position: 'absolute', top: '6px', right: '6px', width: '20px', height: '20px', borderRadius: '50%', border: `2px solid ${isSelected ? 'var(--ff-pink)' : 'rgba(255,255,255,0.9)'}`, backgroundColor: isSelected ? 'var(--ff-pink)' : 'rgba(255,255,255,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                {isSelected && <span style={{ color: '#fff', fontSize: '11px', fontWeight: 700 }}>✓</span>}
+                                {isSelected && <span style={{ color: 'var(--ff-white)', fontSize: '11px', fontWeight: 700 }}>✓</span>}
                               </div>
                             )}
                           </div>
@@ -756,12 +756,12 @@ export default function DiscoverGroups({ findActive = true }: { findActive?: boo
 
 const s: Record<string, React.CSSProperties> = {
   container: { display: 'flex', flexDirection: 'column', gap: '16px', padding: `0 ${DISCOVER_GUTTER}px 32px` },
-  stickyHeader: { position: 'sticky' as const, top: 0, zIndex: 10, background: '#fff', paddingBottom: '8px' },
+  stickyHeader: { position: 'sticky' as const, top: 0, zIndex: 10, background: 'var(--ff-surface)', paddingBottom: '8px' },
   headerRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '20px' },
   heading: { margin: 0, fontSize: '18px', fontWeight: 600, color: '#1a1a1a' },
   subheading: { margin: '4px 0 0', fontSize: '13px', color: '#888' },
   backBtn: { background: 'none', border: 'none', color: 'var(--ff-blue)', cursor: 'pointer', fontSize: '14px', padding: '4px 0', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '4px' },
-  selectBtn: { padding: '6px 14px', borderRadius: '8px', border: '1px solid #ddd', background: '#fff', cursor: 'pointer', fontSize: '13px', color: '#444', flexShrink: 0 },
+  selectBtn: { padding: '6px 14px', borderRadius: '8px', border: '1px solid #ddd', background: 'var(--ff-surface)', cursor: 'pointer', fontSize: '13px', color: '#444', flexShrink: 0 },
   filterInput: {
     height: '36px', borderRadius: '8px', border: '1px solid #ddd',
     padding: '0 12px', fontSize: '14px', outline: 'none', width: '100%', boxSizing: 'border-box',
@@ -775,7 +775,7 @@ const s: Record<string, React.CSSProperties> = {
   groupAvatar: { width: '44px', height: '44px', borderRadius: '8px', objectFit: 'cover' },
   groupAvatarFallback: {
     width: '44px', height: '44px', borderRadius: '8px',
-    background: 'var(--ff-blue)', color: '#fff', display: 'flex', alignItems: 'center',
+    background: 'var(--ff-blue)', color: 'var(--ff-white)', display: 'flex', alignItems: 'center',
     justifyContent: 'center', fontSize: '18px', fontWeight: 700
   },
   groupInfo: { flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' },
@@ -786,7 +786,7 @@ const s: Record<string, React.CSSProperties> = {
   grid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px' },
   justifiedContainer: { padding: '0' },
   loadMoreRow: { display: 'flex', justifyContent: 'center', paddingTop: '8px' },
-  loadMoreBtn: { padding: '8px 24px', borderRadius: '8px', border: '1px solid #ddd', background: '#fff', cursor: 'pointer', fontSize: '13px', color: '#444' },
+  loadMoreBtn: { padding: '8px 24px', borderRadius: '8px', border: '1px solid #ddd', background: 'var(--ff-surface)', cursor: 'pointer', fontSize: '13px', color: '#444' },
   loadingState: { textAlign: 'center', color: '#888', fontSize: '14px', paddingTop: '48px' },
   errorState: { textAlign: 'center', color: 'var(--ff-error)', fontSize: '14px', paddingTop: '48px' },
   emptyState: { textAlign: 'center', color: '#888', fontSize: '14px', paddingTop: '48px' },

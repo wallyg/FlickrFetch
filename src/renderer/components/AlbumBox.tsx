@@ -47,7 +47,7 @@ export default function AlbumBox({ chosen, onToggle, minWidth = 200 }: { chosen:
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  suggest: { position: 'absolute', top: '100%', left: 0, marginTop: 2, zIndex: 20, minWidth: 300, maxHeight: 260, overflowY: 'auto', background: '#fff', border: '1px solid var(--ff-border)', borderRadius: 8, boxShadow: '0 6px 20px rgba(0,0,0,0.14)', padding: 4 },
+  suggest: { position: 'absolute', top: '100%', left: 0, marginTop: 2, zIndex: 20, minWidth: 300, maxHeight: 260, overflowY: 'auto', background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 8, boxShadow: 'var(--ff-shadow-menu)', padding: 4 },
   suggestItem: { display: 'flex', alignItems: 'center', width: '100%', gap: 8, textAlign: 'left', border: 'none', background: 'none', padding: '6px 8px', borderRadius: 6, fontSize: 13, color: 'var(--ff-text)', cursor: 'pointer' },
   suggestOn: { background: 'var(--ff-tint)', color: 'var(--ff-pink-action)' },
   tick: { width: 14, flex: 'none', fontWeight: 700 },

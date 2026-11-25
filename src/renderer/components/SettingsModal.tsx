@@ -665,7 +665,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
                       ['subStripParens',    subStripParens,    setSubStripParens,    'Strip parentheses',   'e.g. Title (2024) → Title 2024'],
                       ['subStripBrackets',  subStripBrackets,  setSubStripBrackets,  'Strip square brackets', 'e.g. Title [edit] → Title edit'],
                     ] as [string, boolean, (v: boolean) => void, string, string][]).map(([key, val, setter, label, example]) => (
-                      <div key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', padding: '7px 10px', borderRadius: '6px', background: '#fafaf8', border: '1px solid #eeebe6' }}>
+                      <div key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', padding: '7px 10px', borderRadius: '6px', background: 'var(--ff-cream)', border: '1px solid #eeebe6' }}>
                         <div>
                           <div style={{ fontSize: '12px', fontWeight: '500', color: '#333' }}>{label}</div>
                           <div style={{ fontSize: '11px', color: '#aaa', fontFamily: 'monospace', marginTop: '1px' }}>{example}</div>
@@ -844,13 +844,13 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
 
 const s: Record<string, React.CSSProperties> = {
   overlay: { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 600 },
-  card: { backgroundColor: '#fff', borderRadius: '12px', width: '640px', maxWidth: '90vw', height: '660px', maxHeight: '90vh', boxShadow: '0 8px 40px rgba(0,0,0,0.3)', display: 'flex', flexDirection: 'column' },
+  card: { backgroundColor: 'var(--ff-surface)', borderRadius: '12px', width: '640px', maxWidth: '90vw', height: '660px', maxHeight: '90vh', boxShadow: '0 8px 40px rgba(0,0,0,0.3)', display: 'flex', flexDirection: 'column' },
   header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px 0', flexShrink: 0 },
   title: { fontSize: '18px', fontWeight: '600', color: '#111', margin: 0 },
   closeBtn: { background: 'none', border: 'none', fontSize: '16px', color: '#888', cursor: 'pointer', padding: '4px' },
   updateBanner: { display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 24px', backgroundColor: '#edf4ff', borderBottom: '1px solid #cce0ff', flexShrink: 0 },
   updateText: { flex: 1, fontSize: '13px', color: 'var(--ff-blue)', fontWeight: '500' },
-  updateBtn: { background: 'var(--ff-blue)', color: '#fff', border: 'none', borderRadius: '6px', padding: '5px 12px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', flexShrink: 0 },
+  updateBtn: { background: 'var(--ff-blue)', color: 'var(--ff-white)', border: 'none', borderRadius: '6px', padding: '5px 12px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', flexShrink: 0 },
   tabBar: { display: 'flex', padding: '0 24px', marginTop: '16px', borderBottom: '1px solid #e8e4de', flexShrink: 0 },
   tabBtn: { background: 'none', border: 'none', borderBottom: '2px solid transparent', padding: '8px 12px', fontSize: '13px', fontWeight: '500', color: '#888', cursor: 'pointer', marginBottom: '-1px', transition: 'color 0.15s' },
   tabBtnActive: { color: 'var(--ff-pink)', borderBottom: '2px solid var(--ff-pink)' },
@@ -862,58 +862,58 @@ const s: Record<string, React.CSSProperties> = {
   // Tooltip
 
   // Download folder
-  folderRow: { display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '8px', border: '1px solid #eee', backgroundColor: '#fafafa' },
+  folderRow: { display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '8px', border: '1px solid #eee', backgroundColor: 'var(--ff-cream)' },
   folderPath: { flex: 1, fontSize: '12px', color: '#555', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const },
   changeBtn: { background: 'none', border: '1px solid #ccc', borderRadius: '6px', padding: '4px 12px', fontSize: '12px', color: '#555', cursor: 'pointer', flexShrink: 0 },
 
   // Radio option list
   optionList: { display: 'flex', flexDirection: 'column' as const, gap: '6px' },
-  radioRow: { display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '9px 12px', borderRadius: '8px', boxShadow: 'inset 0 0 0 1.5px #dedad4', background: '#fafaf8', cursor: 'pointer', outline: 'none' },
+  radioRow: { display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '9px 12px', borderRadius: '8px', boxShadow: 'inset 0 0 0 1.5px #dedad4', background: 'var(--ff-cream)', cursor: 'pointer', outline: 'none' },
   radioRowActive: { boxShadow: 'inset 0 0 0 2px var(--ff-pink)', background: 'rgba(255,0,132,0.04)' },
   radioLabel: { fontSize: '13px', fontWeight: '500', color: '#222' },
   radioDesc: { fontSize: '11px', color: '#999', marginTop: '1px' },
 
   // Toggles
   toggleList: { display: 'flex', flexDirection: 'column' as const, gap: '8px' },
-  toggleRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', padding: '10px 12px', borderRadius: '8px', border: '1px solid #eee', backgroundColor: '#fafafa', cursor: 'pointer' },
+  toggleRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', padding: '10px 12px', borderRadius: '8px', border: '1px solid #eee', backgroundColor: 'var(--ff-cream)', cursor: 'pointer' },
   toggleInfo: { display: 'flex', flexDirection: 'column' as const, gap: '2px' },
   toggleLabel: { fontSize: '14px', fontWeight: '500', color: '#222' },
   toggleDesc: { fontSize: '12px', color: '#888' },
   toggle: { position: 'relative' as const, width: '44px', height: '24px', borderRadius: '12px', cursor: 'pointer', transition: 'background-color 0.2s', flexShrink: 0 },
-  toggleKnob: { position: 'absolute' as const, top: '2px', left: '2px', width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.3)', transition: 'transform 0.2s' },
+  toggleKnob: { position: 'absolute' as const, top: '2px', left: '2px', width: '20px', height: '20px', borderRadius: '50%', backgroundColor: 'var(--ff-surface)', boxShadow: '0 1px 3px rgba(0,0,0,0.3)', transition: 'transform 0.2s' },
 
   // Core grid
   coreGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' },
-  coreOption: { display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 11px', borderRadius: '8px', boxShadow: 'inset 0 0 0 1.5px #dedad4', background: '#fafaf8', cursor: 'pointer', outline: 'none' },
+  coreOption: { display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 11px', borderRadius: '8px', boxShadow: 'inset 0 0 0 1.5px #dedad4', background: 'var(--ff-cream)', cursor: 'pointer', outline: 'none' },
   coreOptionActive: { boxShadow: 'inset 0 0 0 2px var(--ff-pink)', background: 'rgba(255,0,132,0.05)' },
   radioHidden: { display: 'none' as const },
-  radioCircle: { width: '16px', height: '16px', borderRadius: '50%', border: '1.5px solid #ccc', flexShrink: 0, backgroundColor: '#fff', transition: 'border-color 0.1s, box-shadow 0.1s', marginTop: '1px' },
-  radioCircleSm: { width: '14px', height: '14px', borderRadius: '50%', border: '1.5px solid #ccc', flexShrink: 0, backgroundColor: '#fff', transition: 'border-color 0.1s, box-shadow 0.1s' },
+  radioCircle: { width: '16px', height: '16px', borderRadius: '50%', border: '1.5px solid #ccc', flexShrink: 0, backgroundColor: 'var(--ff-surface)', transition: 'border-color 0.1s, box-shadow 0.1s', marginTop: '1px' },
+  radioCircleSm: { width: '14px', height: '14px', borderRadius: '50%', border: '1.5px solid #ccc', flexShrink: 0, backgroundColor: 'var(--ff-surface)', transition: 'border-color 0.1s, box-shadow 0.1s' },
   radioCircleActive: { borderColor: 'var(--ff-pink)', boxShadow: 'inset 0 0 0 4px var(--ff-pink)' },
   coreLabel: { fontSize: '13px', fontWeight: '500', color: '#333' },
   coreExample: { fontSize: '11px', color: '#888', fontFamily: 'monospace', marginTop: '1px' },
 
   // Separator
   sepRow: { display: 'flex', gap: '6px', flexWrap: 'wrap' as const },
-  sepPill: { padding: '5px 16px', borderRadius: '20px', border: '1.5px solid #ddd', background: '#fafaf8', fontSize: '13px', fontFamily: 'monospace', color: '#555', cursor: 'pointer' },
+  sepPill: { padding: '5px 16px', borderRadius: '20px', border: '1.5px solid #ddd', background: 'var(--ff-cream)', fontSize: '13px', fontFamily: 'monospace', color: '#555', cursor: 'pointer' },
   sepPillActive: { borderColor: 'var(--ff-pink)', background: 'rgba(255,0,132,0.06)', color: 'var(--ff-pink)', fontWeight: '600' },
 
   // Optional parts
-  optRow: { display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 11px', borderRadius: '8px', border: '1px solid #eeebe6', background: '#fafaf8' },
+  optRow: { display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 11px', borderRadius: '8px', border: '1px solid #eeebe6', background: 'var(--ff-cream)' },
   optLabelGroup: { display: 'flex', alignItems: 'center', gap: '5px', flex: 1 },
   subArrow: { color: '#aaa', marginRight: '7px', fontWeight: '400' },
   optName: { fontSize: '13px', fontWeight: '500', color: '#333' },
   posGroup: { display: 'flex', border: '1px solid #d8d4ce', borderRadius: '6px', overflow: 'hidden', flexShrink: 0 },
   posBtn: { background: 'none', border: 'none', borderRight: '1px solid #d8d4ce', padding: '4px 10px', fontSize: '12px', color: '#777', cursor: 'pointer', whiteSpace: 'nowrap' as const },
-  posBtnActive: { background: 'var(--ff-pink)', color: '#fff', fontWeight: '600' },
+  posBtnActive: { background: 'var(--ff-pink)', color: 'var(--ff-white)', fontWeight: '600' },
   subOpts: { margin: '1px 0 0', padding: '10px 12px', background: 'rgba(255,0,132,0.04)', border: '1px solid rgba(255,0,132,0.12)', borderTop: 'none', borderRadius: '0 0 8px 8px', display: 'flex', flexDirection: 'column' as const, gap: '7px' },
   subOptRow: { display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' },
   fmtLabel: { flex: 1, fontSize: '12px', color: '#333' },
   fmtExample: { fontSize: '11px', fontFamily: 'monospace', color: '#888' },
-  textInput: { width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid #e0dcd8', background: '#fff', color: '#111', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const },
+  textInput: { width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid #e0dcd8', background: 'var(--ff-surface)', color: '#111', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const },
 
   // Scroll fade + chevron
-  scrollFade: { height: '40px', background: 'linear-gradient(to top, #fff 50%, transparent)', marginTop: '-40px', position: 'relative', zIndex: 1, pointerEvents: 'none', flexShrink: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: '6px' },
+  scrollFade: { height: '40px', background: 'linear-gradient(to top, var(--ff-white) 50%, transparent)', marginTop: '-40px', position: 'relative', zIndex: 1, pointerEvents: 'none', flexShrink: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: '6px' },
   scrollChevron: { fontSize: '10px', color: '#888', background: 'rgba(0,0,0,0.07)', borderRadius: '10px', padding: '2px 9px', lineHeight: 1 },
 
   // Preview (more prominent)
@@ -930,9 +930,9 @@ const s: Record<string, React.CSSProperties> = {
   resetConfirm: { display: 'flex', alignItems: 'center', gap: '8px' },
   resetConfirmText: { fontSize: '12px', color: '#555' },
   resetCancelBtn: { background: 'none', border: '1px solid #ccc', borderRadius: '6px', padding: '4px 10px', fontSize: '12px', color: '#555', cursor: 'pointer' },
-  resetConfirmBtn: { background: '#d44', border: 'none', borderRadius: '6px', padding: '4px 10px', fontSize: '12px', fontWeight: '600', color: '#fff', cursor: 'pointer' },
+  resetConfirmBtn: { background: '#d44', border: 'none', borderRadius: '6px', padding: '4px 10px', fontSize: '12px', fontWeight: '600', color: 'var(--ff-white)', cursor: 'pointer' },
   resetDoneText: { fontSize: '12px', color: '#888' },
   cancelBtn: { background: 'none', border: '1px solid #ccc', borderRadius: '8px', padding: '10px 20px', fontSize: '14px', color: '#555', cursor: 'pointer' },
-  saveBtn: { backgroundColor: 'var(--ff-pink-action)', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px 28px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' },
+  saveBtn: { backgroundColor: 'var(--ff-pink-action)', color: 'var(--ff-white)', border: 'none', borderRadius: '8px', padding: '10px 28px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' },
   saveBtnDisabled: { opacity: 0.6, cursor: 'not-allowed' },
 }

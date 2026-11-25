@@ -82,7 +82,7 @@ export default function CameraRoll({ from, to, title, scope, extra, extraText, o
       </div>
 
       {selected.size > 0 && (
-        <div style={{ ...styles.bar, background: '#fff4f9', border: '1px solid #ffc2de', borderRadius: 8, padding: '6px 10px' }}>
+        <div style={{ ...styles.bar, background: 'var(--ff-tint)', border: '1px solid #ffc2de', borderRadius: 8, padding: '6px 10px' }}>
           <span style={styles.muted}>{selected.size} selected</span>
           <button style={styles.btn} onClick={() => onDownload([...selected.values()].map(p => ({ id: p.id, title: p.title })), `Camera roll, ${title} (selected)`, 'Only the photos you selected')}>Download selected</button>
           <BatchEditButton inline style={styles.btn} label="Batch editor" getIds={async () => [...selected.values()].map(p => p.id)} />

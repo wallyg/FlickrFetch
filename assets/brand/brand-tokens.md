@@ -58,6 +58,8 @@ A status has a **mark** (dots, bars, rings), an **ink** (words) and a **pale bac
 | Put aside | Grey underlined text | Dismiss or defer: "This one is fine", "Not now", "Undo" |
 | Destructive | The same shape, `--ff-error-ink` text and edge | Delete, Clear. A final "Yes, delete" is the only red-filled button |
 
+- **A Main button is the same size as the Secondary buttons beside it.** It stands out by its pink fill, not by being taller. A picture on a button is a small icon (about 16 px), never a hero image, and buttons have no drop shadow. (On This Day's "Make a shareable collage" was the one exception; fixed in 3.12, #251. No other screen has a hero button.)
+
 - One label per action across the app.
 - Selection (chip, segment, list row, photo) is the soft pink look (`selectedOn`). Switches (on/off) have a pink track.
 

@@ -210,7 +210,7 @@ const styles: Record<string, React.CSSProperties> = {
   card: {
     display: 'flex',
     flexDirection: 'row',
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--ff-surface)',
     borderRadius: '20px',
     boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
     width: '880px',
@@ -275,7 +275,7 @@ const styles: Record<string, React.CSSProperties> = {
   // ── Right column ──
   rightCol: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--ff-surface)',
     display: 'flex',
     alignItems: 'center',
     padding: '36px 36px'
@@ -351,12 +351,12 @@ const styles: Record<string, React.CSSProperties> = {
     boxSizing: 'border-box' as const,
     width: '100%',
     marginTop: '8px',
-    backgroundColor: '#fff'
+    backgroundColor: 'var(--ff-surface)'
   },
   primaryBtn: {
     height: '40px',
     backgroundColor: 'var(--ff-pink-action)',
-    color: '#ffffff',
+    color: 'var(--ff-white)',
     border: 'none',
     borderRadius: '8px',
     fontSize: '14px',
@@ -429,7 +429,7 @@ const styles: Record<string, React.CSSProperties> = {
     width: '10px',
     height: '10px',
     borderRadius: '50%',
-    backgroundColor: '#fff',
+    backgroundColor: 'var(--ff-surface)',
     opacity: 0.9,
   } as React.CSSProperties,
   dotPink: {

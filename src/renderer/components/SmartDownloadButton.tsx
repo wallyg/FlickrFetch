@@ -72,14 +72,14 @@ const styles: Record<string, React.CSSProperties> = {
     position: 'relative', display: 'inline-flex',
   },
   mainBtn: {
-    background: BTN_BG, color: '#fff',
+    background: BTN_BG, color: 'var(--ff-white)',
     border: 'none', borderRadius: '6px 0 0 6px',
     padding: '7px 14px', fontSize: 13, fontWeight: 500,
     cursor: 'pointer',
     lineHeight: 1,
   },
   arrowBtn: {
-    background: BTN_BG, color: '#fff',
+    background: BTN_BG, color: 'var(--ff-white)',
     border: 'none', borderLeft: '1px solid rgba(255,255,255,0.25)',
     borderRadius: '0 6px 6px 0',
     padding: '7px 8px', fontSize: 11,
@@ -92,8 +92,8 @@ const styles: Record<string, React.CSSProperties> = {
   dropdown: {
     position: 'absolute', top: '100%', right: 0, zIndex: 200,
     marginTop: 4,
-    background: '#fff',
-    border: '1px solid #e5e7eb',
+    background: 'var(--ff-surface)',
+    border: '1px solid var(--ff-border)',
     borderRadius: 8,
     boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
     minWidth: 240,
@@ -106,12 +106,12 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: 'pointer',
   },
   itemTitle: {
-    fontSize: 13, fontWeight: 500, color: '#111827',
+    fontSize: 13, fontWeight: 500, color: 'var(--ff-text)',
   },
   itemDesc: {
-    fontSize: 11, color: '#9ca3af',
+    fontSize: 11, color: 'var(--ff-text-muted)',
   },
   divider: {
-    height: 1, background: '#f3f4f6', margin: '2px 0',
+    height: 1, background: 'var(--ff-grey-100)', margin: '2px 0',
   },
 }

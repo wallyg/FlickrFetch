@@ -154,7 +154,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
         </div>
         <div style={styles.actions}>
           <button style={styles.cta} disabled={data.total - data.videos === 0} onClick={startShare} title={data.videos > 0 ? 'Videos are left out of collages' : undefined}>
-            <span style={styles.stack} aria-hidden="true"><s style={{ ...styles.stackCard, left: 0, top: 6, transform: 'rotate(-12deg)' }} /><s style={{ ...styles.stackCard, left: 11, top: 0, transform: 'rotate(3deg)' }} /><s style={{ ...styles.stackCard, left: 22, top: 7, transform: 'rotate(15deg)' }} /></span>
+            <span style={styles.stack} aria-hidden="true"><s style={{ ...styles.stackCard, left: 0, top: 3, transform: 'rotate(-12deg)' }} /><s style={{ ...styles.stackCard, left: 6, top: 0, transform: 'rotate(3deg)' }} /><s style={{ ...styles.stackCard, left: 12, top: 3, transform: 'rotate(15deg)' }} /></span>
             Make a shareable collage
           </button>
           <BatchEditButton inline style={quietBtn} label="Batch editor" getIds={async () => (await window.flickrAPI.getDatePhotoIds({ kind: 'day', month, day, scope, tag: tag?.key, ...extra })).map(p => p.id)} />
@@ -296,25 +296,25 @@ const styles: Record<string, React.CSSProperties> = {
   pad: { padding: '40px 24px' },
   muted: { fontSize: 12, color: 'var(--ff-text-secondary)' },
   hero: { display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', padding: '4px 0 14px', borderBottom: '1px solid var(--ff-line-strong)' },
-  bigTile: { width: 72, flexShrink: 0, borderRadius: 12, overflow: 'hidden', background: '#fff', boxShadow: '0 3px 12px rgba(27,41,70,0.22)', textAlign: 'center', border: 'none', padding: 0, cursor: 'pointer' },
-  bigMonth: { background: 'var(--ff-pink)', color: '#fff', fontSize: 12, fontWeight: 700, letterSpacing: '0.2em', padding: '5px 0 4px' },
+  bigTile: { width: 72, flexShrink: 0, borderRadius: 12, overflow: 'hidden', background: 'var(--ff-surface)', boxShadow: '0 3px 12px rgba(27,41,70,0.22)', textAlign: 'center', border: 'none', padding: 0, cursor: 'pointer' },
+  bigMonth: { background: 'var(--ff-pink)', color: 'var(--ff-white)', fontSize: 12, fontWeight: 700, letterSpacing: '0.2em', padding: '5px 0 4px' },
   bigDay: { fontSize: 38, fontWeight: 700, color: 'var(--ff-navy)', lineHeight: '48px' },
   headText: { flex: '1 1 320px', minWidth: 0 },
   title: { fontSize: 26, fontWeight: 800, letterSpacing: '-0.5px', color: 'var(--ff-navy)', lineHeight: 1.1 },
   count: { fontSize: 16, fontWeight: 700, color: 'var(--ff-text)' },
   countNote: { fontSize: 13, fontWeight: 400, color: 'var(--ff-text-secondary)', marginLeft: 6 },
   actions: { display: 'flex', flexDirection: 'row', gap: 10, alignItems: 'center', flexWrap: 'wrap' },
-  navSeg: { display: 'inline-flex', border: '1px solid var(--ff-line-strong)', borderRadius: 8, background: '#fff', overflow: 'hidden' },
-  navBtn: { background: '#fff', border: 'none', borderRight: '1px solid var(--ff-border)', padding: '5px 13px', fontSize: 13, color: 'var(--ff-text)', cursor: 'pointer', whiteSpace: 'nowrap' },
-  cta: { ...primaryBtn, display: 'flex', alignItems: 'center', gap: 12, padding: '9px 18px 9px 12px', fontSize: 14, borderRadius: 11, boxShadow: '0 2px 8px rgba(208,0,105,0.3)' },
-  stack: { position: 'relative', width: 50, height: 40, flexShrink: 0, display: 'block' },
-  stackCard: { position: 'absolute', width: 26, height: 31, background: 'linear-gradient(135deg, #f0b15a, #6f93b8)', border: '2px solid #fff', borderBottomWidth: 6, borderRadius: 2, boxShadow: '0 1px 3px rgba(0,0,0,0.4)', display: 'block' },
+  navSeg: { display: 'inline-flex', border: '1px solid var(--ff-line-strong)', borderRadius: 8, background: 'var(--ff-surface)', overflow: 'hidden' },
+  navBtn: { background: 'var(--ff-surface)', border: 'none', borderRight: '1px solid var(--ff-border)', padding: '5px 13px', fontSize: 13, color: 'var(--ff-text)', cursor: 'pointer', whiteSpace: 'nowrap' },
+  cta: { ...primaryBtn, display: 'inline-flex', alignItems: 'center', gap: 9, padding: '4px 13px 4px 13px' },   // the Main button, the same size as the buttons beside it, with a small picture as its icon (#251)
+  stack: { position: 'relative', width: 26, height: 16, flexShrink: 0, display: 'block', marginLeft: 2 },   // room for the tilted left card, so it never touches the button's edge
+  stackCard: { position: 'absolute', width: 13, height: 15, background: 'linear-gradient(135deg, #f0b15a, #6f93b8)', border: '1px solid var(--ff-white)', borderBottomWidth: 3, borderRadius: 1, boxShadow: '0 1px 2px rgba(0,0,0,0.4)', display: 'block' },
   row: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', margin: '12px 0 10px' },
   insights: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10, margin: '4px 0' },
   yearBar: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, cursor: 'pointer' },
   tagCount: { marginLeft: 5, fontWeight: 400, fontSize: 11.5, color: 'var(--ff-text-secondary)', whiteSpace: 'nowrap' },
   chips: { display: 'flex', gap: 5, flexWrap: 'wrap' },
-  tagChip: { background: '#fff', border: '1px solid var(--ff-border)', borderRadius: 14, padding: '2px 9px', fontSize: 12, color: 'var(--ff-text)', cursor: 'pointer', textAlign: 'left', maxWidth: '100%' },
+  tagChip: { background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 14, padding: '2px 9px', fontSize: 12, color: 'var(--ff-text)', cursor: 'pointer', textAlign: 'left', maxWidth: '100%' },
   sectionRule: { display: 'flex', alignItems: 'center', gap: 10, margin: '26px 0 2px', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ff-text-secondary)' },
   yearHead: { display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 6 },
   

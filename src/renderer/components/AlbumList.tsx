@@ -224,7 +224,7 @@ export default function AlbumList({ onAlbumSelect, active = true }: AlbumListPro
         </div>
       )}
       {tooltip && (
-        <div style={{ position: 'fixed', left: tooltip.x, top: tooltip.y - 4, transform: 'translateY(-100%)', background: 'rgba(30,28,26,0.92)', color: '#fff', padding: '4px 9px', borderRadius: '5px', fontSize: '12px', whiteSpace: 'nowrap', pointerEvents: 'none', zIndex: 9999, maxWidth: '320px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <div style={{ position: 'fixed', left: tooltip.x, top: tooltip.y - 4, transform: 'translateY(-100%)', background: 'rgba(30,28,26,0.92)', color: 'var(--ff-white)', padding: '4px 9px', borderRadius: '5px', fontSize: '12px', whiteSpace: 'nowrap', pointerEvents: 'none', zIndex: 9999, maxWidth: '320px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {tooltip.title}
         </div>
       )}
@@ -280,7 +280,7 @@ const styles: Record<string, React.CSSProperties> = {
     position: 'sticky' as const,
     top: 0,
     zIndex: 10,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: 'var(--ff-grey-100)',
     borderBottom: '1px solid #f0ede8',
   },
   rightGroup: {
@@ -297,10 +297,10 @@ const styles: Record<string, React.CSSProperties> = {
   searchGroup: {
     display: 'flex', alignItems: 'center',
     border: '1px solid #ddd', borderRadius: '6px',
-    overflow: 'hidden', backgroundColor: '#fff'
+    overflow: 'hidden', backgroundColor: 'var(--ff-surface)'
   },
   operatorSelect: {
-    background: '#f5f5f5', border: 'none', borderRight: '1px solid #ddd',
+    background: 'var(--ff-grey-100)', border: 'none', borderRight: '1px solid #ddd',
     padding: '5px 6px', fontSize: '11px', color: '#555', cursor: 'pointer',
     outline: 'none'
   },
@@ -324,7 +324,7 @@ const styles: Record<string, React.CSSProperties> = {
   card: {
     display: 'block',
     width: '100%',
-    background: '#fff',
+    background: 'var(--ff-surface)',
     border: '1px solid #e8e4de',
     borderRadius: '10px',
     overflow: 'hidden',
@@ -372,16 +372,16 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     gap: '12px',
     padding: '8px 16px',
-    background: '#fff',
+    background: 'var(--ff-surface)',
     border: 'none',
-    borderBottom: '1px solid #f5f2ee',
+    borderBottom: '1px solid var(--ff-warm)',
     cursor: 'pointer',
     textAlign: 'left' as const,
     width: '100%',
     transition: 'background 0.1s',
   },
   listRowHover: {
-    background: '#faf8f5',
+    background: 'var(--ff-cream)',
   },
   listThumb: {
     width: '44px',

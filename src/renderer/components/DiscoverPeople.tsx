@@ -819,17 +819,17 @@ export default function DiscoverPeople({ isActive, findActive = true }: { isActi
                             )}
                             {hoveredId === photo.id && (
                               <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(transparent, rgba(0,0,0,0.6))', padding: '12px 6px 4px', pointerEvents: 'none' }}>
-                                <div style={{ color: '#fff', fontSize: '11px', fontWeight: 500, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{photo.title}</div>
+                                <div style={{ color: 'var(--ff-white)', fontSize: '11px', fontWeight: 500, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{photo.title}</div>
                               </div>
                             )}
                             {albumSelectMode && (
-                              <div style={{ position: 'absolute', top: 4, right: 4, width: 18, height: 18, borderRadius: '50%', border: '2px solid #fff', background: isSelected ? 'var(--ff-blue)' : 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                {isSelected && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                              <div style={{ position: 'absolute', top: 4, right: 4, width: 18, height: 18, borderRadius: '50%', border: '2px solid var(--ff-white)', background: isSelected ? 'var(--ff-blue)' : 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                {isSelected && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="var(--ff-white)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                               </div>
                             )}
                             {albumPhotosDownloadRecords[photo.id] && !albumSelectMode && (
                               <div style={{ position: 'absolute', bottom: 4, left: 4, width: 16, height: 16, borderRadius: '50%', background: 'var(--ff-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3l2 2 4-4" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3l2 2 4-4" stroke="var(--ff-white)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                               </div>
                             )}
                           </div>
@@ -1235,17 +1235,17 @@ export default function DiscoverPeople({ isActive, findActive = true }: { isActi
                                 )}
                                 {hoveredId === photo.id && (
                                   <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(transparent, rgba(0,0,0,0.6))', padding: '12px 6px 4px', pointerEvents: 'none' }}>
-                                    <div style={{ color: '#fff', fontSize: '11px', fontWeight: 500, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{photo.title}</div>
+                                    <div style={{ color: 'var(--ff-white)', fontSize: '11px', fontWeight: 500, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{photo.title}</div>
                                   </div>
                                 )}
                                 {userSelectMode && (
-                                  <div style={{ position: 'absolute', top: 4, right: 4, width: 18, height: 18, borderRadius: '50%', border: '2px solid #fff', background: isSelected ? 'var(--ff-blue)' : 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    {isSelected && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                                  <div style={{ position: 'absolute', top: 4, right: 4, width: 18, height: 18, borderRadius: '50%', border: '2px solid var(--ff-white)', background: isSelected ? 'var(--ff-blue)' : 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    {isSelected && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="var(--ff-white)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                                   </div>
                                 )}
                                 {userDownloadRecords[photo.id] && !userSelectMode && (
                                   <div style={{ position: 'absolute', bottom: 4, left: 4, width: 16, height: 16, borderRadius: '50%', background: 'var(--ff-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3l2 2 4-4" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                    <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3l2 2 4-4" stroke="var(--ff-white)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                                   </div>
                                 )}
                               </div>
@@ -1541,7 +1541,7 @@ function CollectionStackIcon(): React.JSX.Element {
     <svg width="54" height="44" viewBox="0 0 54 44" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="14" y="14" width="38" height="28" rx="5" fill="#9e9a93" stroke="rgba(0,0,0,0.12)" strokeWidth="1.5"/>
       <rect x="8"  y="8"  width="38" height="28" rx="5" fill="#c2bdb6" stroke="rgba(0,0,0,0.10)" strokeWidth="1.5"/>
-      <rect x="2"  y="2"  width="38" height="28" rx="5" fill="#ffffff" stroke="rgba(0,0,0,0.12)" strokeWidth="1.5"/>
+      <rect x="2"  y="2"  width="38" height="28" rx="5" fill="var(--ff-white)" stroke="rgba(0,0,0,0.12)" strokeWidth="1.5"/>
     </svg>
   )
 }
@@ -1582,7 +1582,7 @@ function DiscoverCollCard({ col, onClick }: { col: FlickrCollection; onClick: ()
 
 const s: Record<string, React.CSSProperties> = {
   container: { display: 'flex', flexDirection: 'column', gap: '16px', padding: `0 ${DISCOVER_GUTTER}px 32px` },
-  stickyHeader: { position: 'sticky' as const, top: 0, zIndex: 10, background: '#fff', display: 'flex', flexDirection: 'column' as const },
+  stickyHeader: { position: 'sticky' as const, top: 0, zIndex: 10, background: 'var(--ff-surface)', display: 'flex', flexDirection: 'column' as const },
   headerRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', paddingTop: '20px', paddingBottom: '8px' },
   heading: { margin: 0, fontSize: '18px', fontWeight: 600, color: '#1a1a1a' },
   subheading: { margin: '4px 0 0', fontSize: '13px', color: '#888' },
@@ -1595,7 +1595,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   searchBtn: {
     height: '36px', padding: '0 20px', borderRadius: '8px',
-    background: 'var(--ff-blue)', color: '#fff', border: 'none', cursor: 'pointer',
+    background: 'var(--ff-blue)', color: 'var(--ff-white)', border: 'none', cursor: 'pointer',
     fontSize: '14px', fontWeight: 500, flexShrink: 0,
   },
   searchError: { color: 'var(--ff-error)', fontSize: '13px' },
@@ -1611,7 +1611,7 @@ const s: Record<string, React.CSSProperties> = {
     padding: '12px 8px', borderRadius: '10px', cursor: 'pointer',
     border: '1px solid transparent',
   },
-  contactCardHover: { background: '#f8f8f8', border: '1px solid #eee' },
+  contactCardHover: { background: 'var(--ff-cream)', border: '1px solid #eee' },
   contactAvatar: { width: '52px', height: '52px', borderRadius: '50%', objectFit: 'cover' },
   contactName: { fontSize: '12px', fontWeight: 500, color: '#1a1a1a', textAlign: 'center', lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' },
   contactHandle: { fontSize: '11px', color: '#aaa', textAlign: 'center', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' },
@@ -1627,7 +1627,7 @@ const s: Record<string, React.CSSProperties> = {
   userHandle: { fontSize: '12px', color: '#888' },
   toolbarArea: {
     display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' as const,
-    padding: '8px 0 6px', backgroundColor: '#f5f5f5',
+    padding: '8px 0 6px', backgroundColor: 'var(--ff-grey-100)',
     borderBottom: '1px solid #f0ede8',
     marginLeft: '-20px', marginRight: '-20px',
     paddingLeft: '20px', paddingRight: '20px',
@@ -1648,34 +1648,34 @@ const s: Record<string, React.CSSProperties> = {
     gap: '16px',
   },
   albumCard: { cursor: 'pointer', borderRadius: '8px', overflow: 'hidden', border: '1px solid #eee' },
-  albumCover: { aspectRatio: '1', overflow: 'hidden', background: '#f0f0f0' },
+  albumCover: { aspectRatio: '1', overflow: 'hidden', background: 'var(--ff-grey-100)' },
   albumCoverImg: { width: '100%', height: '100%', objectFit: 'cover' },
   albumCoverPlaceholder: { width: '100%', height: '100%', background: '#e8e8e8' },
   albumInfo: { padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: '2px' },
   albumTitle: { fontSize: '13px', fontWeight: 500, color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
   albumMeta: { fontSize: '11px', color: '#888' },
   albumListContainer: { display: 'flex', flexDirection: 'column' },
-  albumListRow: { display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 16px', background: '#fff', border: 'none', borderBottom: '1px solid #f5f2ee', cursor: 'pointer', textAlign: 'left', width: '100%' },
+  albumListRow: { display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 16px', background: 'var(--ff-surface)', border: 'none', borderBottom: '1px solid var(--ff-warm)', cursor: 'pointer', textAlign: 'left', width: '100%' },
   albumListThumb: { width: '44px', height: '44px', borderRadius: '6px', overflow: 'hidden', background: '#f0ede8', flexShrink: 0 },
   albumListThumbImg: { width: '100%', height: '100%', objectFit: 'cover', display: 'block' },
   albumListInfo: { flex: 1, display: 'flex', flexDirection: 'column', gap: '2px', overflow: 'hidden', minWidth: 0 },
   albumListChevron: { fontSize: '18px', color: '#ccc', flexShrink: 0, lineHeight: 1 },
   loadMoreRow: { display: 'flex', justifyContent: 'center', paddingTop: '8px' },
-  loadMoreBtn: { padding: '8px 24px', borderRadius: '8px', border: '1px solid #ddd', background: '#fff', cursor: 'pointer', fontSize: '13px', color: '#444' },
+  loadMoreBtn: { padding: '8px 24px', borderRadius: '8px', border: '1px solid #ddd', background: 'var(--ff-surface)', cursor: 'pointer', fontSize: '13px', color: '#444' },
   loadingState: { textAlign: 'center', color: '#888', fontSize: '14px', paddingTop: '48px' },
   errorState: { textAlign: 'center', color: 'var(--ff-error)', fontSize: '14px', paddingTop: '48px' },
   emptyState: { textAlign: 'center', color: '#888', fontSize: '14px', paddingTop: '48px' },
   // Collections tab
   collectionGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px', marginBottom: '16px' },
-  collectionCard: { display: 'block', width: '100%', background: '#fff', border: '1px solid #e8e4de', borderRadius: '12px', overflow: 'hidden', cursor: 'pointer', textAlign: 'left' as const, padding: 0 },
-  collectionCardHover: { background: '#faf8f5' },
+  collectionCard: { display: 'block', width: '100%', background: 'var(--ff-surface)', border: '1px solid #e8e4de', borderRadius: '12px', overflow: 'hidden', cursor: 'pointer', textAlign: 'left' as const, padding: 0 },
+  collectionCardHover: { background: 'var(--ff-cream)' },
   collectionIconArea: { width: '100%', aspectRatio: '1', background: '#f0ede8', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' as const },
   collectionCollage: { position: 'absolute' as const, inset: 0, display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr' },
   collectionCollageCell: { width: '100%', height: '100%', objectFit: 'cover' as const, display: 'block' },
   collectionCardInfo: { padding: '10px 12px', display: 'flex', flexDirection: 'column' as const, gap: '5px' },
   collectionCardTitle: { fontSize: '13px', fontWeight: 600, color: '#111', whiteSpace: 'nowrap' as const, overflow: 'hidden', textOverflow: 'ellipsis' },
   collectionChips: { display: 'flex', gap: '5px', flexWrap: 'wrap' as const },
-  collectionChip: { fontSize: '11px', color: '#999', background: '#f5f2ee', borderRadius: '4px', padding: '2px 6px' },
+  collectionChip: { fontSize: '11px', color: '#999', background: 'var(--ff-warm)', borderRadius: '4px', padding: '2px 6px' },
   collectionSectionLabel: { fontSize: '11px', fontWeight: 600, color: '#aaa', textTransform: 'uppercase' as const, letterSpacing: '0.06em', margin: '0 0 12px 0' },
   collectionAlbumsHeader: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' },
   collectionSizerGroup: { display: 'flex', gap: '2px', marginLeft: 'auto' },

@@ -138,7 +138,7 @@ function StackIcon(): React.JSX.Element {
     <svg width="54" height="44" viewBox="0 0 54 44" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="14" y="14" width="38" height="28" rx="5" fill="#9e9a93" stroke="rgba(0,0,0,0.12)" strokeWidth="1.5"/>
       <rect x="8"  y="8"  width="38" height="28" rx="5" fill="#c2bdb6" stroke="rgba(0,0,0,0.10)" strokeWidth="1.5"/>
-      <rect x="2"  y="2"  width="38" height="28" rx="5" fill="#ffffff" stroke="rgba(0,0,0,0.12)" strokeWidth="1.5"/>
+      <rect x="2"  y="2"  width="38" height="28" rx="5" fill="var(--ff-white)" stroke="rgba(0,0,0,0.12)" strokeWidth="1.5"/>
     </svg>
   )
 }
@@ -167,7 +167,7 @@ const styles: Record<string, React.CSSProperties> = {
   operatorSelect: {
     fontSize: '12px',
     color: '#555',
-    background: '#f5f2ee',
+    background: 'var(--ff-warm)',
     border: '1px solid #ddd8d1',
     borderRadius: '6px',
     padding: '5px 8px',
@@ -180,7 +180,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '5px 10px',
     border: '1px solid #ddd8d1',
     borderRadius: '6px',
-    background: '#fff',
+    background: 'var(--ff-surface)',
     color: '#111',
     outline: 'none'
   },
@@ -223,7 +223,7 @@ const styles: Record<string, React.CSSProperties> = {
   card: {
     display: 'block',
     width: '100%',
-    background: '#fff',
+    background: 'var(--ff-surface)',
     border: '1px solid #e8e4de',
     borderRadius: '12px',
     overflow: 'hidden',
@@ -276,7 +276,7 @@ const styles: Record<string, React.CSSProperties> = {
   chip: {
     fontSize: '11px',
     color: '#999',
-    background: '#f5f2ee',
+    background: 'var(--ff-warm)',
     borderRadius: '4px',
     padding: '2px 6px'
   }

@@ -1027,7 +1027,7 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: 'column',
     height: '100vh',
     fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
-    backgroundColor: '#f5f5f5'
+    backgroundColor: 'var(--ff-grey-100)'
   },
   header: {
     display: 'flex',
@@ -1113,7 +1113,7 @@ const styles: Record<string, React.CSSProperties> = {
     position: 'absolute' as const,
     top: 'calc(100% + 8px)',
     right: 0,
-    backgroundColor: '#fff',
+    backgroundColor: 'var(--ff-surface)',
     border: '1px solid #e0dcd8',
     borderRadius: '10px',
     boxShadow: '0 4px 20px rgba(0,0,0,.14)',
@@ -1174,7 +1174,7 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'space-between',
     rowGap: '2px',
     borderBottom: '1px solid #e8e4de',
-    backgroundColor: '#fff',
+    backgroundColor: 'var(--ff-surface)',
     paddingLeft: '24px',
     paddingRight: '16px'
   },
@@ -1214,7 +1214,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     gap: '12px',
     padding: '10px 24px',
-    backgroundColor: '#fff',
+    backgroundColor: 'var(--ff-surface)',
     borderBottom: '1px solid #e8e4de'
   },
   backButton: {
@@ -1238,7 +1238,7 @@ const styles: Record<string, React.CSSProperties> = {
   downloadAllBtn: {
     fontSize: '12px',
     fontWeight: '600',
-    color: '#fff',
+    color: 'var(--ff-white)',
     background: 'var(--ff-blue)',
     border: 'none',
     borderRadius: '7px',
@@ -1279,7 +1279,7 @@ const styles: Record<string, React.CSSProperties> = {
     position: 'absolute' as const,
     top: '1px', right: '1px',
     width: '8px', height: '8px', borderRadius: '50%',
-    backgroundColor: 'var(--ff-pink)', border: '2px solid #fff',
+    backgroundColor: 'var(--ff-pink)', border: '2px solid var(--ff-white)',
     pointerEvents: 'none' as const,
   },
   iconTooltip: {
@@ -1287,7 +1287,7 @@ const styles: Record<string, React.CSSProperties> = {
     top: 'calc(100% + 6px)',
     right: 0,
     backgroundColor: '#1a1a1a',
-    color: '#fff',
+    color: 'var(--ff-white)',
     fontSize: '12px',
     padding: '4px 8px',
     borderRadius: '5px',
@@ -1297,7 +1297,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   downloadAllButton: {
     backgroundColor: 'var(--ff-pink-action)',
-    color: '#fff',
+    color: 'var(--ff-white)',
     border: 'none',
     borderRadius: '6px',
     padding: '6px 14px',
@@ -1350,7 +1350,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     gap: '10px',
     padding: '8px 24px',
-    backgroundColor: '#fff',
+    backgroundColor: 'var(--ff-surface)',
     borderBottom: '1px solid #e8e4de',
     minHeight: '40px'
   },
@@ -1381,7 +1381,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   overflowMenu: {
     position: 'absolute' as const, top: 'calc(100% + 4px)', right: 0,
-    background: '#fff', border: '1px solid #e0dcd8', borderRadius: '8px',
+    background: 'var(--ff-surface)', border: '1px solid #e0dcd8', borderRadius: '8px',
     boxShadow: '0 4px 16px rgba(0,0,0,0.12)', zIndex: 100, minWidth: '190px', padding: '4px',
   },
   overflowMenuItemDestructive: {
@@ -1393,7 +1393,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 700,
   },
   confirmCard: {
-    backgroundColor: '#fff', borderRadius: '12px', padding: '24px',
+    backgroundColor: 'var(--ff-surface)', borderRadius: '12px', padding: '24px',
     width: '360px', maxWidth: '90vw', boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
   },
   confirmTitle: { fontSize: '16px', fontWeight: '600' as const, color: '#111', margin: '0 0 8px' },
@@ -1405,6 +1405,6 @@ const styles: Record<string, React.CSSProperties> = {
   },
   confirmDestructive: {
     background: 'var(--ff-error)', border: 'none', borderRadius: '8px',
-    padding: '8px 18px', fontSize: '14px', fontWeight: '600' as const, color: '#fff', cursor: 'pointer',
+    padding: '8px 18px', fontSize: '14px', fontWeight: '600' as const, color: 'var(--ff-white)', cursor: 'pointer',
   },
 }

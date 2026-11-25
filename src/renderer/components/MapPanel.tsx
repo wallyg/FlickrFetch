@@ -2,9 +2,11 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { AlbumFitPhoto, MapAccuracy, MapCluster, MapFilter, MapView } from '../../shared/types'
 import { anchorAfterResize, limitCentre, minZoomFor, placeAt, usableSize, visibleTiles, wheelIntent, worldCopies, worldPixel, wrapLon } from '../../shared/mapGeo'
 import { loadOutline } from '../ui/mapOutline'
+import { mapColours } from '../ui/mapColours'
 import { quietBtn, primaryBtn } from '../ui/kit'
 import { dash } from './DashboardParts'
 import AlbumBox from './AlbumBox'
+import PhotoPeek from './PhotoPeek'
 import { Chip, DateMode, PRIVACY_LABELS, PRIVACY_OPTIONS, PrivacyFilter, Tooltip, formatDateChip, getPresetDates, sharedStyles } from './PhotoGridShared'
 
 // The Map tab: your photos with a location as dots and numbered circles on a built-in outline of the countries. Drag to move, scroll or the
@@ -72,6 +74,7 @@ export default function MapPanel({ active, onDownload, onFullRescan, refreshKey,
   const zoomLive = useRef(zoom)   // the zoom including changes made since the last render, so quick pinch and scroll events add up
   zoomLive.current = zoom
   const [photos, setPhotos] = useState<AlbumFitPhoto[]>([])
+  const [peek, setPeek] = useState<number | null>(null)   // a photo of the side panel opened in the photo view (#259)
   const [total, setTotal] = useState(0)
   const [loadingPhotos, setLoadingPhotos] = useState(false)
   const [busyDownload, setBusyDownload] = useState(false)
@@ -182,9 +185,10 @@ export default function MapPanel({ active, onDownload, onFullRescan, refreshKey,
     const g = c.getContext('2d')
     if (!g) return
     g.setTransform(dpr, 0, 0, dpr, 0, 0)
-    g.fillStyle = '#dbe7f3'; g.fillRect(0, 0, size.w, size.h)
+    const col = mapColours()
+    g.fillStyle = col.water; g.fillRect(0, 0, size.w, size.h)
     const world = 256 * 2 ** zoom
-    g.fillStyle = '#f4f1ea'; g.strokeStyle = '#c4beb0'; g.lineWidth = 0.8
+    g.fillStyle = col.land; g.strokeStyle = col.edge; g.lineWidth = 0.8
     const copies = worldCopies(corner.x, size.w, world)   // the flat map repeats sideways: draw everything once per copy that shows
     for (const k of copies) {
       for (const ring of outline) {
@@ -226,9 +230,9 @@ export default function MapPanel({ active, onDownload, onFullRescan, refreshKey,
         const p = { x: base.x + k * world, y: base.y }
         if (p.x < -40 || p.y < -40 || p.x > size.w + 40 || p.y > size.h + 40) continue
         g.beginPath(); g.arc(p.x, p.y, r, 0, Math.PI * 2)
-        g.fillStyle = cl.count === 1 ? '#1b2946' : 'rgba(0,99,220,0.88)'; g.fill()
-        g.lineWidth = chosen ? 3 : 1.5; g.strokeStyle = chosen ? '#ff0084' : '#ffffff'; g.stroke()
-        if (cl.count > 1) { g.fillStyle = '#ffffff'; g.fillText(shortCount(cl.count), p.x, p.y + 0.5) }
+        g.fillStyle = cl.count === 1 ? col.navy : col.blue; g.globalAlpha = cl.count === 1 ? 1 : 0.88; g.fill(); g.globalAlpha = 1
+        g.lineWidth = chosen ? 3 : 1.5; g.strokeStyle = chosen ? col.pink : col.white; g.stroke()
+        if (cl.count > 1) { g.fillStyle = col.white; g.fillText(shortCount(cl.count), p.x, p.y + 0.5) }
       }
     }
     if (marker) {
@@ -236,9 +240,9 @@ export default function MapPanel({ active, onDownload, onFullRescan, refreshKey,
       for (const k of copies) {
         const x = base.x + k * world, y = base.y
         if (x < -40 || y < -40 || x > size.w + 40 || y > size.h + 40) continue
-        g.beginPath(); g.arc(x, y, 16, 0, Math.PI * 2); g.lineWidth = 5; g.strokeStyle = '#ffffff'; g.stroke()
-        g.beginPath(); g.arc(x, y, 16, 0, Math.PI * 2); g.lineWidth = 2.5; g.strokeStyle = '#ff0084'; g.stroke()
-        g.beginPath(); g.arc(x, y, 3.5, 0, Math.PI * 2); g.fillStyle = '#ff0084'; g.fill()
+        g.beginPath(); g.arc(x, y, 16, 0, Math.PI * 2); g.lineWidth = 5; g.strokeStyle = col.white; g.stroke()
+        g.beginPath(); g.arc(x, y, 16, 0, Math.PI * 2); g.lineWidth = 2.5; g.strokeStyle = col.pink; g.stroke()
+        g.beginPath(); g.arc(x, y, 3.5, 0, Math.PI * 2); g.fillStyle = col.pink; g.fill()
       }
     }
   }, [size, zoom, corner, outline, data, pick, toScreen, street, tileTick, marker])
@@ -532,17 +536,18 @@ export default function MapPanel({ active, onDownload, onFullRescan, refreshKey,
               <button style={quietBtn} disabled={busyDownload || total === 0} onClick={() => void downloadAll()}>{busyDownload ? 'Getting the list…' : `Download these ${n(total || pick.cluster.count)}`}</button>
             </div>
             <div style={styles.grid}>
-              {photos.map(p => (
-                <button key={p.photoId} style={styles.tile} title={`${p.title || '(no title)'}: open on Flickr`} aria-label={`Open ${p.title || 'this photo'} on Flickr`} onClick={() => window.flickrAPI.openExternal(p.flickrUrl)}>
+              {photos.map((p, i) => (
+                <button key={p.photoId} style={styles.tile} title={p.title || '(no title)'} aria-label={`Open ${p.title || 'this photo'}`} onClick={() => setPeek(i)}>
                   {p.thumbUrl ? <img src={p.thumbUrl} alt="" loading="lazy" style={styles.thumb} /> : null}
                 </button>
               ))}
             </div>
             {loadingPhotos && <div style={dash.muted}>Loading…</div>}
             {photos.length < total && !loadingPhotos && <button style={{ ...quietBtn, width: '100%' }} onClick={() => void more(photos.length)}>Show more ({n(total - photos.length)} left)</button>}
-            <div style={{ ...dash.muted, marginTop: 6 }}>Click a photo to open it on Flickr.</div>
+            <div style={{ ...dash.muted, marginTop: 6 }}>Click a photo to see it larger.</div>
           </aside>
         )}
+        {peek !== null && photos[peek] && <PhotoPeek photos={photos} start={peek} sourceName="Map" hasMore={photos.length < total} loadMore={() => more(photos.length)} onClose={() => setPeek(null)} />}
       </div>
     </div>
   )
@@ -557,20 +562,20 @@ const styles: Record<string, React.CSSProperties> = {
   xBtn: { border: 'none', background: 'none', padding: '0 8px', fontSize: 12, color: 'var(--ff-text-muted)', cursor: 'pointer' },
   hint: { fontSize: 12, color: 'var(--ff-text-secondary)' },
   field: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--ff-text-secondary)' },
-  select: { border: '1px solid var(--ff-border)', borderRadius: 6, padding: '4px 8px', fontSize: 13, background: '#fff', color: 'var(--ff-text)' },
+  select: { border: '1px solid var(--ff-border)', borderRadius: 6, padding: '4px 8px', fontSize: 13, background: 'var(--ff-surface)', color: 'var(--ff-text)' },
   body: { flex: 1, minHeight: 0, display: 'flex', gap: 12, padding: '0 24px 12px' },
   mapBox: { position: 'relative', flex: 1, minWidth: 0, minHeight: 300, borderRadius: 10, overflow: 'hidden', border: '1px solid var(--ff-border)' },
-  credit: { position: 'absolute', right: 0, bottom: 0, background: 'rgba(255,255,255,0.85)', border: 'none', borderTopLeftRadius: 6, padding: '2px 8px', fontSize: 11, color: 'var(--ff-text-secondary)', cursor: 'pointer', textDecoration: 'underline' },
-  explain: { position: 'absolute', top: 10, left: 54, maxWidth: 380, background: '#fff', border: '1px solid var(--ff-border)', borderRadius: 10, padding: 14, fontSize: 13, color: 'var(--ff-text)', display: 'flex', flexDirection: 'column', gap: 8, boxShadow: '0 6px 24px rgba(0,0,0,0.16)' },
+  credit: { position: 'absolute', right: 0, bottom: 0, background: 'color-mix(in srgb, var(--ff-surface) 85%, transparent)', border: 'none', borderTopLeftRadius: 6, padding: '2px 8px', fontSize: 11, color: 'var(--ff-text-secondary)', cursor: 'pointer', textDecoration: 'underline' },
+  explain: { position: 'absolute', top: 10, left: 54, maxWidth: 380, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 10, padding: 14, fontSize: 13, color: 'var(--ff-text)', display: 'flex', flexDirection: 'column', gap: 8, boxShadow: 'var(--ff-shadow-menu)' },
   zoom: { position: 'absolute', top: 10, left: 10, display: 'flex', flexDirection: 'column', gap: 4 },
-  zoomBtn: { width: 32, height: 32, border: '1px solid var(--ff-line-strong)', borderRadius: 8, background: '#fff', fontSize: 18, lineHeight: 1, color: 'var(--ff-text)', cursor: 'pointer' },
-  note: { position: 'absolute', left: 10, bottom: 10, background: 'rgba(255,255,255,0.92)', border: '1px solid var(--ff-border)', borderRadius: 6, padding: '4px 10px', fontSize: 12, color: 'var(--ff-text-secondary)' },
-  side: { width: 300, flex: 'none', overflowY: 'auto', background: '#fff', border: '1px solid var(--ff-border)', borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column', gap: 8 },
+  zoomBtn: { width: 32, height: 32, border: '1px solid var(--ff-line-strong)', borderRadius: 8, background: 'var(--ff-surface)', fontSize: 18, lineHeight: 1, color: 'var(--ff-text)', cursor: 'pointer' },
+  note: { position: 'absolute', left: 10, bottom: 10, background: 'color-mix(in srgb, var(--ff-surface) 92%, transparent)', border: '1px solid var(--ff-border)', borderRadius: 6, padding: '4px 10px', fontSize: 12, color: 'var(--ff-text-secondary)' },
+  side: { width: 300, flex: 'none', overflowY: 'auto', background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column', gap: 8 },
   sideHead: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 14, color: 'var(--ff-text)' },
   close: { border: 'none', background: 'none', fontSize: 15, color: 'var(--ff-text-muted)', cursor: 'pointer' },
   sideActions: { display: 'flex', gap: 6, flexWrap: 'wrap' },
   grid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 },
-  tile: { display: 'block', width: '100%', aspectRatio: '1 / 1', padding: 0, border: '1px solid var(--ff-border)', borderRadius: 6, overflow: 'hidden', background: '#eee', cursor: 'pointer' },
+  tile: { display: 'block', width: '100%', aspectRatio: '1 / 1', padding: 0, border: '1px solid var(--ff-border)', borderRadius: 6, overflow: 'hidden', background: 'var(--ff-grey-100)', cursor: 'pointer' },
   thumb: { width: '100%', height: '100%', objectFit: 'cover', display: 'block' },
   empty: { padding: '60px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, textAlign: 'center', maxWidth: 520, margin: '0 auto' },
   emptyTitle: { fontSize: 15, fontWeight: 700, color: 'var(--ff-navy)' }

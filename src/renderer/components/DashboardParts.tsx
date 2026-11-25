@@ -38,9 +38,9 @@ export function Ring({ fraction, color, label }: { fraction: number; color: stri
   const pct = Math.max(0, Math.min(1, fraction)) * 100
   return (
     <svg width="130" height="130" viewBox="0 0 42 42" role="img" aria-label={label}>
-      <circle cx="21" cy="21" r="15.9" fill="none" stroke="#f1efec" strokeWidth="6" />
+      <circle cx="21" cy="21" r="15.9" fill="none" stroke="var(--ff-warm)" strokeWidth="6" />
       <circle cx="21" cy="21" r="15.9" fill="none" stroke={color} strokeWidth="6" strokeDasharray={`${pct} ${100 - pct}`} strokeDashoffset="25" />
-      <text x="21" y="22.5" textAnchor="middle" fontSize="7" fontWeight="600" fill="#1b2946">{label}</text>
+      <text x="21" y="22.5" textAnchor="middle" fontSize="7" fontWeight="600" fill="var(--ff-navy)">{label}</text>
     </svg>
   )
 }
@@ -55,7 +55,7 @@ export function RingParts({ parts, label, active, onActive }: {
   const cur = active !== null ? parts[active] : null
   return (
     <svg width="130" height="130" viewBox="0 0 42 42" role="img" aria-label={label} style={{ flexShrink: 0 }}>
-      <circle cx="21" cy="21" r="15.9" fill="none" stroke="#f1efec" strokeWidth="6" />
+      <circle cx="21" cy="21" r="15.9" fill="none" stroke="var(--ff-warm)" strokeWidth="6" />
       {parts.map((p, i) => {
         const len = Math.max(0, Math.min(1, p.fraction)) * 100
         const el = (
@@ -74,11 +74,11 @@ export function RingParts({ parts, label, active, onActive }: {
       })}
       {cur ? (
         <>
-          <text x="21" y="21.6" textAnchor="middle" fontSize="6" fontWeight="700" fill="#1b2946" style={{ pointerEvents: 'none' }}>{cur.n.toLocaleString()}</text>
-          <text x="21" y="26" textAnchor="middle" fontSize="3" fill="#667085" style={{ pointerEvents: 'none' }}>{cur.short}</text>
+          <text x="21" y="21.6" textAnchor="middle" fontSize="6" fontWeight="700" fill="var(--ff-navy)" style={{ pointerEvents: 'none' }}>{cur.n.toLocaleString()}</text>
+          <text x="21" y="26" textAnchor="middle" fontSize="3" fill="var(--ff-text-secondary)" style={{ pointerEvents: 'none' }}>{cur.short}</text>
         </>
       ) : (
-        <text x="21" y="22.5" textAnchor="middle" fontSize="7" fontWeight="600" fill="#1b2946" style={{ pointerEvents: 'none' }}>{label}</text>
+        <text x="21" y="22.5" textAnchor="middle" fontSize="7" fontWeight="600" fill="var(--ff-navy)" style={{ pointerEvents: 'none' }}>{label}</text>
       )}
     </svg>
   )
@@ -92,19 +92,19 @@ export function pctLabel(fraction: number): string {
 }
 
 // open = an Issue (red; pink is only for selection), warn = a Warning (amber), plan and neutral are blue, fixed is green
-export const COLORS = { open: 'var(--ff-error)', warn: 'var(--ff-warning)', plan: 'var(--ff-blue)', fine: '#cbd0d8', fixed: 'var(--ff-success)', neutral: 'var(--ff-blue)' }
+export const COLORS = { open: 'var(--ff-error)', warn: 'var(--ff-warning)', plan: 'var(--ff-blue)', fine: 'var(--ff-fine-fill)', fixed: 'var(--ff-success)', neutral: 'var(--ff-blue)' }
 
 export const dash: Record<string, React.CSSProperties> = {
   wrap: { flex: 1, minHeight: 0, overflowY: 'auto', padding: '8px 24px 16px' },
   grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 14, marginTop: 14 },
-  card: { background: '#fff', border: '1px solid var(--ff-border)', borderRadius: 12, padding: '14px 16px', minWidth: 0 },
+  card: { background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 12, padding: '14px 16px', minWidth: 0 },
   cardTitle: { margin: '0 0 10px', fontSize: 14, fontWeight: 600, color: 'var(--ff-text)' },
   hint: { fontWeight: 400, color: 'var(--ff-text-secondary)' },
   muted: { fontSize: 12, color: 'var(--ff-text-secondary)' },
   ringWrap: { display: 'flex', alignItems: 'center', gap: 16 },
   big: { fontSize: 12, color: 'var(--ff-text-secondary)', lineHeight: 1.5 },
   bigNum: { display: 'block', fontSize: 20, fontWeight: 600, color: 'var(--ff-text)' },
-  item: { display: 'flex', justifyContent: 'space-between', gap: 10, padding: '7px 0', borderTop: '1px solid #f1efec', fontSize: 13, cursor: 'pointer', color: 'var(--ff-text)' },
+  item: { display: 'flex', justifyContent: 'space-between', gap: 10, padding: '7px 0', borderTop: '1px solid var(--ff-warm)', fontSize: 13, cursor: 'pointer', color: 'var(--ff-text)' },
   pill: { fontSize: 11, borderRadius: 10, padding: '1px 8px', background: 'var(--ff-warm)', color: 'var(--ff-text-secondary)', marginLeft: 6 },   // a label, not a selection: pink is only for what is selected
   legendRow: { display: 'flex', alignItems: 'baseline', gap: 8, fontSize: 13, padding: '2px 0', color: 'var(--ff-text)' },
   legendSwatch: { display: 'inline-block', width: 10, height: 10, borderRadius: 3, flex: 'none', transform: 'translateY(1px)' },
@@ -117,7 +117,7 @@ export const dash: Record<string, React.CSSProperties> = {
 const styles: Record<string, React.CSSProperties> = {
   row: { display: 'grid', gridTemplateColumns: 'minmax(120px, 1.1fr) minmax(70px, 1fr) 64px', gap: 10, alignItems: 'center', padding: '6px 0', borderRadius: 6 },
   rowName: { fontSize: 13, color: 'var(--ff-text)' },
-  barTrack: { height: 14, borderRadius: 7, background: '#f1efec', overflow: 'hidden' },
+  barTrack: { height: 14, borderRadius: 7, background: 'var(--ff-warm)', overflow: 'hidden' },
   rowNum: { textAlign: 'right', fontSize: 13, fontWeight: 600, color: 'var(--ff-text)' },
   legend: { display: 'flex', gap: 14, flexWrap: 'wrap', marginTop: 10, fontSize: 12, color: 'var(--ff-text-secondary)' },
   swatch: { display: 'inline-block', width: 10, height: 10, borderRadius: 3, marginRight: 5, verticalAlign: -1, fontStyle: 'normal' }

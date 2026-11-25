@@ -174,7 +174,7 @@ export function PhotoListRow({ photo, isDownloaded, isSelected, selectMode, onCl
           background: isSelected ? 'var(--ff-pink)' : 'transparent',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          {isSelected && <span style={{ color: '#fff', fontSize: '10px', fontWeight: 700 }}>✓</span>}
+          {isSelected && <span style={{ color: 'var(--ff-white)', fontSize: '10px', fontWeight: 700 }}>✓</span>}
         </div>
       )}
       {photo.thumbnailUrl
@@ -300,7 +300,7 @@ export function Tooltip({ text, children, align = 'center', side = 'above' }: { 
         <span style={{
           position: 'absolute', ...(side === 'below' ? { top: 'calc(100% + 6px)' } : { bottom: 'calc(100% + 6px)' }),
           ...(align === 'right' ? { right: 0 } : align === 'left' ? { left: 0 } : { left: '50%', transform: 'translateX(-50%)' }),
-          backgroundColor: '#333', color: '#fff', fontSize: '11px', lineHeight: '1.5',
+          backgroundColor: '#333', color: 'var(--ff-white)', fontSize: '11px', lineHeight: '1.5',
           padding: '5px 9px', borderRadius: '5px', maxWidth: '220px', width: 'max-content', whiteSpace: 'pre-line',
           zIndex: 100, pointerEvents: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
           textAlign: 'left' as const
@@ -428,18 +428,18 @@ export function formatDateChip(min: string, max: string, field: import('../../sh
 // a key defined here without a documented reason.
 export const sharedStyles: Record<string, React.CSSProperties> = {
   // Toolbar chrome
-  toolbarWrap: { position: 'sticky' as const, top: 0, zIndex: 10, backgroundColor: '#f5f5f5', borderBottom: '1px solid #f0ede8' },
+  toolbarWrap: { position: 'sticky' as const, top: 0, zIndex: 10, backgroundColor: 'var(--ff-grey-100)', borderBottom: '1px solid #f0ede8' },
   toolbar: { display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' as const, padding: '10px 16px 8px' },
-  drawer: { display: 'flex', flexDirection: 'column' as const, borderTop: '1px solid #ece8e2', backgroundColor: '#faf9f7' },
+  drawer: { display: 'flex', flexDirection: 'column' as const, borderTop: '1px solid #ece8e2', backgroundColor: 'var(--ff-cream)' },
   drawerRow: { display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' as const, padding: '7px 16px', borderBottom: '1px solid #f0ede8' },
   drawerLabel: { fontSize: '11px', fontWeight: '600', color: '#999', textTransform: 'uppercase' as const, letterSpacing: '0.04em', minWidth: `${DRAWER_LABEL_WIDTH}px` },
   // Search / filter controls
-  searchGroup: { display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '6px', overflow: 'hidden', backgroundColor: '#fff' },
+  searchGroup: { display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '6px', overflow: 'hidden', backgroundColor: 'var(--ff-surface)' },
   searchIcon: { display: 'flex', alignItems: 'center', padding: '0 4px 0 8px', color: '#aaa', flexShrink: 0 },
-  operatorSelect: { background: '#f5f5f5', border: 'none', borderRight: '1px solid #ddd', padding: '5px 6px', fontSize: '11px', color: '#555', cursor: 'pointer', outline: 'none' },
+  operatorSelect: { background: 'var(--ff-grey-100)', border: 'none', borderRight: '1px solid #ddd', padding: '5px 6px', fontSize: '11px', color: '#555', cursor: 'pointer', outline: 'none' },
   searchInput: { border: 'none', outline: 'none', padding: '5px 8px', fontSize: '12px', color: '#333', minWidth: '160px', background: 'transparent' },
   searchClearBtn: { background: 'none', border: 'none', padding: '0 6px', fontSize: '11px', color: '#aaa', cursor: 'pointer' },
-  idStatus: { fontSize: '11px', color: '#9ca3af', padding: '0 6px', flexShrink: 0 },
+  idStatus: { fontSize: '11px', color: 'var(--ff-text-muted)', padding: '0 6px', flexShrink: 0 },
   idStatusErr: { fontSize: '11px', color: '#ef4444', padding: '0 6px', flexShrink: 0 },
   idOpenDetailBtn: { background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: 'var(--ff-blue)', padding: '0 6px', flexShrink: 0 } as React.CSSProperties,
   segGroup: { ...kitSegGroup },
@@ -451,28 +451,28 @@ export const sharedStyles: Record<string, React.CSSProperties> = {
   densityBtnActive: { backgroundColor: '#ece8e2', color: '#333' },
   rowHeightSlider: { width: '72px', height: '3px', cursor: 'pointer', accentColor: 'var(--ff-blue)', margin: '0 4px' },
   moreFiltersBtn: { display: 'flex', alignItems: 'center', gap: '4px', background: 'none', border: '1px solid #ddd', borderRadius: '6px', padding: '5px 10px', fontSize: '12px', color: '#555', cursor: 'pointer' },
-  moreFiltersBtnActive: { backgroundColor: '#111', color: '#fff', borderColor: '#111' },
-  drawerBadge: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--ff-pink)', color: '#fff', borderRadius: '50%', width: '14px', height: '14px', fontSize: '9px', fontWeight: '700' },
+  moreFiltersBtnActive: { backgroundColor: '#111', color: 'var(--ff-white)', borderColor: '#111' },
+  drawerBadge: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--ff-pink)', color: 'var(--ff-white)', borderRadius: '50%', width: '14px', height: '14px', fontSize: '9px', fontWeight: '700' },
   clearFiltersLink: { background: 'none', border: 'none', fontSize: '12px', color: 'var(--ff-blue)', cursor: 'pointer', padding: '0', textDecoration: 'underline' as const },
   // Active filter chips
   chipRow: { display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' as const, padding: '5px 16px 6px' },
   countLabel: { fontSize: '12px', color: '#777', margin: '0', padding: '0 16px 8px' },
-  selectModeCount: { fontSize: '12px', color: '#777', padding: '8px 16px', backgroundColor: '#f5f5f5', borderBottom: '1px solid #f0ede8' },
+  selectModeCount: { fontSize: '12px', color: '#777', padding: '8px 16px', backgroundColor: 'var(--ff-grey-100)', borderBottom: '1px solid #f0ede8' },
   // Grid tiles
   tile: { position: 'relative', aspectRatio: '1', overflow: 'hidden', backgroundColor: '#e8e8e8', cursor: 'pointer' },
   thumb: { width: '100%', height: '100%', objectFit: 'cover', display: 'block' },
   videoOverlay: { position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' },
   privacyBadge: { position: 'absolute', top: '5px', left: '5px', width: '18px', height: '18px', borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.52)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2, cursor: 'default' },
   selectBadge: { position: 'absolute' as const, top: '6px', right: '6px', width: '22px', height: '22px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 },
-  selectCheck: { color: '#fff', fontSize: '13px', fontWeight: 'bold', lineHeight: 1 },
+  selectCheck: { color: 'var(--ff-white)', fontSize: '13px', fontWeight: 'bold', lineHeight: 1 },
   // Drawer date/tag controls
-  dateModeSelect: { border: '1px solid #ddd', borderRadius: '6px', padding: '5px 8px', fontSize: '12px', color: '#444', background: '#fff', cursor: 'pointer' },
+  dateModeSelect: { border: '1px solid #ddd', borderRadius: '6px', padding: '5px 8px', fontSize: '12px', color: '#444', background: 'var(--ff-surface)', cursor: 'pointer' },
   dateInputsInline: { display: 'flex', alignItems: 'center', gap: '5px' },
-  dateInput: { border: '1px solid #ddd', borderRadius: '5px', padding: '4px 6px', fontSize: '12px', color: '#444', background: '#fff' },
+  dateInput: { border: '1px solid #ddd', borderRadius: '5px', padding: '4px 6px', fontSize: '12px', color: '#444', background: 'var(--ff-surface)' },
   dateToLabel: { fontSize: '12px', color: '#888' },
   comingSoon: { fontSize: '12px', color: '#bbb' },
   downloadFilterBtn: { background: 'none', border: '1px solid #ddd', borderRadius: '6px', padding: '5px 10px', fontSize: '12px', color: '#555', cursor: 'pointer', whiteSpace: 'nowrap' as const },
-  downloadFilterBtnActive: { backgroundColor: '#111', color: '#fff', borderColor: '#111' },
+  downloadFilterBtnActive: { backgroundColor: '#111', color: 'var(--ff-white)', borderColor: '#111' },
   listContainer: { display: 'flex', flexDirection: 'column' as const },
   tagHint: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#ddd', fontSize: '10px', color: '#666', cursor: 'default', fontWeight: '600', flexShrink: 0 } as React.CSSProperties,
   // Empty / error states

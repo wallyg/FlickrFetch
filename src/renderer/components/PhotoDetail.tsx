@@ -99,7 +99,7 @@ function formatDownloadDateTime(ms: number): string {
 
 function getPrivacyBadge(photo: FlickrPhoto): { label: string; bg: string; color: string } {
   if (photo.ispublic === 1) return { label: 'Public', bg: 'var(--ff-success-bg)', color: 'var(--ff-success)' }
-  if (photo.ispublic === undefined) return { label: 'Unknown', bg: '#f5f5f5', color: '#999' }
+  if (photo.ispublic === undefined) return { label: 'Unknown', bg: 'var(--ff-grey-100)', color: '#999' }
   if (photo.isfriend === 1 && photo.isfamily === 1) return { label: 'Friends & Family', bg: '#fff3e0', color: '#e67e22' }
   if (photo.isfriend === 1) return { label: 'Friends', bg: '#e8f4fd', color: '#2980b9' }
   if (photo.isfamily === 1) return { label: 'Family', bg: '#f0e8fd', color: '#8e44ad' }
@@ -762,7 +762,7 @@ const styles: Record<string, React.CSSProperties> = {
     transform: 'translateY(-50%)',
     backgroundColor: 'rgba(0,0,0,0.45)',
     border: 'none',
-    color: '#fff',
+    color: 'var(--ff-white)',
     borderRadius: '50%',
     width: '38px',
     height: '38px',
@@ -811,7 +811,7 @@ const styles: Record<string, React.CSSProperties> = {
     left: '14px',
     backgroundColor: 'rgba(0,0,0,0.5)',
     border: 'none',
-    color: '#fff',
+    color: 'var(--ff-white)',
     borderRadius: '20px',
     fontSize: '13px',
     padding: '7px 13px',
@@ -930,7 +930,7 @@ const styles: Record<string, React.CSSProperties> = {
     margin: '8px 0 12px',
   },
   actionBtn: {
-    background: '#fff',
+    background: 'var(--ff-surface)',
     border: '1px solid #ddd',
     borderRadius: '6px',
     padding: '4px 9px',
@@ -965,14 +965,14 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: '6px',
     fontSize: '12px',
     marginBottom: '10px',
-    backgroundColor: '#fff',
+    backgroundColor: 'var(--ff-surface)',
     color: '#333',
   },
   downloadBtn: {
     width: '100%',
     padding: '9px',
     backgroundColor: 'var(--ff-pink-action)',
-    color: '#fff',
+    color: 'var(--ff-white)',
     border: 'none',
     borderRadius: '7px',
     fontSize: '14px',
@@ -1024,7 +1024,7 @@ const styles: Record<string, React.CSSProperties> = {
     flex: 1,
     padding: '8px',
     backgroundColor: 'var(--ff-pink-action)',
-    color: '#fff',
+    color: 'var(--ff-white)',
     border: 'none',
     borderRadius: '6px',
     fontSize: '12px',
@@ -1127,7 +1127,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'flex-start',
     fontSize: '12px',
-    color: '#9ca3af',
+    color: 'var(--ff-text-muted)',
     marginTop: '6px',
     marginBottom: '10px',
     cursor: 'pointer',
@@ -1155,7 +1155,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   scrollFade: {
     height: '36px',
-    background: 'linear-gradient(to top, #FCFAF6 50%, transparent)',
+    background: 'linear-gradient(to top, var(--ff-cream) 50%, transparent)',
     marginTop: '-36px',
     position: 'relative',
     zIndex: 1,

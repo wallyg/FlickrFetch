@@ -125,7 +125,7 @@ export default function HealthOverview({ refreshKey, onOpenList }: { refreshKey:
               if (!stacked) {
                 return (
                   <div key={e.year} title={`${e.year}: ${Math.round(share(e) * 100)}% (${fmt(e.by[metric])} of ${fmt(e.total)})`}
-                    style={{ ...styles.bar, height: `${tall}%`, background: share(e) === topShare ? 'var(--ff-pink)' : '#0063dc' }} />
+                    style={{ ...styles.bar, height: `${tall}%`, background: share(e) === topShare ? 'var(--ff-pink)' : 'var(--ff-blue)' }} />
                 )
               }
               const issueOnly = e.anyGap - e.both
@@ -181,7 +181,7 @@ export default function HealthOverview({ refreshKey, onOpenList }: { refreshKey:
   )
 }
 
-const STACK = { issue: '#0063dc', both: '#6a9be8', warn: '#bfd3f6' }   // darker = more serious
+const STACK = { issue: 'var(--ff-blue)', both: '#6a9be8', warn: '#bfd3f6' }   // darker = more serious
 const swatch = (c: string): React.CSSProperties => ({ width: 10, height: 10, borderRadius: 2, background: c, display: 'inline-block' })
 
 const styles: Record<string, React.CSSProperties> = {

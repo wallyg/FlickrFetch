@@ -177,7 +177,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   rightCol: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--ff-surface)',
     display: 'flex',
     flexDirection: 'column',
     padding: '28px 28px 20px',
@@ -233,7 +233,7 @@ const styles: Record<string, React.CSSProperties> = {
     whiteSpace: 'nowrap',
     zIndex: 1,
     boxShadow: '0 1px 4px rgba(27,41,70,0.2)',
-    backgroundColor: '#fff',
+    backgroundColor: 'var(--ff-surface)',
     border: 'none',
     borderRadius: '20px',
     padding: '5px 14px',

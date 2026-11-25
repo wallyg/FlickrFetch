@@ -62,7 +62,7 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'center',
     paddingLeft: '24px', paddingRight: '16px',
     borderBottom: '1px solid #e8e4de',
-    background: '#fff',
+    background: 'var(--ff-surface)',
     flexShrink: 0,
   },
   tabGroup: { display: 'flex', gap: '0' },

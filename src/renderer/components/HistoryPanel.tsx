@@ -757,7 +757,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   panel: {
     width: 440, height: '100vh',
-    background: '#fff',
+    background: 'var(--ff-surface)',
     display: 'flex', flexDirection: 'column',
     boxShadow: '-4px 0 24px rgba(0,0,0,0.12)',
   },
@@ -775,7 +775,7 @@ const styles: Record<string, React.CSSProperties> = {
   tabs: {
     display: 'flex', gap: 0,
     padding: '12px 20px 0',
-    borderBottom: '1px solid #e5e7eb',
+    borderBottom: '1px solid var(--ff-border)',
   },
   tab: {
     background: 'none', border: 'none', borderBottom: '2px solid transparent',
@@ -791,7 +791,7 @@ const styles: Record<string, React.CSSProperties> = {
     flex: 1, overflowY: 'auto',
   },
   empty: {
-    padding: '24px 20px', color: '#9ca3af', fontSize: 13, lineHeight: 1.5, margin: 0,
+    padding: '24px 20px', color: 'var(--ff-text-muted)', fontSize: 13, lineHeight: 1.5, margin: 0,
   },
   clearFiltersBtn: {
     background: 'none', border: '1px solid #d1d5db', borderRadius: '6px',
@@ -800,7 +800,7 @@ const styles: Record<string, React.CSSProperties> = {
   // Batch tab rows
   row: {
     padding: '10px 20px',
-    borderBottom: '1px solid #f3f4f6',
+    borderBottom: '1px solid var(--ff-grey-100)',
   },
   rowTop: {
     display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4,
@@ -835,7 +835,7 @@ const styles: Record<string, React.CSSProperties> = {
   // Photos tab search bar
   photoSearchBar: {
     padding: '12px 16px 10px',
-    borderBottom: '1px solid #e5e7eb',
+    borderBottom: '1px solid var(--ff-border)',
     display: 'flex', flexDirection: 'column', gap: 8,
   },
   searchModeRow: {
@@ -860,21 +860,21 @@ const styles: Record<string, React.CSSProperties> = {
   searchClearBtn: {
     position: 'absolute' as const, right: 6,
     background: 'none', border: 'none', cursor: 'pointer',
-    fontSize: 11, color: '#9ca3af', padding: '2px 4px', lineHeight: 1,
+    fontSize: 11, color: 'var(--ff-text-muted)', padding: '2px 4px', lineHeight: 1,
   },
   filterRow: {
     display: 'flex', alignItems: 'center', gap: 6,
   },
   filterLabel: {
-    fontSize: 11, color: '#9ca3af', flexShrink: 0,
+    fontSize: 11, color: 'var(--ff-text-muted)', flexShrink: 0,
   },
   presetSelect: {
     border: '1px solid #d1d5db', borderRadius: 4,
-    padding: '4px 6px', fontSize: 11, color: '#374151', background: '#fff', cursor: 'pointer',
+    padding: '4px 6px', fontSize: 11, color: '#374151', background: 'var(--ff-surface)', cursor: 'pointer',
   },
   clearFilterX: {
     background: 'none', border: 'none', cursor: 'pointer',
-    fontSize: 10, color: '#9ca3af', padding: '2px 4px',
+    fontSize: 10, color: 'var(--ff-text-muted)', padding: '2px 4px',
   },
   dateFieldWrap: {
     display: 'flex', alignItems: 'center', gap: 2,
@@ -885,34 +885,34 @@ const styles: Record<string, React.CSSProperties> = {
   },
   dateFieldClear: {
     background: 'none', border: 'none', cursor: 'pointer',
-    fontSize: 10, color: '#9ca3af', padding: '2px 3px', lineHeight: 1, flexShrink: 0,
+    fontSize: 10, color: 'var(--ff-text-muted)', padding: '2px 3px', lineHeight: 1, flexShrink: 0,
   },
   applyBtn: {
     background: '#111', border: 'none', borderRadius: 4,
-    padding: '4px 10px', fontSize: 11, color: '#fff', cursor: 'pointer', flexShrink: 0,
+    padding: '4px 10px', fontSize: 11, color: 'var(--ff-white)', cursor: 'pointer', flexShrink: 0,
   },
   loadAlbumsBtn: {
     background: 'none', border: '1px solid #d1d5db', borderRadius: 4,
     padding: '3px 8px', fontSize: 11, color: '#6b7280', cursor: 'pointer',
   },
   resultCount: {
-    margin: 0, fontSize: 11, color: '#9ca3af',
+    margin: 0, fontSize: 11, color: 'var(--ff-text-muted)',
   },
   // Photo record rows
   photoRow: {
     display: 'flex', alignItems: 'center', gap: 10,
     padding: '8px 16px',
-    borderBottom: '1px solid #f3f4f6',
+    borderBottom: '1px solid var(--ff-grey-100)',
   },
   thumb: {
     width: 44, height: 44, borderRadius: 4,
     objectFit: 'cover', flexShrink: 0,
-    background: '#f3f4f6',
+    background: 'var(--ff-grey-100)',
   },
   discoverThumb: {
     width: 44, height: 44, borderRadius: 4,
     objectFit: 'cover', flexShrink: 0,
-    background: '#f3f4f6',
+    background: 'var(--ff-grey-100)',
   },
   discoverSource: {
     fontSize: 11, color: '#888', marginTop: 2,
@@ -920,17 +920,17 @@ const styles: Record<string, React.CSSProperties> = {
   },
   thumbPlaceholder: {
     width: 44, height: 44, borderRadius: 4, flexShrink: 0,
-    background: '#f3f4f6',
+    background: 'var(--ff-grey-100)',
   },
   photoMeta: {
     flex: 1, minWidth: 0,
   },
   photoTitle: {
-    fontSize: 13, fontWeight: 500, color: '#111827',
+    fontSize: 13, fontWeight: 500, color: 'var(--ff-text)',
     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
   },
   untitled: {
-    color: '#9ca3af', fontStyle: 'italic',
+    color: 'var(--ff-text-muted)', fontStyle: 'italic',
   },
   photoSub: {
     display: 'flex', alignItems: 'center', gap: 6, marginTop: 2,
@@ -939,13 +939,13 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 11, color: '#f59e0b', cursor: 'default',
   },
   photoDate: {
-    fontSize: 11, color: '#9ca3af',
+    fontSize: 11, color: 'var(--ff-text-muted)',
   },
   sizeTag: {
-    fontSize: 10, color: 'var(--ff-text-secondary)', border: '1px solid #e5e7eb', borderRadius: 8, padding: '0 6px',
+    fontSize: 10, color: 'var(--ff-text-secondary)', border: '1px solid var(--ff-border)', borderRadius: 8, padding: '0 6px',
   },
   sizeTagSmaller: {
-    fontSize: 10, color: '#92400e', background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: 8, padding: '0 6px',
+    fontSize: 10, color: 'var(--ff-warning-text)', background: 'var(--ff-warning-bg)', border: '1px solid #fcd34d', borderRadius: 8, padding: '0 6px',
   },
   photoId: {
     fontSize: 10, color: '#c4c9d4',
@@ -963,7 +963,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   deleteConfirmYes: {
     background: 'none', border: '1px solid #fca5a5', borderRadius: 4,
-    padding: '2px 6px', fontSize: 11, color: '#dc2626', cursor: 'pointer',
+    padding: '2px 6px', fontSize: 11, color: 'var(--ff-error)', cursor: 'pointer',
   },
   deleteConfirmNo: {
     background: 'none', border: '1px solid #d1d5db', borderRadius: 4,
@@ -971,7 +971,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   // Footer
   footer: {
-    padding: '12px 20px', borderTop: '1px solid #e5e7eb',
+    padding: '12px 20px', borderTop: '1px solid var(--ff-border)',
     display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap',
   },
   clearBtn: {
@@ -980,13 +980,13 @@ const styles: Record<string, React.CSSProperties> = {
   },
   confirmBtn: {
     background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 6,
-    padding: '6px 12px', fontSize: 12, color: '#dc2626', cursor: 'pointer',
+    padding: '6px 12px', fontSize: 12, color: 'var(--ff-error)', cursor: 'pointer',
   },
   cancelConfirm: {
     background: 'none', border: 'none', fontSize: 12, color: '#6b7280', cursor: 'pointer',
   },
   clearLabel: {
-    fontSize: 11, color: '#9ca3af', flexShrink: 0,
+    fontSize: 11, color: 'var(--ff-text-muted)', flexShrink: 0,
   },
   clearChoiceRow: {
     display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap',
@@ -997,7 +997,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   clearChoiceBtnDanger: {
     background: 'none', border: '1px solid #fca5a5', borderRadius: 6,
-    padding: '5px 9px', fontSize: 11, color: '#dc2626', cursor: 'pointer',
+    padding: '5px 9px', fontSize: 11, color: 'var(--ff-error)', cursor: 'pointer',
   },
   clearNote: { display: 'block', marginTop: 2, fontSize: 11, fontWeight: 400, color: '#888' },
   clearWarning: {

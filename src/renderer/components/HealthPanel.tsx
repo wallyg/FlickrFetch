@@ -168,7 +168,7 @@ export default function HealthPanel({ refreshKey, onFullRescan, toolbarLeft, sta
           <ListHead sort={condition === 'title' && reasons ? (
             <span style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--ff-text-secondary)' }}>Reason
-                <select style={{ border: '1px solid var(--ff-border)', borderRadius: 6, padding: '5px 8px', fontSize: 13, background: '#fff', color: 'var(--ff-text)' }} value={reason} aria-label="Show only one kind of title problem" onChange={e => setReason(e.target.value as '' | 'none' | 'camera')}>
+                <select style={{ border: '1px solid var(--ff-border)', borderRadius: 6, padding: '5px 8px', fontSize: 13, background: 'var(--ff-surface)', color: 'var(--ff-text)' }} value={reason} aria-label="Show only one kind of title problem" onChange={e => setReason(e.target.value as '' | 'none' | 'camera')}>
                   <option value="">All ({(reasons.none + reasons.camera).toLocaleString()})</option>
                   <option value="none">No title ({reasons.none.toLocaleString()})</option>
                   <option value="camera">Camera-file title ({reasons.camera.toLocaleString()})</option>
@@ -232,19 +232,19 @@ const styles: Record<string, React.CSSProperties> = {
   emptyTitle: { fontSize: 15, fontWeight: 700, color: 'var(--ff-navy)' },
   body: { flex: 1, minHeight: 0, display: 'flex', gap: 16, padding: '4px 24px 12px' },
   railCol: { width: 230, flexShrink: 0, alignSelf: 'flex-start', maxHeight: '100%', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12 },   // long lists of checks scroll inside this column
-  rail: { flexShrink: 0, background: '#fff', border: '1px solid var(--ff-border)', borderRadius: 10, padding: 6 },
+  rail: { flexShrink: 0, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 10, padding: 6 },
   main: { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: 0 },
   statusRow: { display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, flexWrap: 'wrap' },
-  statusChip: { border: '1px solid var(--ff-border)', borderRadius: 14, padding: '3px 11px', fontSize: 13, background: '#fff', color: 'var(--ff-text)', cursor: 'pointer' },
+  statusChip: { border: '1px solid var(--ff-border)', borderRadius: 14, padding: '3px 11px', fontSize: 13, background: 'var(--ff-surface)', color: 'var(--ff-text)', cursor: 'pointer' },
   statusChipOn: { ...selectedOn },
   list: { flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: 4 },
-  card: { display: 'flex', gap: 12, background: '#fff', border: '1px solid var(--ff-border)', borderRadius: 10, padding: 10, marginBottom: 8 },
+  card: { display: 'flex', gap: 12, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 10, padding: 10, marginBottom: 8 },
   tick: { alignSelf: 'flex-start', marginTop: 4, flexShrink: 0, cursor: 'pointer' },
   thumb: { width: 76, height: 76, borderRadius: 6, objectFit: 'cover', background: '#eee', flexShrink: 0 },
   cardBody: { flex: 1, minWidth: 0 },
   l1: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   title: { fontSize: 14, fontWeight: 600, color: 'var(--ff-text)', overflowWrap: 'anywhere' },
-  pill: { fontSize: 11, borderRadius: 10, padding: '1px 8px', background: '#fef3c7', color: '#92400e' },
+  pill: { fontSize: 11, borderRadius: 10, padding: '1px 8px', background: 'var(--ff-warning-bg)', color: 'var(--ff-warning-text)' },
   actions: { display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, flexWrap: 'wrap' },
   primaryBtn: { ...primaryBtn },
   secondaryBtn: { ...quietBtn },

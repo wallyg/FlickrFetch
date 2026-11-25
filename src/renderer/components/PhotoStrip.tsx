@@ -1,20 +1,22 @@
 import React, { useState } from 'react'
 import type { AlbumFitPhoto } from '../../shared/types'
+import PhotoPeek from './PhotoPeek'
 
-// A strip of photos with a tick box on each: click a photo to open it on Flickr, untick the ones you do not want. Shared by the
+// A strip of photos with a tick box on each: click a photo to see it larger, untick the ones you do not want. Shared by the
 // "Show the photos" rows (May be missing from an album, Photos missing a tag). Shows the first SHOWN until "Show all".
 
 const SHOWN = 24
 
 export default function PhotoStrip({ photos, ticked, onToggle }: { photos: AlbumFitPhoto[]; ticked: Set<string>; onToggle: (id: string, on: boolean) => void }): React.JSX.Element {
   const [all, setAll] = useState(false)
+  const [peek, setPeek] = useState<number | null>(null)
   const shown = all ? photos : photos.slice(0, SHOWN)
   return (
     <>
       <div style={styles.strip}>
-        {shown.map(p => (
+        {shown.map((p, i) => (
           <div key={p.photoId} style={{ ...styles.tile, ...(ticked.has(p.photoId) ? styles.tileOn : {}) }}>
-            <button style={styles.tileImg} title={`${p.title || '(no title)'}: open on Flickr`} aria-label={`Open ${p.title || 'this photo'} on Flickr`} onClick={() => window.flickrAPI.openExternal(p.flickrUrl)}>
+            <button style={styles.tileImg} title={p.title || '(no title)'} aria-label={`Open ${p.title || 'this photo'}`} onClick={() => setPeek(i)}>
               {p.thumbUrl ? <img src={p.thumbUrl} alt="" loading="lazy" style={styles.tileThumb} /> : null}
             </button>
             <input type="checkbox" style={styles.tick} checked={ticked.has(p.photoId)} aria-label={`Include ${p.title || 'this photo'}`} onChange={e => onToggle(p.photoId, e.target.checked)} />
@@ -22,9 +24,10 @@ export default function PhotoStrip({ photos, ticked, onToggle }: { photos: Album
         ))}
       </div>
       <div style={styles.hint}>
-        Click a photo to open it on Flickr. Untick the ones that do not belong.
+        Click a photo to see it larger. Untick the ones that do not belong.
         {photos.length > SHOWN && !all && <> <button style={styles.small} onClick={() => setAll(true)}>Show all {photos.length.toLocaleString()}</button></>}
       </div>
+      {peek !== null && <PhotoPeek photos={photos} start={peek} sourceName="Suggested photos" onClose={() => setPeek(null)} />}
     </>
   )
 }

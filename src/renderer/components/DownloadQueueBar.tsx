@@ -388,7 +388,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '12px',
     fontWeight: '500',
     color: '#555',
-    backgroundColor: '#fff',
+    backgroundColor: 'var(--ff-surface)',
     borderBottom: '1px solid #e8e4de'
   },
   bar: {
@@ -506,7 +506,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   panel: {
     borderTop: '1px solid #e8e4de',
-    backgroundColor: '#fff',
+    backgroundColor: 'var(--ff-surface)',
     maxHeight: '280px',
     overflowY: 'auto'
   },
