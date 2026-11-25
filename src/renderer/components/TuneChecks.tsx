@@ -4,7 +4,6 @@ import { CLEANUP_RULES, DEFAULT_GENERIC_WORDS, logicOf } from '../../shared/clea
 import type { CleanupRuleState } from '../../shared/cleanupRules'
 import { segGroup, segBtn, selectedOn } from '../ui/kit'
 import AlbumFitSettings from './AlbumFitSettings'
-import AlbumKindList from './AlbumKindList'
 import MissingTagSettings from './MissingTagSettings'
 import LocationHintSettings from './LocationHintSettings'
 import { LocationScope } from './HealthScopeSettings'
@@ -17,6 +16,7 @@ import RichNote from '../ui/RichNote'
 interface Props {
   stateOf: (id: string) => CleanupRuleState
   setState: (id: string, state: CleanupRuleState) => void
+  onOpenAlbumTab?: () => void   // the list of how each album is judged has its own tab in Settings
 }
 
 const CHOICES: { key: CleanupRuleState; label: string; hint: string }[] = [
@@ -41,7 +41,7 @@ const SELECTED: Record<CleanupRuleState, React.CSSProperties> = {
 // Settings closes and opens again as a new screen; this keeps which checks were unfolded and how far down you were
 const remembered: { open: Record<string, boolean>; scroll: number } = { open: {}, scroll: 0 }
 
-export default function TuneChecks({ stateOf, setState }: Props): React.JSX.Element {
+export default function TuneChecks({ stateOf, setState, onOpenAlbumTab }: Props): React.JSX.Element {
   // How many items each check finds today, to help decide
   const [counts, setCounts] = useState<Record<string, number>>({})
   const [limitText, setLimitText] = useState<string>('65')   // what is typed in the box; it is checked and saved when you click away or press Enter
@@ -156,12 +156,9 @@ export default function TuneChecks({ stateOf, setState }: Props): React.JSX.Elem
         {report === 'albums' && (
           <div style={styles.rule}>
             <div style={styles.ruleTop}>
-              <button style={styles.ruleToggle} aria-expanded={open['albums:kinds'] === true} onClick={() => setOpen(o => ({ ...o, 'albums:kinds': !o['albums:kinds'] }))}>
-                <span aria-hidden="true" style={styles.chev}>{open['albums:kinds'] ? '▾' : '▸'}</span>
-                <span style={{ fontWeight: 600 }}>How each album is judged</span>
-              </button>
+              <span style={{ fontWeight: 600, padding: '4px 0 4px 18px' }}>How each album is judged</span>
+              {onOpenAlbumTab && <button style={styles.resetBtn} onClick={onOpenAlbumTab}>Open the Album Checks tab</button>}
             </div>
-            {open['albums:kinds'] && <div style={styles.ruleBody}><AlbumKindList /></div>}
           </div>
         )}
       </div>

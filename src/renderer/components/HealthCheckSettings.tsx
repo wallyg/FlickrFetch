@@ -32,7 +32,7 @@ const TUNE_HELP = [
   'Changes apply at once. Nothing here changes Flickr or your files.'
 ].join('\n\n')
 
-export default function HealthCheckSettings({ reloadKey = 0 }: { reloadKey?: number }): React.JSX.Element {
+export default function HealthCheckSettings({ reloadKey = 0, onOpenAlbumTab }: { reloadKey?: number; onOpenAlbumTab?: () => void }): React.JSX.Element {
   const rules = useCleanupRules(reloadKey)
   const [when, setWhen] = useState<When>('daily')
   useEffect(() => { void window.flickrAPI.getSettings().then(s => setWhen(s.autoUpdateWhen ?? (s.autoUpdate === false ? 'off' : 'daily'))) }, [reloadKey])
@@ -56,7 +56,7 @@ export default function HealthCheckSettings({ reloadKey = 0 }: { reloadKey?: num
         <div style={{ ...styles.head, display: 'flex', alignItems: 'center', gap: 7 }}>Tune checks <InfoTip text={TUNE_HELP} /></div>
         <div style={{ ...styles.desc, marginTop: 0, marginBottom: 12 }}>Choose how each check is treated. Changes apply at once.</div>
         <div style={{ marginBottom: 18 }}><VideoSwitch /></div>
-        <TuneChecks stateOf={rules.stateOf} setState={(id, st) => void rules.setState(id, st)} />
+        <TuneChecks stateOf={rules.stateOf} setState={(id, st) => void rules.setState(id, st)} onOpenAlbumTab={onOpenAlbumTab} />
       </div>
     </div>
   )

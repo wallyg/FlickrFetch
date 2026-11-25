@@ -56,3 +56,6 @@ Questions to answer by looking at it:
 - [ ] R2 **Tune checks counts match the list.** With "Include videos" off, the "photos have a suggestion" line under No location counts no videos, the same as the list.
 - [ ] R3 **Totals agree.** With "Include videos" off and No location set to Include videos, the photo total on the Overview and the one beside the Photos summary are the same number.
 - [ ] R4 **Free-account note only when known.** Your Pro account never shows the 1024 px note, including right after signing in with a poor connection.
+- [ ] R5 **Album Checks tab.** Settings has a new tab **Album Checks** (the window is a little wider so all six tabs fit). It opens with "Health Check · Albums" and a line saying these choices belong to Health Check, with a link to Health Check settings. Below it is the list of your albums with the find box and "Only the ones I changed". Changing an album's choice still works and "Reset" still goes back to the app's pick.
+- [ ] R6 **Tune checks points to it.** Settings > Health Check > Tune checks > Albums: "How each album is judged" is now one line with a link "Open the Album Checks tab"; the long list is gone from there.
+- [ ] R7 **Subject albums name their tag.** In Album Checks, an album the app judges by subject (for example Arenas) says "because a clear subject tag: " followed by the tag name, not an empty space.

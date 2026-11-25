@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import HealthCheckSettings from './HealthCheckSettings'
+import AlbumCheckSettings from './AlbumCheckSettings'
 import InfoTip from '../ui/InfoTip'
 import MapCacheControls from './MapCacheControls'
 import { cacheLimitMb } from '../../shared/mapGeo'
@@ -8,7 +9,7 @@ import type {
   AppSettings, CaseTransform, DownloadSize, ConflictBehavior, MetadataSettings
 } from '../../shared/types'
 
-export type SettingsTab = 'general' | 'downloads' | 'naming' | 'metadata' | 'health'
+export type SettingsTab = 'general' | 'downloads' | 'naming' | 'metadata' | 'health' | 'albums'
 type Tab = SettingsTab
 
 const DATE_EXAMPLES: Record<DateFormat, string> = {
@@ -307,13 +308,13 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
 
         {/* Tab bar */}
         <div style={s.tabBar}>
-          {(['general', 'downloads', 'naming', 'metadata', 'health'] as Tab[]).map(tab => (
+          {(['general', 'downloads', 'naming', 'metadata', 'health', 'albums'] as Tab[]).map(tab => (
             <button
               key={tab}
               style={{ ...s.tabBtn, ...(activeTab === tab ? s.tabBtnActive : {}) }}
               onClick={() => setActiveTab(tab)}
             >
-              {tab === 'general' ? 'General' : tab === 'downloads' ? 'Downloads' : tab === 'naming' ? 'File Naming' : tab === 'metadata' ? 'Metadata' : 'Health Check'}
+              {tab === 'general' ? 'General' : tab === 'downloads' ? 'Downloads' : tab === 'naming' ? 'File Naming' : tab === 'metadata' ? 'Metadata' : tab === 'health' ? 'Health Check' : 'Album Checks'}
             </button>
           ))}
         </div>
@@ -389,7 +390,8 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
           )}
 
           {/* ── HEALTH CHECK TAB ── */}
-          {activeTab === 'health' && <div style={s.section}><HealthCheckSettings reloadKey={resetCount} /></div>}
+          {activeTab === 'health' && <div style={s.section}><HealthCheckSettings reloadKey={resetCount} onOpenAlbumTab={() => setActiveTab('albums')} /></div>}
+          {activeTab === 'albums' && <div style={s.section}><AlbumCheckSettings onOpenHealth={() => setActiveTab('health')} /></div>}
 
           {/* ── DOWNLOADS TAB ── */}
           {activeTab === 'downloads' && (
@@ -842,7 +844,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
 
 const s: Record<string, React.CSSProperties> = {
   overlay: { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 600 },
-  card: { backgroundColor: '#fff', borderRadius: '12px', width: '580px', maxWidth: '90vw', height: '660px', maxHeight: '90vh', boxShadow: '0 8px 40px rgba(0,0,0,0.3)', display: 'flex', flexDirection: 'column' },
+  card: { backgroundColor: '#fff', borderRadius: '12px', width: '640px', maxWidth: '90vw', height: '660px', maxHeight: '90vh', boxShadow: '0 8px 40px rgba(0,0,0,0.3)', display: 'flex', flexDirection: 'column' },
   header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px 0', flexShrink: 0 },
   title: { fontSize: '18px', fontWeight: '600', color: '#111', margin: 0 },
   closeBtn: { background: 'none', border: 'none', fontSize: '16px', color: '#888', cursor: 'pointer', padding: '4px' },
@@ -850,7 +852,7 @@ const s: Record<string, React.CSSProperties> = {
   updateText: { flex: 1, fontSize: '13px', color: 'var(--ff-blue)', fontWeight: '500' },
   updateBtn: { background: 'var(--ff-blue)', color: '#fff', border: 'none', borderRadius: '6px', padding: '5px 12px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', flexShrink: 0 },
   tabBar: { display: 'flex', padding: '0 24px', marginTop: '16px', borderBottom: '1px solid #e8e4de', flexShrink: 0 },
-  tabBtn: { background: 'none', border: 'none', borderBottom: '2px solid transparent', padding: '8px 14px', fontSize: '13px', fontWeight: '500', color: '#888', cursor: 'pointer', marginBottom: '-1px', transition: 'color 0.15s' },
+  tabBtn: { background: 'none', border: 'none', borderBottom: '2px solid transparent', padding: '8px 12px', fontSize: '13px', fontWeight: '500', color: '#888', cursor: 'pointer', marginBottom: '-1px', transition: 'color 0.15s' },
   tabBtnActive: { color: 'var(--ff-pink)', borderBottom: '2px solid var(--ff-pink)' },
   content: { overflowY: 'auto', flex: 1 },
   section: { padding: '18px 24px' },

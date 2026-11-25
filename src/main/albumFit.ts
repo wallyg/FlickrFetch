@@ -66,7 +66,7 @@ export interface Profile {
 }
 export interface Misfit { photoId: string; albumId: string; why: string; types: ('date' | 'place' | 'tag' | 'wrong' | 'double')[] }
 export interface Missing { albumId: string; photoIds: string[]; why: string; both: number }
-export interface Fit { titledPercent: number; titlesOn: boolean; profiles: Map<string, Profile>; infos: Map<string, Info>; tagNames: Map<number, string>; misfits: Misfit[]; missing: Missing[] }
+export interface Fit { titledPercent: number; titlesOn: boolean; profiles: Map<string, Profile>; infos: Map<string, Info>; tagNames: Map<number, string>; nameOf: (ids: number[]) => string[]; misfits: Misfit[]; missing: Missing[] }
 
 let cache: { key: string; fit: Fit } | null = null
 let kindVersion = 0
@@ -418,7 +418,7 @@ export function compute(db: Database.Database, level: Level): Fit {
     const hint = words.length ? ` ${n(named)} of ${n(found.length)} also mention ${words.slice(0, 3).join(' or ')}.` : ''
     missing.push({ albumId, photoIds: found, why: `${list(how)}${both ? `; ${n(both)} by both` : ''}.${tagText}${hint}`.replace(/^./, c => c.toUpperCase()), both })
   }
-  return { titledPercent: Math.round(titledShare * 100), titlesOn, profiles, infos, tagNames, misfits, missing }
+  return { titledPercent: Math.round(titledShare * 100), titlesOn, profiles, infos, tagNames, nameOf, misfits, missing }
 }
 
 function fit(): Fit {
@@ -553,7 +553,7 @@ export function fitKinds(): AlbumKindRow[] {
   const why = (p: Profile): string => {
     if (p.pick === 'date') return `its photos sit in ${s(p.visits.length, 'visit', 'visits')}`
     if (p.pick === 'place') return `most photos are within ${Math.max(1, Math.round(p.loc?.p80 ?? 1))} km of its middle`
-    if (p.pick === 'tag') return `a clear subject tag: ${p.strong.slice(0, 3).map(id => f.tagNames.get(id) ?? '').filter(Boolean).join(', ')}`
+    if (p.pick === 'tag') return `a clear subject tag: ${f.nameOf(p.strong.slice(0, 3)).join(', ')}`   // reads the names it has not met yet
     return p.eligible ? 'no clear pattern' : `fewer than ${MIN_MEMBERS} photos`
   }
   return [...f.profiles.values()]

@@ -483,7 +483,7 @@ export interface AlbumItem {
 }
 export interface AlbumListPage { rows: AlbumItem[]; total: number; reasons?: Record<'all' | MisfitReason, number> }   // reasons: May not fit only, how many rows each reason has (before the reason filter)
 export interface AlbumFitPhoto { photoId: string; title: string; thumbUrl: string; flickrUrl: string }
-// One album in Tune checks > How each album is judged
+// One album in Settings > Album Checks (How each album is judged)
 export interface AlbumKindRow { albumId: string; title: string; photos: number; kind: AlbumKind; pick: AlbumKind; overridden: boolean; why: string }
 export interface AlbumSetRequest { id: string; condition: AlbumCondition; status: 'open' | 'fine' }
 export interface AlbumKindRequest { albumId: string; kind: AlbumKind | 'auto' }

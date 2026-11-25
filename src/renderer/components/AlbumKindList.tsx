@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import type { AlbumKind, AlbumKindRow } from '../../shared/types'
 import { filterInput } from '../ui/kit'
 
-// Tune checks > Albums > How each album is judged. What an album is about decides how May not fit and May be missing judge its photos:
+// Settings > Album Checks (part of Health Check). What an album is about decides how May not fit and May be missing judge its photos:
 // Date (trips and events), Place (one area), Subject (a clear tag) or Anything (leave it alone). The app picks one for every album;
 // a choice here replaces the pick for that album only, and Reset goes back to it. The choice stays on this computer.
 
