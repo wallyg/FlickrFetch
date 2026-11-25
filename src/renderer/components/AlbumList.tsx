@@ -93,7 +93,7 @@ export default function AlbumList({ onAlbumSelect, active = true }: AlbumListPro
         <style>{`@keyframes ff-al-shimmer { 0%,100% { opacity: 0.55; } 50% { opacity: 1; } }`}</style>
         <div style={{ ...styles.grid, gridTemplateColumns: GRID_COLUMNS['medium'], padding: '16px' }}>
           {Array.from({ length: 18 }, (_, i) => (
-            <div key={i} style={{ borderRadius: '10px', overflow: 'hidden', animation: `ff-al-shimmer 1.4s ease-in-out infinite`, animationDelay: `${(i % 6) * 0.08}s` }}>
+            <div key={i} style={{ borderRadius: '8px', overflow: 'hidden', animation: `ff-al-shimmer 1.4s ease-in-out infinite`, animationDelay: `${(i % 6) * 0.08}s` }}>
               <div style={{ height: '180px', background: 'var(--ff-border)' }} />
               <div style={{ padding: '10px 12px', background: 'var(--ff-grey-100)' }}>
                 <div style={{ height: '12px', background: 'var(--ff-border)', borderRadius: '4px', marginBottom: '6px', width: '75%' }} />
@@ -224,7 +224,7 @@ export default function AlbumList({ onAlbumSelect, active = true }: AlbumListPro
         </div>
       )}
       {tooltip && (
-        <div style={{ position: 'fixed', left: tooltip.x, top: tooltip.y - 4, transform: 'translateY(-100%)', background: 'color-mix(in srgb, var(--ff-text) 92%, transparent)', color: 'var(--ff-white)', padding: '4px 9px', borderRadius: '5px', fontSize: '12px', whiteSpace: 'nowrap', pointerEvents: 'none', zIndex: 'var(--ff-z-hover)', maxWidth: '320px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <div style={{ position: 'fixed', left: tooltip.x, top: tooltip.y - 4, transform: 'translateY(-100%)', background: 'color-mix(in srgb, var(--ff-text) 92%, transparent)', color: 'var(--ff-white)', padding: '4px 9px', borderRadius: '6px', fontSize: '12px', whiteSpace: 'nowrap', pointerEvents: 'none', zIndex: 'var(--ff-z-hover)', maxWidth: '320px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {tooltip.title}
         </div>
       )}
@@ -266,7 +266,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   message: {
     color: 'var(--ff-text-secondary)',
-    fontSize: '15px'
+    fontSize: '14px'
   },
   scroll: {
     height: '100%',
@@ -313,7 +313,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '11px', color: 'var(--ff-text-secondary)', cursor: 'pointer'
   },
   segGroupDensity: { display: 'flex', gap: '2px' },
-  densityBtn: { background: 'none', border: 'none', padding: '4px 5px', cursor: 'pointer', borderRadius: '5px', display: 'flex', alignItems: 'center', color: 'var(--ff-text-secondary)' },
+  densityBtn: { background: 'none', border: 'none', padding: '4px 5px', cursor: 'pointer', borderRadius: '6px', display: 'flex', alignItems: 'center', color: 'var(--ff-text-secondary)' },
   densityBtnActive: { backgroundColor: 'var(--ff-border)', color: 'var(--ff-text)' },
   grid: {
     display: 'grid',
@@ -326,7 +326,7 @@ const styles: Record<string, React.CSSProperties> = {
     width: '100%',
     background: 'var(--ff-surface)',
     border: '1px solid var(--ff-border)',
-    borderRadius: '10px',
+    borderRadius: '8px',
     overflow: 'hidden',
     cursor: 'pointer',
     textAlign: 'left' as const,
@@ -352,7 +352,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   title: {
     fontSize: '13px',
-    fontWeight: '600',
+    fontWeight: '700',
     color: 'var(--ff-text)',
     whiteSpace: 'nowrap',
     overflow: 'hidden',
@@ -407,7 +407,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   listTitle: {
     fontSize: '13px',
-    fontWeight: '600',
+    fontWeight: '700',
     color: 'var(--ff-text)',
     overflow: 'hidden',
     textOverflow: 'ellipsis',

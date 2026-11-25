@@ -172,3 +172,10 @@ Lato, bundled via `@fontsource/lato` (400, 700, 400 italic) and applied globally
 | `--ff-glass` / `--ff-glass-soft` | white at 85% / 75% | A white panel or chip over a photo or the map |
 
 Tints of a brand colour (a hover wash, a selected row) are written `color-mix(in srgb, var(--ff-pink) 6%, transparent)`, so the colour stays the token's. Nothing in the interface types a hex or rgba colour; `npm test` keeps it that way (tests/colourGuard.test.ts). Left on purpose: the collage picture's own artwork (Share dialog), the three privacy badge hues in the photo view, the brand wave, and computed heat colours.
+
+## Type and corner scales (3.12, #231)
+
+- **Weights:** 400 and 700 only. 500 became 400, 600 and 800 became 700 (what the screen already showed).
+- **Text sizes:** 11, 12, 13, 14, 16, 18, 22, 24 px; display sizes above 24 are free. Nothing is smaller than 11. The odd sizes moved to the nearest (8, 9, 10 and 10.5 to 11; 11.5 and 12.5 to 12; 13.5 and 15 to 14; 17 to 16; 20 to 18; 26 to 24).
+- **Corners:** 0, 4, 6, 8, 12 and 50 (a pill). 1, 2, 3 to 4; 5 and 7 to 6; 9 and 10 to 8; 14 and 16 to 12; 20 and 99 to 50. A shape such as `'3px 3px 0 0'` is its own thing.
+- `npm test` keeps all three (tests/styleScales.test.ts).

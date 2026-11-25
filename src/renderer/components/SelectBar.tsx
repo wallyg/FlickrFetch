@@ -12,7 +12,7 @@ export default function SelectBar({ count, shown, onSelectAll, onClear, ids }: {
   return (
     <div role="status" style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', padding: '6px 10px', margin: '0 0 8px', background: 'var(--ff-tint)', border: '1px solid var(--ff-border)', borderRadius: 8, fontSize: 13, color: 'var(--ff-text)' }}>
       <b>{count.toLocaleString()} selected</b>
-      <BatchEditButton inline key={count} style={{ ...quietBtn, borderColor: 'var(--ff-blue)', color: 'var(--ff-blue)', fontWeight: 600 }} label="Fix selected in Flickr's batch editor" getIds={async () => ids()} />
+      <BatchEditButton inline key={count} style={{ ...quietBtn, borderColor: 'var(--ff-blue)', color: 'var(--ff-blue)', fontWeight: 700 }} label="Fix selected in Flickr's batch editor" getIds={async () => ids()} />
       {count < shown && <button style={link} onClick={onSelectAll}>Select all {shown.toLocaleString()} showing</button>}
       <button style={link} onClick={onClear}>Clear</button>
     </div>

@@ -174,7 +174,7 @@ export function PhotoListRow({ photo, isDownloaded, isSelected, selectMode, onCl
           background: isSelected ? 'var(--ff-pink)' : 'transparent',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          {isSelected && <span style={{ color: 'var(--ff-white)', fontSize: '10px', fontWeight: 700 }}>✓</span>}
+          {isSelected && <span style={{ color: 'var(--ff-white)', fontSize: '11px', fontWeight: 700 }}>✓</span>}
         </div>
       )}
       {photo.thumbnailUrl
@@ -182,7 +182,7 @@ export function PhotoListRow({ photo, isDownloaded, isSelected, selectMode, onCl
         : <div style={{ width: 40, height: 40, background: 'var(--ff-line-strong)', borderRadius: '4px', flexShrink: 0 }} />
       }
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ff-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ff-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {photo.title || '(untitled)'}
         </div>
         <div style={{ fontSize: '11px', color: 'var(--ff-text-secondary)', marginTop: '2px' }}>
@@ -190,7 +190,7 @@ export function PhotoListRow({ photo, isDownloaded, isSelected, selectMode, onCl
         </div>
       </div>
       {photo.media === 'video' && (
-        <span style={{ fontSize: '11px', color: 'var(--ff-text-secondary)', background: 'var(--ff-grey-100)', borderRadius: '3px', padding: '2px 6px', flexShrink: 0 }}>Video</span>
+        <span style={{ fontSize: '11px', color: 'var(--ff-text-secondary)', background: 'var(--ff-grey-100)', borderRadius: '4px', padding: '2px 6px', flexShrink: 0 }}>Video</span>
       )}
       {privacyLevel !== 'public' && (
         <span style={{ flexShrink: 0 }}><PrivacyIcon level={privacyLevel} /></span>
@@ -301,7 +301,7 @@ export function Tooltip({ text, children, align = 'center', side = 'above' }: { 
           position: 'absolute', ...(side === 'below' ? { top: 'calc(100% + 6px)' } : { bottom: 'calc(100% + 6px)' }),
           ...(align === 'right' ? { right: 0 } : align === 'left' ? { left: 0 } : { left: '50%', transform: 'translateX(-50%)' }),
           backgroundColor: 'var(--ff-text)', color: 'var(--ff-white)', fontSize: '11px', lineHeight: '1.5',
-          padding: '5px 9px', borderRadius: '5px', maxWidth: '220px', width: 'max-content', whiteSpace: 'pre-line',
+          padding: '5px 9px', borderRadius: '6px', maxWidth: '220px', width: 'max-content', whiteSpace: 'pre-line',
           zIndex: 'var(--ff-z-menu)', pointerEvents: 'none', boxShadow: '0 2px 8px var(--ff-shadow-mid)',
           textAlign: 'left' as const
         }}>
@@ -319,7 +319,7 @@ export const chipStyle: React.CSSProperties = {
 }
 export const chipDismissStyle: React.CSSProperties = {
   background: 'none', border: 'none', padding: '0 0 0 2px',
-  fontSize: '10px', color: 'var(--ff-text-secondary)', cursor: 'pointer', lineHeight: 1
+  fontSize: '11px', color: 'var(--ff-text-secondary)', cursor: 'pointer', lineHeight: 1
 }
 
 export function DownloadFilterSelect({ value, onChange }: { value: DownloadFilter; onChange: (v: DownloadFilter) => void }): React.JSX.Element {
@@ -432,7 +432,7 @@ export const sharedStyles: Record<string, React.CSSProperties> = {
   toolbar: { display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' as const, padding: '10px 16px 8px' },
   drawer: { display: 'flex', flexDirection: 'column' as const, borderTop: '1px solid var(--ff-border)', backgroundColor: 'var(--ff-cream)' },
   drawerRow: { display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' as const, padding: '7px 16px', borderBottom: '1px solid var(--ff-border)' },
-  drawerLabel: { fontSize: '11px', fontWeight: '600', color: 'var(--ff-text-secondary)', textTransform: 'uppercase' as const, letterSpacing: '0.04em', minWidth: `${DRAWER_LABEL_WIDTH}px` },
+  drawerLabel: { fontSize: '11px', fontWeight: '700', color: 'var(--ff-text-secondary)', textTransform: 'uppercase' as const, letterSpacing: '0.04em', minWidth: `${DRAWER_LABEL_WIDTH}px` },
   // Search / filter controls
   searchGroup: { display: 'flex', alignItems: 'center', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', overflow: 'hidden', backgroundColor: 'var(--ff-surface)' },
   searchIcon: { display: 'flex', alignItems: 'center', padding: '0 4px 0 8px', color: 'var(--ff-text-secondary)', flexShrink: 0 },
@@ -447,12 +447,12 @@ export const sharedStyles: Record<string, React.CSSProperties> = {
   segActive: { ...kitSelectedOn },
   sortSelect: { fontSize: '12px', color: 'var(--ff-text-secondary)', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '5px 8px', background: 'none', cursor: 'pointer' },
   segGroupDensity: { display: 'flex', alignItems: 'center', gap: '2px', marginLeft: 'auto' },
-  densityBtn: { background: 'none', border: 'none', padding: '4px 5px', cursor: 'pointer', borderRadius: '5px', display: 'flex', alignItems: 'center', color: 'var(--ff-text-secondary)' },
+  densityBtn: { background: 'none', border: 'none', padding: '4px 5px', cursor: 'pointer', borderRadius: '6px', display: 'flex', alignItems: 'center', color: 'var(--ff-text-secondary)' },
   densityBtnActive: { backgroundColor: 'var(--ff-border)', color: 'var(--ff-text)' },
   rowHeightSlider: { width: '72px', height: '3px', cursor: 'pointer', accentColor: 'var(--ff-blue)', margin: '0 4px' },
   moreFiltersBtn: { display: 'flex', alignItems: 'center', gap: '4px', background: 'none', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '5px 10px', fontSize: '12px', color: 'var(--ff-text-secondary)', cursor: 'pointer' },
   moreFiltersBtnActive: { backgroundColor: 'var(--ff-stage)', color: 'var(--ff-white)', borderColor: 'var(--ff-stage)' },
-  drawerBadge: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--ff-pink)', color: 'var(--ff-white)', borderRadius: '50%', width: '14px', height: '14px', fontSize: '9px', fontWeight: '700' },
+  drawerBadge: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--ff-pink)', color: 'var(--ff-white)', borderRadius: '50%', width: '14px', height: '14px', fontSize: '11px', fontWeight: '700' },
   clearFiltersLink: { background: 'none', border: 'none', fontSize: '12px', color: 'var(--ff-blue)', cursor: 'pointer', padding: '0', textDecoration: 'underline' as const },
   // Active filter chips
   chipRow: { display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' as const, padding: '5px 16px 6px' },
@@ -468,15 +468,15 @@ export const sharedStyles: Record<string, React.CSSProperties> = {
   // Drawer date/tag controls
   dateModeSelect: { border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '5px 8px', fontSize: '12px', color: 'var(--ff-text)', background: 'var(--ff-surface)', cursor: 'pointer' },
   dateInputsInline: { display: 'flex', alignItems: 'center', gap: '5px' },
-  dateInput: { border: '1px solid var(--ff-line-strong)', borderRadius: '5px', padding: '4px 6px', fontSize: '12px', color: 'var(--ff-text)', background: 'var(--ff-surface)' },
+  dateInput: { border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '4px 6px', fontSize: '12px', color: 'var(--ff-text)', background: 'var(--ff-surface)' },
   dateToLabel: { fontSize: '12px', color: 'var(--ff-text-secondary)' },
   comingSoon: { fontSize: '12px', color: 'var(--ff-text-secondary)' },
   downloadFilterBtn: { background: 'none', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '5px 10px', fontSize: '12px', color: 'var(--ff-text-secondary)', cursor: 'pointer', whiteSpace: 'nowrap' as const },
   downloadFilterBtnActive: { backgroundColor: 'var(--ff-stage)', color: 'var(--ff-white)', borderColor: 'var(--ff-stage)' },
   listContainer: { display: 'flex', flexDirection: 'column' as const },
-  tagHint: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '16px', height: '16px', borderRadius: '50%', backgroundColor: 'var(--ff-line-strong)', fontSize: '10px', color: 'var(--ff-text-secondary)', cursor: 'default', fontWeight: '600', flexShrink: 0 } as React.CSSProperties,
+  tagHint: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '16px', height: '16px', borderRadius: '50%', backgroundColor: 'var(--ff-line-strong)', fontSize: '11px', color: 'var(--ff-text-secondary)', cursor: 'default', fontWeight: '700', flexShrink: 0 } as React.CSSProperties,
   // Empty / error states
   centered: { display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', height: '100%', gap: '12px' },
-  mutedText: { color: 'var(--ff-text-secondary)', fontSize: '15px', margin: 0 },
+  mutedText: { color: 'var(--ff-text-secondary)', fontSize: '14px', margin: 0 },
   clearFiltersBtn: { background: 'none', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '6px 16px', fontSize: '13px', color: 'var(--ff-text-secondary)', cursor: 'pointer' },
 }

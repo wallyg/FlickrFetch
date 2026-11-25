@@ -101,7 +101,7 @@ export default function BackupPanel({ refreshKey, toolbarLeft, onDownload, openR
             {!summary ? <div style={dash.muted}>{summaryFailed ? <>This could not be loaded. <button style={{ background: 'none', border: 'none', color: 'var(--ff-blue)', cursor: 'pointer', fontSize: 'inherit', textDecoration: 'underline', padding: 0 }} onClick={() => setAttempt(n => n + 1)}>Try again</button></> : 'Counting…'}</div> : (
               <>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 26, fontWeight: 600, color: 'var(--ff-text)' }}>{summary.downloaded.toLocaleString()}</span>
+                  <span style={{ fontSize: 24, fontWeight: 700, color: 'var(--ff-text)' }}>{summary.downloaded.toLocaleString()}</span>
                   <span style={dash.big}>of {summary.library.toLocaleString()} photos and videos downloaded</span>
                 </div>
                 <div style={styles.track} aria-hidden="true"><div style={{ ...styles.fill, width: `${Math.max(fraction * 100, summary.downloaded > 0 ? 0.6 : 0)}%` }} /></div>
@@ -175,17 +175,17 @@ const styles: Record<string, React.CSSProperties> = {
   wrap: { flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' },
   body: { flex: 1, minHeight: 0, display: 'flex', gap: 16, padding: '4px 24px 12px' },
   railCol: { width: 230, flexShrink: 0, alignSelf: 'flex-start', maxHeight: '100%', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12 },
-  rail: { flexShrink: 0, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 10, padding: 6 },
+  rail: { flexShrink: 0, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 8, padding: 6 },
   main: { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: 0 },
   list: { flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: 4 },
-  card: { display: 'flex', gap: 12, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 10, padding: 10, marginBottom: 8 },
+  card: { display: 'flex', gap: 12, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 8, padding: 10, marginBottom: 8 },
   thumb: { width: 76, height: 76, borderRadius: 6, objectFit: 'cover', background: 'var(--ff-border)', flexShrink: 0 },
   l1: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  title: { fontSize: 14, fontWeight: 600, color: 'var(--ff-text)', overflowWrap: 'anywhere' },
-  pill: { fontSize: 11, borderRadius: 10, padding: '1px 8px', background: 'var(--ff-warm)', color: 'var(--ff-text-secondary)' },
+  title: { fontSize: 14, fontWeight: 700, color: 'var(--ff-text)', overflowWrap: 'anywhere' },
+  pill: { fontSize: 11, borderRadius: 8, padding: '1px 8px', background: 'var(--ff-warm)', color: 'var(--ff-text-secondary)' },
   actions: { display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, flexWrap: 'wrap' },
-  mainActionBtn: { ...quietBtn, borderColor: 'var(--ff-blue)', color: 'var(--ff-blue)', fontWeight: 600 },
+  mainActionBtn: { ...quietBtn, borderColor: 'var(--ff-blue)', color: 'var(--ff-blue)', fontWeight: 700 },
   moreBtn: { ...quietBtn, width: '100%', marginBottom: 12 },
-  track: { height: 10, borderRadius: 5, background: 'var(--ff-warm)', overflow: 'hidden', marginTop: 10 },
+  track: { height: 10, borderRadius: 6, background: 'var(--ff-warm)', overflow: 'hidden', marginTop: 10 },
   fill: { height: 10, background: 'var(--ff-pink)' }
 }

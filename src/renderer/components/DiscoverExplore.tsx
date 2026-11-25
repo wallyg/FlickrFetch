@@ -229,7 +229,7 @@ export default function DiscoverExplore({ onDownload }: Props): React.JSX.Elemen
                       return (
                         <div key={photo.id} style={{
                           position: 'relative', width: `${row.widths[pi]}px`, height: `${row.height}px`,
-                          flexShrink: 0, overflow: 'hidden', borderRadius: '2px', cursor: 'pointer',
+                          flexShrink: 0, overflow: 'hidden', borderRadius: '4px', cursor: 'pointer',
                           transition: 'transform 0.15s ease, box-shadow 0.15s ease',
                           ...(isSelected ? { outline: '3px solid var(--ff-pink)', outlineOffset: '-3px', zIndex: 1 } : {}),
                           ...(selectMode && !isSelected ? { opacity: 0.75 } : {}),
@@ -371,13 +371,13 @@ const sb: Record<string, React.CSSProperties> = {
   },
   downloadBtn: {
     backgroundColor: 'var(--ff-pink-action)', color: 'var(--ff-white)', border: 'none',
-    borderRadius: '6px', padding: '6px 14px', fontSize: '13px', fontWeight: 600,
+    borderRadius: '6px', padding: '6px 14px', fontSize: '13px', fontWeight: 700,
     cursor: 'pointer', flexShrink: 0,
   },
   downloadBtnDisabled: { opacity: 0.5, cursor: 'not-allowed' },
   cancelBtn: {
     background: 'none', border: 'none', padding: '5px 8px',
-    fontSize: '13px', fontWeight: 600, color: 'var(--ff-text-secondary)', cursor: 'pointer',
+    fontSize: '13px', fontWeight: 700, color: 'var(--ff-text-secondary)', cursor: 'pointer',
   },
 }
 
@@ -385,7 +385,7 @@ const s: Record<string, React.CSSProperties> = {
   container: { display: 'flex', flexDirection: 'column', gap: '16px', padding: `0 ${DISCOVER_GUTTER}px 32px` },
   stickyHeader: { position: 'sticky' as const, top: 0, zIndex: 'var(--ff-z-sticky)', background: 'var(--ff-surface)', paddingBottom: '8px' },
   headerRow: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', paddingTop: '20px' },
-  heading: { margin: 0, fontSize: '18px', fontWeight: 600, color: 'var(--ff-text)' },
+  heading: { margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--ff-text)' },
   subheading: { margin: '4px 0 0', fontSize: '13px', color: 'var(--ff-text-secondary)' },
   attrNotice: {
     display: 'flex', alignItems: 'flex-start', gap: '8px',
@@ -417,8 +417,8 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
     padding: '8px',
   },
-  overlayTitle: { color: 'var(--ff-white)', fontSize: '11px', fontWeight: 500, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-  videoTag: { color: 'var(--ff-text-muted)', fontSize: '10px', marginTop: '2px' },
+  overlayTitle: { color: 'var(--ff-white)', fontSize: '11px', fontWeight: 400, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  videoTag: { color: 'var(--ff-text-muted)', fontSize: '11px', marginTop: '2px' },
   loadMoreRow: { display: 'flex', justifyContent: 'center', paddingTop: '8px' },
   loadMoreBtn: {
     padding: '8px 24px', borderRadius: '8px', border: '1px solid var(--ff-line-strong)',

@@ -182,13 +182,13 @@ export default function HealthOverview({ refreshKey, onOpenList }: { refreshKey:
 }
 
 const STACK = { issue: 'var(--ff-blue)', both: '#6a9be8', warn: '#bfd3f6' }   // darker = more serious
-const swatch = (c: string): React.CSSProperties => ({ width: 10, height: 10, borderRadius: 2, background: c, display: 'inline-block' })
+const swatch = (c: string): React.CSSProperties => ({ width: 10, height: 10, borderRadius: 4, background: c, display: 'inline-block' })
 
 const styles: Record<string, React.CSSProperties> = {
   years: { display: 'flex', alignItems: 'flex-end', gap: 3, height: 130 },
   bar: { flex: 1, minWidth: 4, borderRadius: '3px 3px 0 0' },
   stack: { display: 'flex', flexDirection: 'column', overflow: 'hidden' },
-  key: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--ff-text-secondary)', marginTop: 8 },
+  key: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--ff-text-secondary)', marginTop: 8 },
   axis: { display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--ff-text-secondary)', marginTop: 4 },
   chip: { ...chipBase, fontSize: 12, padding: '2px 10px' },
   chipOn: { ...selectedOn }

@@ -389,12 +389,12 @@ export default function DiscoverGroups({ findActive = true }: { findActive?: boo
           )}
           {groupDownloadWarning && (
             <div style={{ padding: '8px 16px', backgroundColor: 'color-mix(in srgb, var(--ff-warning) 10%, transparent)', borderBottom: '1px solid color-mix(in srgb, var(--ff-warning) 25%, transparent)', display: 'flex', alignItems: 'center', gap: '12px', fontSize: '13px' }}>
-              <span style={{ color: 'var(--ff-warning-text)', fontSize: '15px', flexShrink: 0 }}>⚠</span>
+              <span style={{ color: 'var(--ff-warning-text)', fontSize: '14px', flexShrink: 0 }}>⚠</span>
               <span style={{ flex: 1 }}>
                 This group has {groupDownloadWarning.photoCount.toLocaleString()} photos. Downloading all may take a while to start.
               </span>
               <button
-                style={{ background: 'none', border: '1px solid color-mix(in srgb, var(--ff-warning) 50%, transparent)', borderRadius: '5px', padding: '4px 10px', fontSize: '12px', color: 'var(--ff-warning-text)', cursor: 'pointer', flexShrink: 0 }}
+                style={{ background: 'none', border: '1px solid color-mix(in srgb, var(--ff-warning) 50%, transparent)', borderRadius: '6px', padding: '4px 10px', fontSize: '12px', color: 'var(--ff-warning-text)', cursor: 'pointer', flexShrink: 0 }}
                 onClick={() => {
                   setGroupDownloadWarning(null)
                   void window.flickrAPI.startDiscoverGroupBatch(activeGroup.id, activeGroup.name, `↓ ${activeGroup.name}`, true, undefined)
@@ -648,7 +648,7 @@ export default function DiscoverGroups({ findActive = true }: { findActive?: boo
                         return (
                           <div key={photo.id} style={{
                             position: 'relative', width: `${row.widths[pi]}px`, height: `${row.height}px`,
-                            flexShrink: 0, overflow: 'hidden', borderRadius: '2px', cursor: 'pointer',
+                            flexShrink: 0, overflow: 'hidden', borderRadius: '4px', cursor: 'pointer',
                             transition: 'transform 0.15s ease, box-shadow 0.15s ease',
                             ...(isSelected ? { outline: '3px solid var(--ff-pink)', outlineOffset: '-3px', zIndex: 1 } : {}),
                             ...(selectMode && !isSelected ? { opacity: 0.75 } : {}),
@@ -758,7 +758,7 @@ const s: Record<string, React.CSSProperties> = {
   container: { display: 'flex', flexDirection: 'column', gap: '16px', padding: `0 ${DISCOVER_GUTTER}px 32px` },
   stickyHeader: { position: 'sticky' as const, top: 0, zIndex: 'var(--ff-z-sticky)', background: 'var(--ff-surface)', paddingBottom: '8px' },
   headerRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '20px' },
-  heading: { margin: 0, fontSize: '18px', fontWeight: 600, color: 'var(--ff-text)' },
+  heading: { margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--ff-text)' },
   subheading: { margin: '4px 0 0', fontSize: '13px', color: 'var(--ff-text-secondary)' },
   backBtn: { background: 'none', border: 'none', color: 'var(--ff-blue)', cursor: 'pointer', fontSize: '14px', padding: '4px 0', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '4px' },
   selectBtn: { padding: '6px 14px', borderRadius: '8px', border: '1px solid var(--ff-line-strong)', background: 'var(--ff-surface)', cursor: 'pointer', fontSize: '13px', color: 'var(--ff-text)', flexShrink: 0 },
@@ -779,7 +779,7 @@ const s: Record<string, React.CSSProperties> = {
     justifyContent: 'center', fontSize: '18px', fontWeight: 700
   },
   groupInfo: { flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' },
-  groupName: { fontSize: '14px', fontWeight: 500, color: 'var(--ff-text)' },
+  groupName: { fontSize: '14px', fontWeight: 400, color: 'var(--ff-text)' },
   groupMeta: { fontSize: '12px', color: 'var(--ff-text-secondary)' },
   chevron: { color: 'var(--ff-text-muted)' },
   groupIcon: { width: '36px', height: '36px', borderRadius: '6px', objectFit: 'cover' },

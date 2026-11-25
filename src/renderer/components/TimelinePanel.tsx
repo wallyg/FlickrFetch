@@ -213,7 +213,7 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
             <div style={{ ...styles.key, marginTop: 0, marginLeft: 'auto' }}>
               <span>Fewer</span>
               <span style={{ display: 'inline-flex', gap: 2 }}>
-                {[0, 0.05, 0.2, 0.45, 1].map(f => <i key={f} style={{ width: 24, height: 11, borderRadius: 2, display: 'block', background: f === 0 ? 'var(--ff-warm)' : shade(f * grid.max) }} />)}
+                {[0, 0.05, 0.2, 0.45, 1].map(f => <i key={f} style={{ width: 24, height: 11, borderRadius: 4, display: 'block', background: f === 0 ? 'var(--ff-warm)' : shade(f * grid.max) }} />)}
               </span>
               <span>More</span>
               <span style={{ marginLeft: 6 }}>Grey means none.</span>
@@ -231,8 +231,8 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
                     <div
                       key={m}
                       title={`${n.toLocaleString()} photo${n === 1 ? '' : 's'}, ${monthTitle(y, m)}`}
-                      style={{ height: 18, borderRadius: 3, background: shade(n), cursor: n ? 'pointer' : 'default', outline: came ? '2px solid var(--ff-pink)' : 'none', outlineOffset: 1,
-                        display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '0 6px', fontSize: 10.5, lineHeight: 1, fontVariantNumeric: 'tabular-nums',
+                      style={{ height: 18, borderRadius: 4, background: shade(n), cursor: n ? 'pointer' : 'default', outline: came ? '2px solid var(--ff-pink)' : 'none', outlineOffset: 1,
+                        display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '0 6px', fontSize: 11, lineHeight: 1, fontVariantNumeric: 'tabular-nums',
                         color: strength(n, grid.max) > 0.55 ? 'var(--ff-glass)' : 'color-mix(in srgb, var(--ff-navy) 55%, transparent)', userSelect: 'none' }}
                       onMouseEnter={() => setHover({ year: y, month: m, n, v: grid.vmap.get(`${y}-${m}`) ?? 0 })}
                       onMouseLeave={() => setHover(null)}
@@ -302,12 +302,12 @@ const styles: Record<string, React.CSSProperties> = {
   card: { background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 12, padding: `14px ${CARD_PAD}px` },
   hm: { display: 'grid', gridTemplateColumns: `${LABEL_W}px repeat(12, 1fr)`, gap: GAP, marginBottom: GAP, alignItems: 'center' },
   hl: { fontSize: 11, color: 'var(--ff-text-secondary)' },
-  hc: { fontSize: 10, color: 'var(--ff-text-secondary)', textAlign: 'center' },
+  hc: { fontSize: 11, color: 'var(--ff-text-secondary)', textAlign: 'center' },
   cal: { display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, maxWidth: 560 },
   btn: { ...quietBtn },
   pill: { ...pillBtn },
   icon: { color: 'var(--ff-blue)', display: 'inline-flex' },
-  primary: { ...primaryBtn, padding: '4px 12px', fontSize: 12.5 },
+  primary: { ...primaryBtn, padding: '4px 12px', fontSize: 12 },
   bar: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', margin: '0 0 10px' },
   key: { display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--ff-text-secondary)', marginTop: 10 }
 }

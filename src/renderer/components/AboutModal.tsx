@@ -90,7 +90,7 @@ export default function AboutModal({ version, onClose }: AboutModalProps): React
                 </a>
                 <a href="#" style={styles.linkItem}
                   onClick={(e) => { e.preventDefault(); window.flickrAPI.openExternal('https://www.flickr.com/photos/wallyg/') }}>
-                  <span style={{ fontSize: '15px', letterSpacing: '-1px', lineHeight: 1 }}>
+                  <span style={{ fontSize: '14px', letterSpacing: '-1px', lineHeight: 1 }}>
                     <span style={{ color: 'var(--ff-blue)' }}>●</span><span style={{ color: 'var(--ff-pink)' }}>●</span>
                   </span>
                   <span style={styles.linkLabel}>My Flickr</span>
@@ -132,7 +132,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   card: {
     backgroundColor: 'var(--ff-warning-bg)',
-    borderRadius: '16px',
+    borderRadius: '12px',
     width: '720px',
     maxWidth: '92vw',
     boxShadow: '0 12px 48px var(--ff-shadow-strong)',
@@ -147,7 +147,7 @@ const styles: Record<string, React.CSSProperties> = {
     right: '14px',
     background: 'none',
     border: 'none',
-    fontSize: '15px',
+    fontSize: '14px',
     color: 'var(--ff-text-secondary)',
     cursor: 'pointer',
     padding: '4px',
@@ -185,7 +185,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '14px'
   },
   heading: {
-    fontSize: '17px',
+    fontSize: '16px',
     fontWeight: '700',
     color: 'var(--ff-navy)',
     margin: 0,
@@ -205,7 +205,7 @@ const styles: Record<string, React.CSSProperties> = {
   iconBadge: {
     width: '36px',
     height: '36px',
-    borderRadius: '10px',
+    borderRadius: '8px',
     backgroundColor: 'var(--ff-info-bg)',
     display: 'flex',
     alignItems: 'center',
@@ -235,17 +235,17 @@ const styles: Record<string, React.CSSProperties> = {
     boxShadow: '0 1px 4px color-mix(in srgb, var(--ff-navy) 20%, transparent)',
     backgroundColor: 'var(--ff-surface)',
     border: 'none',
-    borderRadius: '20px',
+    borderRadius: '50px',
     padding: '5px 14px',
     fontSize: '12px',
-    fontWeight: '600',
+    fontWeight: '700',
     color: 'var(--ff-blue)',
     cursor: 'pointer',
     textDecoration: 'none'
   } as React.CSSProperties,
   deepLink: {
     fontSize: '12px',
-    fontWeight: '600',
+    fontWeight: '700',
     color: 'var(--ff-blue)',
     cursor: 'pointer',
     textDecoration: 'none'
@@ -270,11 +270,11 @@ const styles: Record<string, React.CSSProperties> = {
   } as React.CSSProperties,
   linkLabel: {
     fontSize: '12px',
-    fontWeight: '600',
+    fontWeight: '700',
     color: 'var(--ff-blue)'
   },
   linkSub: {
-    fontSize: '10px',
+    fontSize: '11px',
     color: 'var(--ff-text-secondary)',
     textAlign: 'center' as const
   },

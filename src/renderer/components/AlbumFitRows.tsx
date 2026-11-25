@@ -9,8 +9,8 @@ import PhotoStrip from './PhotoStrip'
 // ticked or opened on Flickr) and the full reason. Nothing here changes Flickr.
 
 export const actionStyles: Record<string, React.CSSProperties> = {
-  link: { background: 'none', border: 'none', color: 'var(--ff-blue)', fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: '5px 6px' },    // looks at something on Flickr
-  fix: { ...quietBtn, borderColor: 'var(--ff-blue)', color: 'var(--ff-blue)', fontWeight: 600 },                                                  // the one real action: open the editor
+  link: { background: 'none', border: 'none', color: 'var(--ff-blue)', fontSize: 13, fontWeight: 700, cursor: 'pointer', padding: '5px 6px' },    // looks at something on Flickr
+  fix: { ...quietBtn, borderColor: 'var(--ff-blue)', color: 'var(--ff-blue)', fontWeight: 700 },                                                  // the one real action: open the editor
   quiet: { background: 'none', border: 'none', color: 'var(--ff-text-secondary)', fontSize: 13, textDecoration: 'underline', cursor: 'pointer', padding: '5px 6px' }   // puts the row aside
 }
 
@@ -93,10 +93,10 @@ export function MissingRow({ item, onFine, onKind }: { item: AlbumItem; onFine: 
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  card: { display: 'flex', gap: 12, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 10, padding: 10, marginBottom: 8 },
+  card: { display: 'flex', gap: 12, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 8, padding: 10, marginBottom: 8 },
   thumb: { width: 76, height: 76, borderRadius: 6, objectFit: 'cover', background: 'var(--ff-border)', flexShrink: 0 },
   body: { flex: 1, minWidth: 0 },
-  title: { fontSize: 14, fontWeight: 600, color: 'var(--ff-text)', overflowWrap: 'anywhere' },
+  title: { fontSize: 14, fontWeight: 700, color: 'var(--ff-text)', overflowWrap: 'anywhere' },
   muted: { fontSize: 13, color: 'var(--ff-text-secondary)' },
   description: { fontSize: 13, fontStyle: 'italic', color: 'var(--ff-text-secondary)', marginTop: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
   judged: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 8, fontSize: 12, color: 'var(--ff-text-secondary)' },

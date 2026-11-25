@@ -9,7 +9,7 @@ import type { CSSProperties } from 'react'
 
 export const primaryBtn: CSSProperties = {
   background: 'var(--ff-pink-action)', color: 'var(--ff-white)', border: '1px solid var(--ff-pink-action)',
-  borderRadius: 6, padding: '5px 13px', fontSize: 13, fontWeight: 600, cursor: 'pointer'
+  borderRadius: 6, padding: '5px 13px', fontSize: 13, fontWeight: 700, cursor: 'pointer'
 }
 
 export const quietBtn: CSSProperties = {
@@ -19,7 +19,7 @@ export const quietBtn: CSSProperties = {
 
 // A small quiet button with an icon in front (the icon takes the blue; the label stays dark)
 export const pillBtn: CSSProperties = {
-  ...quietBtn, display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 10px', fontSize: 12.5, whiteSpace: 'nowrap'
+  ...quietBtn, display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 10px', fontSize: 12, whiteSpace: 'nowrap'
 }
 
 export const linkBtn: CSSProperties = {
@@ -33,16 +33,16 @@ export const selectedOn: CSSProperties = {
 }
 
 export const chip: CSSProperties = {
-  border: '1px solid var(--ff-border)', borderRadius: 14, padding: '3px 11px', fontSize: 13,
+  border: '1px solid var(--ff-border)', borderRadius: 12, padding: '3px 11px', fontSize: 13,
   background: 'var(--ff-surface)', color: 'var(--ff-text)', cursor: 'pointer'
 }
 
 export const segGroup: CSSProperties = {
-  display: 'inline-flex', gap: 2, padding: 2, border: '1px solid var(--ff-line-strong)', borderRadius: 10, background: 'var(--ff-surface)'
+  display: 'inline-flex', gap: 2, padding: 2, border: '1px solid var(--ff-line-strong)', borderRadius: 8, background: 'var(--ff-surface)'
 }
 
 export const segBtn: CSSProperties = {
-  border: 'none', borderRadius: 7, padding: '4px 12px', fontSize: 13, color: 'var(--ff-text-secondary)', background: 'var(--ff-surface)', cursor: 'pointer'
+  border: 'none', borderRadius: 6, padding: '4px 12px', fontSize: 13, color: 'var(--ff-text-secondary)', background: 'var(--ff-surface)', cursor: 'pointer'
 }
 
 export const railItem: CSSProperties = {

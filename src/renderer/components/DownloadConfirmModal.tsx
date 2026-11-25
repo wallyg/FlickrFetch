@@ -184,14 +184,14 @@ const s: Record<string, React.CSSProperties> = {
     margin: 0, fontSize: '16px', fontWeight: '700', color: 'var(--ff-navy)',
   },
   closeBtn: {
-    background: 'none', border: 'none', fontSize: '15px', color: 'var(--ff-text-secondary)',
+    background: 'none', border: 'none', fontSize: '14px', color: 'var(--ff-text-secondary)',
     cursor: 'pointer', padding: '0 4px', lineHeight: 1,
   },
   body: {
     padding: '16px 20px 0',
   },
   batchTitle: {
-    margin: '0 0 4px', fontSize: '14px', fontWeight: '600', color: 'var(--ff-text)',
+    margin: '0 0 4px', fontSize: '14px', fontWeight: '700', color: 'var(--ff-text)',
   },
   countLine: {
     margin: '0 0 4px', fontSize: '13px', color: 'var(--ff-text-secondary)',
@@ -213,14 +213,14 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: '12px', color: 'var(--ff-text-secondary)', width: '52px', flexShrink: 0,
   },
   settingValue: {
-    fontSize: '14px', color: 'var(--ff-text)', fontWeight: '500', overflow: 'hidden',
+    fontSize: '14px', color: 'var(--ff-text)', fontWeight: '400', overflow: 'hidden',
     textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const, flex: 1,
   },
   metaSection: {
     marginTop: '16px', borderTop: '1px solid var(--ff-border)', paddingTop: '12px',
   },
   metaHeading: {
-    margin: '0 0 10px', fontSize: '11px', fontWeight: '600', color: 'var(--ff-text-secondary)',
+    margin: '0 0 10px', fontSize: '11px', fontWeight: '700', color: 'var(--ff-text-secondary)',
     textTransform: 'uppercase' as const, letterSpacing: '0.5px',
   },
   metaGrid: {
@@ -244,13 +244,13 @@ const s: Record<string, React.CSSProperties> = {
     padding: '14px 20px 0',
   },
   formatLabel: {
-    fontSize: '13px', color: 'var(--ff-text-secondary)', fontWeight: '500', flexShrink: 0,
+    fontSize: '13px', color: 'var(--ff-text-secondary)', fontWeight: '400', flexShrink: 0,
   },
   segGroup: {
-    display: 'flex', borderRadius: '7px', border: '1px solid var(--ff-line-strong)', overflow: 'hidden',
+    display: 'flex', borderRadius: '6px', border: '1px solid var(--ff-line-strong)', overflow: 'hidden',
   },
   segBtn: {
-    padding: '5px 12px', fontSize: '13px', fontWeight: '500',
+    padding: '5px 12px', fontSize: '13px', fontWeight: '400',
     background: 'var(--ff-surface)', border: 'none', borderRight: '1px solid var(--ff-line-strong)',
     cursor: 'pointer', color: 'var(--ff-text-secondary)',
   },
@@ -266,7 +266,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   trackLabel: {
     display: 'flex', alignItems: 'center', fontSize: 13, color: 'var(--ff-text-secondary)',
-    cursor: 'pointer', fontWeight: '500',
+    cursor: 'pointer', fontWeight: '400',
   },
   footer: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -280,12 +280,12 @@ const s: Record<string, React.CSSProperties> = {
     cursor: 'pointer', padding: 0,
   },
   cancelBtn: {
-    background: 'none', border: '1px solid var(--ff-line-strong)', borderRadius: '7px',
+    background: 'none', border: '1px solid var(--ff-line-strong)', borderRadius: '6px',
     fontSize: '13px', color: 'var(--ff-text-secondary)', cursor: 'pointer', padding: '7px 16px',
   },
   confirmBtn: {
-    background: 'var(--ff-pink-action)', border: 'none', borderRadius: '7px',
-    fontSize: '13px', color: 'var(--ff-white)', fontWeight: '600', cursor: 'pointer',
+    background: 'var(--ff-pink-action)', border: 'none', borderRadius: '6px',
+    fontSize: '13px', color: 'var(--ff-white)', fontWeight: '700', cursor: 'pointer',
     padding: '7px 20px',
   },
 }

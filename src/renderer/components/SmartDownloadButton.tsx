@@ -74,7 +74,7 @@ const styles: Record<string, React.CSSProperties> = {
   mainBtn: {
     background: BTN_BG, color: 'var(--ff-white)',
     border: 'none', borderRadius: '6px 0 0 6px',
-    padding: '7px 14px', fontSize: 13, fontWeight: 500,
+    padding: '7px 14px', fontSize: 13, fontWeight: 400,
     cursor: 'pointer',
     lineHeight: 1,
   },
@@ -106,7 +106,7 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: 'pointer',
   },
   itemTitle: {
-    fontSize: 13, fontWeight: 500, color: 'var(--ff-text)',
+    fontSize: 13, fontWeight: 400, color: 'var(--ff-text)',
   },
   itemDesc: {
     fontSize: 11, color: 'var(--ff-text-muted)',

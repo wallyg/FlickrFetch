@@ -207,7 +207,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   message: {
     color: 'var(--ff-text-secondary)',
-    fontSize: '15px'
+    fontSize: '14px'
   },
   scroll: {
     flex: 1,
@@ -262,7 +262,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   title: {
     fontSize: '13px',
-    fontWeight: '600',
+    fontWeight: '700',
     color: 'var(--ff-text)',
     whiteSpace: 'nowrap',
     overflow: 'hidden',

@@ -204,7 +204,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
                 {data.years.map(g => (
                   <div key={g.year} style={styles.yearBar} {...asButton(() => document.getElementById(`otd-year-${g.year}`)?.scrollIntoView({ block: 'start', behavior: 'smooth' }))} title={`${g.count.toLocaleString()} photo${g.count === 1 ? '' : 's'} in ${g.year}. Click to jump there.`}>
                     <span style={{ width: 34, color: 'var(--ff-text)' }}>{g.year}</span>
-                    <span style={{ flex: 1, minWidth: 0 }}><i style={{ display: 'block', height: 9, borderRadius: 5, width: `${Math.max(3, (g.count / (topYear?.count || 1)) * 100)}%`, background: g === topYear ? 'var(--ff-pink)' : '#e6b0cb' }} /></span>
+                    <span style={{ flex: 1, minWidth: 0 }}><i style={{ display: 'block', height: 9, borderRadius: 6, width: `${Math.max(3, (g.count / (topYear?.count || 1)) * 100)}%`, background: g === topYear ? 'var(--ff-pink)' : '#e6b0cb' }} /></span>
                     <span style={{ color: 'var(--ff-text-secondary)', minWidth: 58, textAlign: 'right' }}>{g.count.toLocaleString()}{g === topYear && data.years.length > 1 ? ' · most' : ''}</span>
                   </div>
                 ))}
@@ -227,7 +227,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
                 <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 46 }}>
                   {ins.hourCounts.map((n, h) => <i key={h} title={`${hourLabel(h)}: ${n}`} style={{ flex: 1, display: 'block', height: Math.max(2, (n / maxHour) * 46), borderRadius: '2px 2px 0 0', background: h === peakHour ? 'var(--ff-navy)' : '#b8c4dc' }} />)}
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10.5, color: 'var(--ff-text-secondary)', margin: '2px 0 4px' }}><span>12 am</span><span>6 am</span><span>noon</span><span>6 pm</span></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--ff-text-secondary)', margin: '2px 0 4px' }}><span>12 am</span><span>6 am</span><span>noon</span><span>6 pm</span></div>
                 Busiest around {hourLabel(peakHour)} ({maxHour} photo{maxHour === 1 ? '' : 's'}).
               </Insight>
             )}
@@ -245,7 +245,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
             return (
               <div key={g.year} id={`otd-year-${g.year}`} style={yi === 0 ? { margin: '16px 0 4px' } : { margin: '24px 0 4px', paddingTop: 18, borderTop: '1px solid var(--ff-line-strong)' }}>
                 <div style={styles.yearHead}>
-                  <b style={{ fontSize: 17 }}>{g.year}</b>
+                  <b style={{ fontSize: 16 }}>{g.year}</b>
                   <span style={styles.muted}>{ago === 0 ? 'this year' : `${ago} year${ago === 1 ? '' : 's'} ago`} · {itemsLabel(g.count, g.videos)}</span>
                   <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: 8 }}>
                     <button style={pillBtn} onClick={() => openYear(g.year)} title={openTitle(extra, 'that date')}><span style={iconBlue}><OpenIcon /></span>Open in Photostream</button>
@@ -284,7 +284,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
 
 function Insight({ icon, title, children }: { icon: string; title: string; children: React.ReactNode }): React.JSX.Element {
   return (
-    <div style={{ background: 'var(--ff-warm)', borderRadius: 10, padding: '10px 12px', fontSize: 12.5, color: 'var(--ff-text)' }}>
+    <div style={{ background: 'var(--ff-warm)', borderRadius: 8, padding: '10px 12px', fontSize: 12, color: 'var(--ff-text)' }}>
       <b style={{ display: 'block', fontSize: 11, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--ff-text-secondary)', marginBottom: 8 }}>{icon} {title}</b>
       {children}
     </div>
@@ -300,7 +300,7 @@ const styles: Record<string, React.CSSProperties> = {
   bigMonth: { background: 'var(--ff-pink)', color: 'var(--ff-white)', fontSize: 12, fontWeight: 700, letterSpacing: '0.2em', padding: '5px 0 4px' },
   bigDay: { fontSize: 38, fontWeight: 700, color: 'var(--ff-navy)', lineHeight: '48px' },
   headText: { flex: '1 1 320px', minWidth: 0 },
-  title: { fontSize: 26, fontWeight: 800, letterSpacing: '-0.5px', color: 'var(--ff-navy)', lineHeight: 1.1 },
+  title: { fontSize: 24, fontWeight: 700, letterSpacing: '-0.5px', color: 'var(--ff-navy)', lineHeight: 1.1 },
   count: { fontSize: 16, fontWeight: 700, color: 'var(--ff-text)' },
   countNote: { fontSize: 13, fontWeight: 400, color: 'var(--ff-text-secondary)', marginLeft: 6 },
   actions: { display: 'flex', flexDirection: 'row', gap: 10, alignItems: 'center', flexWrap: 'wrap' },
@@ -308,13 +308,13 @@ const styles: Record<string, React.CSSProperties> = {
   navBtn: { background: 'var(--ff-surface)', border: 'none', borderRight: '1px solid var(--ff-border)', padding: '5px 13px', fontSize: 13, color: 'var(--ff-text)', cursor: 'pointer', whiteSpace: 'nowrap' },
   cta: { ...primaryBtn, display: 'inline-flex', alignItems: 'center', gap: 9, padding: '4px 13px 4px 13px' },   // the Main button, the same size as the buttons beside it, with a small picture as its icon (#251)
   stack: { position: 'relative', width: 26, height: 16, flexShrink: 0, display: 'block', marginLeft: 2 },   // room for the tilted left card, so it never touches the button's edge
-  stackCard: { position: 'absolute', width: 13, height: 15, background: 'linear-gradient(135deg, #f0b15a, #6f93b8)', border: '1px solid var(--ff-white)', borderBottomWidth: 3, borderRadius: 1, boxShadow: '0 1px 2px var(--ff-shadow-strong)', display: 'block' },
+  stackCard: { position: 'absolute', width: 13, height: 15, background: 'linear-gradient(135deg, #f0b15a, #6f93b8)', border: '1px solid var(--ff-white)', borderBottomWidth: 3, borderRadius: 4, boxShadow: '0 1px 2px var(--ff-shadow-strong)', display: 'block' },
   row: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', margin: '12px 0 10px' },
   insights: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10, margin: '4px 0' },
-  yearBar: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, cursor: 'pointer' },
-  tagCount: { marginLeft: 5, fontWeight: 400, fontSize: 11.5, color: 'var(--ff-text-secondary)', whiteSpace: 'nowrap' },
+  yearBar: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, cursor: 'pointer' },
+  tagCount: { marginLeft: 5, fontWeight: 400, fontSize: 12, color: 'var(--ff-text-secondary)', whiteSpace: 'nowrap' },
   chips: { display: 'flex', gap: 5, flexWrap: 'wrap' },
-  tagChip: { background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 14, padding: '2px 9px', fontSize: 12, color: 'var(--ff-text)', cursor: 'pointer', textAlign: 'left', maxWidth: '100%' },
+  tagChip: { background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 12, padding: '2px 9px', fontSize: 12, color: 'var(--ff-text)', cursor: 'pointer', textAlign: 'left', maxWidth: '100%' },
   sectionRule: { display: 'flex', alignItems: 'center', gap: 10, margin: '26px 0 2px', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ff-text-secondary)' },
   yearHead: { display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 6 },
   

@@ -39,7 +39,7 @@ export function VideoSwitch(): React.JSX.Element {
     <div style={styles.box}>
       <label style={styles.line}>
         <input type="checkbox" checked={scope.videos} onChange={e => set({ videos: e.target.checked })} />
-        <span style={{ fontWeight: 600 }}>Include videos in the checks</span>
+        <span style={{ fontWeight: 700 }}>Include videos in the checks</span>
       </label>
       <span style={styles.desc}>
         {scope.videos ? 'Every Photos check looks at photos and videos.' : 'Videos are left out of every Photos check, and out of the totals. No location can still have its own choice below.'}

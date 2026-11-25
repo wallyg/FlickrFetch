@@ -168,7 +168,7 @@ const styles: Record<string, React.CSSProperties> = {
   muted: { color: 'var(--ff-text-secondary)', fontSize: '13px' },
   error: { color: 'var(--ff-error)', fontSize: '13px', maxWidth: '420px' },
   segGroup: { ...segGroupBase },
-  seg: { background: 'var(--ff-surface)', border: 'none', borderRadius: '7px', padding: '4px 14px', fontSize: '13px', cursor: 'pointer', color: 'var(--ff-text-secondary)' },
+  seg: { background: 'var(--ff-surface)', border: 'none', borderRadius: '6px', padding: '4px 14px', fontSize: '13px', cursor: 'pointer', color: 'var(--ff-text-secondary)' },
   segActive: { ...selectedOn },
-  primaryBtn: { background: 'var(--ff-pink-action)', color: 'var(--ff-white)', border: 'none', borderRadius: '6px', padding: '7px 16px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }
+  primaryBtn: { background: 'var(--ff-pink-action)', color: 'var(--ff-white)', border: 'none', borderRadius: '6px', padding: '7px 16px', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }
 }

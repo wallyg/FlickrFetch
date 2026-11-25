@@ -616,7 +616,7 @@ function Step({ n, label, children }: { n: number; label: string; children: Reac
 
 const styles: Record<string, React.CSSProperties> = {
   overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 'var(--ff-z-dialog)', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  modal: { background: 'var(--ff-cream, #fcfaf6)', borderRadius: 14, width: 'min(1100px, 94vw)', height: 'min(760px, 92vh)', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 12px 40px rgba(0,0,0,0.3)' },
+  modal: { background: 'var(--ff-cream, #fcfaf6)', borderRadius: 12, width: 'min(1100px, 94vw)', height: 'min(760px, 92vh)', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 12px 40px rgba(0,0,0,0.3)' },
   head: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 18px', borderBottom: '1px solid var(--ff-border)' },
   x: { background: 'none', border: 'none', fontSize: 16, cursor: 'pointer', color: 'var(--ff-text-secondary)' },
   body: { flex: 1, minHeight: 0, display: 'flex', gap: 18, padding: 16 },
@@ -624,16 +624,16 @@ const styles: Record<string, React.CSSProperties> = {
   scroll: { flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16, paddingRight: 6, paddingBottom: 8 },
   dock: { flexShrink: 0, borderTop: '1px solid var(--ff-border)', paddingTop: 10, display: 'flex', flexDirection: 'column', gap: 8 },
   num: { flexShrink: 0, width: 20, height: 20, borderRadius: '50%', background: 'var(--ff-navy)', color: '#fff', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 1 },
-  preview: { flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ece8e1', borderRadius: 10, padding: 14, overflow: 'hidden' },
+  preview: { flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ece8e1', borderRadius: 8, padding: 14, overflow: 'hidden' },
   group: { display: 'flex', flexDirection: 'column', gap: 6 },
   label: { fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ff-text-secondary)' },
   muted: { fontSize: 12, color: 'var(--ff-text-secondary)' },
   chips: { display: 'flex', gap: 6, flexWrap: 'wrap' },
-  chip: { border: '1px solid var(--ff-border)', borderRadius: 14, padding: '3px 11px', fontSize: 13, background: '#fff', color: 'var(--ff-text)', cursor: 'pointer' },
+  chip: { border: '1px solid var(--ff-border)', borderRadius: 12, padding: '3px 11px', fontSize: 13, background: '#fff', color: 'var(--ff-text)', cursor: 'pointer' },
   chipOn: { ...selectedOn },
   step: { ...quietBtn, width: 28, height: 28, padding: 0, fontSize: 16 },
   check: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--ff-text)' },
   warn: { background: '#fff7e6', border: '1px solid #f5d28b', borderRadius: 8, padding: '8px 10px', fontSize: 12 },
-  primary: { background: 'var(--ff-pink-action)', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer' },
+  primary: { background: 'var(--ff-pink-action)', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer' },
   btn: { ...quietBtn, padding: '6px 12px' }
 }

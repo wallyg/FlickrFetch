@@ -171,7 +171,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   message: {
     color: 'var(--ff-text-secondary)',
-    fontSize: '15px'
+    fontSize: '14px'
   },
   scroll: {
     height: '100%',
@@ -181,7 +181,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   sectionLabel: {
     fontSize: '11px',
-    fontWeight: '600',
+    fontWeight: '700',
     color: 'var(--ff-text-secondary)',
     textTransform: 'uppercase',
     letterSpacing: '0.06em',
@@ -235,7 +235,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   cardTitle: {
     fontSize: '13px',
-    fontWeight: '600',
+    fontWeight: '700',
     color: 'var(--ff-text)',
     whiteSpace: 'nowrap',
     overflow: 'hidden',
@@ -269,7 +269,7 @@ const styles: Record<string, React.CSSProperties> = {
     border: 'none',
     padding: '4px 5px',
     cursor: 'pointer',
-    borderRadius: '5px',
+    borderRadius: '6px',
     display: 'flex',
     alignItems: 'center',
     color: 'var(--ff-text-secondary)',
@@ -287,7 +287,7 @@ const styles: Record<string, React.CSSProperties> = {
     width: '100%',
     background: 'var(--ff-surface)',
     border: '1px solid var(--ff-border)',
-    borderRadius: '10px',
+    borderRadius: '8px',
     overflow: 'hidden',
     cursor: 'pointer',
     textAlign: 'left' as const,
@@ -314,7 +314,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   albumCardTitle: {
     fontSize: '12px',
-    fontWeight: '600' as const,
+    fontWeight: '700' as const,
     color: 'var(--ff-text)',
     overflow: 'hidden',
     textOverflow: 'ellipsis',

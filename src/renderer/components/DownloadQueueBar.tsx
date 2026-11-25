@@ -386,7 +386,7 @@ const styles: Record<string, React.CSSProperties> = {
   toast: {
     padding: '7px 20px',
     fontSize: '12px',
-    fontWeight: '500',
+    fontWeight: '400',
     color: 'var(--ff-text-secondary)',
     backgroundColor: 'var(--ff-surface)',
     borderBottom: '1px solid var(--ff-border)'
@@ -408,26 +408,26 @@ const styles: Record<string, React.CSSProperties> = {
   expandBtn: {
     background: 'none',
     border: '1px solid var(--ff-line-strong)',
-    borderRadius: '5px',
+    borderRadius: '6px',
     fontSize: '12px',
     color: 'var(--ff-text-secondary)',
     cursor: 'pointer',
     padding: '3px 8px',
     flexShrink: 0,
-    fontWeight: '500'
+    fontWeight: '400'
   },
   progressTrack: {
     width: '120px',
     height: '6px',
     backgroundColor: 'var(--ff-line-strong)',
-    borderRadius: '3px',
+    borderRadius: '4px',
     overflow: 'hidden',
     flexShrink: 0
   },
   progressFill: {
     height: '100%',
     backgroundColor: 'var(--ff-pink)',
-    borderRadius: '3px',
+    borderRadius: '4px',
     transition: 'width 0.3s ease'
   },
   labelCol: {
@@ -439,7 +439,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   labelPrimary: {
     fontSize: '13px',
-    fontWeight: '500',
+    fontWeight: '400',
     color: 'var(--ff-text)',
     whiteSpace: 'nowrap',
     overflow: 'hidden',
@@ -475,7 +475,7 @@ const styles: Record<string, React.CSSProperties> = {
     color: 'var(--ff-warning-text)',
     cursor: 'pointer',
     padding: '4px 12px',
-    fontWeight: '500'
+    fontWeight: '400'
   },
   skipBtn: {
     background: 'none',
@@ -498,7 +498,7 @@ const styles: Record<string, React.CSSProperties> = {
   dismissBtn: {
     background: 'none',
     border: 'none',
-    fontSize: '15px',
+    fontSize: '14px',
     color: 'var(--ff-text-secondary)',
     cursor: 'pointer',
     padding: '2px 4px',
@@ -567,7 +567,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   batchTitle: {
     fontSize: '13px',
-    fontWeight: '600',
+    fontWeight: '700',
     color: 'var(--ff-text)',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
@@ -577,7 +577,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   batchTitleQueued: {
     fontSize: '13px',
-    fontWeight: '500',
+    fontWeight: '400',
     color: 'var(--ff-text-secondary)',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
@@ -663,7 +663,7 @@ const styles: Record<string, React.CSSProperties> = {
   retryBtn: {
     background: 'none',
     border: '1px solid var(--ff-warning)',
-    borderRadius: '5px',
+    borderRadius: '6px',
     fontSize: '11px',
     color: 'var(--ff-warning-text)',
     cursor: 'pointer',

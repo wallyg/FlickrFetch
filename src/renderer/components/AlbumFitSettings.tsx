@@ -84,7 +84,7 @@ export default function AlbumFitSettings(): React.JSX.Element {
   const stat = (label: string, value: string, detail?: string): React.JSX.Element => (
     <div key={label} style={styles.statRow}>
       <span style={styles.statLabel}>{label}</span>
-      <span><b style={{ fontWeight: 600 }}>{value}</b>{detail && <span style={styles.statDetail}>{value ? ' ' : ''}{detail}</span>}</span>
+      <span><b style={{ fontWeight: 700 }}>{value}</b>{detail && <span style={styles.statDetail}>{value ? ' ' : ''}{detail}</span>}</span>
     </div>
   )
 

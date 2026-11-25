@@ -19,13 +19,13 @@ export default function TimelineNav({ backLabel, onBack, title, prev, next }: Pr
     <>
       <button style={styles.btn} onClick={onBack} title="Esc does the same">‹ {backLabel}</button>
       <button style={{ ...styles.btn, ...(prev ? {} : styles.off) }} disabled={!prev} onClick={prev?.onClick} title={prev ? `Go to ${prev.label}` : 'Nothing earlier'}>‹ {prev?.label ?? ''}</button>
-      <b style={{ color: 'var(--ff-navy)', fontSize: 17 }}>{title}</b>
+      <b style={{ color: 'var(--ff-navy)', fontSize: 16 }}>{title}</b>
       <button style={{ ...styles.btn, ...(next ? {} : styles.off) }} disabled={!next} onClick={next?.onClick} title={next ? `Go to ${next.label}` : 'Nothing later'}>{next?.label ?? ''} ›</button>
     </>
   )
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  btn: { ...quietBtn, padding: '3px 10px', fontSize: 12.5, whiteSpace: 'nowrap' },
+  btn: { ...quietBtn, padding: '3px 10px', fontSize: 12, whiteSpace: 'nowrap' },
   off: { opacity: 0.4, cursor: 'default' }
 }

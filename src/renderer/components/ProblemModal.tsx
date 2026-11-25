@@ -47,7 +47,7 @@ export default function ProblemModal({ onClose }: ProblemModalProps): React.JSX.
             The result is a true archive: files that are self-describing, portable, and
             not dependent on Flickr remaining online or your account remaining active.
           </p>
-          <p style={{ ...s.para, fontWeight: 600, color: 'var(--ff-navy)', marginBottom: 0 }}>
+          <p style={{ ...s.para, fontWeight: 700, color: 'var(--ff-navy)', marginBottom: 0 }}>
             For photographers who built their archive on Flickr, FlickrFetch is the difference
             between a backup and an archive.
           </p>
@@ -69,7 +69,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   card: {
     backgroundColor: 'var(--ff-surface)',
-    borderRadius: '16px',
+    borderRadius: '12px',
     width: '640px',
     maxWidth: '92vw',
     maxHeight: '85vh',
@@ -84,13 +84,13 @@ const s: Record<string, React.CSSProperties> = {
     right: '14px',
     background: 'none',
     border: 'none',
-    fontSize: '15px',
+    fontSize: '14px',
     color: 'var(--ff-text-secondary)',
     cursor: 'pointer',
     padding: '4px',
   },
   heading: {
-    fontSize: '20px',
+    fontSize: '18px',
     fontWeight: '700',
     color: 'var(--ff-navy)',
     margin: '0 0 20px',

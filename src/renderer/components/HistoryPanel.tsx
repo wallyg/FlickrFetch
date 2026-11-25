@@ -766,7 +766,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '20px 20px 0',
   },
   title: {
-    margin: 0, fontSize: 17, fontWeight: 600, color: 'var(--ff-navy)',
+    margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--ff-navy)',
   },
   closeBtn: {
     background: 'none', border: 'none', cursor: 'pointer',
@@ -780,12 +780,12 @@ const styles: Record<string, React.CSSProperties> = {
   tab: {
     background: 'none', border: 'none', borderBottom: '2px solid transparent',
     padding: '6px 12px 10px', fontSize: 13, color: 'var(--ff-text-secondary)',
-    cursor: 'pointer', fontWeight: 500,
+    cursor: 'pointer', fontWeight: 400,
   },
   tabActive: {
     background: 'none', border: 'none', borderBottom: '2px solid var(--ff-pink)',
     padding: '6px 12px 10px', fontSize: 13, color: 'var(--ff-pink)',
-    cursor: 'pointer', fontWeight: 600,
+    cursor: 'pointer', fontWeight: 700,
   },
   tabBody: {
     flex: 1, overflowY: 'auto',
@@ -806,7 +806,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4,
   },
   source: {
-    flex: 1, fontSize: 13, fontWeight: 500, color: C.text,
+    flex: 1, fontSize: 13, fontWeight: 400, color: C.text,
     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
   },
   date: {
@@ -817,8 +817,8 @@ const styles: Record<string, React.CSSProperties> = {
   },
   pill: {
     display: 'inline-flex', alignItems: 'center',
-    fontSize: 11, fontWeight: 500,
-    padding: '2px 7px', borderRadius: 99,
+    fontSize: 11, fontWeight: 400,
+    padding: '2px 7px', borderRadius: 50,
     border: '1px solid',
   },
   expandableWrap: { marginTop: 6, paddingLeft: 18 },
@@ -847,7 +847,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   modeTabActive: {
     background: 'var(--ff-info-bg)', border: '1px solid var(--ff-info-line)', borderRadius: 4,
-    padding: '3px 8px', fontSize: 11, color: 'var(--ff-blue)', cursor: 'pointer', fontWeight: 600,
+    padding: '3px 8px', fontSize: 11, color: 'var(--ff-blue)', cursor: 'pointer', fontWeight: 700,
   },
   searchInputWrap: {
     position: 'relative' as const, display: 'flex', alignItems: 'center',
@@ -874,7 +874,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   clearFilterX: {
     background: 'none', border: 'none', cursor: 'pointer',
-    fontSize: 10, color: 'var(--ff-text-muted)', padding: '2px 4px',
+    fontSize: 11, color: 'var(--ff-text-muted)', padding: '2px 4px',
   },
   dateFieldWrap: {
     display: 'flex', alignItems: 'center', gap: 2,
@@ -885,7 +885,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   dateFieldClear: {
     background: 'none', border: 'none', cursor: 'pointer',
-    fontSize: 10, color: 'var(--ff-text-muted)', padding: '2px 3px', lineHeight: 1, flexShrink: 0,
+    fontSize: 11, color: 'var(--ff-text-muted)', padding: '2px 3px', lineHeight: 1, flexShrink: 0,
   },
   applyBtn: {
     background: 'var(--ff-stage)', border: 'none', borderRadius: 4,
@@ -926,7 +926,7 @@ const styles: Record<string, React.CSSProperties> = {
     flex: 1, minWidth: 0,
   },
   photoTitle: {
-    fontSize: 13, fontWeight: 500, color: 'var(--ff-text)',
+    fontSize: 13, fontWeight: 400, color: 'var(--ff-text)',
     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
   },
   untitled: {
@@ -942,13 +942,13 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 11, color: 'var(--ff-text-muted)',
   },
   sizeTag: {
-    fontSize: 10, color: 'var(--ff-text-secondary)', border: '1px solid var(--ff-border)', borderRadius: 8, padding: '0 6px',
+    fontSize: 11, color: 'var(--ff-text-secondary)', border: '1px solid var(--ff-border)', borderRadius: 8, padding: '0 6px',
   },
   sizeTagSmaller: {
-    fontSize: 10, color: 'var(--ff-warning-text)', background: 'var(--ff-warning-bg)', border: '1px solid var(--ff-warning)', borderRadius: 8, padding: '0 6px',
+    fontSize: 11, color: 'var(--ff-warning-text)', background: 'var(--ff-warning-bg)', border: '1px solid var(--ff-warning)', borderRadius: 8, padding: '0 6px',
   },
   photoId: {
-    fontSize: 10, color: 'var(--ff-text-muted)',
+    fontSize: 11, color: 'var(--ff-text-muted)',
   },
   deleteRecordBtn: {
     background: 'none', border: 'none', cursor: 'pointer',

@@ -147,9 +147,9 @@ const styles: Record<string, React.CSSProperties> = {
   secondaryBtn: { ...quietBtn, padding: '5px 12px' },
   linkBtn: { background: 'none', border: 'none', color: 'var(--ff-blue)', fontSize: '13px', cursor: 'pointer', padding: '4px 6px' },
   progressCard: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', width: '360px', padding: '28px', background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: '12px' },
-  cardTitle: { fontSize: '15px', fontWeight: 700, color: 'var(--ff-navy)' },
+  cardTitle: { fontSize: '14px', fontWeight: 700, color: 'var(--ff-navy)' },
   barTrack: { width: '100%', height: '8px', background: 'var(--ff-border)', borderRadius: '4px', overflow: 'hidden' },
   barFill: { height: '100%', background: 'var(--ff-pink)', transition: 'width 0.3s' },
-  updateBtn: { background: 'var(--ff-pink-action)', color: 'var(--ff-white)', border: '1px solid var(--ff-pink-action)', borderRadius: '6px', padding: '6px 14px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' },
+  updateBtn: { background: 'var(--ff-pink-action)', color: 'var(--ff-white)', border: '1px solid var(--ff-pink-action)', borderRadius: '6px', padding: '6px 14px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' },
   dataPanel: { position: 'absolute', top: 'calc(100% + 6px)', right: 0, width: 370, background: 'var(--ff-surface)', border: '1px solid var(--ff-line-strong)', borderRadius: 12, boxShadow: '0 10px 30px var(--ff-shadow-mid)', padding: '14px 16px', zIndex: 'var(--ff-z-menu)' }
 }

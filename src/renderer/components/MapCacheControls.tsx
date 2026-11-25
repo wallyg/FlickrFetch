@@ -62,6 +62,6 @@ const styles: Record<string, React.CSSProperties> = {
   bad: { borderColor: 'var(--ff-error)' },
   unit: { fontSize: 13, color: 'var(--ff-text-secondary)' },
   help: { fontSize: 12, color: 'var(--ff-text-secondary)' },
-  value: { fontSize: 13, color: 'var(--ff-text)', fontWeight: 600 },
+  value: { fontSize: 13, color: 'var(--ff-text)', fontWeight: 700 },
   btn: { background: 'none', border: '1px solid var(--ff-line-strong)', borderRadius: 6, padding: '4px 12px', fontSize: 12, color: 'var(--ff-text-secondary)', cursor: 'pointer' }
 }

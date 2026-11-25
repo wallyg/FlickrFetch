@@ -67,7 +67,7 @@ export default function CameraRoll({ from, to, title, scope, extra, extraText, o
   return (
     <div>
       <div style={styles.bar}>
-        {heading ?? <b style={{ color: 'var(--ff-navy)', fontSize: 15 }}>{title}</b>}
+        {heading ?? <b style={{ color: 'var(--ff-navy)', fontSize: 14 }}>{title}</b>}
         <span style={styles.muted}>{itemsLabel(totalPhotos, totalVideos)} on {totalDays.toLocaleString()} day{totalDays === 1 ? '' : 's'}{scopeNote}</span>
         <div style={{ flex: 1 }} />
         <div style={styles.seg}>
@@ -95,7 +95,7 @@ export default function CameraRoll({ from, to, title, scope, extra, extraText, o
         : days.map(d => (
           <div key={d.date} style={{ margin: '14px 0 4px' }}>
             <div style={styles.dayHead}>
-              <b style={{ fontSize: 15, color: 'var(--ff-navy)' }}>{dayHeading(d.date)}</b>
+              <b style={{ fontSize: 14, color: 'var(--ff-navy)' }}>{dayHeading(d.date)}</b>
               <span style={styles.muted}>{itemsLabel(d.count, d.videos)}</span>
               <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: 12 }}>
                 <button style={styles.link} onClick={() => onOpenRange(d.date, d.date, rangeOpts(extra))}>Open in Photostream</button>

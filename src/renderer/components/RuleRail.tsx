@@ -45,7 +45,7 @@ export function RailRow({ selected, dim, label, count, pending, onSelect, dot }:
   return (
     <div style={{ ...railItem, ...(selected ? railSel : {}), opacity: dim && !selected ? 0.55 : 1 }} {...asButton(onSelect)} aria-current={selected ? 'true' : undefined}>
       <span style={{ display: 'flex', alignItems: 'baseline', gap: 7 }}>{dot && <i aria-hidden="true" style={{ width: 8, height: 8, borderRadius: '50%', background: dot, flex: 'none', display: 'inline-block' }} />}{label}</span>
-      {pending ? <b style={{ fontWeight: 600 }} title="This check needs a Rebuild before it can count">–</b> : <b style={{ fontWeight: 600 }}>{count.toLocaleString()}</b>}
+      {pending ? <b style={{ fontWeight: 700 }} title="This check needs a Rebuild before it can count">–</b> : <b style={{ fontWeight: 700 }}>{count.toLocaleString()}</b>}
     </div>
   )
 }

@@ -68,7 +68,7 @@ const s: Record<string, React.CSSProperties> = {
   tabGroup: { display: 'flex', gap: '0' },
   tab: {
     background: 'none', border: 'none', borderBottom: '2px solid transparent',
-    padding: '10px 16px', cursor: 'pointer', fontSize: '14px', fontWeight: 500,
+    padding: '10px 16px', cursor: 'pointer', fontSize: '14px', fontWeight: 400,
     color: 'var(--ff-text-secondary)', marginBottom: '-1px', outline: 'none',
   },
   tabActive: { borderBottom: '2px solid var(--ff-pink)', color: 'var(--ff-pink)' },

@@ -1065,8 +1065,8 @@ const styles: Record<string, React.CSSProperties> = {
     border: 'none',
     borderBottom: '3px solid transparent',
     padding: '0 20px',
-    fontSize: '15px',
-    fontWeight: '600',
+    fontSize: '14px',
+    fontWeight: '700',
     color: 'var(--ff-text-secondary)',
     cursor: 'pointer',
     display: 'flex',
@@ -1079,7 +1079,7 @@ const styles: Record<string, React.CSSProperties> = {
     borderBottom: '3px solid var(--ff-blue)',
   },
   proBadge: {
-    fontSize: '9px',
+    fontSize: '11px',
     fontWeight: '700',
     color: 'var(--ff-pink)',
     backgroundColor: 'color-mix(in srgb, var(--ff-pink) 10%, transparent)',
@@ -1093,7 +1093,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     gap: '5px',
-    borderRadius: '20px',
+    borderRadius: '50px',
     overflow: 'visible',
     cursor: 'pointer',
     border: '1px solid var(--ff-line-strong)',
@@ -1115,7 +1115,7 @@ const styles: Record<string, React.CSSProperties> = {
     right: 0,
     backgroundColor: 'var(--ff-surface)',
     border: '1px solid var(--ff-line-strong)',
-    borderRadius: '10px',
+    borderRadius: '8px',
     boxShadow: '0 4px 20px var(--ff-shadow-mid)',
     zIndex: 'var(--ff-z-menu)',
     minWidth: '220px',
@@ -1136,7 +1136,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   avatarPopoverName: {
     fontSize: '14px',
-    fontWeight: '600',
+    fontWeight: '700',
     color: 'var(--ff-text)',
     display: 'flex',
     alignItems: 'center',
@@ -1198,7 +1198,7 @@ const styles: Record<string, React.CSSProperties> = {
     borderBottom: '2px solid transparent',
     padding: '10px 16px',
     fontSize: '14px',
-    fontWeight: '500',
+    fontWeight: '400',
     color: 'var(--ff-text-secondary)',
     cursor: 'pointer',
     marginBottom: '-1px',
@@ -1228,7 +1228,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   albumTitle: {
     fontSize: '14px',
-    fontWeight: '600',
+    fontWeight: '700',
     color: 'var(--ff-text)'
   },
   albumCount: {
@@ -1237,11 +1237,11 @@ const styles: Record<string, React.CSSProperties> = {
   },
   downloadAllBtn: {
     fontSize: '12px',
-    fontWeight: '600',
+    fontWeight: '700',
     color: 'var(--ff-white)',
     background: 'var(--ff-blue)',
     border: 'none',
-    borderRadius: '7px',
+    borderRadius: '6px',
     padding: '6px 12px',
     cursor: 'pointer',
     flexShrink: 0
@@ -1270,7 +1270,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   iconButtonLabel: {
     fontSize: '12px',
-    fontWeight: '500',
+    fontWeight: '400',
     color: 'var(--ff-text-secondary)',
     letterSpacing: '-0.01em',
     lineHeight: 1,
@@ -1290,7 +1290,7 @@ const styles: Record<string, React.CSSProperties> = {
     color: 'var(--ff-white)',
     fontSize: '12px',
     padding: '4px 8px',
-    borderRadius: '5px',
+    borderRadius: '6px',
     whiteSpace: 'nowrap' as const,
     pointerEvents: 'none' as const,
     zIndex: 'var(--ff-z-hover)',
@@ -1302,7 +1302,7 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: '6px',
     padding: '6px 14px',
     fontSize: '13px',
-    fontWeight: '600',
+    fontWeight: '700',
     cursor: 'pointer',
     flexShrink: 0
   },
@@ -1340,7 +1340,7 @@ const styles: Record<string, React.CSSProperties> = {
     border: 'none',
     padding: '5px 8px',
     fontSize: '13px',
-    fontWeight: '600',
+    fontWeight: '700',
     color: 'var(--ff-text-secondary)',
     cursor: 'pointer',
     flexShrink: 0
@@ -1386,7 +1386,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   overflowMenuItemDestructive: {
     display: 'block', width: '100%', textAlign: 'left' as const, background: 'none', border: 'none',
-    padding: '8px 12px', fontSize: '13px', color: 'var(--ff-error)', cursor: 'pointer', borderRadius: '5px',
+    padding: '8px 12px', fontSize: '13px', color: 'var(--ff-error)', cursor: 'pointer', borderRadius: '6px',
   },
   confirmOverlay: {
     position: 'fixed' as const, inset: 0, backgroundColor: 'var(--ff-scrim)',
@@ -1396,7 +1396,7 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundColor: 'var(--ff-surface)', borderRadius: '12px', padding: '24px',
     width: '360px', maxWidth: '90vw', boxShadow: '0 8px 32px var(--ff-shadow-mid)',
   },
-  confirmTitle: { fontSize: '16px', fontWeight: '600' as const, color: 'var(--ff-text)', margin: '0 0 8px' },
+  confirmTitle: { fontSize: '16px', fontWeight: '700' as const, color: 'var(--ff-text)', margin: '0 0 8px' },
   confirmBody: { fontSize: '13px', color: 'var(--ff-text-secondary)', lineHeight: '1.5', margin: '0 0 20px' },
   confirmActions: { display: 'flex', gap: '10px', justifyContent: 'flex-end' as const },
   confirmCancel: {
@@ -1405,6 +1405,6 @@ const styles: Record<string, React.CSSProperties> = {
   },
   confirmDestructive: {
     background: 'var(--ff-error)', border: 'none', borderRadius: '8px',
-    padding: '8px 18px', fontSize: '14px', fontWeight: '600' as const, color: 'var(--ff-white)', cursor: 'pointer',
+    padding: '8px 18px', fontSize: '14px', fontWeight: '700' as const, color: 'var(--ff-white)', cursor: 'pointer',
   },
 }

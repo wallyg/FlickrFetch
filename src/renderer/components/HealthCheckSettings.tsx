@@ -44,7 +44,7 @@ export default function HealthCheckSettings({ reloadKey = 0, onOpenAlbumTab }: {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 30 }}>
       <div>
         <div style={styles.head}>Keep the library list up to date</div>
-        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 7 }}>Update automatically <InfoTip text={WHEN_HELP} /></div>
+        <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 7 }}>Update automatically <InfoTip text={WHEN_HELP} /></div>
         <div style={segGroup} role="radiogroup" aria-label="Update automatically">
           {WHEN_OPTIONS.map(o => (
             <button key={o.key} role="radio" aria-checked={when === o.key} style={{ ...segBtn, ...(when === o.key ? selectedOn : {}) }} onClick={() => void change(o.key)}>{o.label}</button>

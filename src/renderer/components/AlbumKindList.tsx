@@ -74,7 +74,7 @@ const styles: Record<string, React.CSSProperties> = {
   bar: { display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' },
   check: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--ff-text)', cursor: 'pointer' },
   row: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '7px 0', borderTop: '1px solid var(--ff-warm)' },
-  title: { fontSize: 13, fontWeight: 600, color: 'var(--ff-text)', overflowWrap: 'anywhere' },
+  title: { fontSize: 13, fontWeight: 700, color: 'var(--ff-text)', overflowWrap: 'anywhere' },
   count: { fontWeight: 400, color: 'var(--ff-text-secondary)' },
   choice: { display: 'flex', alignItems: 'center', gap: 8, flex: 'none' },
   select: { border: '1px solid var(--ff-border)', borderRadius: 6, padding: '3px 6px', fontSize: 12, background: 'var(--ff-surface)', color: 'var(--ff-text)' },

@@ -72,7 +72,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   card: {
     backgroundColor: 'var(--ff-surface)',
-    borderRadius: '16px',
+    borderRadius: '12px',
     width: '480px',
     maxWidth: '90vw',
     maxHeight: '70vh',
@@ -98,7 +98,7 @@ const styles: Record<string, React.CSSProperties> = {
   closeBtn: {
     background: 'none',
     border: 'none',
-    fontSize: '15px',
+    fontSize: '14px',
     color: 'var(--ff-text-secondary)',
     cursor: 'pointer',
     padding: '4px'
@@ -122,7 +122,7 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: '8px'
   },
   releaseVersionMajor: {
-    fontWeight: '800',
+    fontWeight: '700',
     fontSize: '14px'
   },
   milestone: {
@@ -147,8 +147,8 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '8px'
   },
   latestBadge: {
-    fontSize: '10px',
-    fontWeight: '600',
+    fontSize: '11px',
+    fontWeight: '700',
     color: 'var(--ff-pink)',
     backgroundColor: 'color-mix(in srgb, var(--ff-pink) 10%, transparent)',
     borderRadius: '4px',
