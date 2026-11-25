@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { AlbumFitPhoto, MapAccuracy, MapAlbumHit, MapCluster, MapFilter, MapView } from '../../shared/types'
-import { anchorAfterResize, limitCentre, minZoomFor, placeAt, visibleTiles, wheelIntent, worldCopies, worldPixel, wrapLon } from '../../shared/mapGeo'
+import { anchorAfterResize, limitCentre, minZoomFor, placeAt, usableSize, visibleTiles, wheelIntent, worldCopies, worldPixel, wrapLon } from '../../shared/mapGeo'
 import { loadOutline } from '../ui/mapOutline'
 import { quietBtn, primaryBtn } from '../ui/kit'
 import { dash } from './DashboardParts'
@@ -8,7 +8,7 @@ import { Chip, DateMode, PRIVACY_LABELS, PRIVACY_OPTIONS, PrivacyFilter, Tooltip
 
 // The Map tab: your photos with a location as dots and numbered circles on a built-in outline of the countries. Drag to move, scroll or the
 // + and - buttons to zoom. Click a dot or circle to see its photos, open one on Flickr, or download them. Everything comes from the local
-// library list; nothing here changes Flickr. "Show street map" (off until you turn it on) draws OpenStreetMap's street pictures under the dots; the
+// library list; nothing here changes Flickr. "Show street map" (off until you turn it on) draws OpenStreetMap's street map images under the dots; the
 // app's background process fetches and saves them, and only the part of the map you are looking at is ever asked for.
 
 interface Props {
@@ -68,6 +68,8 @@ export default function MapPanel({ active, onDownload, onFullRescan, refreshKey,
   // What the resize watcher needs to know, kept current each render (the watcher is set up once)
   const sizeRef = useRef(size), centreRef = useRef(centre), zoomRef = useRef(zoom), pickRef = useRef(pick)
   sizeRef.current = size; centreRef.current = centre; zoomRef.current = zoom; pickRef.current = pick
+  const zoomLive = useRef(zoom)   // the zoom including changes made since the last render, so quick pinch and scroll events add up
+  zoomLive.current = zoom
   const [photos, setPhotos] = useState<AlbumFitPhoto[]>([])
   const [total, setTotal] = useState(0)
   const [loadingPhotos, setLoadingPhotos] = useState(false)
@@ -86,7 +88,8 @@ export default function MapPanel({ active, onDownload, onFullRescan, refreshKey,
     const el = box.current
     if (!el) return
     const watch = (): void => {
-      const next = { w: Math.max(300, el.clientWidth), h: Math.max(300, el.clientHeight) }
+      const next = usableSize(el.clientWidth, el.clientHeight)
+      if (!next) return   // the tab is hidden (the box measures 0 by 0): leave the size and the place alone
       const prev = sizeRef.current
       if (next.w === prev.w && next.h === prev.h) return
       if (measured.current) {
@@ -199,8 +202,13 @@ export default function MapPanel({ active, onDownload, onFullRescan, refreshKey,
         else if (!have || (typeof have === 'number' && Date.now() - have > 60_000)) {
           tiles.current.set(key, 'loading')
           void window.flickrAPI.getMapTile(t.z, t.x, t.y)
-            .then(bytes => (bytes ? createImageBitmap(new Blob([new Uint8Array(bytes)], { type: 'image/png' })) : null))
-            .then(bmp => { tiles.current.set(key, bmp ?? Date.now()); setTileTick(n => n + 1) })
+            .then(async bytes => (bytes === 'dropped' ? 'dropped' as const : bytes ? await createImageBitmap(new Blob([new Uint8Array(bytes)], { type: 'image/png' })) : null))
+            .then(bmp => {
+              // 'dropped' = the app skipped it because you had already moved on: forget it, and it is asked for again if it is still in view
+              if (bmp === 'dropped') tiles.current.delete(key)
+              else tiles.current.set(key, bmp ?? Date.now())
+              setTileTick(n => n + 1)
+            })
             .catch(() => { tiles.current.set(key, Date.now()); setTileTick(n => n + 1) })
           // keep the saved-in-memory pictures to the most recently drawn few hundred
           if (tiles.current.size > MAX_TILES) for (const [k, v] of tiles.current) { if (tiles.current.size <= MAX_TILES) break; if (v !== 'loading') { if (typeof v !== 'number') v.close(); tiles.current.delete(k) } }
@@ -226,7 +234,8 @@ export default function MapPanel({ active, onDownload, onFullRescan, refreshKey,
   // Moving and zooming. Zoom keeps the spot under the pointer still.
   const zoomTo = useCallback((next: number, at?: { x: number; y: number }): void => {
     const z = Math.max(minZoomFor(size.h, MIN_ZOOM), Math.min(MAX_ZOOM, next))
-    if (z === zoom) return
+    if (z === zoomLive.current) return
+    zoomLive.current = z
     const anchor = at ?? { x: size.w / 2, y: size.h / 2 }
     const before = placeAt(corner.x + anchor.x, corner.y + anchor.y, zoom)
     const after = worldPixel(before.lat, before.lon, z)
@@ -241,7 +250,7 @@ export default function MapPanel({ active, onDownload, onFullRescan, refreshKey,
       e.preventDefault()
       const r = el.getBoundingClientRect()
       const intent = wheelIntent(e)
-      if (intent.kind === 'zoom') { zoomTo(zoom + intent.amount, { x: e.clientX - r.left, y: e.clientY - r.top }); return }
+      if (intent.kind === 'zoom') { zoomTo(zoomLive.current + intent.amount, { x: e.clientX - r.left, y: e.clientY - r.top }); return }
       // a two-finger swipe moves the map; the view cannot go past the top or bottom of the world
       setCentre(prev => { const c = worldPixel(prev.lat, prev.lon, zoom); return limitCentre(placeAt(c.x + intent.dx, c.y + intent.dy, zoom), zoom, size.h) })
     }
@@ -500,8 +509,9 @@ export default function MapPanel({ active, onDownload, onFullRescan, refreshKey,
           {explain && (
             <div style={styles.explain} role="dialog" aria-label="About the street map">
               <b>About the street map</b>
-              <div>It draws street pictures from OpenStreetMap, a free community map. To do that, FlickrFetch asks OpenStreetMap for the squares of map you are looking at, so they can tell roughly where on the map that is. Nothing else is sent: not your photos, your account or your name.</div>
-              <div>The pictures are saved on this computer, so places you have seen load quickly and still show offline. Turn it off any time, here or in Settings; the map then goes back to the country outline.</div>
+              <div>Draws streets under your photos, using OpenStreetMap, a free community map.</div>
+              <div>To do that, FlickrFetch asks it for the map images of the area you are looking at, so it learns roughly where you look. Nothing else is sent: not your photos, account or name.</div>
+              <div>The map images (not your photos) are saved on this computer, so places you have seen load fast and work offline. Turn it off any time, here or in Settings.</div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button style={primaryBtn} onClick={() => { asked.current = true; setStreet(true); setExplain(false); void window.flickrAPI.setSettings({ mapStreet: true }) }}>Turn on street map</button>
                 <button style={quietBtn} onClick={() => setExplain(false)}>Not now</button>

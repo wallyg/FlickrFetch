@@ -1,6 +1,6 @@
 import { app } from 'electron'
 import { join } from 'path'
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs'
+import { existsSync, readFileSync, writeFileSync, mkdirSync, statSync } from 'fs'
 import type { AppSettings, FileNamingConfig, MetadataSettings } from '../shared/types'
 
 const SETTINGS_FILE = join(app.getPath('userData'), 'settings.json')
@@ -80,6 +80,19 @@ export function loadSettings(): AppSettings {
   } catch {
     return { ...defaults }
   }
+}
+
+// For code that asks for the settings many times a second (the map's street pictures): the file is read again only when it has changed
+let cached: { key: string; value: AppSettings } | null = null
+export function loadSettingsCached(): AppSettings {
+  try {
+    const st = statSync(SETTINGS_FILE)
+    const key = `${st.mtimeMs}:${st.size}`
+    if (cached && cached.key === key) return cached.value
+    const value = loadSettings()
+    cached = { key, value }
+    return value
+  } catch { return loadSettings() }   // no file yet: the defaults
 }
 
 export function saveSettings(settings: AppSettings): void {

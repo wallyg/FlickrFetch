@@ -62,13 +62,13 @@ Metadata that lives only on a website disappears when the website does, or when 
 **Photo map**
 - Your photos with a location, as dots and numbered circles on a world map. Click one to see its photos, open a photo on Flickr, or download them
 - Filter by photos or videos, privacy, tags, album, date and how precise the location is
-- An optional street map, off by default, using OpenStreetMap. The map pictures are saved on your Mac, and you can set a size limit
+- An optional street map, off by default, using OpenStreetMap. The map images are saved on your Mac (not your photos), and you can set a size limit
 
 ## Privacy and safety
 
 - **Read-only.** FlickrFetch asks Flickr for read access only. It cannot change or delete anything on your account.
 - **Your files stay on your Mac.** Photos, metadata and download history are stored locally.
-- **No FlickrFetch servers.** The app talks to Flickr, and to GitHub to check whether a new version is out. If you turn on the optional street map, it also asks OpenStreetMap for the squares of map you are looking at, so OpenStreetMap learns roughly which part of the world that is, and nothing else. There is no analytics or tracking.
+- **No FlickrFetch servers.** The app talks to Flickr, and to GitHub to check whether a new version is out. If you turn on the optional street map, it also asks OpenStreetMap for the map images of the area you are looking at, so OpenStreetMap learns roughly which part of the world that is, and nothing else. There is no analytics or tracking.
 - The source code is public, so you can see exactly what it does.
 
 ## Install

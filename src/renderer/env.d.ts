@@ -53,7 +53,7 @@ declare global {
       getMapAlbums: (query: string) => Promise<MapAlbumHit[]>
       getMapCacheInfo: () => Promise<MapCacheInfo>
       clearMapCache: () => Promise<void>
-      getMapTile: (z: number, x: number, y: number) => Promise<Uint8Array | null>
+      getMapTile: (z: number, x: number, y: number) => Promise<Uint8Array | null | 'dropped'>
       setAlbumKind: (req: AlbumKindRequest) => Promise<void>
       saveAlbumCsv: (query: AlbumExportQuery) => Promise<string | null>
       getBackupSummary: () => Promise<BackupSummary>

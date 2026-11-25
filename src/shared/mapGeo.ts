@@ -59,6 +59,13 @@ export function worldCopies(cornerX: number, width: number, world: number): numb
   return out
 }
 
+/** The size the map should use for a box that measures width by height. A box that is not on screen (its tab is hidden) measures 0 by 0: that gives
+    null, and the map leaves its size and place alone instead of shrinking to the smallest size and drifting. */
+export function usableSize(width: number, height: number, min = 300): { w: number; h: number } | null {
+  if (!(width > 0) || !(height > 0)) return null
+  return { w: Math.max(min, width), h: Math.max(min, height) }
+}
+
 /** The nearest zoom at which the whole height of the world fits the window exactly, so the map never shows blank space above the north pole or
     below the south. Never below the map's own lowest zoom (1). */
 export function minZoomFor(height: number, floor = 1): number {

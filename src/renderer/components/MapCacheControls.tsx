@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { MAP_CACHE_MAX_MB, MAP_CACHE_MIN_MB } from '../../shared/mapGeo'
 import type { MapCacheInfo } from '../../shared/types'
 
-// Settings > General > Street map: how much room the saved street pictures take, the most they may take (a number you type, from 20 MB to
+// Settings > General > Street map: how much room the saved map images take, the most they may take (a number you type, from 20 MB to
 // 5,000 MB), and a button that deletes them all. They simply download again when a place is looked at next.
 
 const size = (bytes: number): string => (bytes >= 1024 ** 3 ? `${(bytes / 1024 ** 3).toFixed(1)} GB` : bytes >= 1024 ** 2 ? `${Math.round(bytes / 1024 ** 2)} MB` : bytes > 0 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : '0 MB')
@@ -20,11 +20,8 @@ export default function MapCacheControls({ limitMb, onLimit, reloadKey }: { limi
 
   const n = whole(text)
   const ok = n !== null && n >= MAP_CACHE_MIN_MB && n <= MAP_CACHE_MAX_MB
-  const change = (value: string): void => {
-    setText(value)
-    const v = whole(value)
-    if (v !== null && v >= MAP_CACHE_MIN_MB && v <= MAP_CACHE_MAX_MB) onLimit(v)
-  }
+  // The number is kept only when you finish typing (leave the box or press Enter), so half-typed numbers such as the 30 on the way to 300 are never saved as the limit
+  const commit = (): void => { if (ok && n !== null) onLimit(n); else setText(String(limitMb)) }
   const clear = async (): Promise<void> => {
     setBusy(true)
     try { await window.flickrAPI.clearMapCache() } catch { /* the size shown below says whether it worked */ }
@@ -34,25 +31,25 @@ export default function MapCacheControls({ limitMb, onLimit, reloadKey }: { limi
   return (
     <div style={styles.box}>
       <div style={styles.row}>
-        <label style={styles.label} htmlFor="map-cache-limit">Most it may take</label>
-        <input id="map-cache-limit" style={{ ...styles.input, ...(ok ? {} : styles.bad) }} inputMode="numeric" value={text} onChange={e => change(e.target.value)}
-          onBlur={() => { if (!ok) setText(String(limitMb)) }} aria-invalid={!ok} aria-describedby="map-cache-help" />
+        <label style={styles.label} htmlFor="map-cache-limit">Size limit</label>
+        <input id="map-cache-limit" style={{ ...styles.input, ...(ok ? {} : styles.bad) }} inputMode="numeric" value={text} onChange={e => setText(e.target.value)}
+          onBlur={commit} onKeyDown={e => { if (e.key === 'Enter') commit() }} aria-invalid={!ok} aria-describedby="map-cache-help" />
         <span style={styles.unit}>MB</span>
       </div>
       <div id="map-cache-help" style={ok ? styles.help : { ...styles.help, color: 'var(--ff-error)' }}>
-        {ok ? `Between ${MAP_CACHE_MIN_MB.toLocaleString()} and ${MAP_CACHE_MAX_MB.toLocaleString()} MB. When it is full, the oldest pictures are deleted first.` : `Enter a whole number from ${MAP_CACHE_MIN_MB.toLocaleString()} to ${MAP_CACHE_MAX_MB.toLocaleString()}.`}
+        {ok ? `${MAP_CACHE_MIN_MB.toLocaleString()} to ${MAP_CACHE_MAX_MB.toLocaleString()} MB. When full, the oldest map images go first.` : `Enter ${MAP_CACHE_MIN_MB.toLocaleString()} to ${MAP_CACHE_MAX_MB.toLocaleString()}.`}
       </div>
       <div style={styles.row}>
-        <span style={styles.label}>Saved now</span>
-        <b style={styles.value}>{info ? `${size(info.bytes)} (${info.files.toLocaleString()} picture${info.files === 1 ? '' : 's'})` : '…'}</b>
+        <span style={styles.label}>In use</span>
+        <b style={styles.value}>{info ? `${size(info.bytes)} (${info.files.toLocaleString()} image${info.files === 1 ? '' : 's'})` : '…'}</b>
         {!confirm
-          ? <button style={styles.btn} disabled={busy || !info || info.files === 0} onClick={() => setConfirm(true)}>Clear saved pictures</button>
+          ? <button style={styles.btn} disabled={busy || !info || info.files === 0} onClick={() => setConfirm(true)}>Clear</button>
           : <>
-              <button style={{ ...styles.btn, color: 'var(--ff-error)', borderColor: 'var(--ff-error)' }} disabled={busy} onClick={() => void clear()}>{busy ? 'Clearing…' : 'Yes, delete them'}</button>
-              <button style={styles.btn} disabled={busy} onClick={() => setConfirm(false)}>Keep them</button>
+              <button style={{ ...styles.btn, color: 'var(--ff-error)', borderColor: 'var(--ff-error)' }} disabled={busy} onClick={() => void clear()}>{busy ? 'Clearing…' : 'Delete them'}</button>
+              <button style={styles.btn} disabled={busy} onClick={() => setConfirm(false)}>Cancel</button>
             </>}
       </div>
-      {confirm && <div style={styles.help}>This only deletes the saved street pictures. Your photos and library are not touched, and the pictures download again as you look around.</div>}
+      {confirm && <div style={styles.help}>Deletes only the saved map images, not your photos. They download again as you browse.</div>}
     </div>
   )
 }

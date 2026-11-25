@@ -116,7 +116,7 @@ contextBridge.exposeInMainWorld('flickrAPI', {
   getMapAlbums: (query: string): Promise<MapAlbumHit[]> => ipcRenderer.invoke('map:albums', query),
   getMapCacheInfo: (): Promise<MapCacheInfo> => ipcRenderer.invoke('map:cacheInfo'),
   clearMapCache: (): Promise<void> => ipcRenderer.invoke('map:cacheClear'),
-  getMapTile: (z: number, x: number, y: number): Promise<Uint8Array | null> => ipcRenderer.invoke('map:tile', z, x, y),
+  getMapTile: (z: number, x: number, y: number): Promise<Uint8Array | null | 'dropped'> => ipcRenderer.invoke('map:tile', z, x, y),
   setAlbumKind: (req: AlbumKindRequest): Promise<void> => ipcRenderer.invoke('albums:setKind', req),
   saveAlbumCsv: (query: AlbumExportQuery): Promise<string | null> => ipcRenderer.invoke('albums:saveCsv', query),
   getBackupSummary: (): Promise<BackupSummary> => ipcRenderer.invoke('backup:summary'),

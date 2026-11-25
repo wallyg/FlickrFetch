@@ -4,8 +4,8 @@ import { existsSync, mkdtempSync, readFileSync, utimesSync, writeFileSync, mkdir
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { placeAt as placeAtForTest } from '../src/shared/mapGeo'
-import { anchorAfterResize, limitCentre, minZoomFor, visibleTiles, tileZoomFor, wheelIntent, worldCopies, worldPixel, wrapLon, cacheLimitMb, MAP_CACHE_DEFAULT_MB, MAP_CACHE_MAX_MB, MAP_CACHE_MIN_MB } from '../src/shared/mapGeo'
-import { FRESH_DAYS, cacheKeeper, cacheSize, getTile, trimCache, validTile } from '../src/main/mapTiles'
+import { usableSize, anchorAfterResize, limitCentre, minZoomFor, visibleTiles, tileZoomFor, wheelIntent, worldCopies, worldPixel, wrapLon, cacheLimitMb, MAP_CACHE_DEFAULT_MB, MAP_CACHE_MAX_MB, MAP_CACHE_MIN_MB } from '../src/shared/mapGeo'
+import { FRESH_DAYS, MAX_WAITING, cacheKeeper, cacheSize, getTile, readCapped, trimCache, validTile } from '../src/main/mapTiles'
 
 const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 1, 2, 3, 4, 5, 6])
 const NEW = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 9, 9, 9, 9, 9, 9])
@@ -237,44 +237,111 @@ test('the size limit is a whole number kept between the smallest and largest all
   assert.equal(cacheLimitMb(MAP_CACHE_MIN_MB), MAP_CACHE_MIN_MB)
   assert.equal(cacheLimitMb(MAP_CACHE_MAX_MB), MAP_CACHE_MAX_MB)
 })
-test('the size shown counts every saved picture, and an empty or missing folder is zero', () => {
-  assert.deepEqual(cacheSize(join(folder(), 'nope')), { bytes: 0, files: 0 })
+test('the size shown counts every saved picture, and an empty or missing folder is zero', async () => {
+  assert.deepEqual(await cacheSize(join(folder(), 'nope')), { bytes: 0, files: 0 })
   const dir = folder()
   fill(dir, ['a', 'b', 'c'], 1000, () => 1)
-  assert.deepEqual(cacheSize(dir), { bytes: 3000, files: 3 })
+  assert.deepEqual(await cacheSize(dir), { bytes: 3000, files: 3 })
 })
-test('trimming removes the oldest pictures first and stops with room to spare', () => {
+test('trimming removes the oldest pictures first and stops with room to spare', async () => {
   const dir = folder()
   fill(dir, ['new', 'mid', 'old', 'older'], 1000, i => [1, 5, 9, 20][i])
-  assert.equal(trimCache(dir, 4000), 0)                         // at the limit: nothing goes
-  assert.equal(trimCache(dir, 3500), 2)                         // over it: down to 80% of 3500 = 2800, so two of the oldest go
+  assert.equal(await trimCache(dir, 4000), 0)                         // at the limit: nothing goes
+  assert.equal(await trimCache(dir, 3500), 2)                         // over it: down to 80% of 3500 = 2800, so two of the oldest go
   assert.ok(existsSync(join(dir, '3', '1', 'new.png')) && existsSync(join(dir, '3', '1', 'mid.png')))
   assert.ok(!existsSync(join(dir, '3', '1', 'old.png')) && !existsSync(join(dir, '3', '1', 'older.png')))
 })
-test('the folder is measured once, then only added to, and trimmed as soon as it passes the limit', () => {
+test('the folder is measured once, then only added to, and trimmed as soon as it passes the limit', async () => {
   const dir = folder()
   fill(dir, ['a', 'b'], 1000, i => 5 - i)
   const keeper = cacheKeeper(dir)
-  keeper.saved(0, 5000)                                         // first look: 2000 of 5000
-  assert.equal(cacheSize(dir).files, 2)
+  await keeper.saved(0, 5000)                                   // first look: 2000 of 5000
+  assert.equal((await cacheSize(dir)).files, 2)
   fill(dir, ['c', 'd', 'e'], 1000, () => 0)                     // 3 more arrive: 5000, not over yet
-  keeper.saved(3000, 5000)
-  assert.equal(cacheSize(dir).files, 5)
+  await keeper.saved(3000, 5000)
+  assert.equal((await cacheSize(dir)).files, 5)
   fill(dir, ['f'], 1000, () => 0)                               // one more: 6000, over 5000, so it trims to 4000
-  keeper.saved(1000, 5000)
-  assert.ok(cacheSize(dir).bytes <= 4000 && cacheSize(dir).files >= 3)
+  await keeper.saved(1000, 5000)
+  const after = await cacheSize(dir)
+  assert.ok(after.bytes <= 4000 && after.files >= 3)
   assert.ok(!existsSync(join(dir, '3', '1', 'a.png')))          // the oldest went
 })
-test('lowering the limit trims on the next look even if nothing new was saved', () => {
+test('lowering the limit trims on the next look even if nothing new was saved', async () => {
   const dir = folder()
   fill(dir, ['a', 'b', 'c', 'd'], 1000, i => 10 - i)
   const keeper = cacheKeeper(dir)
-  keeper.saved(0, 2000)
-  assert.ok(cacheSize(dir).bytes <= 1600)
+  await keeper.saved(0, 2000)
+  assert.ok((await cacheSize(dir)).bytes <= 1600)
 })
 test('saving a picture reports its size so the folder can be kept within its limit', async () => {
   const dir = folder(); const told: number[] = []
   await getTile(8, 1, 1, { dir, now: Date.now, fetchTile: async () => PNG, onSaved: n => told.push(n) })
   await getTile(8, 1, 1, { dir, now: Date.now, fetchTile: async () => PNG, onSaved: n => told.push(n) })   // from the saved copy: nothing new
   assert.deepEqual(told, [PNG.length])
+})
+
+// Queue: two at a time, newest first, the oldest dropped past MAX_WAITING
+const tick = (ms = 5): Promise<void> => new Promise(r => setTimeout(r, ms))
+function held(): { started: string[]; release: () => void; releaseAll: () => Promise<void>; fetchTile: (u: string) => Promise<Uint8Array | null> } {
+  const started: string[] = [], gates: (() => void)[] = []
+  return {
+    started,
+    release: () => gates.shift()?.(),
+    releaseAll: async () => { for (let i = 0; i < 200; i++) { if (gates.length === 0) { await tick(); if (gates.length === 0) return } gates.shift()?.(); await tick(1) } },
+    fetchTile: u => new Promise(res => { started.push(u); gates.push(() => res(PNG)) })
+  }
+}
+test('downloads run two at a time, and the next one started is the newest that is waiting', async () => {
+  const h = held(), deps = { dir: folder(), now: Date.now, fetchTile: h.fetchTile }
+  const all = [1, 2, 3, 4, 5].map(x => getTile(6, x, 1, deps))      // 1 and 2 start; 3, 4, 5 wait
+  assert.deepEqual(h.started.map(u => u.split('/').slice(-2).join('/')), ['1/1.png', '2/1.png'])
+  h.release(); await tick()                                          // one finishes: the newest waiting (5) goes next, not the oldest (3)
+  assert.equal(h.started.length, 3)
+  assert.ok(h.started[2].endsWith('/6/5/1.png'))
+  const late = getTile(6, 6, 1, deps)                                // two are running again, so a new request has to wait, not start a third
+  assert.equal(h.started.length, 3)
+  await h.releaseAll()
+  await Promise.all([...all, late])
+  assert.equal(h.started.length, 6)
+})
+test('past the waiting limit the oldest requests are dropped, without being remembered as failures', async () => {
+  const h = held(), dir = folder(), deps = { dir, now: Date.now, fetchTile: h.fetchTile }
+  const xs = Array.from({ length: 2 + MAX_WAITING + 5 }, (_, i) => i + 10)
+  const results: unknown[] = []
+  const all = xs.map((x, i) => getTile(7, x, 1, deps).then(r => { results[i] = r }))
+  await tick()
+  const dropped = xs.map((_, i) => i).filter(i => results[i] === 'dropped')
+  assert.deepEqual(dropped, [2, 3, 4, 5, 6])                         // the 5 oldest of the waiting ones, not the two already running
+  await h.releaseAll()
+  await Promise.all(all)
+  assert.equal(h.started.length, 2 + MAX_WAITING)                    // everything else was fetched, the dropped ones were not
+  const again = await getTile(7, xs[2], 1, { dir, now: Date.now, fetchTile: async () => PNG })   // asked for again straight away: fetched, not blocked
+  assert.deepEqual(again, PNG)
+})
+
+// A body bigger than the limit is not read to the end
+test('an oversize response is refused by its header or as soon as too much has arrived', async () => {
+  const bytes = (n: number): Uint8Array => new Uint8Array(n).fill(7)
+  const stream = (chunks: Uint8Array[], onCancel: () => void): ReadableStream<Uint8Array> => {
+    let i = 0
+    return new ReadableStream<Uint8Array>({ pull(c) { if (i < chunks.length) c.enqueue(chunks[i++]); else c.close() }, cancel() { onCancel() } })
+  }
+  let cancelled = 0
+  const declared = await readCapped({ headers: new Headers({ 'content-length': '999999' }), body: stream([bytes(10)], () => cancelled++) }, 1000)
+  assert.equal(declared, null); assert.equal(cancelled, 1)          // the header alone was enough
+  const grown = await readCapped({ headers: new Headers(), body: stream([bytes(600), bytes(600), bytes(600)], () => cancelled++) }, 1000)
+  assert.equal(grown, null); assert.equal(cancelled, 2)             // no header: stopped after the second chunk, the third was never read
+  const fine = await readCapped({ headers: new Headers({ 'content-length': '900' }), body: stream([bytes(400), bytes(500)], () => cancelled++) }, 1000)
+  assert.equal(fine?.length, 900); assert.equal(cancelled, 2)
+  assert.equal(await readCapped({ headers: new Headers(), body: null }, 1000), null)
+})
+
+// A hidden tab measures 0 by 0
+test('a box that is not on screen gives no size, so the map leaves its place alone', () => {
+  assert.equal(usableSize(0, 0), null)
+  assert.equal(usableSize(800, 0), null)
+  assert.equal(usableSize(0, 600), null)
+  assert.equal(usableSize(NaN, 600), null)
+  assert.deepEqual(usableSize(800, 600), { w: 800, h: 600 })
+  assert.deepEqual(usableSize(120, 90), { w: 300, h: 300 })         // a very small box is raised to the smallest size
 })

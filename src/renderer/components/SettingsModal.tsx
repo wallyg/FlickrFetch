@@ -365,14 +365,14 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
               <div style={{ ...s.section, borderTop: '1px solid #f0ede8' }}>
                 <div style={s.sectionRow}>
                   <p style={s.sectionTitle}>Street map</p>
-                  <InfoTip text={"The Map tab can draw streets under your photos, using OpenStreetMap, a free community map.\n\nTo do that, FlickrFetch asks OpenStreetMap for the squares of map you are looking at, so they can tell roughly where on the map that is. Nothing else is sent: not your photos, your account or your name.\n\nThe pictures are saved on this computer, so places you have seen load fast and still show offline."} />
+                  <InfoTip text={"# About the street map\n- Draws streets from OpenStreetMap, a free community map\n- Asks it for the map images of the area you are looking at, so it learns roughly where you look\n- Sends nothing else: no photos, account or name\n- Saves those map images on this computer (not your photos), so places you have seen load fast and work offline" } />
                 </div>
                 <div style={s.toggleList}>
                   <Toggle
                     value={mapStreet === true}
                     onChange={v => { setMapStreet(v) }}
                     label="Show street map"
-                    desc="On the Map tab, under your photos. Off shows only the country outline."
+                    desc="Draws streets under your photos on the Map tab."
                   />
                 </div>
                 <MapCacheControls limitMb={mapCacheMb} onLimit={setMapCacheMb} reloadKey={resetCount} />
