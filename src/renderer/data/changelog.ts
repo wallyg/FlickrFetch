@@ -14,7 +14,8 @@ const changelog: Release[] = [
       'One set of line icons — the emoji and the plain characters that stood in for icons (the cross, tick, warning sign and arrows) are now drawn icons of the same weight, and the top bar shows a clock for History and a cog for Settings',
       'One kind of button — the main, "do this", grey, put-aside and red looks are now the same on every screen. On This Day\'s "Make a shareable collage" button is the same size as its neighbours, with a small picture on it',
       'Clicking a photo in the Map\'s side panel, or in the suggested photos under Albums and Tags, opens it in the app (arrows move through the photos, "Open on Flickr" is a button) instead of jumping to the browser',
-      'Clearer hover notes in Settings, and the "Updated" menu in Health Check reads more plainly; the example for replacing spaces in filenames was wrong and is fixed'
+      'Clearer hover notes in Settings, and the "Updated" menu in Health Check reads more plainly; the example for replacing spaces in filenames was wrong and is fixed. A hover note now opens next to its (i) icon, not at the far edge of the row',
+      'Health Check has a pulse "How it works" button beside Tune checks, and Album Checks shows a small computer or person icon on each album to say whether the app picked or you did, with Reset only on yours'
     ]
   },
   {

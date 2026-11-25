@@ -1,10 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import type { AlbumKind, AlbumKindRow } from '../../shared/types'
 import { filterInput } from '../ui/kit'
+import Icon from '../ui/Icon'
 
 // Settings > Album Checks (part of Health Check). What an album is about decides how May not fit and May be missing judge its photos:
 // Date (trips and events), Place (one area), Subject (a clear tag) or Anything (leave it alone). The app picks one for every album;
-// a choice here replaces the pick for that album only, and Reset goes back to it. The choice stays on this computer.
+// a choice here replaces the pick for that album only, and Reset goes back to the app's pick as it is now (the pick is worked out again
+// from the album every time; only your choices are kept, on this computer). A small icon says where each choice came from (#260).
 
 const LABEL: Record<AlbumKind, string> = { date: 'Date', place: 'Place', tag: 'Subject (tag)', anything: 'Anything (leave alone)' }
 const PAGE = 60
@@ -40,10 +42,10 @@ export default function AlbumKindList(): React.JSX.Element {
 
   return (
     <div style={styles.box}>
-      <div style={styles.muted}>The app picks how each album is judged. Change one here and only that album changes. {rows.length.toLocaleString()} albums, {changed.toLocaleString()} changed by you.</div>
+      <div style={styles.muted}>The app picks how each album is judged. Change one here and only that album changes. {rows.length.toLocaleString()} albums, {changed.toLocaleString()} chosen by you.</div>
       <div style={styles.bar}>
         <input style={{ ...filterInput, maxWidth: 260 }} placeholder="Find an album…" value={search} onChange={e => setSearch(e.target.value)} aria-label="Find an album" />
-        <label style={styles.check}><input type="checkbox" checked={changedOnly} onChange={e => setChangedOnly(e.target.checked)} /> Only the ones I changed</label>
+        <label style={styles.check}><input type="checkbox" checked={changedOnly} onChange={e => setChangedOnly(e.target.checked)} /> Only the ones I chose</label>
       </div>
       {list.length === 0 ? <div style={styles.muted}>No album matches.</div> : (
         <div>
@@ -51,13 +53,18 @@ export default function AlbumKindList(): React.JSX.Element {
             <div key={r.albumId} style={styles.row}>
               <div style={{ minWidth: 0 }}>
                 <div style={styles.title}>{r.title || '(no title)'} <span style={styles.count}>{r.photos.toLocaleString()} photo{r.photos === 1 ? '' : 's'}</span></div>
-                <div style={styles.muted}>App&apos;s pick: {LABEL[r.pick].replace(' (leave alone)', ', left alone').toLowerCase()}, because {r.why}.</div>
+                <div style={styles.muted}>
+                  {r.overridden && r.kind !== r.pick
+                    ? <>The app would now pick {LABEL[r.pick].replace(' (leave alone)', ', leave alone').toLowerCase()}, because {r.why}.</>
+                    : <>The app picks {LABEL[r.pick].replace(' (leave alone)', ', leave alone').toLowerCase()}, because {r.why}.</>}
+                </div>
               </div>
               <div style={styles.choice}>
+                <span style={styles.origin} title={r.overridden ? 'You chose this' : "The app's pick"} aria-label={r.overridden ? 'You chose this' : "The app's pick"}><Icon name={r.overridden ? 'person' : 'computer'} size={16} /></span>
                 <select style={styles.select} value={r.kind} aria-label={`How ${r.title || 'this album'} is judged`} onChange={e => void set(r.albumId, e.target.value as AlbumKind)}>
-                  {(['date', 'place', 'tag', 'anything'] as AlbumKind[]).map(k => <option key={k} value={k}>{LABEL[k]}{k === r.pick ? " (app's pick)" : ''}</option>)}
+                  {(['date', 'place', 'tag', 'anything'] as AlbumKind[]).map(k => <option key={k} value={k}>{LABEL[k]}</option>)}
                 </select>
-                {r.overridden && <button style={styles.link} onClick={() => void set(r.albumId, 'auto')}>Reset</button>}
+                <span style={styles.resetSlot}>{r.overridden && <button style={styles.link} onClick={() => void set(r.albumId, 'auto')}>Reset</button>}</span>
               </div>
             </div>
           ))}
@@ -77,6 +84,8 @@ const styles: Record<string, React.CSSProperties> = {
   title: { fontSize: 13, fontWeight: 700, color: 'var(--ff-text)', overflowWrap: 'anywhere' },
   count: { fontWeight: 400, color: 'var(--ff-text-secondary)' },
   choice: { display: 'flex', alignItems: 'center', gap: 8, flex: 'none' },
+  origin: { display: 'inline-flex', color: 'var(--ff-text-secondary)' },
+  resetSlot: { width: 40, textAlign: 'right' },
   select: { border: '1px solid var(--ff-border)', borderRadius: 6, padding: '3px 6px', fontSize: 12, background: 'var(--ff-surface)', color: 'var(--ff-text)' },
   link: { background: 'none', border: 'none', padding: 0, fontSize: 12, color: 'var(--ff-blue)', textDecoration: 'underline', cursor: 'pointer' }
 }

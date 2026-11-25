@@ -67,7 +67,7 @@ The duplicated "Do this", Main, Secondary, put-aside and danger button styles no
 
 ## Icons (#229)
 
-One icon set (`src/renderer/ui/Icon.tsx`): line icons, 1.5 px line, round ends, in the colour of the text beside them. The six colour emoji (lock, calendar, bell, tag, clock, pin) and the plain characters (cross, tick, up-right arrow, warning sign, return, refresh and up arrows) are now these icons; the old icons were all redrawn to the same 1.5 px line; the top bar's History is a clock and Settings is a cog. Arrows inside sentences (tooltips, the names of saved downloads such as "↓ Download…") stay as text on purpose. The Health Check pulse icon is in the set but not placed anywhere yet.
+One icon set (`src/renderer/ui/Icon.tsx`): line icons, 1.5 px line, round ends, in the colour of the text beside them. The six colour emoji (lock, calendar, bell, tag, clock, pin) and the plain characters (cross, tick, up-right arrow, warning sign, return, refresh and up arrows) are now these icons; the old icons were all redrawn to the same 1.5 px line; the top bar's History is a clock and Settings is a cog. Arrows inside sentences (tooltips, the names of saved downloads such as "↓ Download…") stay as text on purpose. The Health Check pulse is now the "How it works" button beside Tune checks (see K3).
 
 - [ ] I1 **The top bar.** History is a clock outline and Settings is a cog outline, side by side with the avatar. Do they read as a clock and a cog? Is the cog's shape right (eight teeth, round hub)?
 - [ ] I2 **Close buttons.** The cross in every dialog, panel, chip, filter box and the Plan box is a drawn cross, centred in its button, not a text character.
@@ -80,3 +80,10 @@ One icon set (`src/renderer/ui/Icon.tsx`): line icons, 1.5 px line, round ends, 
 
 - [ ] J1 **Settings hover notes.** Hover the (i) marks in Settings > Downloads and File Naming and Metadata: the notes are short and plain. The one for "Replace spaces" now shows the right example ("NYC - Highline" becomes "NYC.-.Highline"). The GPS, brackets, sidecar, capitalisation and filename-core notes were reworded.
 - [ ] J2 **The Updated menu in Health Check.** Hover the small dot beside "Updated": the note is one or two short sentences. Open the menu: Update now and Rebuild from scratch each have a one-line explanation.
+
+## Fix pass (after your walk-through notes, 25 Nov 2026)
+
+- [ ] K1 **Collage colours.** Make a shareable collage (On This Day): the calendar tile's pink band, navy day number, the white tile and the Flickr / Fetch wordmark look the same as before; shadows are a touch softer. The five frames (Polaroid, Matted, Paper, Gallery, Film) keep their own looks.
+- [ ] K2 **Album Checks.** Settings > Album Checks: every album shows a small computer icon (the app's pick) or a person icon (you chose it) before its dropdown. Reset appears only beside a person icon, in a fixed column, so the dropdowns line up. The four Atlanta albums you set earlier show the person icon and Reset. Change one album, then press Reset: it goes back to the app's pick as it is now. The dropdown choices no longer say "(app's pick)"; the line under the name says "The app picks ..." or, for a choice that differs, "The app would now pick ...".
+- [ ] K3 **Tune checks and How it works.** Health Check > Albums > Lists: Tune checks has the same switches icon as before, now drawn from the shared set. Beside it is a new "How it works" button with a pulse icon; point at it and the "How Health Check works" note opens below it, lined up with the button and not running off the right edge of the window.
+- [ ] K4 **Hover notes line up with their icon.** Health Check > Albums > Lists > "Photos in no album": point at the (i) after the description. On a wide window the note opens under the icon, not at the left edge of the row. Try a narrow window too, and an (i) near the right edge.

@@ -7,6 +7,7 @@ import RichNote from './RichNote'
 export default function InfoTip({ text, direction }: { text: string; direction?: 'down' | 'up' }): React.JSX.Element {
   const [show, setShow] = useState(false)
   const [flip, setFlip] = useState(false)
+  const [shift, setShift] = useState(false)   // near the right edge of the window: line up with the icon's right edge instead
   const wrap = useRef<HTMLDivElement | null>(null)
   const open = (): void => {
     const el = wrap.current
@@ -20,14 +21,16 @@ export default function InfoTip({ text, direction }: { text: string; direction?:
       const roomBelow = limit - r.bottom - 8
       const roomAbove = r.top - (box ? box.getBoundingClientRect().top : 0) - 8
       setFlip(roomBelow < need && roomAbove > roomBelow)
+      setShift(r.left + 300 > window.innerWidth - 8)
     }
     setShow(true)
   }
   const up = direction ? direction === 'up' : flip
+  const place: React.CSSProperties = { ...(up ? { top: 'auto', bottom: 'calc(100% + 7px)' } : {}), ...(shift ? { left: 'auto', right: 0 } : {}) }
   return (
     <div ref={wrap} style={styles.wrap} onMouseEnter={open} onMouseLeave={() => setShow(false)}>
       <div style={styles.icon}>i</div>
-      {show && <div style={up ? { ...styles.bubble, top: 'auto', bottom: 'calc(100% + 7px)' } : styles.bubble}><RichNote text={text} /></div>}
+      {show && <div style={{ ...styles.bubble, ...place }}><RichNote text={text} /></div>}
     </div>
   )
 }

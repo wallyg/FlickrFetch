@@ -4,6 +4,7 @@ import logoImg from '../assets/logo-tray.png'
 import { itemsLabel } from '../../shared/counts'
 import { MONTHS } from './DateViewParts'
 import { quietBtn, selectedOn } from '../ui/kit'
+import { mapColours } from '../ui/mapColours'
 
 // Collage and card maker for On This Day: pick how many photos, a layout and a frame, then save or copy the
 // picture. Drawn on a canvas here; nothing is uploaded anywhere. The frame colors come from the photos.
@@ -322,11 +323,12 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
     if (!ctx) return null
     const sh = SHAPES.find(x => x.key === shape) ?? SHAPES[0]
     const fixed = sh.key !== 'auto'
+    const brand = mapColours()   // the brand colours and shadow, read from the page's tokens
     const OW = fixed ? sh.w : W   // canvas width at standard size
     const theme = {
-      polaroid: { bg: css(palette.mat), fg: css(palette.text), rule: css(palette.accent), tab: css(palette.accent), tabText: '#ffffff', dark: false },
-      matched: { bg: css(palette.mat), fg: css(palette.text), rule: css(palette.accent), tab: css(palette.accent), tabText: '#ffffff', dark: false },
-      paper: { bg: '#faf6ee', fg: '#3b3a36', rule: '#8a7a5c', tab: '#8a7a5c', tabText: '#ffffff', dark: false },
+      polaroid: { bg: css(palette.mat), fg: css(palette.text), rule: css(palette.accent), tab: css(palette.accent), tabText: brand.white, dark: false },
+      matched: { bg: css(palette.mat), fg: css(palette.text), rule: css(palette.accent), tab: css(palette.accent), tabText: brand.white, dark: false },
+      paper: { bg: '#faf6ee', fg: '#3b3a36', rule: '#8a7a5c', tab: '#8a7a5c', tabText: brand.white, dark: false },
       gallery: { bg: '#17181b', fg: '#e8e8ea', rule: '#e0b84a', tab: '#e0b84a', tabText: '#1a1a1a', dark: true },
       film: { bg: '#111111', fg: '#f2a65a', rule: '#f2a65a', tab: '#f2a65a', tabText: '#111111', dark: true }
     }[frame]
@@ -357,12 +359,12 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
 
     // Header: a calendar page with the date, the title, a line about the whole day, and a line of its most common tags
     const tileW = 116, tileH = 124, tx = padX, ty = pad
-    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.28)'; ctx.shadowBlur = 10; ctx.shadowOffsetY = 3
-    ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.roundRect(tx, ty, tileW, tileH, 14); ctx.fill(); ctx.restore()
-    ctx.save(); ctx.beginPath(); ctx.roundRect(tx, ty, tileW, tileH, 14); ctx.clip(); ctx.fillStyle = '#FF0084'; ctx.fillRect(tx, ty, tileW, 38); ctx.restore()
+    ctx.save(); ctx.shadowColor = brand.shadow; ctx.shadowBlur = 10; ctx.shadowOffsetY = 3
+    ctx.fillStyle = brand.white; ctx.beginPath(); ctx.roundRect(tx, ty, tileW, tileH, 14); ctx.fill(); ctx.restore()
+    ctx.save(); ctx.beginPath(); ctx.roundRect(tx, ty, tileW, tileH, 14); ctx.clip(); ctx.fillStyle = brand.pink; ctx.fillRect(tx, ty, tileW, 38); ctx.restore()
     ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'
-    ctx.fillStyle = '#ffffff'; ctx.font = `700 22px ${SANS}`; setSpacing('3.5px'); ctx.fillText(MONTHS[month - 1].slice(0, 3).toUpperCase(), tx + tileW / 2 + 1.75, ty + 27)
-    setSpacing('0px'); ctx.fillStyle = '#1b2946'; ctx.font = `800 68px ${SANS}`; ctx.fillText(String(day), tx + tileW / 2, ty + 106)
+    ctx.fillStyle = brand.white; ctx.font = `700 22px ${SANS}`; setSpacing('3.5px'); ctx.fillText(MONTHS[month - 1].slice(0, 3).toUpperCase(), tx + tileW / 2 + 1.75, ty + 27)
+    setSpacing('0px'); ctx.fillStyle = brand.navy; ctx.font = `800 68px ${SANS}`; ctx.fillText(String(day), tx + tileW / 2, ty + 106)
     ctx.textAlign = 'left'
     const hx = tx + tileW + 36, hMax = OW - padX - hx
     ctx.fillStyle = theme.fg; ctx.font = `800 68px ${SANS}`; setSpacing('-1.5px'); ctx.fillText('On This Day', hx, ty + 66); setSpacing('0px')
@@ -392,7 +394,7 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
     }
     ctx.globalAlpha = 1
     const ruleY = pad + tileH + 46
-    const grad = ctx.createLinearGradient(padX, 0, padX + cw, 0); grad.addColorStop(0, theme.rule); grad.addColorStop(1, '#FF0084')
+    const grad = ctx.createLinearGradient(padX, 0, padX + cw, 0); grad.addColorStop(0, theme.rule); grad.addColorStop(1, brand.pink)
     ctx.fillStyle = grad; ctx.fillRect(padX, ruleY, cw, 4)
 
     const top = pad + headerH
@@ -406,8 +408,8 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
         const pw = pol.w
         ctx.save()
         ctx.translate(x + pw / 2, y + pol.h / 2); ctx.rotate((rot[i % 6] * Math.PI) / 180); ctx.translate(-pw / 2, -pol.h / 2)
-        ctx.shadowColor = 'rgba(0,0,0,0.28)'; ctx.shadowBlur = 16; ctx.shadowOffsetY = 5
-        ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, pw, pol.h)
+        ctx.shadowColor = brand.shadow; ctx.shadowBlur = 16; ctx.shadowOffsetY = 5
+        ctx.fillStyle = brand.white; ctx.fillRect(0, 0, pw, pol.h)
         ctx.shadowColor = 'transparent'
         drawCover(ctx, src.get(p.id) as HTMLImageElement, { x: 14, y: 14, w: pw - 28, h: pw - 28 })
         // Caption: the year in big handwriting, how long ago, and the short Flickr link
@@ -434,7 +436,7 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
         const yr = p.dateTaken.slice(0, 4)
         ctx.font = `800 30px ${SANS}`
         const tw = ctx.measureText(yr).width + 34, th = 46, ty2 = ry + r.h - th - 18
-        ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.35)'; ctx.shadowBlur = 5; ctx.shadowOffsetY = 1
+        ctx.save(); ctx.shadowColor = brand.shadow; ctx.shadowBlur = 5; ctx.shadowOffsetY = 1
         ctx.fillStyle = theme.tab; ctx.beginPath(); ctx.roundRect(rx, ty2, tw, th, [0, 12, 12, 0]); ctx.fill(); ctx.restore()
         ctx.fillStyle = theme.tabText; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(yr, rx + 16, ty2 + th / 2 + 1)
         ctx.textBaseline = 'alphabetic'
@@ -451,8 +453,8 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
       const fetchW = ctx.measureText('Fetch').width, flickrW = ctx.measureText('Flickr').width
       const nameY = ty + 68
       ctx.textAlign = 'left'
-      ctx.fillStyle = theme.dark ? '#ffffff' : '#0063DC'; ctx.fillText('Flickr', right - fetchW - flickrW, nameY)
-      ctx.fillStyle = '#FF0084'; ctx.fillText('Fetch', right - fetchW, nameY)
+      ctx.fillStyle = theme.dark ? brand.white : brand.blue; ctx.fillText('Flickr', right - fetchW - flickrW, nameY)
+      ctx.fillStyle = brand.pink; ctx.fillText('Fetch', right - fetchW, nameY)
       const logo = logoRef.current
       if (logo) {
         const sz = 62, lx = right - fetchW - flickrW - sz - 14
@@ -594,7 +596,7 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
             {loading ? <span style={styles.muted}>Getting bigger pictures from Flickr…{progress.total > 0 ? ` ${Math.min(progress.done, progress.total)} of ${progress.total}` : ''}</span>
               : basePicks.length === 0 ? <span style={styles.muted}>{publicOnly ? 'None of this day\'s photos are public. Untick "Use public photos only" to include them.' : 'No photos to use.'}</span>
               : ready.length === 0 ? <span style={{ ...styles.muted, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>Could not get these pictures from Flickr. Check your connection and try again.<button style={styles.btn} onClick={() => { setLoading(true); setAttempt(a => a + 1) }}>Try again</button></span>
-              : <canvas ref={canvasRef} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', boxShadow: '0 2px 12px rgba(0,0,0,0.18)' }} />}
+              : <canvas ref={canvasRef} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', boxShadow: '0 2px 12px var(--ff-shadow-mid)' }} />}
           </div>
         </div>
       </div>
@@ -615,25 +617,25 @@ function Step({ n, label, children }: { n: number; label: string; children: Reac
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 'var(--ff-z-dialog)', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  modal: { background: 'var(--ff-cream, #fcfaf6)', borderRadius: 12, width: 'min(1100px, 94vw)', height: 'min(760px, 92vh)', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 12px 40px rgba(0,0,0,0.3)' },
+  overlay: { position: 'fixed', inset: 0, background: 'var(--ff-scrim)', zIndex: 'var(--ff-z-dialog)', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  modal: { background: 'var(--ff-cream, #fcfaf6)', borderRadius: 12, width: 'min(1100px, 94vw)', height: 'min(760px, 92vh)', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 12px 40px var(--ff-shadow-strong)' },
   head: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 18px', borderBottom: '1px solid var(--ff-border)' },
   x: { background: 'none', border: 'none', fontSize: 16, cursor: 'pointer', color: 'var(--ff-text-secondary)' },
   body: { flex: 1, minHeight: 0, display: 'flex', gap: 18, padding: 16 },
   controls: { width: 316, flexShrink: 0, display: 'flex', flexDirection: 'column', minHeight: 0 },
   scroll: { flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16, paddingRight: 6, paddingBottom: 8 },
   dock: { flexShrink: 0, borderTop: '1px solid var(--ff-border)', paddingTop: 10, display: 'flex', flexDirection: 'column', gap: 8 },
-  num: { flexShrink: 0, width: 20, height: 20, borderRadius: '50%', background: 'var(--ff-navy)', color: '#fff', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 1 },
+  num: { flexShrink: 0, width: 20, height: 20, borderRadius: '50%', background: 'var(--ff-navy)', color: 'var(--ff-white)', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 1 },
   preview: { flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ece8e1', borderRadius: 8, padding: 14, overflow: 'hidden' },
   group: { display: 'flex', flexDirection: 'column', gap: 6 },
   label: { fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ff-text-secondary)' },
   muted: { fontSize: 12, color: 'var(--ff-text-secondary)' },
   chips: { display: 'flex', gap: 6, flexWrap: 'wrap' },
-  chip: { border: '1px solid var(--ff-border)', borderRadius: 12, padding: '3px 11px', fontSize: 13, background: '#fff', color: 'var(--ff-text)', cursor: 'pointer' },
+  chip: { border: '1px solid var(--ff-border)', borderRadius: 12, padding: '3px 11px', fontSize: 13, background: 'var(--ff-white)', color: 'var(--ff-text)', cursor: 'pointer' },
   chipOn: { ...selectedOn },
   step: { ...quietBtn, width: 28, height: 28, padding: 0, fontSize: 16 },
   check: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--ff-text)' },
   warn: { background: '#fff7e6', border: '1px solid #f5d28b', borderRadius: 8, padding: '8px 10px', fontSize: 12 },
-  primary: { background: 'var(--ff-pink-action)', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer' },
+  primary: { background: 'var(--ff-pink-action)', color: 'var(--ff-white)', border: 'none', borderRadius: 6, padding: '6px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer' },
   btn: { ...quietBtn, padding: '6px 12px' }
 }

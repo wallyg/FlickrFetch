@@ -3,6 +3,8 @@ import { useRememberScroll } from '../hooks/useRememberScroll'
 import type { AuditCategory, HealthCondition, TagMode } from '../../shared/types'
 import { CLEANUP_RULES } from '../../shared/cleanupRules'
 import EmptyState from './EmptyState'
+import Icon from '../ui/Icon'
+import HoverNote from '../ui/HoverNote'
 import AuditPanel from './AuditPanel'
 import HealthPanel from './HealthPanel'
 import BackupPanel from './BackupPanel'
@@ -28,18 +30,6 @@ interface Props {
 }
 
 type View = 'overview' | 'tags' | 'photos' | 'albums' | 'backup'
-
-// Two switches (outline, 24 grid): the Tune checks button, since it turns each check on, off or to a warning. Big enough to read when it is alone on the button.
-function SwitchesIcon({ size }: { size: number }): React.JSX.Element {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="2" y="3" width="20" height="8" rx="4" />
-      <circle cx="17" cy="7" r="2" />
-      <rect x="2" y="13" width="20" height="8" rx="4" />
-      <circle cx="7" cy="17" r="2" />
-    </svg>
-  )
-}
 
 export default function CleanupPanel({ onViewPhotos, onDownload, settingsKey, onOpenSettings, onShowOnMap, backupRequest }: Props): React.JSX.Element {
   const scan = useTagScan()
@@ -117,8 +107,9 @@ export default function CleanupPanel({ onViewPhotos, onDownload, settingsKey, on
         </div>
         <span ref={setLeftSlot} style={styles.slot} />
         <div style={{ flex: 1 }} />
-        <button style={quietBtn} onClick={onOpenSettings} aria-label="Tune checks" title="Tune checks: choose which checks are an Issue, a Warning or Off (opens Settings)"><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><SwitchesIcon size={narrow ? 20 : 17} />{narrow ? '' : 'Tune checks'}</span></button>
-        <LibraryDataChip status={scan.status} info={info} compact={narrow} onUpdate={() => void scan.startScan('refresh')} onRebuild={rebuild} />
+        <button style={quietBtn} onClick={onOpenSettings} aria-label="Tune checks" title="Tune checks: choose which checks are an Issue, a Warning or Off (opens Settings)"><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Icon name="switches" size={narrow ? 20 : 17} />{narrow ? '' : 'Tune checks'}</span></button>
+        <HoverNote mark={false} text={info}><button style={quietBtn} aria-label="How Health Check works"><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Icon name="pulse" size={narrow ? 20 : 17} />{narrow ? '' : 'How it works'}</span></button></HoverNote>
+        <LibraryDataChip status={scan.status} compact={narrow} onUpdate={() => void scan.startScan('refresh')} onRebuild={rebuild} />
         <span ref={setRightSlot} style={styles.slot} />
       </div>
       <ScanNotices status={scan.status} scanError={scan.scanError} onRebuild={rebuild} />
