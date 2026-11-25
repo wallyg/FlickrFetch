@@ -1,4 +1,4 @@
-# Health Check copy: all 39 checks (draft for review, issue #221)
+# Health Check copy: all 40 checks (draft for review, issue #221)
 
 Nothing here is in the app yet. Read it whenever you like; say "approved" or mark what you want changed.
 
@@ -241,6 +241,16 @@ Decided (owner, 23 Nov 2026):
 - **(i)**
   - **Flagged when**
     - Flickr reports no usable location, yet recorded an accuracy, which is what a failed lookup that put the photo at exactly 0, 0 looks like
+
+### Vague location (`photos:locVague`)
+- **Description:** Photos placed only at country or region level, so they sit in the middle of it on the map.
+- **Default:** Warning (optional)
+- **(i)**
+  - **Flagged when**
+    - the photo has a location, but Flickr recorded its precision as 10 or less, on a scale from 1 (the whole world) to 16 (a street), such as a photo placed just "Italy"
+  - **Left alone when**
+    - no precision was recorded (the photo is not counted either way)
+- **"This one is fine" reasons:** That is as precise as the place gets; No exact spot applies (a flight, a long drive); I will pin it exactly later
 
 ### Far from nearby photos (`photos:locFar`)
 - **Description:** A photo far from the photos taken just before and after it.

@@ -33,7 +33,7 @@ const PHOTO_GROUPS: { title: string; ids: string[] }[] = [
   { title: 'Titles and descriptions', ids: ['title', 'description', 'descLink', 'descCopy', 'descMarkup', 'descTags'].map(c => `photos:${c}`) },
   { title: 'Tags', ids: ['tags', 'tagsOne', 'tagsMany'].map(c => `photos:${c}`) },
   { title: 'Dates', ids: ['dateFuture', 'dateAfterUpload', 'datePlaceholder'].map(c => `photos:${c}`) },
-  { title: 'Locations', ids: ['location', 'locNull', 'locFar', 'locTitle'].map(c => `photos:${c}`) },
+  { title: 'Locations', ids: ['location', 'locNull', 'locVague', 'locFar', 'locTitle'].map(c => `photos:${c}`) },
   { title: 'Duplicates', ids: ['duplicates'].map(c => `photos:${c}`) }
 ]
 const PAGE = 100

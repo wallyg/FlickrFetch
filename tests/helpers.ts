@@ -37,10 +37,10 @@ export function addTag(db: Database.Database, display: string, photos: string[])
   return id
 }
 
-export interface PhotoRow { id: string; title?: string; taken?: string; lat?: number | null; lon?: number | null; uploaded?: number | null; privacy?: number }
+export interface PhotoRow { id: string; title?: string; taken?: string; lat?: number | null; lon?: number | null; uploaded?: number | null; privacy?: number; media?: string; accuracy?: number }
 export function addPhotos(db: Database.Database, rows: PhotoRow[]): void {
-  const put = db.prepare('INSERT OR REPLACE INTO photo_meta (photo_id, title, date_taken, latitude, longitude, has_location, date_upload, privacy) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
-  for (const r of rows) put.run(r.id, r.title ?? '', r.taken ?? '', r.lat ?? null, r.lon ?? null, r.lat != null && r.lon != null ? 1 : 0, r.uploaded ?? null, r.privacy ?? 0)
+  const put = db.prepare('INSERT OR REPLACE INTO photo_meta (photo_id, title, date_taken, latitude, longitude, has_location, date_upload, privacy, media, geo_accuracy) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+  for (const r of rows) put.run(r.id, r.title ?? '', r.taken ?? '', r.lat ?? null, r.lon ?? null, r.lat != null && r.lon != null ? 1 : 0, r.uploaded ?? null, r.privacy ?? 0, r.media ?? 'photo', r.accuracy ?? 0)
 }
 
 export function addAlbum(db: Database.Database, id: string, title: string, photos: string[], kind?: string): void {

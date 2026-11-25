@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import HealthCheckSettings from './HealthCheckSettings'
 import InfoTip from '../ui/InfoTip'
+import MapCacheControls from './MapCacheControls'
+import { cacheLimitMb } from '../../shared/mapGeo'
 import type {
   FileNamingConfig, FileNamingCore, FileNamingSep, DateFormat, PartPosition,
   AppSettings, CaseTransform, DownloadSize, ConflictBehavior, MetadataSettings
@@ -73,6 +75,8 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
   const [notifyOnComplete, setNotifyOnComplete] = useState(true)
   const [onThisDayCard, setOnThisDayCard] = useState(true)
   const [onThisDayNotify, setOnThisDayNotify] = useState(false)
+  const [mapStreet, setMapStreet] = useState<boolean | undefined>(undefined)   // undefined = never asked
+  const [mapCacheMb, setMapCacheMb] = useState(cacheLimitMb(undefined))
 
   // Downloads tab
   const [downloadFolder, setDownloadFolder] = useState('')
@@ -136,6 +140,8 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
     setNotifyOnComplete(settings.notifyOnComplete ?? true)
     setOnThisDayCard(settings.onThisDayCard ?? true)
     setOnThisDayNotify(settings.onThisDayNotify ?? false)
+    setMapStreet(settings.mapStreet)
+    setMapCacheMb(cacheLimitMb(settings.mapCacheMb))
     setDownloadFolder(settings.downloadFolder)
     setConflictBehavior(settings.conflictBehavior ?? 'rename')
     setDownloadSize(settings.downloadSize ?? 'original')
@@ -217,7 +223,8 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
       }
       window.flickrAPI.setSettings({
         fileNaming, downloadFolder, showDockProgress, notifyOnComplete,
-        conflictBehavior, downloadSize, openFinderOnComplete, metadata, onThisDayCard, onThisDayNotify
+        conflictBehavior, downloadSize, openFinderOnComplete, metadata, onThisDayCard, onThisDayNotify,
+        mapCacheMb, ...(mapStreet !== undefined ? { mapStreet } : {})
       })
     }
     saveRef.current = save
@@ -228,7 +235,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
     core, sep, datePos, dateFmt, seqPos, customPos, customText,
     caseTransform, charSubstitution, subStripParens, subStripBrackets,
     sizeTokenPos, downloadFolder, showDockProgress, notifyOnComplete,
-    conflictBehavior, downloadSize, openFinderOnComplete, onThisDayCard, onThisDayNotify,
+    conflictBehavior, downloadSize, openFinderOnComplete, onThisDayCard, onThisDayNotify, mapStreet, mapCacheMb,
     embedTitle, embedDescription, embedTags,
     embedDateTaken, embedCreator, embedGps, stripGpsFromPrivate,
     embedLicense, embedPhotoUrl, embedPhotoId, writeSidecarJson, keepDescriptionHtml
@@ -353,6 +360,22 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
                     desc="One macOS notification a day while FlickrFetch is open"
                   />
                 </div>
+              </div>
+
+              <div style={{ ...s.section, borderTop: '1px solid #f0ede8' }}>
+                <div style={s.sectionRow}>
+                  <p style={s.sectionTitle}>Street map</p>
+                  <InfoTip text={"The Map tab can draw streets under your photos, using OpenStreetMap, a free community map.\n\nTo do that, FlickrFetch asks OpenStreetMap for the squares of map you are looking at, so they can tell roughly where on the map that is. Nothing else is sent: not your photos, your account or your name.\n\nThe pictures are saved on this computer, so places you have seen load fast and still show offline."} />
+                </div>
+                <div style={s.toggleList}>
+                  <Toggle
+                    value={mapStreet === true}
+                    onChange={v => { setMapStreet(v) }}
+                    label="Show street map"
+                    desc="On the Map tab, under your photos. Off shows only the country outline."
+                  />
+                </div>
+                <MapCacheControls limitMb={mapCacheMb} onLimit={setMapCacheMb} reloadKey={resetCount} />
               </div>
             </>
           )}

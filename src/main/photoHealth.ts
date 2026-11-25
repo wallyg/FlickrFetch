@@ -145,6 +145,8 @@ function whereFor(db: Database.Database, c: HealthCondition): string {
     case 'descTags': return `(p.desc_flags & ${DESC_LOOKS_LIKE_TAGS}) <> 0`
     // Flickr sends 0, 0 for "no location", so a real geotag at 0, 0 is told apart by its accuracy (set only when a place was chosen)
     case 'locNull': return '(p.has_location = 0 AND p.geo_accuracy > 0)'
+    // Flickr's precision runs from 1 (the whole world) to 16 (a street): 10 or less is a region, a country or worse. Unrecorded (0) is not counted
+    case 'locVague': return '(p.has_location = 1 AND p.geo_accuracy BETWEEN 1 AND 10)'
     case 'locFar': refreshFar(db); return 'p.photo_id IN (SELECT photo_id FROM health_far)'
     case 'locTitle': refreshTitleFar(db); return 'p.photo_id IN (SELECT photo_id FROM health_titlefar)'
     case 'duplicates': return `(p.date_upload IS NOT NULL AND p.date_taken IN ${dupGroupsSql()})`

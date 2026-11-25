@@ -7,6 +7,18 @@ export interface Release {
 
 const changelog: Release[] = [
   {
+    version: '3.10',
+    date: 'November 2026',
+    highlights: [
+      'Map — a new tab that shows your photos with a location as dots and numbered circles on a map of the world. Drag to move, scroll with two fingers to move, pinch or Cmd and scroll to zoom. The circles split as you zoom in. Click one to see its photos (newest first), open one on Flickr, or download them all. The map repeats sideways so you can cross the date line, stops at the poles, and keeps its place when the photo panel opens and closes',
+      'Map filters — show only photos or only videos, one privacy level, photos with certain tags (any or all of them), photos in an album, a date range (taken or posted), or only photos whose location is precise or only vague. The counts, the circles and the downloads all follow the filters',
+      'Street map — a switch on the Map (off until you turn it on) draws streets and place names under your photos, using OpenStreetMap. Turning it on asks OpenStreetMap for the squares of map you are looking at, and nothing else is sent. The pictures are saved on this computer, and Settings shows how much room they take, lets you set a limit and clear them',
+      'Vague location — a new Warning in Photos for photos whose location is only a country or region, so they sit in the middle of it on the map. It can be an Issue or Off in Tune checks like any other check',
+      'Narrower windows — the window can now be made as narrow as about 560 points (there was no limit before). The tabs wrap onto a second line instead of being cut off, and History and Settings show only their icons when there is no room for their names',
+      'The tab order is now Photostream, Albums, Collections, Tags, Timeline, On This Day, Map, then Health Check'
+    ]
+  },
+  {
     version: '3.8',
     date: 'November 2026',
     highlights: [

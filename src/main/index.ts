@@ -15,6 +15,8 @@ import { registerAuditIpc } from './tagAudit'
 import { registerHealthIpc } from './photoHealth'
 import { registerFineIpc } from './fineReasons'
 import { registerAlbumsIpc } from './albumChecks'
+import { registerMapIpc } from './mapPoints'
+import { registerTileIpc } from './mapTiles'
 import { registerDatesIpc } from './dateViews'
 import { registerShareIpc } from './share'
 import { registerBatchIpc, batchUrl } from './batchEdit'
@@ -175,6 +177,8 @@ function createWindow(): void {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
+    minWidth: 560,    // provisional (24 Nov 2026): the owner wants to go narrow; first try 728 pt was fine, then "narrower". Raise it if screens break below this.
+    minHeight: 520,
     show: false,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -345,6 +349,8 @@ registerAuditIpc(() => mainWindow)
 registerHealthIpc(() => mainWindow)
 registerFineIpc(() => mainWindow)
 registerAlbumsIpc(() => mainWindow)
+registerMapIpc()
+registerTileIpc()
 registerDatesIpc(() => mainWindow)
 registerShareIpc(() => mainWindow)
 registerBatchIpc()

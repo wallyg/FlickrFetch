@@ -1,4 +1,4 @@
-import type { AuditCategory, DuplicateQuery, DuplicatePage, DuplicateStats, FineReasonRequest, FineReasonSummaryRow, LocationHintStats, MissingTagStats, AlbumFitStats, AlbumFitPhoto, AlbumKindRow, AlbumKindRequest, AlbumExportQuery, AlbumListPage, AlbumListQuery, AlbumSetRequest, AlbumSummary, BackupQuery, BackupSummary, FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery, DiscoverDownloadRecord, DiscoverUser, DiscoverContact, DiscoverGroup, TagIndexStatus, TagLetterGroup, TagListQuery, TagListPage, TagScanProgress, AuditSummary, AuditListQuery, AuditListPage, AuditSetRequest, AuditPlanRow, AuditExportQuery, HealthSummary, HealthListQuery, HealthListPage, HealthSetRequest, HealthExportQuery, AuditOverview, HealthOverview, DayView, DayQuery, DayPhoto, DayPhotosQuery, DatePhotoIdsQuery, PrivacyScope, TimelineMonths, TimelineDays, TodaySummary, CameraRollQuery, CameraRollView } from '../shared/types'
+import type { AuditCategory, DuplicateQuery, DuplicatePage, DuplicateStats, FineReasonRequest, FineReasonSummaryRow, LocationHintStats, MissingTagStats, AlbumFitStats, AlbumFitPhoto, AlbumKindRow, MapAlbumHit, MapCacheInfo, MapCellPage, MapCellQuery, MapView, MapViewQuery, AlbumKindRequest, AlbumExportQuery, AlbumListPage, AlbumListQuery, AlbumSetRequest, AlbumSummary, BackupQuery, BackupSummary, FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery, DiscoverDownloadRecord, DiscoverUser, DiscoverContact, DiscoverGroup, TagIndexStatus, TagLetterGroup, TagListQuery, TagListPage, TagScanProgress, AuditSummary, AuditListQuery, AuditListPage, AuditSetRequest, AuditPlanRow, AuditExportQuery, HealthSummary, HealthListQuery, HealthListPage, HealthSetRequest, HealthExportQuery, AuditOverview, HealthOverview, DayView, DayQuery, DayPhoto, DayPhotosQuery, DatePhotoIdsQuery, PrivacyScope, TimelineMonths, TimelineDays, TodaySummary, CameraRollQuery, CameraRollView } from '../shared/types'
 
 
 // Tells TypeScript about the window.flickrAPI object injected by the preload script
@@ -48,6 +48,12 @@ declare global {
       getAlbumFitPhotoIds: (albumId: string) => Promise<string[]>
       getAlbumFitPhotos: (albumId: string) => Promise<AlbumFitPhoto[]>
       getAlbumKinds: () => Promise<AlbumKindRow[]>
+      getMapView: (query: MapViewQuery) => Promise<MapView>
+      getMapCell: (query: MapCellQuery) => Promise<MapCellPage>
+      getMapAlbums: (query: string) => Promise<MapAlbumHit[]>
+      getMapCacheInfo: () => Promise<MapCacheInfo>
+      clearMapCache: () => Promise<void>
+      getMapTile: (z: number, x: number, y: number) => Promise<Uint8Array | null>
       setAlbumKind: (req: AlbumKindRequest) => Promise<void>
       saveAlbumCsv: (query: AlbumExportQuery) => Promise<string | null>
       getBackupSummary: () => Promise<BackupSummary>

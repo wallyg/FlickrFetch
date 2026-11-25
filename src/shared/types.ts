@@ -76,7 +76,11 @@ export interface AppSettings {
   missingTags?: Partial<MissingTagSettings>   // the numbers behind the "Photos missing a tag" check (Tune checks)
   albumFit?: Partial<AlbumFitSettings>   // the numbers behind the Album fit lists (Tune checks); anything missing uses its default
   cleanupRules?: Record<string, 'off' | 'optional' | 'on'>   // per check in the Cleanup tab; see shared/cleanupRules.ts
+  mapStreet?: boolean          // the Map tab's street map: true on, false off, missing = never asked (the first time it is turned on, a note explains it)
+  mapCacheMb?: number          // room for the saved street pictures, in megabytes (20 to 5000, default 300)
 }
+
+export interface MapCacheInfo { bytes: number; files: number }
 
 export interface BatchProgress {
   current: number       // number completed so far
@@ -394,7 +398,7 @@ export type HealthCondition =
   | 'title' | 'description' | 'tags' | 'tagsOne' | 'location'                  // missing
   | 'dateFuture' | 'dateAfterUpload' | 'datePlaceholder'                       // dates
   | 'descLink' | 'descCopy' | 'descMarkup' | 'descTags'                        // descriptions that are not real descriptions
-  | 'locNull' | 'locFar' | 'locTitle' | 'duplicates'                                                       // locations that look wrong
+  | 'locNull' | 'locVague' | 'locFar' | 'locTitle' | 'duplicates'                                                       // locations that look wrong
   | 'tagsMany'                                                                 // too many tags
 
 export interface HealthSummaryRow { condition: HealthCondition; open: number; fine: number }
@@ -583,6 +587,33 @@ export interface HealthOverview {
   byYear: { year: string; total: number; anyGap: number; both: number; warnOnly: number; by: Record<HealthCondition, number> }[]   // by: photos with each gap in that year (checks that are Off are 0)
   clusters: { condition: HealthCondition; year: string; count: number; total: number }[]
 }
+
+// ── The Photo Map (3.10): your located photos as dots and numbered circles, worked out from the local library list ──
+
+// The filters of the Map tab. Choices inside one filter match ANY of them (two albums: photos in either); different filters all have to match.
+export type MapAccuracy = 'street' | 'town' | 'vague'   // Flickr's 1 to 16 precision: street 15 or 16, town or better 11 or more, vague 1 to 10 (none recorded matches none of these)
+export interface MapFilter {
+  media?: 'photo' | 'video'
+  privacy?: 0 | 1 | 2 | 3 | 4         // 0 public, 1 friends, 2 family, 3 friends and family, 4 private
+  dateField?: 'taken' | 'posted'      // which date the range applies to (default taken)
+  dateFrom?: number; dateTo?: number  // YYYYMMDD; photos with no such date are left out once a range is set
+  tags?: string[]; tagMode?: 'any' | 'all'   // typed names ("New York" and "newyork" are the same tag)
+  albumIds?: string[]
+  accuracy?: MapAccuracy
+}
+export interface MapAlbumHit { id: string; title: string; count: number }
+export interface MapViewQuery extends MapFilter { west: number; south: number; east: number; north: number; zoom: number }   // zoom may be fractional (256 px is the whole world at zoom 0)
+// One dot (count 1, with the photo's id) or one numbered circle. cx and cy name the grid cell it stands for, so a click can ask for its photos.
+export interface MapCluster { lat: number; lon: number; count: number; cx: number; cy: number; id?: string }
+export interface MapView {
+  clusters: MapCluster[]
+  inView: number          // photos in the window that pass the filters
+  matching: number        // located photos anywhere that pass the filters
+  located: number         // photos with a usable location
+  photos: number          // photos in the library list
+}
+export interface MapCellQuery extends MapFilter { zoom: number; cx: number; cy: number; offset: number; limit: number }
+export interface MapCellPage { ids: string[]; total: number }   // newest first
 
 // ── On This Day and the Timeline (3.5): read-only views over the local photo list ──
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useRememberScroll } from '../hooks/useRememberScroll'
+import MapPanel from '../components/MapPanel'
 import BatchEditButton from '../components/BatchEditButton'
 import type { FlickrUser, FlickrPhoto, FlickrAlbum, FlickrCollection, FlickrSet, BatchProgress, TagMode } from '../../shared/types'
 import PhotoGrid from '../components/PhotoGrid'
@@ -30,6 +31,7 @@ function IconBtn({ label, onClick, children, badge, showLabel }: { label: string
     <div style={{ position: 'relative' }}>
       <button
         style={{ ...styles.iconButton, ...(showLabel ? styles.iconButtonLabeled : {}) }}
+        aria-label={label}
         onClick={onClick}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
@@ -45,7 +47,7 @@ function IconBtn({ label, onClick, children, badge, showLabel }: { label: string
   )
 }
 
-type MainView = 'photostream' | 'tags' | 'cleanup' | 'onthisday' | 'timeline' | 'albums' | 'album-detail' | 'collections' | 'collection-detail' | 'photo-detail'
+type MainView = 'photostream' | 'tags' | 'cleanup' | 'onthisday' | 'timeline' | 'map' | 'albums' | 'album-detail' | 'collections' | 'collection-detail' | 'photo-detail'
 
 interface MainPageProps {
   user: FlickrUser
@@ -84,11 +86,23 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
   const [tagBackView, setTagBackView] = useState<'tags' | 'cleanup'>('tags')
   const [onThisDayVisited, setOnThisDayVisited] = useState(false)
   const [timelineVisited, setTimelineVisited] = useState(false)
+  const [mapVisited, setMapVisited] = useState(false)
   // Set by 'Open in Photostream' in On This Day or the Timeline; the photostream applies it as a date range
   const [dateSearchRequest, setDateSearchRequest] = useState<{ from: string; to: string; publicOnly?: boolean; tag?: string; backLabel?: string; nonce: number } | null>(null)
   const handledDateSearch = useRef(0)
   const [dateBackView, setDateBackView] = useState<'onthisday' | 'timeline'>('onthisday')
   const [otdJump, setOtdJump] = useState<{ month: number; day: number; year?: number; nonce: number } | null>(null)
+  // In a narrow window the sub-tab row tightens (smaller text and gaps) so all eight labels still fit on one line
+  const [tight, setTight] = useState(typeof window !== 'undefined' && window.innerWidth < 860)
+  // Under 660 px the top bar is full: History and Settings show only their icons (the name appears on hover) so the account button stays on screen.
+  // With the words the bar needs about 630 to 650 px (measured from the owner's screenshots at 564 and 764 pt).
+  const [compactHeader, setCompactHeader] = useState(typeof window !== 'undefined' && window.innerWidth < 660)
+  useEffect(() => {
+    const watch = (): void => { setTight(window.innerWidth < 860); setCompactHeader(window.innerWidth < 660) }
+    window.addEventListener('resize', watch)
+    return () => window.removeEventListener('resize', watch)
+  }, [])
+  const tabStyle: React.CSSProperties = tight ? { ...styles.tab, padding: '10px 9px', fontSize: '13px' } : styles.tab
   const [dataKey, setDataKey] = useState(0)   // changes when a scan finishes, so On This Day, the Timeline and the card look again
   // Set when a tag is clicked in the photo detail while viewing an album; the album grid filters itself to it
   const [albumTagRequest, setAlbumTagRequest] = useState<{ tag: string; nonce: number } | null>(null)
@@ -490,14 +504,14 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
           </div>
         </div>
         <div style={styles.headerActions}>
-          <IconBtn label="History" onClick={() => setShowHistory(true)} showLabel>
+          <IconBtn label="History" onClick={() => setShowHistory(true)} showLabel={!compactHeader}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" strokeWidth="1.5" fill="currentColor" fillOpacity="0.1"/>
               <circle cx="12" cy="12" r="1.8" fill="currentColor" strokeWidth="0"/>
               <polyline points="12 7 12 12 15.5 14" strokeWidth="2"/>
             </svg>
           </IconBtn>
-          <IconBtn label="Settings" onClick={() => openSettings()} badge={!!updateVersion} showLabel>
+          <IconBtn label="Settings" onClick={() => openSettings()} badge={!!updateVersion} showLabel={!compactHeader}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <line x1="4" y1="6" x2="20" y2="6"/>
               <line x1="4" y1="12" x2="20" y2="12"/>
@@ -554,44 +568,50 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
       {appMode === 'you' && <div style={styles.tabBar}>
         <div style={styles.tabGroup}>
           <button
-            style={{ ...styles.tab, ...(view === 'photostream' ? styles.tabActive : {}) }}
+            style={{ ...tabStyle, ...(view === 'photostream' ? styles.tabActive : {}) }}
             onClick={() => setView('photostream')}
           >
             Photostream
           </button>
           <button
-            style={{ ...styles.tab, ...(view === 'albums' || view === 'album-detail' && albumDetailOrigin === 'albums' ? styles.tabActive : {}) }}
+            style={{ ...tabStyle, ...(view === 'albums' || view === 'album-detail' && albumDetailOrigin === 'albums' ? styles.tabActive : {}) }}
             onClick={() => { setAlbumsVisited(true); setSelectedAlbum(null); setView('albums') }}
           >
             Albums
           </button>
           <button
-            style={{ ...styles.tab, ...(view === 'collections' || view === 'collection-detail' || view === 'album-detail' && albumDetailOrigin === 'collections' ? styles.tabActive : {}) }}
+            style={{ ...tabStyle, ...(view === 'collections' || view === 'collection-detail' || view === 'album-detail' && albumDetailOrigin === 'collections' ? styles.tabActive : {}) }}
             onClick={() => { setCollectionsVisited(true); setCollectionPath([]); setSelectedAlbum(null); setView('collections') }}
           >
             Collections
           </button>
           <button
-            style={{ ...styles.tab, ...(view === 'onthisday' ? styles.tabActive : {}) }}
-            onClick={() => { setOnThisDayVisited(true); setView('onthisday') }}
+            style={{ ...tabStyle, ...(view === 'tags' ? styles.tabActive : {}) }}
+            onClick={() => { setTagsVisited(true); setView('tags') }}
           >
-            On This Day
+            Tags
           </button>
           <button
-            style={{ ...styles.tab, ...(view === 'timeline' ? styles.tabActive : {}) }}
+            style={{ ...tabStyle, ...(view === 'timeline' ? styles.tabActive : {}) }}
             onClick={() => { setTimelineVisited(true); setView('timeline') }}
           >
             Timeline
           </button>
           <button
-            style={{ ...styles.tab, ...(view === 'tags' ? styles.tabActive : {}) }}
-            onClick={() => { setTagsVisited(true); setView('tags') }}
+            style={{ ...tabStyle, ...(view === 'onthisday' ? styles.tabActive : {}) }}
+            onClick={() => { setOnThisDayVisited(true); setView('onthisday') }}
           >
-            Tags
+            On This Day
+          </button>
+          <button
+            style={{ ...tabStyle, ...(view === 'map' ? styles.tabActive : {}) }}
+            onClick={() => { setMapVisited(true); setView('map') }}
+          >
+            Map
           </button>
           <span style={styles.tabDivider} aria-hidden="true" />   {/* views on the left, tools on the right */}
           <button
-            style={{ ...styles.tab, ...(view === 'cleanup' ? styles.tabActive : {}) }}
+            style={{ ...tabStyle, ...(view === 'cleanup' ? styles.tabActive : {}) }}
             onClick={() => { setCleanupVisited(true); setView('cleanup') }}
           >
             Health Check
@@ -851,6 +871,17 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
                 setView('photostream')
               }}
               onOpenCleanup={() => { setCleanupVisited(true); setView('cleanup') }}
+            />
+          </div>
+        )}
+        {mapVisited && (
+          <div style={view === 'map' ? styles.tabPane : styles.tabPaneHidden}>
+            <MapPanel
+              active={view === 'map'}
+              refreshKey={dataKey}
+              settingsKey={settingsKey}
+              onDownload={startDateDownload}
+              onFullRescan={() => { setCleanupVisited(true); setView('cleanup') }}
             />
           </div>
         )}
@@ -1127,8 +1158,10 @@ const styles: Record<string, React.CSSProperties> = {
   },
   tabBar: {
     display: 'flex',
+    flexWrap: 'wrap',           // the buttons on the right drop under the tabs in a narrow window instead of running off the edge
     alignItems: 'center',
     justifyContent: 'space-between',
+    rowGap: '2px',
     borderBottom: '1px solid #e8e4de',
     backgroundColor: '#fff',
     paddingLeft: '24px',
@@ -1136,7 +1169,9 @@ const styles: Record<string, React.CSSProperties> = {
   },
   tabGroup: {
     display: 'flex',
-    gap: '0'
+    flexWrap: 'wrap',           // if the tabs do not fit in a narrow window, whole tabs move to a second line (never clipped, never a label folded in two)
+    gap: '0',
+    minWidth: 0
   },
   tabDivider: {
     width: '1px',
@@ -1155,7 +1190,9 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: '500',
     color: '#888',
     cursor: 'pointer',
-    marginBottom: '-1px'
+    marginBottom: '-1px',
+    whiteSpace: 'nowrap',       // "On This Day" and "Health Check" used to fold onto two or three lines in a narrow window
+    flexShrink: 0
   },
   tabActive: {
     color: 'var(--ff-pink)',
@@ -1203,6 +1240,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     gap: '8px',
     padding: '0 16px',
+    flexShrink: 0,              // the account button must never be pushed off the edge
   },
   iconButton: {
     backgroundColor: 'transparent',

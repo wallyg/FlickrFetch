@@ -54,16 +54,21 @@ Metadata that lives only on a website disappears when the website does, or when 
 - Browse other photographers' public photos, groups and Explore, and filter by license to find things you're free to reuse. Please respect each photo's license and Flickr's terms.
 
 **Health Check**
-- Checks your tags, photos and albums against a snapshot of your library kept on your Mac: tags stuck together, typos, odd characters, missing titles, descriptions and locations, dates that cannot be right, photos that look out of place in their album or may be missing from one, and photos that may be duplicates
+- Checks your tags, photos and albums against a snapshot of your library kept on your Mac: tags stuck together, typos, odd characters, missing titles, descriptions and locations, dates that cannot be right, photos placed only at country or region level, photos that look out of place in their album or may be missing from one, and photos that may be duplicates
 - Every check can be an Issue, a Warning, or Off, and each one has plain rules you can read (the ⓘ)
 - Suggestions only: fixes happen on Flickr, and a button opens Flickr's organizer with the right photos ready
 - A Backup view of what you have downloaded, what is new since your last download, and what has changed
+
+**Photo map**
+- Your photos with a location, as dots and numbered circles on a world map. Click one to see its photos, open a photo on Flickr, or download them
+- Filter by photos or videos, privacy, tags, album, date and how precise the location is
+- An optional street map, off by default, using OpenStreetMap. The map pictures are saved on your Mac, and you can set a size limit
 
 ## Privacy and safety
 
 - **Read-only.** FlickrFetch asks Flickr for read access only. It cannot change or delete anything on your account.
 - **Your files stay on your Mac.** Photos, metadata and download history are stored locally.
-- **No FlickrFetch servers.** The app talks to Flickr, and to GitHub to check whether a new version is out. There is no analytics or tracking.
+- **No FlickrFetch servers.** The app talks to Flickr, and to GitHub to check whether a new version is out. If you turn on the optional street map, it also asks OpenStreetMap for the squares of map you are looking at, so OpenStreetMap learns roughly which part of the world that is, and nothing else. There is no analytics or tracking.
 - The source code is public, so you can see exactly what it does.
 
 ## Install
@@ -86,6 +91,7 @@ FlickrFetch is a personal project that has grown up. Here's what it doesn't do y
 - **Not notarized by Apple**, hence the install step above.
 - **Smart Sync trusts its own history.** It doesn't yet re-check that files are still on disk, so if you move or delete downloads, it may think they're still there.
 - **No automatic or background syncing.** Downloads run when you start them.
+- **The street map relies on OpenStreetMap's free map service.** That is fine for one person browsing their own photos. If FlickrFetch were ever used by many people, it would need a paid or self-hosted map source.
 - **Health Check suggests, you decide.** Its checks are rules of thumb and some will be wrong for your library. Mark those "This one is fine", or switch a check off. Nothing on Flickr changes until you change it there.
 
 ## What's next

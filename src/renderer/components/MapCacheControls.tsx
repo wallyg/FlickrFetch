@@ -1,0 +1,70 @@
+import React, { useCallback, useEffect, useState } from 'react'
+import { MAP_CACHE_MAX_MB, MAP_CACHE_MIN_MB } from '../../shared/mapGeo'
+import type { MapCacheInfo } from '../../shared/types'
+
+// Settings > General > Street map: how much room the saved street pictures take, the most they may take (a number you type, from 20 MB to
+// 5,000 MB), and a button that deletes them all. They simply download again when a place is looked at next.
+
+const size = (bytes: number): string => (bytes >= 1024 ** 3 ? `${(bytes / 1024 ** 3).toFixed(1)} GB` : bytes >= 1024 ** 2 ? `${Math.round(bytes / 1024 ** 2)} MB` : bytes > 0 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : '0 MB')
+const whole = (text: string): number | null => (/^\d{1,5}$/.test(text.trim()) ? Number(text.trim()) : null)
+
+export default function MapCacheControls({ limitMb, onLimit, reloadKey }: { limitMb: number; onLimit: (mb: number) => void; reloadKey: number }): React.JSX.Element {
+  const [text, setText] = useState(String(limitMb))
+  const [info, setInfo] = useState<MapCacheInfo | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [confirm, setConfirm] = useState(false)
+
+  useEffect(() => { setText(String(limitMb)) }, [limitMb])
+  const load = useCallback(() => { void window.flickrAPI.getMapCacheInfo().then(setInfo).catch(() => setInfo(null)) }, [])
+  useEffect(load, [load, reloadKey])
+
+  const n = whole(text)
+  const ok = n !== null && n >= MAP_CACHE_MIN_MB && n <= MAP_CACHE_MAX_MB
+  const change = (value: string): void => {
+    setText(value)
+    const v = whole(value)
+    if (v !== null && v >= MAP_CACHE_MIN_MB && v <= MAP_CACHE_MAX_MB) onLimit(v)
+  }
+  const clear = async (): Promise<void> => {
+    setBusy(true)
+    try { await window.flickrAPI.clearMapCache() } catch { /* the size shown below says whether it worked */ }
+    setConfirm(false); setBusy(false); load()
+  }
+
+  return (
+    <div style={styles.box}>
+      <div style={styles.row}>
+        <label style={styles.label} htmlFor="map-cache-limit">Most it may take</label>
+        <input id="map-cache-limit" style={{ ...styles.input, ...(ok ? {} : styles.bad) }} inputMode="numeric" value={text} onChange={e => change(e.target.value)}
+          onBlur={() => { if (!ok) setText(String(limitMb)) }} aria-invalid={!ok} aria-describedby="map-cache-help" />
+        <span style={styles.unit}>MB</span>
+      </div>
+      <div id="map-cache-help" style={ok ? styles.help : { ...styles.help, color: 'var(--ff-error)' }}>
+        {ok ? `Between ${MAP_CACHE_MIN_MB.toLocaleString()} and ${MAP_CACHE_MAX_MB.toLocaleString()} MB. When it is full, the oldest pictures are deleted first.` : `Enter a whole number from ${MAP_CACHE_MIN_MB.toLocaleString()} to ${MAP_CACHE_MAX_MB.toLocaleString()}.`}
+      </div>
+      <div style={styles.row}>
+        <span style={styles.label}>Saved now</span>
+        <b style={styles.value}>{info ? `${size(info.bytes)} (${info.files.toLocaleString()} picture${info.files === 1 ? '' : 's'})` : '…'}</b>
+        {!confirm
+          ? <button style={styles.btn} disabled={busy || !info || info.files === 0} onClick={() => setConfirm(true)}>Clear saved pictures</button>
+          : <>
+              <button style={{ ...styles.btn, color: 'var(--ff-error)', borderColor: 'var(--ff-error)' }} disabled={busy} onClick={() => void clear()}>{busy ? 'Clearing…' : 'Yes, delete them'}</button>
+              <button style={styles.btn} disabled={busy} onClick={() => setConfirm(false)}>Keep them</button>
+            </>}
+      </div>
+      {confirm && <div style={styles.help}>This only deletes the saved street pictures. Your photos and library are not touched, and the pictures download again as you look around.</div>}
+    </div>
+  )
+}
+
+const styles: Record<string, React.CSSProperties> = {
+  box: { display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 },
+  row: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
+  label: { fontSize: 13, color: 'var(--ff-text)', minWidth: 110 },
+  input: { width: 80, border: '1px solid var(--ff-border)', borderRadius: 6, padding: '4px 8px', fontSize: 13, color: 'var(--ff-text)', background: '#fff' },
+  bad: { borderColor: 'var(--ff-error)' },
+  unit: { fontSize: 13, color: 'var(--ff-text-secondary)' },
+  help: { fontSize: 12, color: 'var(--ff-text-secondary)' },
+  value: { fontSize: 13, color: 'var(--ff-text)', fontWeight: 600 },
+  btn: { background: 'none', border: '1px solid #ccc', borderRadius: 6, padding: '4px 12px', fontSize: 12, color: '#555', cursor: 'pointer' }
+}
