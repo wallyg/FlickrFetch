@@ -177,7 +177,8 @@ function profileOf(id: string, title: string, thumb: string, created: number | n
   const family = [...counts.entries()].filter(([t, c]) => c >= FAMILY_SHARE * known.length && lift(t, c) >= FAMILY_LIFT).map(([t]) => t)
   const strong = [...counts.entries()].filter(([t, c]) => c >= STRONG_SHARE * known.length && lift(t, c) >= STRONG_LIFT).map(([t]) => t)
 
-  const guess: AlbumKind = clustered ? 'date' : loc && loc.p80 <= PLACE_SPREAD_KM ? 'place' : strong.length > 0 ? 'tag' : 'anything'
+  // An album that fits both place and date is judged by place: most of the owner's albums are about where, and the flags barely change (measured on the real library)
+  const guess: AlbumKind = loc && loc.p80 <= PLACE_SPREAD_KM ? 'place' : clustered ? 'date' : strong.length > 0 ? 'tag' : 'anything'
   return { ...base, kind: chosen ?? guess, pick: guess, eligible: true, lo, hi, span, loc, defining, visits, isolated, family, strong }
 }
 

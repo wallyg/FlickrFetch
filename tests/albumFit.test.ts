@@ -164,3 +164,21 @@ test('an album you chose keeps the app\'s own pick, so the list can offer Reset'
   const left = compute(parisAlbum(stray, ''), levelFrom({})).profiles.get('A')!
   assert.equal(left.kind, 'place'); assert.equal(left.pick, 'place'); assert.equal(left.guessed, true)
 })
+
+// ---- an album that fits both a place and a date is judged by place; one that only fits a date is judged by date
+test('an album whose photos are close in time and in place is picked as a place album', () => {
+  const db = memoryDb()
+  const rows: PhotoRow[] = Array.from({ length: 40 }, (_, i) => ({ id: `b${i}`, taken: `2020-05-${String(1 + (i % 28)).padStart(2, '0')} 00:00:00`, ...jitter(i) }))
+  addPhotos(db, rows)
+  addAlbum(db, 'B', 'Both', rows.map(r => r.id))
+  const p = compute(db, levelFrom({})).profiles.get('B')!
+  assert.equal(p.visits.length, 1)                  // it is one visit in time...
+  assert.equal(p.pick, 'place')                     // ...and one place, so place wins
+})
+test('an album close in time but spread over many places is still picked as a date album', () => {
+  const db = memoryDb()
+  const rows: PhotoRow[] = Array.from({ length: 40 }, (_, i) => ({ id: `c${i}`, taken: `2020-05-${String(1 + (i % 28)).padStart(2, '0')} 00:00:00`, lat: 30 + i * 0.5, lon: 2 + i * 0.5 }))
+  addPhotos(db, rows)
+  addAlbum(db, 'C', 'Road trip', rows.map(r => r.id))
+  assert.equal(compute(db, levelFrom({})).profiles.get('C')!.pick, 'date')
+})
