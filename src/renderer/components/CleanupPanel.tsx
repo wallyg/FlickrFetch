@@ -79,8 +79,11 @@ export default function CleanupPanel({ onViewPhotos, onDownload, settingsKey, on
   // The (i) on the data chip: how Health Check works (the same for every tab), then one line on what this tab adds
   const info = [
     '# How Health Check works',
+    '',
     'FlickrFetch keeps a snapshot of your photos, tags and albums on this computer. Health Check runs a set of audits against that snapshot, so results come quickly.',
+    '',
     'Each audit can be Off, a Warning or an Issue (change them in Tune checks).',
+    '',
     'Health Check never changes anything unless you choose to. For now you fix things on Flickr, then press Update to refresh the snapshot.',
     '',
     view === 'tags' ? 'Tags: checked against your tag list.'
