@@ -14,6 +14,7 @@ import SelectBar from './SelectBar'
 import DuplicatesList from './DuplicatesList'
 import { askFineReason } from '../ui/fineReason'
 import { useFindShortcut } from '../hooks/useFindShortcut'
+import { DEBOUNCE, useDebouncedValue } from '../ui/useDebounce'
 import { HEALTH_CONDITIONS } from '../../shared/healthChecks'
 
 // The Health view of the Tags tab: photos with missing or weak metadata, by problem, as a to-do list
@@ -26,6 +27,7 @@ interface HealthPanelProps {
   stateOf: (id: string) => CleanupRuleState   // Off / Warning / Issue for each check
   openRequest?: { condition: HealthCondition; year?: string; nonce: number } | null   // the front page asking for one list
   needsRebuild?: boolean   // the library list was built before 3.6, so some checks cannot count yet
+  onShowOnMap?: (lat: number, lon: number) => void   // opens the app's own Map on a suggested place
 }
 
 // The left column groups the checks by what they are about (Issues first inside each group)
@@ -44,12 +46,13 @@ const INFO = (c: HealthCondition): { name: string; blurb: string } => {
 }
 const CONDITIONS = HEALTH_CONDITIONS
 
-export default function HealthPanel({ refreshKey, onFullRescan, toolbarLeft, stateOf, openRequest, needsRebuild }: HealthPanelProps): React.JSX.Element {
+export default function HealthPanel({ refreshKey, onFullRescan, toolbarLeft, stateOf, openRequest, needsRebuild, onShowOnMap }: HealthPanelProps): React.JSX.Element {
   const [summary, setSummary] = useState<HealthSummary | null>(null)
   const [section, setSection] = useState<'overview' | 'lists'>('overview')
   const [condition, setCondition] = useState<HealthCondition>('title')
   const [year, setYear] = useState('')   // set by clicking a cluster on the overview
   const [search, setSearch] = useState('')
+  const typed = useDebouncedValue(search, search ? DEBOUNCE.typing : 0)   // typing waits a moment so every key does not search; clearing the box is at once
   const [status, setStatus] = useState<'open' | 'fine'>('open')
   const [sort, setSort] = useState<HealthSort>('newest')
   const [reason, setReason] = useState<'' | 'none' | 'camera'>('')   // No title or camera-file title: show only one kind
@@ -85,19 +88,18 @@ export default function HealthPanel({ refreshKey, onFullRescan, toolbarLeft, sta
     if (condition === 'duplicates') { setRows([]); setTotal(0); setLoading(false); return }   // groups are read by DuplicatesList
     const req = ++requestRef.current
     if (offset === 0) setLoading(true)
-    const page = await window.flickrAPI.listHealthPhotos({ condition, status, search, sort, year: year || undefined, reason: condition === 'title' && reason ? reason : undefined, offset, limit: PAGE })
+    const page = await window.flickrAPI.listHealthPhotos({ condition, status, search: typed, sort, year: year || undefined, reason: condition === 'title' && reason ? reason : undefined, offset, limit: PAGE })
     if (req !== requestRef.current) return
     setRows(prev => (offset === 0 ? page.rows : [...prev, ...page.rows]))
     setTotal(page.total)
     setReasons(page.reasons)
     setLoading(false)
-  }, [condition, status, year, search, sort, reason])
+  }, [condition, status, year, typed, sort, reason])
   useEffect(() => { setReason('') }, [condition, status])
 
   useEffect(() => {
     if (summary && !summary.hasData) return
-    const t = setTimeout(() => void loadRows(0), search ? 200 : 0)   // typing waits a moment so every key does not search
-    return () => clearTimeout(t)
+    void loadRows(0)
   }, [loadRows, refreshKey, summary?.hasData])
 
   const mark = async (p: HealthPhoto, next: 'open' | 'fine'): Promise<void> => {
@@ -201,7 +203,9 @@ export default function HealthPanel({ refreshKey, onFullRescan, toolbarLeft, sta
                     {p.hint && <div style={{ ...styles.muted, marginTop: 3 }}>{p.hint}</div>}
                     <div style={styles.actions}>
                       <button style={styles.mainActionBtn} onClick={() => window.flickrAPI.openExternal(p.flickrUrl)}>Open on Flickr ↗</button>
-                      {p.hintMapUrl && <button style={styles.secondaryBtn} onClick={() => window.flickrAPI.openExternal(p.hintMapUrl as string)}>Show on a map ↗</button>}
+                      {p.hintGeo && onShowOnMap
+                        ? <button style={styles.secondaryBtn} title="Opens the Map tab on this place, with a mark" onClick={() => onShowOnMap((p.hintGeo as { lat: number; lon: number }).lat, (p.hintGeo as { lat: number; lon: number }).lon)}>Show on the map</button>
+                        : p.hintMapUrl && <button style={styles.secondaryBtn} onClick={() => window.flickrAPI.openExternal(p.hintMapUrl as string)}>Show on a map ↗</button>}
                       {p.status === 'open' && <BatchEditButton inline key={p.photoId} style={styles.secondaryBtn} label="Batch editor" getIds={async () => [p.photoId]} />}
                       {p.status === 'open'
                         ? <button style={styles.secondaryBtn} onClick={() => void mark(p, 'fine')}>This one is fine</button>

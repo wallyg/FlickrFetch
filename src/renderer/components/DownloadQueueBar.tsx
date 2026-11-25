@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import type { BatchProgress } from '../../shared/types'
+import { smallerPart } from '../../shared/downloadLimits'
 
 interface DownloadQueueBarProps {
   progress: BatchProgress | null
@@ -7,12 +8,13 @@ interface DownloadQueueBarProps {
   onDismiss: () => void
   onStackedDismiss?: (idx: number) => void
   onDismissAll?: () => void
+  onShowSmaller?: () => void    // opens the list of photos saved smaller than the original (free accounts, #126)
 }
 
 const TOAST_MS = 2500
 const CANCEL_DISMISS_MS = 10000
 
-export default function DownloadQueueBar({ progress, completedBatches = [], onDismiss, onStackedDismiss, onDismissAll }: DownloadQueueBarProps): React.JSX.Element {
+export default function DownloadQueueBar({ progress, completedBatches = [], onDismiss, onStackedDismiss, onDismissAll, onShowSmaller }: DownloadQueueBarProps): React.JSX.Element {
   const [expanded, setExpanded] = useState(false)
   const [cancelling, setCancelling] = useState(false)
   const [toastMsg, setToastMsg] = useState<string | null>(null)
@@ -146,6 +148,8 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
                 if (bSkipped > 0) bParts.push(`${bSkipped.toLocaleString()} skipped`)
                 if (bSizeUnavailable > 0) bParts.push(`${bSizeUnavailable.toLocaleString()} size unavailable`)
                 if (bFailed > 0) bParts.push(`${bFailed.toLocaleString()} failed`)
+                const bSmaller = smallerPart(b.smallerCount)
+                if (bSmaller) bParts.push(bSmaller)
                 if (bSmartFiltered > 0) bParts.push(`${bSmartFiltered.toLocaleString()} already downloaded`)
                 if (b.completedAt) bParts.push(new Date(b.completedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }))
                 return (
@@ -159,6 +163,7 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
                             Show in Finder
                           </button>
                         )}
+                        {bSmaller && onShowSmaller && <button style={styles.finderLink} onClick={onShowSmaller} title="Opens Health Check > Backup > Saved smaller than the original">See the list</button>}
                       </div>
                       <span style={styles.batchMeta}>{bParts.join(' · ')}</span>
                       {(b.failedPhotos ?? []).length > 0 && (
@@ -307,6 +312,8 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
                 if (skipped > 0) parts.push(`${skipped.toLocaleString()} skipped`)
                 if (sizeUnavailable > 0) parts.push(`${sizeUnavailable.toLocaleString()} size unavailable`)
                 if (failed > 0) parts.push(`${failed.toLocaleString()} failed`)
+                const sm = smallerPart(progress?.smallerCount)
+                if (sm) parts.push(sm)
                 if (smartFiltered > 0) parts.push(`${smartFiltered.toLocaleString()} already downloaded`)
                 return parts.join(' · ')
               })()}
@@ -322,6 +329,8 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
                 if (ns > 0) parts.push(`${ns.toLocaleString()} skipped`)
                 if (nsu > 0) parts.push(`${nsu.toLocaleString()} size unavailable`)
                 if (nf > 0) parts.push(`${nf.toLocaleString()} failed`)
+                const nsm = smallerPart(newest.smallerCount)
+                if (nsm) parts.push(nsm)
                 if (nsf > 0) parts.push(`${nsf.toLocaleString()} already downloaded`)
                 return parts.join(' · ')
               })()}
@@ -355,6 +364,9 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
             <button style={styles.finderLinkBar} onClick={() => window.flickrAPI.showInFinder(folderPath)}>
               Show in Finder
             </button>
+          )}
+          {onShowSmaller && !cancelling && (isDone ? (progress?.smallerCount ?? 0) > 0 : !progress && (completedBatches[0]?.smallerCount ?? 0) > 0) && (
+            <button style={styles.finderLinkBar} onClick={onShowSmaller} title="Opens Health Check > Backup > Saved smaller than the original">See the list</button>
           )}
           {completedBatches.length > 0 && (
             <button style={styles.dismissAllBtn} onClick={onDismissAll}>Clear completed</button>

@@ -7,6 +7,7 @@ import archiver from 'archiver'
 import { startOAuthFlow, verifyOAuth, loadToken, clearToken } from './auth'
 import { getUserInfo, getPhotos, getPhotoSizes, getPhotoInfo, getPhotoExif, getAlbums, getAlbumPhotos, getPublicAlbumPhotos, getCollectionTree, getDiscoverCollectionTree, resolveVideoUrl, getRecentlyUpdated, findDiscoverUser, getPublicPhotos, getUserPublicAlbums, getContacts, getUserGroups, getGroupPhotos, getInterestingness } from './flickr'
 import { downloadPhoto, downloadToFolder, describeSize } from './downloader'
+import { noteSize, resetSizeTally, smallerSoFar } from './sizeTally'
 import { changedSinceSaved } from './smartFilter'
 import { endExifTool } from './exiftool'
 import { loadSettings, saveSettings, resetSettings, ensureDownloadFolder } from './settings'
@@ -440,6 +441,7 @@ async function runNextBatch(): Promise<void> {
   if (!job) return
 
   activeBatchController = new AbortController()
+  resetSizeTally()   // the count of photos that came down smaller starts again for each batch (#126)
   try {
     if (job.type === 'selected') {
       await runSelectedBatch(job.photos!, job.albumTitle, job.track ?? true, job.zipMode)
@@ -485,7 +487,7 @@ async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'p
   else ensureDownloadFolder(zipParentDir)
 
   const sendProgress = (p: Omit<BatchProgress, 'queuedCount' | 'queuedAlbums'>): void => {
-    const full = { ...p, paused: isPaused, queuedCount: batchQueue.length, queuedAlbums: batchQueue.map(j => ({ id: j.id, title: j.albumTitle, photoCount: j.photoCount, videoCount: j.videoCount })) }
+    const full = { ...p, smallerCount: smallerSoFar(), paused: isPaused, queuedCount: batchQueue.length, queuedAlbums: batchQueue.map(j => ({ id: j.id, title: j.albumTitle, photoCount: j.photoCount, videoCount: j.videoCount })) }
     lastBatchProgress = full
     mainWindow?.webContents.send('batch:progress', full)
     if (showDockProgress) {
@@ -570,7 +572,7 @@ async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'p
         if (outcome.status === 'downloaded') {
           downloadedCount++
           if (!zipMode) lastFilePath = outcome.filePath
-          if (track) writePhotoRecord(photo.id, photo.lastUpdate ?? 0, photo.title, photo.thumbnailUrl, describeSize(sizes, downloadSize))
+          { const size = noteSize(describeSize(sizes, downloadSize)); if (track) writePhotoRecord(photo.id, photo.lastUpdate ?? 0, photo.title, photo.thumbnailUrl, size) }
           if (zipMode) manifestPhotos.push({ id: photo.id, title: photo.title, filename: basename(outcome.filePath) })
           sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: outcome.filePath, status: 'running', skippedCount, skippedSizeUnavailableCount, failedCount })
         } else if (outcome.reason === 'size-unavailable') {
@@ -644,7 +646,7 @@ async function runSelectedBatch(photos: { id: string; title: string; thumbnailUr
   else ensureDownloadFolder(downloadFolder)
 
   const sendProgress = (p: Omit<BatchProgress, 'queuedCount' | 'queuedAlbums'>): void => {
-    const full = { ...p, paused: isPaused, queuedCount: batchQueue.length, queuedAlbums: batchQueue.map(j => ({ id: j.id, title: j.albumTitle, photoCount: j.photoCount, videoCount: j.videoCount })) }
+    const full = { ...p, smallerCount: smallerSoFar(), paused: isPaused, queuedCount: batchQueue.length, queuedAlbums: batchQueue.map(j => ({ id: j.id, title: j.albumTitle, photoCount: j.photoCount, videoCount: j.videoCount })) }
     lastBatchProgress = full
     mainWindow?.webContents.send('batch:progress', full)
     if (showDockProgress) {
@@ -693,7 +695,7 @@ async function runSelectedBatch(photos: { id: string; title: string; thumbnailUr
         if (outcome.status === 'downloaded') {
           downloadedCount++
           if (!zipMode) lastFilePath = outcome.filePath
-          if (track) writePhotoRecord(photo.id, 0, photo.title, photo.thumbnailUrl, describeSize(sizes, downloadSize))
+          { const size = noteSize(describeSize(sizes, downloadSize)); if (track) writePhotoRecord(photo.id, 0, photo.title, photo.thumbnailUrl, size) }
           if (zipMode) manifestPhotos.push({ id: photo.id, title: photo.title, filename: basename(outcome.filePath) })
           sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: outcome.filePath, status: 'running', skippedCount, skippedSizeUnavailableCount, failedCount })
         } else if (outcome.reason === 'size-unavailable') {
@@ -761,7 +763,7 @@ async function runDiscoverSelectedBatch(photos: { id: string; title: string; thu
   ensureDownloadFolder(targetFolder)
 
   const sendProgress = (p: Omit<BatchProgress, 'queuedCount' | 'queuedAlbums'>): void => {
-    const full = { ...p, paused: isPaused, queuedCount: batchQueue.length, queuedAlbums: batchQueue.map(j => ({ id: j.id, title: j.albumTitle, photoCount: j.photoCount, videoCount: j.videoCount })) }
+    const full = { ...p, smallerCount: smallerSoFar(), paused: isPaused, queuedCount: batchQueue.length, queuedAlbums: batchQueue.map(j => ({ id: j.id, title: j.albumTitle, photoCount: j.photoCount, videoCount: j.videoCount })) }
     lastBatchProgress = full
     mainWindow?.webContents.send('batch:progress', full)
     if (showDockProgress) {
@@ -850,7 +852,7 @@ async function runDiscoverPublicBatch(
   ensureDownloadFolder(targetFolder)
 
   const sendProgress = (p: Omit<BatchProgress, 'queuedCount' | 'queuedAlbums'>): void => {
-    const full = { ...p, paused: isPaused, queuedCount: batchQueue.length, queuedAlbums: batchQueue.map(j => ({ id: j.id, title: j.albumTitle, photoCount: j.photoCount, videoCount: j.videoCount })) }
+    const full = { ...p, smallerCount: smallerSoFar(), paused: isPaused, queuedCount: batchQueue.length, queuedAlbums: batchQueue.map(j => ({ id: j.id, title: j.albumTitle, photoCount: j.photoCount, videoCount: j.videoCount })) }
     lastBatchProgress = full
     mainWindow?.webContents.send('batch:progress', full)
     if (showDockProgress) {
@@ -978,7 +980,7 @@ async function runPhotostreamBatch(albumTitle: string, track = true, smartMode?:
   ensureDownloadFolder(downloadFolder)
 
   const sendProgress = (p: Omit<BatchProgress, 'queuedCount' | 'queuedAlbums'>): void => {
-    const full = { ...p, paused: isPaused, queuedCount: batchQueue.length, queuedAlbums: batchQueue.map(j => ({ id: j.id, title: j.albumTitle, photoCount: j.photoCount, videoCount: j.videoCount })) }
+    const full = { ...p, smallerCount: smallerSoFar(), paused: isPaused, queuedCount: batchQueue.length, queuedAlbums: batchQueue.map(j => ({ id: j.id, title: j.albumTitle, photoCount: j.photoCount, videoCount: j.videoCount })) }
     lastBatchProgress = full
     mainWindow?.webContents.send('batch:progress', full)
     if (showDockProgress) {
@@ -1071,7 +1073,7 @@ async function runPhotostreamBatch(albumTitle: string, track = true, smartMode?:
         if (outcome.status === 'downloaded') {
           downloadedCount++
           if (!zipMode) lastFilePath = outcome.filePath
-          if (track) writePhotoRecord(photo.id, photo.lastUpdate ?? 0, photo.title, photo.thumbnailUrl, describeSize(sizes, downloadSize))
+          { const size = noteSize(describeSize(sizes, downloadSize)); if (track) writePhotoRecord(photo.id, photo.lastUpdate ?? 0, photo.title, photo.thumbnailUrl, size) }
           if (zipMode) manifestPhotos.push({ id: photo.id, title: photo.title, filename: basename(outcome.filePath) })
           sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: outcome.filePath, status: 'running', skippedCount, failedCount })
         } else {

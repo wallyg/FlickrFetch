@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { AlbumFitPhoto, MapAccuracy, MapAlbumHit, MapCluster, MapFilter, MapView } from '../../shared/types'
+import type { AlbumFitPhoto, MapAccuracy, MapCluster, MapFilter, MapView } from '../../shared/types'
 import { anchorAfterResize, limitCentre, minZoomFor, placeAt, usableSize, visibleTiles, wheelIntent, worldCopies, worldPixel, wrapLon } from '../../shared/mapGeo'
 import { loadOutline } from '../ui/mapOutline'
 import { quietBtn, primaryBtn } from '../ui/kit'
 import { dash } from './DashboardParts'
+import AlbumBox from './AlbumBox'
 import { Chip, DateMode, PRIVACY_LABELS, PRIVACY_OPTIONS, PrivacyFilter, Tooltip, formatDateChip, getPresetDates, sharedStyles } from './PhotoGridShared'
 
 // The Map tab: your photos with a location as dots and numbered circles on a built-in outline of the countries. Drag to move, scroll or the
@@ -17,6 +18,7 @@ interface Props {
   onFullRescan: () => void
   refreshKey: number
   settingsKey: number   // goes up when the Settings window closes, so a change made there is read again
+  target?: { lat: number; lon: number; nonce: number } | null   // Health Check's "Show on the map": open on this place and mark it
 }
 
 const MIN_ZOOM = 1, MAX_ZOOM = 18
@@ -35,7 +37,7 @@ const MAX_TILES = 400
 const radius = (count: number): number => (count <= 1 ? 5 : 11 + 5 * Math.log10(count))
 const shortCount = (n: number): string => (n >= 10000 ? `${Math.round(n / 1000)}k` : n >= 1000 ? `${(n / 1000).toFixed(1).replace(/\.0$/, '')}k` : String(n))
 
-export default function MapPanel({ active, onDownload, onFullRescan, refreshKey, settingsKey }: Props): React.JSX.Element {
+export default function MapPanel({ active, onDownload, onFullRescan, refreshKey, settingsKey, target }: Props): React.JSX.Element {
   const box = useRef<HTMLDivElement | null>(null)
   const canvas = useRef<HTMLCanvasElement | null>(null)
   const [size, setSize] = useState({ w: 800, h: 520 })
@@ -47,9 +49,6 @@ export default function MapPanel({ active, onDownload, onFullRescan, refreshKey,
   const [tagsApplied, setTagsApplied] = useState('')   // the tags typed and confirmed with Enter, like the Photostream
   const [tagMode, setTagMode] = useState<'any' | 'all'>('any')
   const [albums, setAlbums] = useState<{ id: string; title: string }[]>([])
-  const [albumText, setAlbumText] = useState('')
-  const [albumHits, setAlbumHits] = useState<MapAlbumHit[]>([])
-  const [albumFocus, setAlbumFocus] = useState(false)
   const [dateField, setDateField] = useState<'taken' | 'posted'>('taken')
   const [dateMode, setDateMode] = useState<DateMode>('all')
   const [dateMin, setDateMin] = useState('')
@@ -65,6 +64,8 @@ export default function MapPanel({ active, onDownload, onFullRescan, refreshKey,
   const [tileTick, setTileTick] = useState(0)
   const tiles = useRef(new Map<string, Tile>())
   const [pick, setPick] = useState<Pick | null>(null)
+  const [marker, setMarker] = useState<{ lat: number; lon: number } | null>(null)   // a place sent here from Health Check, drawn as a pink ring
+  const handledTarget = useRef(0)
   // What the resize watcher needs to know, kept current each render (the watcher is set up once)
   const sizeRef = useRef(size), centreRef = useRef(centre), zoomRef = useRef(zoom), pickRef = useRef(pick)
   sizeRef.current = size; centreRef.current = centre; zoomRef.current = zoom; pickRef.current = pick
@@ -84,6 +85,13 @@ export default function MapPanel({ active, onDownload, onFullRescan, refreshKey,
   useEffect(() => {
     void window.flickrAPI.getSettings().then(s => { setStreet(s.mapStreet === true); asked.current = s.mapStreet !== undefined }).catch(() => { /* stays off */ })
   }, [settingsKey])
+  // Health Check sent a place: go there, close up, and mark it (a photo with no location has no dot of its own to look for)
+  useEffect(() => {
+    if (!target || handledTarget.current === target.nonce) return
+    handledTarget.current = target.nonce
+    const z = 14
+    setZoom(z); setCentre(limitCentre({ lat: target.lat, lon: target.lon }, z, sizeRef.current.h)); setPick(null); setMarker({ lat: target.lat, lon: target.lon })
+  }, [target])
   useEffect(() => {
     const el = box.current
     if (!el) return
@@ -128,7 +136,7 @@ export default function MapPanel({ active, onDownload, onFullRescan, refreshKey,
   const hasFilter = Object.keys(f).length > 0
   const drawerBadge = (privacy !== 'all' ? 1 : 0) + (f.tags ? 1 : 0) + (albums.length ? 1 : 0) + (f.dateFrom !== undefined || f.dateTo !== undefined ? 1 : 0) + (accuracy !== 'any' ? 1 : 0)
   const clearAll = (): void => {
-    setMedia('all'); setPrivacy('all'); setTagText(''); setTagsApplied(''); setTagMode('any'); setAlbums([]); setAlbumText('')
+    setMedia('all'); setPrivacy('all'); setTagText(''); setTagsApplied(''); setTagMode('any'); setAlbums([])
     setDateField('taken'); setDateMode('all'); setDateMin(''); setDateMax(''); setAccuracy('any')
   }
   const changeDateMode = (mode: DateMode): void => {
@@ -137,12 +145,6 @@ export default function MapPanel({ active, onDownload, onFullRescan, refreshKey,
     else if (mode !== 'since' && mode !== 'between') { const r = getPresetDates(mode); setDateMin(r.min); setDateMax(r.max) }
   }
 
-  // The albums that match what is typed in the album box
-  useEffect(() => {
-    if (!albumFocus) return
-    const t = setTimeout(() => { void window.flickrAPI.getMapAlbums(albumText).then(setAlbumHits).catch(() => setAlbumHits([])) }, 150)
-    return () => clearTimeout(t)
-  }, [albumText, albumFocus])
   // A circle that was picked may not exist once the filters change
   useEffect(() => { setPick(null) }, [fkey])
 
@@ -229,7 +231,17 @@ export default function MapPanel({ active, onDownload, onFullRescan, refreshKey,
         if (cl.count > 1) { g.fillStyle = '#ffffff'; g.fillText(shortCount(cl.count), p.x, p.y + 0.5) }
       }
     }
-  }, [size, zoom, corner, outline, data, pick, toScreen, street, tileTick])
+    if (marker) {
+      const base = toScreen(marker.lat, marker.lon)
+      for (const k of copies) {
+        const x = base.x + k * world, y = base.y
+        if (x < -40 || y < -40 || x > size.w + 40 || y > size.h + 40) continue
+        g.beginPath(); g.arc(x, y, 16, 0, Math.PI * 2); g.lineWidth = 5; g.strokeStyle = '#ffffff'; g.stroke()
+        g.beginPath(); g.arc(x, y, 16, 0, Math.PI * 2); g.lineWidth = 2.5; g.strokeStyle = '#ff0084'; g.stroke()
+        g.beginPath(); g.arc(x, y, 3.5, 0, Math.PI * 2); g.fillStyle = '#ff0084'; g.fill()
+      }
+    }
+  }, [size, zoom, corner, outline, data, pick, toScreen, street, tileTick, marker])
 
   // Moving and zooming. Zoom keeps the spot under the pointer still.
   const zoomTo = useCallback((next: number, at?: { x: number; y: number }): void => {
@@ -423,22 +435,7 @@ export default function MapPanel({ active, onDownload, onFullRescan, refreshKey,
 
           <div style={{ ...sharedStyles.drawerRow, padding: '7px 24px' }}>
             <span style={sharedStyles.drawerLabel}>Album</span>
-            <div style={{ position: 'relative' }}>
-              <div style={sharedStyles.searchGroup}>
-                <input style={{ ...sharedStyles.searchInput, minWidth: 200 }} type="text" placeholder="Find an album…" value={albumText} aria-label="Find an album"
-                  onChange={e => setAlbumText(e.target.value)} onFocus={() => setAlbumFocus(true)} onBlur={() => setAlbumFocus(false)} />
-              </div>
-              {albumFocus && albumHits.filter(h => !albums.some(a => a.id === h.id)).length > 0 && (
-                <div style={styles.suggest} role="listbox" aria-label="Albums">
-                  {albumHits.filter(h => !albums.some(a => a.id === h.id)).map(h => (
-                    <button key={h.id} style={styles.suggestItem} role="option" aria-selected={false}
-                      onMouseDown={e => { e.preventDefault(); setAlbums(a => [...a, { id: h.id, title: h.title }]); setAlbumText('') }}>
-                      <span style={{ overflowWrap: 'anywhere' }}>{h.title || '(no title)'}</span><span style={styles.suggestCount}>{n(h.count)}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <AlbumBox chosen={albums} onToggle={a => setAlbums(list => (list.some(x => x.id === a.id) ? list.filter(x => x.id !== a.id) : [...list, a]))} />
             <span style={styles.hint}>Pick one or more; photos in any of them show.</span>
           </div>
 
@@ -518,6 +515,7 @@ export default function MapPanel({ active, onDownload, onFullRescan, refreshKey,
               </div>
             </div>
           )}
+          {marker && <div style={{ ...styles.note, left: 'auto', bottom: 'auto', right: 10, top: 10 }}>The place from Health Check is marked. <button style={sharedStyles.clearFiltersLink} onClick={() => setMarker(null)}>Remove mark</button></div>}
           {streetFailed && <div style={{ ...styles.note, bottom: 34 }}>The street map could not be loaded (are you online?). Showing the outline.</div>}
           {data && hasFilter && data.matching === 0 && <div style={{ ...styles.note, left: '50%', bottom: 'auto', top: 12, transform: 'translateX(-50%)' }}>No photo with a location matches these filters. <button style={sharedStyles.clearFiltersLink} onClick={clearAll}>Clear all</button></div>}
           {failed && <div style={styles.note}>The map could not be read. Try moving it again.</div>}
@@ -558,9 +556,6 @@ const styles: Record<string, React.CSSProperties> = {
   count: { color: 'var(--ff-text-secondary)' },
   xBtn: { border: 'none', background: 'none', padding: '0 8px', fontSize: 12, color: 'var(--ff-text-muted)', cursor: 'pointer' },
   hint: { fontSize: 12, color: 'var(--ff-text-secondary)' },
-  suggest: { position: 'absolute', top: '100%', left: 0, marginTop: 2, zIndex: 20, minWidth: 260, maxHeight: 260, overflowY: 'auto', background: '#fff', border: '1px solid var(--ff-border)', borderRadius: 8, boxShadow: '0 6px 20px rgba(0,0,0,0.14)', padding: 4 },
-  suggestItem: { display: 'flex', width: '100%', justifyContent: 'space-between', gap: 12, textAlign: 'left', border: 'none', background: 'none', padding: '6px 8px', borderRadius: 6, fontSize: 13, color: 'var(--ff-text)', cursor: 'pointer' },
-  suggestCount: { color: 'var(--ff-text-secondary)', flex: 'none' },
   field: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--ff-text-secondary)' },
   select: { border: '1px solid var(--ff-border)', borderRadius: 6, padding: '4px 8px', fontSize: 13, background: '#fff', color: 'var(--ff-text)' },
   body: { flex: 1, minHeight: 0, display: 'flex', gap: 12, padding: '0 24px 12px' },

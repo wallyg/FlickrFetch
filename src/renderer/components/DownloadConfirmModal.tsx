@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import type { AppSettings, MetadataSettings } from '../../shared/types'
+import { limitNotice } from '../../shared/downloadLimits'
 
 const SIZE_LABELS: Record<string, string> = {
   original: 'Original',
@@ -34,11 +35,12 @@ export interface PendingDownload {
 interface DownloadConfirmModalProps {
   pending: PendingDownload
   settingsKey: number
+  isPro: boolean          // a Pro account has no size limit, so it never sees the free-account note (#126)
   onCancel: () => void
   onOpenSettings: () => void
 }
 
-export default function DownloadConfirmModal({ pending, settingsKey, onCancel, onOpenSettings }: DownloadConfirmModalProps): React.JSX.Element {
+export default function DownloadConfirmModal({ pending, settingsKey, isPro, onCancel, onOpenSettings }: DownloadConfirmModalProps): React.JSX.Element {
   const [settings, setSettings] = useState<AppSettings | null>(null)
   const [track, setTrack] = useState(true)
   const [exportFormat, setExportFormat] = useState<'files' | 'zip'>('files')
@@ -55,7 +57,8 @@ export default function DownloadConfirmModal({ pending, settingsKey, onCancel, o
   const meta = settings?.metadata
   const folder = settings?.downloadFolder ?? ''
   const folderDisplay = folder.replace(/^\/Users\/[^/]+/, '~')
-  const quality = SIZE_LABELS[settings?.downloadSize ?? 'original'] ?? 'Original'
+  const isFree = !isPro || (import.meta.env.DEV && settings?.devPretendFree === true)   // the switch in Settings pretends, in development builds only
+  const { quality, callout } = limitNotice(isFree, settings?.downloadSize ?? 'original', SIZE_LABELS[settings?.downloadSize ?? 'original'] ?? 'Original')
   const totalCount = pending.photoCount + pending.videoCount
 
   return (
@@ -90,6 +93,8 @@ export default function DownloadConfirmModal({ pending, settingsKey, onCancel, o
               </div>
             )}
           </div>
+
+          {callout && <p style={s.limitNote} role="note">{callout}</p>}
 
           <div style={s.metaSection}>
             <p style={s.metaHeading}>Metadata embedding</p>
@@ -193,6 +198,9 @@ const s: Record<string, React.CSSProperties> = {
   },
   countNote: {
     margin: '0 0 0', fontSize: '11px', color: '#999', fontStyle: 'italic' as const,
+  },
+  limitNote: {
+    fontSize: '12px', lineHeight: 1.5, color: 'var(--ff-text-secondary)', backgroundColor: 'var(--ff-tint)', borderRadius: '8px', padding: '8px 12px', margin: '10px 0 0',
   },
   summaryCard: {
     backgroundColor: '#f8f7f5', borderRadius: '8px', padding: '10px 12px',

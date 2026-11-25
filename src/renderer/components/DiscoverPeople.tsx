@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo } from 'react'
 import { useFindShortcut } from '../hooks/useFindShortcut'
+import { DEBOUNCE, useDebouncedEffect } from '../ui/useDebounce'
 import type { FlickrPhoto, FlickrAlbum, FlickrCollection, DiscoverUser, DiscoverContact, PhotoSearchParams, SearchOperator, DateRangeField, TagMode } from '../../shared/types'
 import PhotoDetail from './PhotoDetail'
 import { AttributionNotice, DiscoverTile, DiscoverSelectBar } from './DiscoverExplore'
@@ -20,6 +21,8 @@ type UserTab = 'photos' | 'albums' | 'collections'
 export default function DiscoverPeople({ isActive, findActive = true }: { isActive: boolean; findActive?: boolean }): React.JSX.Element {
   const findRef = useRef<HTMLInputElement | null>(null)
   useFindShortcut(findActive, findRef)   // Cmd+F goes to the contacts box on the People list
+  const albumFindRef = useRef<HTMLInputElement | null>(null)
+  useFindShortcut(findActive, albumFindRef)   // ...and to the title search inside a person's album (the box exists only while that album is open)
   const [view, setView] = useState<PeopleView>('home')
   const [searchQuery, setSearchQuery] = useState('')
   const [searching, setSearching] = useState(false)
@@ -410,10 +413,7 @@ export default function DiscoverPeople({ isActive, findActive = true }: { isActi
   syncSearchRef.current = syncSearch
 
   useEffect(() => { syncSearchRef.current() }, [searchOperator, tagMode, dateField, dateMode, dateCustomMin, dateCustomMax])
-  useEffect(() => {
-    const t = setTimeout(() => syncSearchRef.current(), 600)
-    return () => clearTimeout(t)
-  }, [photoSearchInput, tagInput])
+  useDebouncedEffect(() => syncSearchRef.current(), [photoSearchInput, tagInput], DEBOUNCE.flickrSearch)
 
   const handleTitleSearch = (): void => { syncSearch() }
 
@@ -696,7 +696,7 @@ export default function DiscoverPeople({ isActive, findActive = true }: { isActi
               <span style={ss.searchIcon}>
                 <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.5"/><path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
               </span>
-              <input style={ss.searchInput} placeholder={albumPhotosSearchOperator === 'photo-id' ? 'Photo ID…' : 'Title…'} value={albumPhotosSearchInput} onChange={e => setAlbumPhotosSearchInput(e.target.value)} />
+              <input ref={albumFindRef} style={ss.searchInput} placeholder={albumPhotosSearchOperator === 'photo-id' ? 'Photo ID…' : 'Title…'} value={albumPhotosSearchInput} onChange={e => setAlbumPhotosSearchInput(e.target.value)} />
               {albumPhotosSearchInput && (
                 <button style={ss.searchClearBtn} onClick={() => setAlbumPhotosSearchInput('')}>✕</button>
               )}

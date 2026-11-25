@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from 'react'
 import { useFindShortcut } from '../hooks/useFindShortcut'
+import { DEBOUNCE, useDebouncedEffect } from '../ui/useDebounce'
 import type { FlickrPhoto, PhotoPage, SearchOperator, DateRangeField, TagMode, LicenseFilter } from '../../shared/types'
 import { MediaFilter, DownloadFilter, PrivacyFilter, PrivacyLevel, PRIVACY_OPTIONS, PRIVACY_LABELS, JustifiedIcon, GridIcon, ListIcon, PrivacyIcon, Chip, Tooltip, PhotoListRow, DownloadFilterSelect, LicenseFilterSelect, matchesLicenseFilter, LICENSE_FILTER_LABEL, getPrivacyLevel, sharedStyles, DateMode, getPresetDates, formatDateChip, loadRowHeight, saveRowHeight, computeJustifiedRows, DOWNLOAD_FILTER_LABEL } from './PhotoGridShared'
 import { cleanTag } from '../../shared/tags'
@@ -156,23 +157,12 @@ export default function AlbumPhotoGrid({ albumId, findActive, onPhotoSelect, sel
 
   // Filters apply as you go. Albums are filtered on the photos already loaded, so a short
   // pause after typing is enough — no Apply button needed.
-  useEffect(() => {
-    const t = setTimeout(() => { setActiveTitleQuery(titleQuery.trim()); setActiveTitleOperator(titleOperator) }, 250)
-    return () => clearTimeout(t)
-  }, [titleQuery, titleOperator])
-
-  useEffect(() => {
-    const t = setTimeout(() => { setActiveTagQuery(tagQuery.trim()); setActiveTagMode(tagMode) }, 250)
-    return () => clearTimeout(t)
-  }, [tagQuery, tagMode])
-
-  useEffect(() => {
-    const t = setTimeout(() => {
-      if (dateMode === 'all') { setActiveDateMin(''); setActiveDateMax(''); return }
-      setActiveDateMin(dateCustomMin); setActiveDateMax(dateCustomMax); setActiveDateField(dateField)
-    }, 150)
-    return () => clearTimeout(t)
-  }, [dateMode, dateField, dateCustomMin, dateCustomMax])
+  useDebouncedEffect(() => { setActiveTitleQuery(titleQuery.trim()); setActiveTitleOperator(titleOperator) }, [titleQuery, titleOperator], DEBOUNCE.tags)
+  useDebouncedEffect(() => { setActiveTagQuery(tagQuery.trim()); setActiveTagMode(tagMode) }, [tagQuery, tagMode], DEBOUNCE.tags)
+  useDebouncedEffect(() => {
+    if (dateMode === 'all') { setActiveDateMin(''); setActiveDateMax(''); return }
+    setActiveDateMin(dateCustomMin); setActiveDateMax(dateCustomMax); setActiveDateField(dateField)
+  }, [dateMode, dateField, dateCustomMin, dateCustomMax], DEBOUNCE.dates)
 
   // A tag clicked in the detail panel: start over with just that tag
   useEffect(() => {

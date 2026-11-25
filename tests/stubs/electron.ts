@@ -12,4 +12,5 @@ export const shell = { openExternal: async (): Promise<void> => {} }
 export const dialog = {}
 export const clipboard = { writeText: (): void => {} }
 export const BrowserWindow = class {}
-export default { app, ipcMain, safeStorage, shell, dialog, clipboard, BrowserWindow }
+export const Notification = class { static isSupported(): boolean { return false }; show(): void {}; on(): void {} }
+export default { app, ipcMain, safeStorage, shell, dialog, clipboard, BrowserWindow, Notification }

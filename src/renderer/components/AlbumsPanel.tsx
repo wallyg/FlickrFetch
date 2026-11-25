@@ -15,6 +15,7 @@ import { asButton } from '../ui/a11y'
 import BatchEditButton from './BatchEditButton'
 import BackToTop from '../ui/BackToTop'
 import { useFindShortcut } from '../hooks/useFindShortcut'
+import { DEBOUNCE, useDebouncedValue } from '../ui/useDebounce'
 
 // The Albums report in Health Check: photos that are in no album, and albums that look wrong (empty, one photo, no description,
 // same title, in no collection), worked out from the local album list. Nothing here changes Flickr.
@@ -46,6 +47,7 @@ export default function AlbumsPanel({ refreshKey, onFullRescan, toolbarLeft, sta
   const [reasons, setReasons] = useState<AlbumListPage['reasons']>(undefined)
   const [hot, setHot] = useState<number | null>(null)
   const [search, setSearch] = useState('')
+  const typed = useDebouncedValue(search, search ? DEBOUNCE.typing : 0)   // typing waits a moment so every key does not search; clearing the box is at once
   const [rows, setRows] = useState<AlbumItem[]>([])
   const [selected, setSelected] = useState<Set<string>>(new Set())   // photos ticked for the batch editor (photo rows only)
   useEffect(() => { setSelected(new Set()) }, [condition, status, search, sort, reason])
@@ -71,18 +73,17 @@ export default function AlbumsPanel({ refreshKey, onFullRescan, toolbarLeft, sta
   const loadRows = useCallback(async (offset: number): Promise<void> => {
     const req = ++requestRef.current
     if (offset === 0) setLoading(true)
-    const page = await window.flickrAPI.listAlbumItems({ condition, status, search, sort, reason: condition === 'misfit' && reason ? reason : undefined, offset, limit: PAGE })
+    const page = await window.flickrAPI.listAlbumItems({ condition, status, search: typed, sort, reason: condition === 'misfit' && reason ? reason : undefined, offset, limit: PAGE })
     if (req !== requestRef.current) return
     setRows(prev => (offset === 0 ? page.rows : [...prev, ...page.rows]))
     setTotal(page.total)
     if (page.reasons) setReasons(page.reasons)
     setLoading(false)
-  }, [condition, status, search, sort, reason])
+  }, [condition, status, typed, sort, reason])
 
   useEffect(() => {
     if (!summary?.hasData || section !== 'lists') return
-    const t = setTimeout(() => void loadRows(0), search ? 200 : 0)   // typing waits a moment so every key does not search
-    return () => clearTimeout(t)
+    void loadRows(0)
   }, [loadRows, refreshKey, section, summary?.hasData])
 
   // What an album is organised by decides how its photos are judged; the choice is kept on this computer
@@ -244,7 +245,7 @@ export default function AlbumsPanel({ refreshKey, onFullRescan, toolbarLeft, sta
                       <div style={styles.actions}>
                         <button style={actionStyles.link} onClick={() => window.flickrAPI.openExternal(item.flickrUrl)}>{condition === 'misfit' ? 'Open photo ↗' : 'Open on Flickr ↗'}</button>
                         {item.isPhoto && item.status === 'open' && <BatchEditButton inline key={`b${item.id}`} style={actionStyles.fix} label="Open in Flickr's organizer" getIds={async () => [photoIdOf(item)]} />}
-                        {condition === 'misfit' && <button style={actionStyles.link} title="Opens the album's page on Flickr, where you can edit the album and take the photo out" onClick={() => window.flickrAPI.openExternal(item.albumUrl)}>Open album ↗</button>}
+                        {condition === 'misfit' && <button style={actionStyles.link} title="Opens the album's page on Flickr. Click Edit there to change the album or take the photo out." onClick={() => window.flickrAPI.openExternal(item.albumUrl)}>Open album ↗</button>}
                         {item.status === 'open'
                           ? <button style={actionStyles.quiet} onClick={() => void mark(item, 'fine')}>This one is fine</button>
                           : <button style={actionStyles.quiet} onClick={() => void mark(item, 'open')}>Undo</button>}

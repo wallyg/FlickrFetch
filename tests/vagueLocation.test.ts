@@ -1,7 +1,7 @@
 import test, { before } from 'node:test'
 import assert from 'node:assert/strict'
 import { openDatabase, getDb } from '../src/main/database'
-import { healthIds, healthList, healthSet, healthSummary } from '../src/main/photoHealth'
+import { healthIds, healthList, healthSet, healthSummary, ownPlace } from '../src/main/photoHealth'
 import { CLEANUP_RULES, ruleById } from '../src/shared/cleanupRules'
 import { addPhotos, tagTables } from './helpers'
 
@@ -48,4 +48,29 @@ test('the list says what is wrong with each photo', () => {
   const page = healthList({ condition: 'locVague', status: 'open', offset: 0, limit: 10 })
   assert.equal(page.total, 4)
   assert.ok(page.rows.every(r => r.kind === 'Vague location'))
+})
+
+// "Show on the map" works on every check about where a photo's own geotag is, not only the ones that suggest a place (#227)
+test('the rows of Vague location carry the photo\'s own geotag, for the in-app Map', () => {
+  const page = healthList({ condition: 'locVague', status: 'open', offset: 0, limit: 20 })
+  const byTitle = new Map(page.rows.map(r => [r.photoId, r.hintGeo]))
+  assert.deepEqual(byTitle.get('region'), { lat: 45.0, lon: 11.0 })
+  assert.deepEqual(byTitle.get('country'), { lat: 42.0, lon: 12.0 })
+  assert.ok(page.rows.length >= 3 && page.rows.every(r => r.hintGeo), 'every row has a place to show')
+})
+test('a geotag exactly at 0, 0 can be shown, and a photo with no geotag has nothing to show', () => {
+  const db = getDb()!
+  addPhotos(db, [{ id: 'nullisland', lat: 0, lon: 0, accuracy: 3 }])
+  db.prepare("UPDATE photo_meta SET has_location = 0 WHERE photo_id = 'nullisland'").run()   // how the library records a real geotag at 0, 0
+  const rows = healthList({ condition: 'locNull', status: 'open', offset: 0, limit: 20 }).rows
+  assert.deepEqual(rows.find(r => r.photoId === 'nullisland')?.hintGeo, { lat: 0, lon: 0 })
+  assert.equal(rows.find(r => r.photoId === 'nolocation')?.hintGeo, undefined)             // a precision but no geotag
+})
+test('only the checks about a photo\'s own geotag hand it to the Map', () => {
+  assert.deepEqual(ownPlace('locFar', 10, 20), { lat: 10, lon: 20 })
+  assert.deepEqual(ownPlace('locVague', 10, 20), { lat: 10, lon: 20 })
+  assert.deepEqual(ownPlace('locNull', 0, 0), { lat: 0, lon: 0 })
+  assert.equal(ownPlace('locFar', null, 20), undefined)
+  assert.equal(ownPlace('locFar', 10, null), undefined)
+  for (const other of ['title', 'description', 'location', 'locTitle', 'duplicates']) assert.equal(ownPlace(other, 10, 20), undefined)
 })

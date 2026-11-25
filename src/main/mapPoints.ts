@@ -1,7 +1,7 @@
 import { ipcMain } from 'electron'
 import type Database from 'better-sqlite3'
 import { albumsDb } from './albumDb'
-import { worldPixel } from '../shared/mapGeo'
+import { worldPixel, wrapLon } from '../shared/mapGeo'
 import { cleanTag } from '../shared/tags'
 import type { MapAccuracy, MapAlbumHit, MapCellPage, MapCellQuery, MapCluster, MapFilter, MapView, MapViewQuery } from '../shared/types'
 
@@ -17,8 +17,19 @@ export interface MapPoint {
   acc: number         // Flickr's precision of the location, 1 (world) to 16 (street); 0 when not recorded
 }
 
-const CELL_PX = 56          // a circle stands for the photos inside one square of this many pixels
+const CELL_PX = 56          // a circle stands for the photos inside one square of about this many pixels
 export { worldPixel }
+
+// The grid at one zoom: a whole number of cells round the world (so the cell size is a little more or less than CELL_PX), shifted half a cell
+// sideways so the date line runs through the middle of one cell. Photos on either side of the date line then land in the same cell and become
+// one circle (Fiji, the Aleutians), instead of two circles that touch.
+interface Grid { world: number; n: number; cell: number }
+function gridAt(zoom: number): Grid {
+  const world = 256 * 2 ** zoom
+  const n = Math.max(1, Math.round(world / CELL_PX))
+  return { world, n, cell: world / n }
+}
+const cellOf = (x: number, y: number, g: Grid): { cx: number; cy: number } => ({ cx: Math.floor((x + g.cell / 2) / g.cell) % g.n, cy: Math.floor(y / g.cell) })
 
 const ymd = (d: Date): number => d.getUTCFullYear() * 10000 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate()
 
@@ -61,24 +72,29 @@ export function clusterPoints(points: MapPoint[], q: MapViewQuery, allow?: Set<s
   const lo = worldPixel(q.north, q.west, q.zoom), hi = worldPixel(q.south, q.east, q.zoom)
   const pad = CELL_PX
   const wraps = q.west > q.east    // the window crosses the date line
-  const cells = new Map<string, { n: number; lat: number; lon: number; id: string; cx: number; cy: number }>()
+  const g = gridAt(q.zoom)
+  const cells = new Map<string, { n: number; lat: number; sx: number; lat0: number; lon0: number; id: string; cx: number; cy: number }>()
   let inView = 0, matching = 0
   for (const p of points) {
     if (!passes(p, q, allow)) continue
     matching++
     const { x, y } = worldPixel(p.lat, p.lon, q.zoom)
     if (y < lo.y - pad || y > hi.y + pad) continue
-    const inX = wraps ? (x >= lo.x - pad || x <= hi.x + pad) : (x >= lo.x - pad && x <= hi.x + pad)
+    const near = (xx: number): boolean => xx >= lo.x - pad && xx <= hi.x + pad
+    // a window at the edge of the map also takes the photos just across the date line, so a circle there keeps its full count
+    const inX = wraps ? (x >= lo.x - pad || x <= hi.x + pad) : (near(x) || near(x - g.world) || near(x + g.world))
     if (!inX) continue
     if (y >= lo.y && y <= hi.y && (wraps ? (x >= lo.x || x <= hi.x) : (x >= lo.x && x <= hi.x))) inView++
-    const cx = Math.floor(x / CELL_PX), cy = Math.floor(y / CELL_PX)
+    const { cx, cy } = cellOf(x, y, g)
     const key = `${cx}|${cy}`
+    const ux = cx === 0 && x > g.world / 2 ? x - g.world : x   // the photos right of the date line count as just left of the seam, so the average lands next to it
     const c = cells.get(key)
-    if (c) { c.n++; c.lat += p.lat; c.lon += p.lon } else cells.set(key, { n: 1, lat: p.lat, lon: p.lon, id: p.id, cx, cy })
+    if (c) { c.n++; c.lat += p.lat; c.sx += ux } else cells.set(key, { n: 1, lat: p.lat, sx: ux, lat0: p.lat, lon0: p.lon, id: p.id, cx, cy })
   }
   const clusters: MapCluster[] = []
   for (const c of cells.values()) {
-    clusters.push({ lat: c.lat / c.n, lon: c.lon / c.n, count: c.n, cx: c.cx, cy: c.cy, ...(c.n === 1 ? { id: c.id } : {}) })
+    const lon = c.n === 1 ? c.lon0 : wrapLon((c.sx / c.n / g.world) * 360 - 180)
+    clusters.push({ lat: c.n === 1 ? c.lat0 : c.lat / c.n, lon, count: c.n, cx: c.cx, cy: c.cy, ...(c.n === 1 ? { id: c.id } : {}) })
   }
   return { clusters, inView, matching }
 }
@@ -86,10 +102,12 @@ export function clusterPoints(points: MapPoint[], q: MapViewQuery, allow?: Set<s
 // The photos behind one circle, newest first: the same cell the circle was made from
 export function cellPhotos(points: MapPoint[], q: MapCellQuery, allow?: Set<string>): MapCellPage {
   const hits: MapPoint[] = []
+  const g = gridAt(q.zoom)
   for (const p of points) {
     if (!passes(p, q, allow)) continue
     const { x, y } = worldPixel(p.lat, p.lon, q.zoom)
-    if (Math.floor(x / CELL_PX) === q.cx && Math.floor(y / CELL_PX) === q.cy) hits.push(p)
+    const c = cellOf(x, y, g)
+    if (c.cx === q.cx && c.cy === q.cy) hits.push(p)
   }
   hits.sort((a, b) => b.taken - a.taken || (a.id < b.id ? 1 : -1))
   const offset = Math.max(0, q.offset)

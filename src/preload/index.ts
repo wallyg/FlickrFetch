@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { IpcRendererEvent } from 'electron'
-import type { AuditCategory, DuplicateQuery, DuplicatePage, DuplicateStats, FineReasonRequest, FineReasonSummaryRow, LocationHintStats, MissingTagStats, AlbumFitStats, AlbumFitPhoto, AlbumKindRow, MapAlbumHit, MapCacheInfo, MapCellPage, MapCellQuery, MapView, MapViewQuery, AlbumKindRequest, AlbumExportQuery, AlbumListPage, AlbumListQuery, AlbumSetRequest, AlbumSummary, BackupQuery, BackupSummary, FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery, DiscoverDownloadRecord, DiscoverUser, DiscoverContact, DiscoverGroup, AuditSummary, AuditListQuery, AuditListPage, AuditSetRequest, AuditPlanRow, AuditExportQuery, HealthSummary, HealthListQuery, DayView, DayQuery, DayPhoto, DayPhotosQuery, DatePhotoIdsQuery, PrivacyScope, TimelineMonths, TimelineDays, TodaySummary, CameraRollQuery, CameraRollView, HealthListPage, HealthSetRequest, HealthExportQuery, AuditOverview, HealthOverview, TagIndexStatus, TagLetterGroup, TagListQuery, TagListPage, TagScanProgress } from '../shared/types'
+import type { DateExtra, AuditCategory, DuplicateQuery, DuplicatePage, DuplicateStats, FineReasonRequest, FineReasonSummaryRow, LocationHintStats, MissingTagStats, AlbumFitStats, AlbumFitPhoto, AlbumKindRow, MapAlbumHit, MapCacheInfo, MapCellPage, MapCellQuery, MapView, MapViewQuery, AlbumKindRequest, AlbumExportQuery, AlbumListPage, AlbumListQuery, AlbumSetRequest, AlbumSummary, BackupQuery, BackupSummary, FlickrUser, PhotoPage, PhotoSize, PhotoInfo, AppSettings, AlbumPage, FlickrCollection, BatchProgress, CameraExif, PhotoSearchParams, BatchLogEntry, PhotoDownloadRecord, PhotoRecordQuery, DiscoverDownloadRecord, DiscoverUser, DiscoverContact, DiscoverGroup, AuditSummary, AuditListQuery, AuditListPage, AuditSetRequest, AuditPlanRow, AuditExportQuery, HealthSummary, HealthListQuery, DayView, DayQuery, DayPhoto, DayPhotosQuery, DatePhotoIdsQuery, PrivacyScope, TimelineMonths, TimelineDays, TodaySummary, CameraRollQuery, CameraRollView, HealthListPage, HealthSetRequest, HealthExportQuery, AuditOverview, HealthOverview, TagIndexStatus, TagLetterGroup, TagListQuery, TagListPage, TagScanProgress } from '../shared/types'
 
 // Expose a safe, limited API surface to the renderer process.
 // The renderer cannot access Node.js or Electron directly — only these methods.
@@ -132,8 +132,8 @@ contextBridge.exposeInMainWorld('flickrAPI', {
   getDayView: (q: DayQuery): Promise<DayView> => ipcRenderer.invoke('dates:day', q),
   getDayPhotos: (q: DayPhotosQuery): Promise<DayPhoto[]> => ipcRenderer.invoke('dates:dayPhotos', q),
   getDatePhotoIds: (q: DatePhotoIdsQuery): Promise<{ id: string; title: string }[]> => ipcRenderer.invoke('dates:photoIds', q),
-  getTimelineMonths: (scope: PrivacyScope): Promise<TimelineMonths> => ipcRenderer.invoke('dates:months', scope),
-  getTimelineDays: (year: number, month: number, scope: PrivacyScope): Promise<TimelineDays> => ipcRenderer.invoke('dates:days', year, month, scope),
+  getTimelineMonths: (scope: PrivacyScope, extra?: DateExtra): Promise<TimelineMonths> => ipcRenderer.invoke('dates:months', scope, extra),
+  getTimelineDays: (year: number, month: number, scope: PrivacyScope, extra?: DateExtra): Promise<TimelineDays> => ipcRenderer.invoke('dates:days', year, month, scope, extra),
   getCameraRoll: (q: CameraRollQuery): Promise<CameraRollView> => ipcRenderer.invoke('dates:camera', q),
   getTodaySummary: (): Promise<TodaySummary> => ipcRenderer.invoke('dates:today'),
   hideOnThisDayCardToday: (): Promise<void> => ipcRenderer.invoke('dates:hideCardToday'),

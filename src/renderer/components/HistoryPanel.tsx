@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo, useRef } from 'react'
 import { useFindShortcut } from '../hooks/useFindShortcut'
 import type { BatchLogEntry, PhotoDownloadRecord, DiscoverDownloadRecord, FlickrAlbum } from '../../shared/types'
 import EmptyState from './EmptyState'
+import { sizeTag } from '../../shared/downloadLimits'
 
 interface HistoryPanelProps {
   onClose: () => void
@@ -553,6 +554,7 @@ function PhotosTab() {
                     <span style={styles.staleIcon} title="Updated on Flickr since last download">⚠</span>
                   )}
                   <span style={styles.photoDate}>{formatDateShort(r.lastDownloadedAt)}</span>
+                  {sizeTag(r) && <span style={sizeTag(r) === 'Smaller size' ? styles.sizeTagSmaller : styles.sizeTag} title={sizeTag(r) === 'Smaller size' ? 'The Original was asked for and Flickr gave a smaller size' : 'Saved at the Original size'}>{sizeTag(r)}</span>}
                   <span style={styles.photoId}>{r.photoId}</span>
                 </div>
               </div>
@@ -938,6 +940,12 @@ const styles: Record<string, React.CSSProperties> = {
   },
   photoDate: {
     fontSize: 11, color: '#9ca3af',
+  },
+  sizeTag: {
+    fontSize: 10, color: 'var(--ff-text-secondary)', border: '1px solid #e5e7eb', borderRadius: 8, padding: '0 6px',
+  },
+  sizeTagSmaller: {
+    fontSize: 10, color: '#92400e', background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: 8, padding: '0 6px',
   },
   photoId: {
     fontSize: 10, color: '#c4c9d4',

@@ -4,6 +4,7 @@ import BatchEditButton from './BatchEditButton'
 import { forgetOverview } from './LibraryOverview'
 import { askFineReason } from '../ui/fineReason'
 import { quietBtn } from '../ui/kit'
+import { DEBOUNCE, useDebouncedValue } from '../ui/useDebounce'
 import type { DuplicateGroup, DuplicatePhoto, DuplicateSort } from '../../shared/types'
 
 // The list under Photos > Possible duplicates (#157): one card per group of photos with the same date and time taken, uploaded at different times,
@@ -53,11 +54,12 @@ export default function DuplicatesList({ status, search, sort, selected, setSele
   const [failed, setFailed] = useState(false)
   const [attempt, setAttempt] = useState(0)
   const [notice, setNotice] = useState<string | null>(null)
+  const typed = useDebouncedValue(search, search ? DEBOUNCE.typing : 0)   // typing waits a moment so every key does not search; clearing the box is at once
 
   const load = useCallback(async (offset: number, stale: () => boolean): Promise<void> => {
     if (offset === 0) { setLoading(true); setFailed(false) }
     try {
-      const page = await window.flickrAPI.getDuplicateGroups({ status, search, sort, offset, limit: PAGE })
+      const page = await window.flickrAPI.getDuplicateGroups({ status, search: typed, sort, offset, limit: PAGE })
       if (stale()) return
       setGroups(prev => (offset === 0 ? page.groups : [...prev, ...page.groups]))
       setTotal(page.total); setPhotoTotal(page.photos)
@@ -66,12 +68,12 @@ export default function DuplicatesList({ status, search, sort, selected, setSele
     } finally {
       if (!stale()) setLoading(false)
     }
-  }, [status, search, sort])
+  }, [status, typed, sort])
 
   useEffect(() => {
     let dead = false
-    const t = setTimeout(() => void load(0, () => dead), search ? 200 : 0)
-    return () => { dead = true; clearTimeout(t) }
+    void load(0, () => dead)
+    return () => { dead = true }
   }, [load, refreshKey, attempt])
 
   const mark = async (g: DuplicateGroup, next: 'open' | 'fine'): Promise<void> => {

@@ -23,6 +23,8 @@ interface Props {
   onDownload: (photos: { id: string; title: string }[], title: string, note: string) => void   // the usual download confirmation
   settingsKey: number          // goes up when Settings has been closed, so the checks are read again
   onOpenSettings: () => void   // opens Settings on its Health Check tab (Tune checks)
+  onShowOnMap?: (lat: number, lon: number) => void   // opens the Map tab on a place (a suggested location, or a geotag that looks wrong)
+  backupRequest?: { list: 'smaller'; nonce: number } | null   // a finished download asking for one Backup list
 }
 
 type View = 'overview' | 'tags' | 'photos' | 'albums' | 'backup'
@@ -39,7 +41,7 @@ function SwitchesIcon({ size }: { size: number }): React.JSX.Element {
   )
 }
 
-export default function CleanupPanel({ onViewPhotos, onDownload, settingsKey, onOpenSettings }: Props): React.JSX.Element {
+export default function CleanupPanel({ onViewPhotos, onDownload, settingsKey, onOpenSettings, onShowOnMap, backupRequest }: Props): React.JSX.Element {
   const scan = useTagScan()
   const rules = useCleanupRules(settingsKey)
   const [view, setView] = useState<View>('overview')
@@ -49,6 +51,8 @@ export default function CleanupPanel({ onViewPhotos, onDownload, settingsKey, on
   // The front page opens one list in a report: a counter makes each request new
   const [tagReq, setTagReq] = useState<{ category: AuditCategory; nonce: number } | null>(null)
   const [photoReq, setPhotoReq] = useState<{ condition: HealthCondition; year?: string; nonce: number } | null>(null)
+  // A finished download asks for the Backup list of photos that came down smaller (#126)
+  useEffect(() => { if (backupRequest) goTo('backup') }, [backupRequest?.nonce])   // eslint-disable-line react-hooks/exhaustive-deps
   // Slots in the toolbar where the report's own controls (Overview | Lists, Plan) are placed, so everything shares one row
   const [leftSlot, setLeftSlot] = useState<HTMLElement | null>(null)
   const [rightSlot, setRightSlot] = useState<HTMLElement | null>(null)
@@ -136,7 +140,7 @@ export default function CleanupPanel({ onViewPhotos, onDownload, settingsKey, on
       )}
       {seen.photos && (
         <div style={view === 'photos' ? styles.pane : styles.paneHidden}>
-          <HealthPanel refreshKey={refreshKey} onFullRescan={rebuild} toolbarLeft={view === 'photos' ? leftSlot : null} stateOf={rules.stateOf} openRequest={photoReq} needsRebuild={scan.status.hasIndex && !scan.status.hasCatalogV3} />
+          <HealthPanel refreshKey={refreshKey} onFullRescan={rebuild} toolbarLeft={view === 'photos' ? leftSlot : null} stateOf={rules.stateOf} openRequest={photoReq} needsRebuild={scan.status.hasIndex && !scan.status.hasCatalogV3} onShowOnMap={onShowOnMap} />
         </div>
       )}
       {seen.albums && (
@@ -146,7 +150,7 @@ export default function CleanupPanel({ onViewPhotos, onDownload, settingsKey, on
       )}
       {seen.backup && (
         <div style={view === 'backup' ? styles.pane : styles.paneHidden}>
-          <BackupPanel refreshKey={refreshKey} toolbarLeft={view === 'backup' ? leftSlot : null} onDownload={onDownload} />
+          <BackupPanel refreshKey={refreshKey} toolbarLeft={view === 'backup' ? leftSlot : null} onDownload={onDownload} openRequest={backupRequest} />
         </div>
       )}
     </div>

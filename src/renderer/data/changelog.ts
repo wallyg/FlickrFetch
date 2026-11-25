@@ -7,6 +7,18 @@ export interface Release {
 
 const changelog: Release[] = [
   {
+    version: '3.11',
+    date: 'November 2026',
+    highlights: [
+      'On This Day and the Timeline have the same filters as the Photostream and the Map — a Photos / Videos switch and a Filters button with six privacy choices (All, Public, Friends, Family, Friends & Family, Private, each with a count) and an album box where you can pick several albums. What you pick shows as chips with a Clear all. Counts, downloads and the batch editor follow them, and Open in Photostream carries the Photos / Videos and privacy choices over',
+      'Health Check — a new "Include videos in the checks" switch in Tune checks, and No location can have its own choice of videos and of public or not public photos, since videos often have no location',
+      'Show on the map now works on every location check (Vague location, Far from its neighbours, Location at 0, 0 and the others), marking the photo\'s own place with a pink ring',
+      'Free Flickr accounts — the Confirm Download box now says when Flickr limits downloads to 1024 px, a finished download says how many photos were saved smaller than the original (with a link to the list), and Download History tags each photo Original or Smaller size. Pro accounts see none of this',
+      'The Map keeps a group of photos on both sides of the date line together as one circle',
+      'Cmd+F now also finds in a person\'s album under Discover, and typing in filter boxes waits the same short moment everywhere before searching'
+    ]
+  },
+  {
     version: '3.10',
     date: 'November 2026',
     highlights: [

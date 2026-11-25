@@ -1,8 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import BatchEditButton from './BatchEditButton'
 import type { PrivacyScope, TimelineDays, TimelineMonths } from '../../shared/types'
-import { MONTHS, pad2, ScopeToggle } from './DateViewParts'
+import { MONTHS, pad2 } from './DateViewParts'
 import CameraRoll from './CameraRoll'
+import DateFilterBar, { dateExtra, extraNote, openTitle, rangeOpts, type MediaChoice, type RangeOpts } from './DateFilterBar'
+import type { PrivacyFilter } from './PhotoGridShared'
+import type { PickedAlbum } from './AlbumBox'
 import TimelineNav, { type Step } from './TimelineNav'
 import BackToTop from '../ui/BackToTop'
 import { OpenIcon, DownloadIcon, CameraRollIcon } from '../ui/icons'
@@ -17,7 +20,7 @@ import { itemsLabel } from '../../shared/counts'
 interface Props {
   active: boolean
   refreshKey: number
-  onOpenRange: (from: string, to: string, publicOnly: boolean) => void
+  onOpenRange: (from: string, to: string, opts: RangeOpts) => void
   onDownload: (photos: { id: string; title: string }[], title: string, note: string) => void
   onOpenDay: (month: number, day: number, year: number) => void
   onFullRescan: () => void
@@ -37,7 +40,11 @@ const monthKey = (y: number, m: number): number => y * 12 + (m - 1)
 const LABEL_W = 44, GAP = 3, CARD_PAD = 16
 
 export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownload, onOpenDay, onFullRescan }: Props): React.JSX.Element {
-  const [scope, setScope] = useState<PrivacyScope>('all')
+  const scope: PrivacyScope = 'all'   // the privacy choice is one of the filters now (six levels, as on the other tabs)
+  const [privacy, setPrivacy] = useState<PrivacyFilter>('all')
+  const [media, setMedia] = useState<MediaChoice>('all')   // All, Photos or Videos
+  const [albums, setAlbums] = useState<PickedAlbum[]>([])   // only photos in any of these albums
+  const extra = useMemo(() => dateExtra(media, albums, privacy), [media, albums, privacy])
   const [data, setData] = useState<TimelineMonths | null>(null)
   const [drill, setDrill] = useState<{ year: number; month: number } | null>(null)   // a month is open as a day-by-day calendar
   const [days, setDays] = useState<TimelineDays | null>(null)
@@ -50,17 +57,17 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
 
   const load = useCallback(async () => {
     const req = ++reqRef.current
-    const m = await window.flickrAPI.getTimelineMonths(scope)
+    const m = await window.flickrAPI.getTimelineMonths(scope, extra)
     if (req === reqRef.current) setData(m)
-  }, [scope])
+  }, [scope, extra])
   useEffect(() => { void load() }, [load, refreshKey])
 
   useEffect(() => {
     if (!drill) { setDays(null); return }
     let cancelled = false
-    void window.flickrAPI.getTimelineDays(drill.year, drill.month, scope).then(d => { if (!cancelled) setDays(d) })
+    void window.flickrAPI.getTimelineDays(drill.year, drill.month, scope, extra).then(d => { if (!cancelled) setDays(d) })
     return () => { cancelled = true }
-  }, [drill, scope, refreshKey])
+  }, [drill, scope, extra, refreshKey])
 
   useEffect(() => {
     if (!gridEl) return
@@ -105,7 +112,7 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
   const strength = (n: number, max: number): number => (n === 0 ? 0 : 0.14 + 0.86 * Math.sqrt(n / max))
   const shade = (n: number, max: number = grid.max): string => (n === 0 ? '#f1efec' : `rgba(0, 99, 220, ${strength(n, max).toFixed(2)})`)
   const dayMax = Math.max(1, ...(days?.days.map(d => d.count) ?? [1]))   // each month's calendar is shaded against its own busiest day
-  const scopeNote = scope === 'public' ? ' (public only)' : scope === 'notpublic' ? ' (not public only)' : ''
+  const scopeNote = extraNote(media, albums, privacy)
 
   const rangeOf = (p: Period): { from: string; to: string; label: string } => {
     if (p.day) { const d = `${p.year}-${pad2(p.month)}-${pad2(p.day)}`; return { from: d, to: d, label: `${MONTHS[p.month - 1]} ${p.day}, ${p.year}` } }
@@ -115,7 +122,7 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
 
   const download = async (p: Period): Promise<void> => {
     const r = rangeOf(p)
-    const photos = await window.flickrAPI.getDatePhotoIds({ kind: 'range', from: r.from, to: r.to, scope })
+    const photos = await window.flickrAPI.getDatePhotoIds({ kind: 'range', from: r.from, to: r.to, scope, ...extra })
     if (photos.length === 0) return
     onDownload(photos, `Timeline, ${r.label}`, `Photos taken in ${r.label}${scopeNote}`)
   }
@@ -155,7 +162,7 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
     const label = n.day ? `${MONTHS[n.month - 1].slice(0, 3)} ${n.day}` : `${MONTHS[n.month - 1].slice(0, 3)} ${n.year}`
     const go = async (): Promise<void> => {
       if (n.day) { setRoll({ year: n.year, month: n.month, day: n.day }); return }
-      const d = await window.flickrAPI.getTimelineDays(n.year, n.month, scope)
+      const d = await window.flickrAPI.getTimelineDays(n.year, n.month, scope, extra)
       const list = d.days.filter(x => x.count > 0).map(x => x.day).sort((a, b) => a - b)
       const day = dir < 0 ? list[list.length - 1] : list[0]
       if (!day) return
@@ -170,8 +177,9 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
   return (
     <div style={styles.wrap}>
       <div style={styles.row}>
-        <ScopeToggle scope={data.scope} counts={data.counts} enabled={data.hasCatalog} onChange={s => { setScope(s); setRoll(null) }} />
-        {!data.hasCatalog && <span style={styles.muted}>Public and not public need one Rebuild of your library list. <button style={styles.link} onClick={onFullRescan}>Open Health Check</button></span>}
+        <DateFilterBar media={media} onMedia={setMedia} privacy={privacy} onPrivacy={setPrivacy} albums={albums} onAlbums={setAlbums}
+          levels={data.levels} hasCatalog={data.hasCatalog} onOpenHealth={onFullRescan}
+          onClearAll={() => { setMedia('all'); setPrivacy('all'); setAlbums([]) }} />
         <span style={{ ...styles.muted, marginLeft: 'auto' }}>{data.total.toLocaleString()} photos{scopeNote} · by date taken</span>
       </div>
 
@@ -182,6 +190,8 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
             to={rangeOf(roll).to}
             title={rangeOf(roll).label}
             scope={scope}
+            extra={extra}
+            extraText={extraNote(media, albums, privacy)}
             onOpenRange={onOpenRange}
             onDownload={onDownload}
             onSeeOnThisDay={roll.day && !isTodayThisYear(roll) ? () => onOpenDay(roll.month, roll.day as number, roll.year) : null}
@@ -249,9 +259,9 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
             />
             <span style={styles.muted}>{itemsLabel(monthCount(drill.year, drill.month), grid.vmap.get(`${drill.year}-${drill.month}`) ?? 0)}{scopeNote}</span>
             <div style={{ flex: 1 }} />
-            <button style={styles.pill} title={scope === 'notpublic' ? 'The Photostream cannot show only not-public photos, so this opens every photo from that month' : 'See these in the Photostream'} onClick={() => onOpenRange(rangeOf(drill).from, rangeOf(drill).to, scope === 'public')}><span style={styles.icon}><OpenIcon /></span>{scope === 'notpublic' ? 'Open all in Photostream' : 'Open in Photostream'}</button>
+            <button style={styles.pill} title={openTitle(extra, 'that month')} onClick={() => onOpenRange(rangeOf(drill).from, rangeOf(drill).to, rangeOpts(extra))}><span style={styles.icon}><OpenIcon /></span>Open in Photostream</button>
             <button style={styles.pill} onClick={() => setRoll({ year: drill.year, month: drill.month })} title="The month's photos in date order, grouped by day"><span style={styles.icon}><CameraRollIcon /></span>Camera roll</button>
-            <BatchEditButton inline style={styles.pill} label="Batch editor" getIds={async () => { const r = rangeOf(drill); return (await window.flickrAPI.getDatePhotoIds({ kind: 'range', from: r.from, to: r.to, scope })).map(p => p.id) }} />
+            <BatchEditButton inline style={styles.pill} label="Batch editor" getIds={async () => { const r = rangeOf(drill); return (await window.flickrAPI.getDatePhotoIds({ kind: 'range', from: r.from, to: r.to, scope, ...extra })).map(p => p.id) }} />
             <button style={{ ...styles.pill, ...styles.primary }} onClick={() => void download(drill)}><DownloadIcon />Download these {monthCount(drill.year, drill.month).toLocaleString()}</button>
           </div>
           <div style={styles.card}>

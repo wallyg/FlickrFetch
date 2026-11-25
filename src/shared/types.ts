@@ -70,7 +70,9 @@ export interface AppSettings {
   autoUpdateWhen?: 'open' | 'daily' | 'off'   // quietly Update the library list: every time the app opens, once a day (default), or never
   autoUpdate?: boolean         // earlier form of the same setting (false = off); autoUpdateWhen wins when both exist
   auditGenericWords?: string[] // the words the 'generic tags' check flags (a trailing * matches anything that starts that way); default list in cleanupRules.ts
+  devPretendFree?: boolean     // development builds only: show the free-account size notes (#126) although the account is Pro
   healthTagLimit?: number      // the 'too many tags' check flags photos with at least this many tags (2 to 75, default 65)
+  healthScope?: Partial<{ videos: boolean; locVideos: 'same' | 'include' | 'leave'; locPrivacy: 'all' | 'public' | 'notPublic' }>   // which photos the Photos checks look at (Tune checks, #246); see shared/healthScope.ts
   duplicates?: Partial<DuplicateSettings>   // the number behind the Possible duplicates check (Tune checks)
   locationHints?: Partial<LocationHintSettings>   // the numbers behind the location and title hints in the Photos checks (Tune checks)
   missingTags?: Partial<MissingTagSettings>   // the numbers behind the "Photos missing a tag" check (Tune checks)
@@ -96,6 +98,7 @@ export interface BatchProgress {
   error?: string
   skippedCount?: number                   // collision skips (file already exists, behavior = skip)
   skippedSizeUnavailableCount?: number    // photos where the requested size doesn't exist on Flickr
+  smallerCount?: number                   // photos saved smaller than the Original that was asked for (free accounts, #126)
   failedCount?: number                    // photos that errored and were skipped
   failedPhotos?: { id: string; title: string }[]
   discoverFolder?: string    // set on done events from Discover batch runners, used for retry routing
@@ -123,6 +126,8 @@ export interface PhotoDownloadRecord {
   flickrLastUpdate: number     // Flickr's last_update timestamp (seconds) at download time
   title: string
   thumbnailUrl: string
+  sizeLabel?: string           // the Flickr size it came down at ('Original', 'Large', ...); empty for downloads from before 3.6
+  sizeLimited?: boolean        // the Original was asked for and Flickr gave a smaller size (free accounts)
 }
 
 export interface PhotoRecordQuery {
@@ -427,6 +432,7 @@ export interface HealthPhoto {
   status: 'open' | 'fine'
   hint?: string         // a suggestion worked out from the photos taken beside it (a location, a title start), with why
   hintMapUrl?: string   // a map showing the suggested place, or the geotag that looks wrong
+  hintGeo?: { lat: number; lon: number }   // the same place as numbers, for opening the app's own Map on it
 }
 export interface HealthListPage { rows: HealthPhoto[]; total: number; reasons?: { none: number; camera: number } }   // reasons: No title or camera-file title, how many rows of each kind (before the reason filter)
 
@@ -638,20 +644,26 @@ export interface DayView {
   total: number                // photos and videos
   videos: number               // how many of the total are videos
   counts: { all: number; public: number; notPublic: number }
+  levels: number[]             // photos at each privacy level (public, friends, family, friends and family, private), with every other choice applied but not the privacy one
   years: DayYearGroup[]        // newest year first
   insights: DayInsights
   prev: DayNeighbour; next: DayNeighbour
 }
-export interface DayQuery { month: number; day: number; scope: PrivacyScope; perYear?: number; tag?: string }   // tag: only photos with this tag
-export interface DayPhotosQuery { month: number; day: number; year: string; scope: PrivacyScope; offset: number; limit: number; tag?: string }
-export type DatePhotoIdsQuery =
+// The Photos / Videos switch and the album choice, on top of the privacy scope: shared by On This Day and the Timeline
+export type DateMedia = 'photo' | 'video'
+export type DatePrivacy = 0 | 1 | 2 | 3 | 4   // 0 public, 1 friends, 2 family, 3 friends and family, 4 private
+export interface DateExtra { media?: DateMedia; albumIds?: string[]; privacy?: DatePrivacy }   // albumIds: photos in any of these albums; privacy: exactly this level
+export interface DayQuery extends DateExtra { month: number; day: number; scope: PrivacyScope; perYear?: number; tag?: string }   // tag: only photos with this tag
+export interface DayPhotosQuery extends DateExtra { month: number; day: number; year: string; scope: PrivacyScope; offset: number; limit: number; tag?: string }
+export type DatePhotoIdsQuery = DateExtra & (
   | { kind: 'day'; month: number; day: number; year?: string; scope: PrivacyScope; tag?: string }
-  | { kind: 'range'; from: string; to: string; scope: PrivacyScope }   // YYYY-MM-DD, inclusive
+  | { kind: 'range'; from: string; to: string; scope: PrivacyScope })   // YYYY-MM-DD, inclusive
 
 export interface TimelineMonths {
   hasData: boolean; hasCatalog: boolean; scope: PrivacyScope; total: number
   cells: { year: number; month: number; count: number; videos: number }[]
   counts: { all: number; public: number; notPublic: number }
+  levels: number[]             // photos at each privacy level, as in DayView
 }
 export interface TimelineDays { year: number; month: number; days: { day: number; count: number; videos: number }[] }
 
@@ -666,6 +678,6 @@ export interface TodaySummary {
 }
 
 // Camera roll (Timeline): the photos of a month or a day in calendar order, grouped by day
-export interface CameraRollQuery { from: string; to: string; scope: PrivacyScope; order: 'asc' | 'desc'; offset: number; limit: number }   // from and to: YYYY-MM-DD, inclusive; offset and limit count days
+export interface CameraRollQuery extends DateExtra { from: string; to: string; scope: PrivacyScope; order: 'asc' | 'desc'; offset: number; limit: number }   // from and to: YYYY-MM-DD, inclusive; offset and limit count days
 export interface CameraRollDay { date: string; count: number; videos: number; photos: DayPhoto[] }   // photos: up to 600 per day
 export interface CameraRollView { hasData: boolean; hasCatalog: boolean; scope: PrivacyScope; totalDays: number; totalPhotos: number; totalVideos: number; days: CameraRollDay[] }

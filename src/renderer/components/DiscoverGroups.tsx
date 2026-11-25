@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo } from 'react'
 import { useFindShortcut } from '../hooks/useFindShortcut'
+import { DEBOUNCE, useDebouncedEffect } from '../ui/useDebounce'
 import type { FlickrPhoto, DiscoverGroup, TagMode } from '../../shared/types'
 import PhotoDetail from './PhotoDetail'
 import { AttributionNotice, DiscoverTile, DiscoverSelectBar } from './DiscoverExplore'
@@ -68,10 +69,7 @@ export default function DiscoverGroups({ findActive = true }: { findActive?: boo
     setPoolAppliedDateFrom(poolPendingDateFrom)
     setPoolAppliedDateTo(poolPendingDateTo)
   }, [poolPendingDownloadFilter, poolPendingLicenseFilter, poolPendingTagMode, poolPendingDateField, poolPendingDatePreset, poolPendingDateFrom, poolPendingDateTo])
-  useEffect(() => {
-    const t = setTimeout(() => setPoolAppliedTagInput(poolPendingTagInput), 200)
-    return () => clearTimeout(t)
-  }, [poolPendingTagInput])
+  useDebouncedEffect(() => setPoolAppliedTagInput(poolPendingTagInput), [poolPendingTagInput], DEBOUNCE.typing)
   // Large-group download warning
   const [groupDownloadWarning, setGroupDownloadWarning] = useState<{ photoCount: number } | null>(null)
   const loadedRef = useRef(false)

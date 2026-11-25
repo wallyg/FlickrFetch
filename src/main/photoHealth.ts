@@ -12,6 +12,7 @@ import { isCameraTitle } from '../shared/cameraNames'
 import { loadSettings } from './settings'
 import { ruleState, ruleById } from '../shared/cleanupRules'
 import { HEALTH_CONDITIONS } from '../shared/healthChecks'
+import { includesVideos, normalizeScope, scopeSql } from '../shared/healthScope'
 import { DESC_ONLY_LINK, DESC_COPIES_TITLE, DESC_ONLY_MARKUP, DESC_LOOKS_LIKE_TAGS } from '../shared/descriptionFlags'
 import type { DuplicateGroup, DuplicatePhoto, DuplicateQuery, DuplicatePage, DuplicateStats,
   HealthCondition, HealthExportQuery, HealthListPage, HealthListQuery, HealthOverview, HealthPhoto, HealthSetRequest, HealthSort, HealthSummary
@@ -69,8 +70,13 @@ function dupGapSeconds(): number {
   const m = Number(loadSettings().duplicates?.gapMinutes)
   return (Number.isFinite(m) ? Math.min(10080, Math.max(1, Math.round(m))) : 10) * 60
 }
-const DUP_REAL = "length(p.date_taken) >= 19 AND substr(p.date_taken, 12, 8) <> '00:00:00' AND p.date_upload IS NOT NULL"
-const dupGroupsSql = (): string => `(SELECT p.date_taken FROM photo_meta p WHERE ${DUP_REAL} GROUP BY p.date_taken HAVING COUNT(*) > 1 AND MAX(p.date_upload) - MIN(p.date_upload) >= ${dupGapSeconds()})`
+// Which photos the checks look at (Tune checks, #246): videos can be left out of every check, and No location has its own privacy and video choice
+function scopeNow(): ReturnType<typeof normalizeScope> { return normalizeScope(loadSettings().healthScope) }
+function catalogSaved(db: Database.Database): boolean {
+  return (db.prepare("SELECT value FROM tag_index_meta WHERE key = 'has_catalog_v2'").get() as { value: string } | undefined)?.value === '1'
+}
+const dupReal = (): string => `length(p.date_taken) >= 19 AND substr(p.date_taken, 12, 8) <> '00:00:00' AND p.date_upload IS NOT NULL${scopeSql('duplicates', scopeNow(), true)}`
+const dupGroupsSql = (): string => `(SELECT p.date_taken FROM photo_meta p WHERE ${dupReal()} GROUP BY p.date_taken HAVING COUNT(*) > 1 AND MAX(p.date_upload) - MIN(p.date_upload) >= ${dupGapSeconds()})`
 
 interface DupRow { taken: string; n: number; gap: number; fine: number }
 function dupGroupRows(db: Database.Database, search: string): DupRow[] {
@@ -78,7 +84,7 @@ function dupGroupRows(db: Database.Database, search: string): DupRow[] {
   const sql = `SELECT p.date_taken AS taken, COUNT(*) AS n, MAX(p.date_upload) - MIN(p.date_upload) AS gap,
       SUM(CASE WHEN s.status = 'fine' THEN 1 ELSE 0 END) AS fine${pattern ? ", MAX(CASE WHEN ff_fold(p.title) LIKE ? ESCAPE '\\' THEN 1 ELSE 0 END) AS hit" : ''}
     FROM photo_meta p LEFT JOIN photo_health_state s ON s.photo_id = p.photo_id AND s.condition = 'duplicates'
-    WHERE ${DUP_REAL} GROUP BY p.date_taken HAVING COUNT(*) > 1 AND gap >= ${dupGapSeconds()}${pattern ? ' AND hit = 1' : ''}`
+    WHERE ${dupReal()} GROUP BY p.date_taken HAVING COUNT(*) > 1 AND gap >= ${dupGapSeconds()}${pattern ? ' AND hit = 1' : ''}`
   return (pattern ? db.prepare(sql).all(pattern) : db.prepare(sql).all()) as DupRow[]
 }
 
@@ -100,7 +106,7 @@ export function duplicateGroups(q: DuplicateQuery): DuplicatePage {
     const photos = db.prepare(`SELECT p.photo_id, p.title, p.thumb_url, p.date_taken, p.date_upload, p.privacy, s.status,
         (SELECT COUNT(*) FROM tag_photo t WHERE t.photo_id = p.photo_id) AS tags
       FROM photo_meta p LEFT JOIN photo_health_state s ON s.photo_id = p.photo_id AND s.condition = 'duplicates'
-      WHERE ${DUP_REAL} AND p.date_taken IN (${marks}) ORDER BY p.date_taken, p.date_upload, p.photo_id`).all(...page.map(r => r.taken)) as { photo_id: string; title: string; thumb_url: string; date_taken: string; date_upload: number; privacy: number; status: string | null; tags: number }[]
+      WHERE ${dupReal()} AND p.date_taken IN (${marks}) ORDER BY p.date_taken, p.date_upload, p.photo_id`).all(...page.map(r => r.taken)) as { photo_id: string; title: string; thumb_url: string; date_taken: string; date_upload: number; privacy: number; status: string | null; tags: number }[]
     // How many albums each photo is in (null until the album list has been read)
     const albumCount = new Map<string, number>()
     let albumsKnown = true
@@ -129,6 +135,9 @@ export function duplicateGroups(q: DuplicateQuery): DuplicatePage {
 
 // The SQL test for one check, on a photo_meta row aliased p
 function whereFor(db: Database.Database, c: HealthCondition): string {
+  return `((${conditionSql(db, c)})${scopeSql(c, scopeNow(), catalogSaved(db))})`
+}
+function conditionSql(db: Database.Database, c: HealthCondition): string {
   switch (c) {
     case 'title': return "(p.title = '' OR ff_camera_title(p.title) = 1)"
     case 'description': return 'p.has_description = 0'
@@ -201,10 +210,18 @@ function hasData(db: Database.Database): boolean {
   return row?.value === '1'
 }
 
+// The checks about where a photo's own geotag is: their rows can open the Map on that geotag ("Show on the map"). A photo with no geotag has no place to show.
+const OWN_PLACE = new Set<string>(['locNull', 'locVague', 'locFar'])
+export function ownPlace(condition: string, lat: number | null, lon: number | null): { lat: number; lon: number } | undefined {
+  return OWN_PLACE.has(condition) && lat !== null && lon !== null ? { lat, lon } : undefined
+}
+
 export function healthSummary(): HealthSummary {
   const db = healthDb()
   if (!hasData(db)) return { hasData: false, photos: 0, rows: [] }
-  const photos = (db.prepare('SELECT COUNT(*) AS n FROM photo_meta').get() as { n: number }).n
+  const scope = scopeNow()
+  // With videos left out of every check they are not part of the library the checks speak about
+  const photos = (db.prepare(`SELECT COUNT(*) AS n FROM photo_meta p WHERE 1 = 1${scopeSql('', scope, false)}`).get() as { n: number }).n
   const rows = HEALTH_CONDITIONS.map(condition => {
     const where = whereFor(db, condition)
     const count = (fine: boolean): number => (db.prepare(`
@@ -259,7 +276,7 @@ function queryRows(q: HealthExportQuery, limit: number, offset: number): { rows:
     rows: raw.map(r => {
       const hint = hintFor(db, q.condition, r.photo_id, r.date_taken, r.latitude !== null && r.longitude !== null ? { lat: r.latitude, lon: r.longitude } : null)
       return {
-      hint: hint?.text, hintMapUrl: hint?.mapUrl,
+      hint: hint?.text, hintMapUrl: hint?.mapUrl, hintGeo: hint?.geo ?? ownPlace(q.condition, r.latitude, r.longitude),
       photoId: r.photo_id,
       title: r.title,
       thumbUrl: r.thumb_url,
@@ -306,7 +323,9 @@ export function healthOverview(): HealthOverview {
   const conds = HEALTH_CONDITIONS.filter(c => stateOf(c) !== 'off')
   // One pass over every photo: a column per check that is switched on
   const select = conds.map((c, i) => `CASE WHEN ${whereFor(db, c)} THEN 1 ELSE 0 END AS c${i}`).join(', ')
-  const rows = db.prepare(`SELECT p.photo_id AS id, substr(p.date_taken, 1, 4) AS y${select ? ', ' + select : ''} FROM photo_meta p`).all() as Record<string, number | string>[]
+  // A video is part of the totals only when at least one check that is on looks at videos
+  const videoPart = conds.some(c => includesVideos(c, scopeNow())) ? '' : " WHERE COALESCE(p.media, 'photo') <> 'video'"
+  const rows = db.prepare(`SELECT p.photo_id AS id, substr(p.date_taken, 1, 4) AS y${select ? ', ' + select : ''} FROM photo_meta p${videoPart}`).all() as Record<string, number | string>[]
   // Gaps marked fine do not count
   const fine = new Set((db.prepare("SELECT photo_id || '|' || condition AS k FROM photo_health_state WHERE status = 'fine'").all() as { k: string }[]).map(r => r.k))
   type YearRow = HealthOverview['byYear'][number]

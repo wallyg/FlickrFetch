@@ -1,8 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import BatchEditButton from './BatchEditButton'
 import type { DayPhoto, DayView, PrivacyScope } from '../../shared/types'
-import { MONTHS, pad2, hourLabel, ScopeToggle, PhotoTile } from './DateViewParts'
+import { MONTHS, pad2, hourLabel, PhotoTile } from './DateViewParts'
 import ShareDialog from './ShareDialog'
+import DateFilterBar, { dateExtra, extraNote, openTitle, rangeOpts, type MediaChoice, type RangeOpts } from './DateFilterBar'
+import type { PrivacyFilter } from './PhotoGridShared'
+import type { PickedAlbum } from './AlbumBox'
 import { primaryBtn, quietBtn, linkBtn, pillBtn, selectedOn } from '../ui/kit'
 import BackToTop from '../ui/BackToTop'
 import { asButton } from '../ui/a11y'
@@ -18,7 +21,7 @@ const iconBlue: React.CSSProperties = { color: 'var(--ff-blue)', display: 'inlin
 interface Props {
   refreshKey: number   // changes when the library is rescanned
   jumpTo: { month: number; day: number; year?: number; nonce: number } | null   // set by See in On This Day in the Timeline
-  onOpenRange: (from: string, to: string, publicOnly: boolean, tag?: string) => void
+  onOpenRange: (from: string, to: string, opts: RangeOpts) => void
   onDownload: (photos: { id: string; title: string }[], title: string, note: string) => void
   onFullRescan: () => void
 }
@@ -30,8 +33,12 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
   const now = new Date()
   const [month, setMonth] = useState(now.getMonth() + 1)
   const [day, setDay] = useState(now.getDate())
-  const [scope, setScope] = useState<PrivacyScope>('all')
+  const scope: PrivacyScope = 'all'   // the privacy choice is one of the filters now (six levels, as on the other tabs)
+  const [privacy, setPrivacy] = useState<PrivacyFilter>('all')
   const [tag, setTag] = useState<{ key: string; label: string } | null>(null)   // show only photos with this tag
+  const [media, setMedia] = useState<MediaChoice>('all')   // All, Photos or Videos
+  const [albums, setAlbums] = useState<PickedAlbum[]>([])   // only photos in any of these albums
+  const extra = useMemo(() => dateExtra(media, albums, privacy), [media, albums, privacy])
   const [data, setData] = useState<DayView | null>(null)
   const [expanded, setExpanded] = useState<Record<string, DayPhoto[]>>({})
   const [selected, setSelected] = useState<Map<string, DayPhoto>>(new Map())
@@ -43,13 +50,13 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
 
   const load = useCallback(async () => {
     const req = ++reqRef.current
-    const v = await window.flickrAPI.getDayView({ month, day, scope, perYear: 12, tag: tag?.key })
+    const v = await window.flickrAPI.getDayView({ month, day, scope, perYear: 12, tag: tag?.key, ...extra })
     if (req !== reqRef.current) return
     setData(v)
-  }, [month, day, scope, tag])
+  }, [month, day, scope, tag, extra])
 
   useEffect(() => { void load() }, [load, refreshKey])
-  useEffect(() => { setExpanded({}); setSelected(new Map()) }, [month, day, scope, tag])
+  useEffect(() => { setExpanded({}); setSelected(new Map()) }, [month, day, scope, tag, extra])
 
   // See in On This Day (from a Timeline day) lands here on that date
   useEffect(() => {
@@ -70,15 +77,15 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
   const goToday = (): void => { const d = new Date(); changeDay(d.getMonth() + 1, d.getDate()) }
 
   const showAll = async (year: string): Promise<void> => {
-    const all = await window.flickrAPI.getDayPhotos({ month, day, year, scope, offset: 0, limit: 1000, tag: tag?.key })
+    const all = await window.flickrAPI.getDayPhotos({ month, day, year, scope, offset: 0, limit: 1000, tag: tag?.key, ...extra })
     setExpanded(e => ({ ...e, [year]: all }))
   }
   const toggle = (p: DayPhoto): void => setSelected(prev => { const n = new Map(prev); if (n.has(p.id)) n.delete(p.id); else n.set(p.id, p); return n })
 
   const dateLabel = `${MONTHS[month - 1]} ${day}`
-  const scopeNote = (scope === 'public' ? ' (public only)' : scope === 'notpublic' ? ' (not public only)' : '') + (tag ? ` (tagged ${tag.label})` : '')
+  const scopeNote = (tag ? ` (tagged ${tag.label})` : '') + extraNote(media, albums, privacy)
   const download = async (year?: string): Promise<void> => {
-    const photos = await window.flickrAPI.getDatePhotoIds({ kind: 'day', month, day, year, scope, tag: tag?.key })
+    const photos = await window.flickrAPI.getDatePhotoIds({ kind: 'day', month, day, year, scope, tag: tag?.key, ...extra })
     if (photos.length === 0) return
     onDownload(photos, `On This Day, ${dateLabel}${year ? ` ${year}` : ''}`, `Photos taken on ${dateLabel}${year ? `, ${year}` : ' in every year'}${scopeNote}`)
   }
@@ -86,7 +93,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
     const photos = [...selected.values()].map(p => ({ id: p.id, title: p.title }))
     onDownload(photos, `On This Day, ${dateLabel} (selected)`, 'Only the photos you selected')
   }
-  const openYear = (year: string): void => onOpenRange(`${year}-${pad2(month)}-${pad2(day)}`, `${year}-${pad2(month)}-${pad2(day)}`, scope === 'public', tag?.label)
+  const openYear = (year: string): void => onOpenRange(`${year}-${pad2(month)}-${pad2(day)}`, `${year}-${pad2(month)}-${pad2(day)}`, rangeOpts(extra, tag?.label))
 
   // Photos for a collage: the ones you ticked, otherwise one per year (newest years first). Videos are left out.
   const isStill = (p: DayPhoto): boolean => p.media !== 'video'
@@ -150,19 +157,16 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
             <span style={styles.stack} aria-hidden="true"><s style={{ ...styles.stackCard, left: 0, top: 6, transform: 'rotate(-12deg)' }} /><s style={{ ...styles.stackCard, left: 11, top: 0, transform: 'rotate(3deg)' }} /><s style={{ ...styles.stackCard, left: 22, top: 7, transform: 'rotate(15deg)' }} /></span>
             Make a shareable collage
           </button>
-          <BatchEditButton inline style={quietBtn} label="Batch editor" getIds={async () => (await window.flickrAPI.getDatePhotoIds({ kind: 'day', month, day, scope, tag: tag?.key })).map(p => p.id)} />
+          <BatchEditButton inline style={quietBtn} label="Batch editor" getIds={async () => (await window.flickrAPI.getDatePhotoIds({ kind: 'day', month, day, scope, tag: tag?.key, ...extra })).map(p => p.id)} />
           <button style={quietBtn} disabled={data.total === 0} onClick={() => void download()}>Download all {data.total.toLocaleString()}</button>
         </div>
       </div>
 
       <div style={styles.row}>
-        <ScopeToggle scope={data.scope} counts={data.counts} enabled={data.hasCatalog} onChange={setScope} />
-        {!data.hasCatalog && (
-          <span style={styles.muted}>
-            Public and not public need one Rebuild of your library list. <button style={linkBtn} onClick={onFullRescan}>Open Health Check</button>
-          </span>
-        )}
-        {data.hasCatalog && <span style={styles.muted}>🔒 marks photos that are not public. Arrow counts follow the toggle.</span>}
+        <DateFilterBar media={media} onMedia={setMedia} privacy={privacy} onPrivacy={setPrivacy} albums={albums} onAlbums={setAlbums}
+          levels={data.levels} hasCatalog={data.hasCatalog} onOpenHealth={onFullRescan}
+          onClearAll={() => { setMedia('all'); setPrivacy('all'); setAlbums([]); setTag(null) }} />
+        {data.hasCatalog && <span style={styles.muted}>🔒 marks photos that are not public. Arrow counts follow the switches.</span>}
         <label style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 6 }} title={`Photo size: ${tileSize}px`}>
           <span style={styles.muted}>Photo size</span>
           <input type="range" min={TILE_MIN} max={TILE_MAX} step={5} value={tileSize} onChange={e => setTileSize(Number(e.target.value))} style={{ width: 110 }} aria-label="Photo size" />
@@ -244,7 +248,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
                   <b style={{ fontSize: 17 }}>{g.year}</b>
                   <span style={styles.muted}>{ago === 0 ? 'this year' : `${ago} year${ago === 1 ? '' : 's'} ago`} · {itemsLabel(g.count, g.videos)}</span>
                   <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: 8 }}>
-                    <button style={pillBtn} onClick={() => openYear(g.year)} title={scope === 'notpublic' ? 'The Photostream cannot show only not-public photos, so this opens every photo from that date' : 'See these in the Photostream, with the usual detail view and download options'}><span style={iconBlue}><OpenIcon /></span>{scope === 'notpublic' ? 'Open all in Photostream' : 'Open in Photostream'}</button>
+                    <button style={pillBtn} onClick={() => openYear(g.year)} title={openTitle(extra, 'that date')}><span style={iconBlue}><OpenIcon /></span>Open in Photostream</button>
                     <button style={pillBtn} onClick={() => void download(g.year)}><span style={iconBlue}><DownloadIcon /></span>Download these {g.count.toLocaleString()}</button>
                   </span>
                 </div>
@@ -268,7 +272,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
           candidates={candidates}
           tag={tag?.key}
           userPicked={share.userPicked}
-          defaultPublicOnly={data.scope === 'public'}
+          defaultPublicOnly={privacy === 'public'}
           month={month}
           day={day}
           onClose={() => setShare(null)}

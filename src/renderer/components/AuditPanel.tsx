@@ -5,6 +5,7 @@ import { dash, SectionSwitch } from './DashboardParts'
 import RuleRail, { RailHead, RailRow, ListHead, SortBox } from './RuleRail'
 import { forgetOverview } from './LibraryOverview'
 import { useFindShortcut } from '../hooks/useFindShortcut'
+import { DEBOUNCE, useDebouncedValue } from '../ui/useDebounce'
 import { GLUE_BOUNDARY_SOURCE } from '../../shared/tags'
 import { logicOf, ruleById } from '../../shared/cleanupRules'
 import type { CleanupRuleState } from '../../shared/cleanupRules'
@@ -147,6 +148,7 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
   const [status, setStatus] = useState<AuditStatus>('open')
   const [sort, setSort] = useState<AuditSort>('suggested')
   const [search, setSearch] = useState('')
+  const typed = useDebouncedValue(search, search ? DEBOUNCE.typing : 0)   // typing waits a moment so every key does not search; clearing the box is at once
   const [reason, setReason] = useState('')   // Odd characters: show only one kind of problem
   const [reasons, setReasons] = useState<Record<string, number> | undefined>(undefined)
   const [rows, setRows] = useState<AuditFinding[]>([])
@@ -198,19 +200,18 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
   const loadRows = useCallback(async (offset: number): Promise<void> => {
     const req = ++requestRef.current
     if (offset === 0) setLoading(true)
-    const page = await window.flickrAPI.listAuditFindings({ category, status, search, sort, reason: category === 'junk' && reason ? reason : undefined, offset, limit: PAGE })
+    const page = await window.flickrAPI.listAuditFindings({ category, status, search: typed, sort, reason: category === 'junk' && reason ? reason : undefined, offset, limit: PAGE })
     if (req !== requestRef.current) return
     setRows(prev => (offset === 0 ? page.rows : [...prev, ...page.rows]))
     setTotal(page.total)
     setReasons(page.reasons)
     setLoading(false)
-  }, [category, status, sort, search, reason])
+  }, [category, status, sort, typed, reason])
   useEffect(() => { setReason('') }, [category, status])
 
 
   useEffect(() => {
-    const t = setTimeout(() => void loadRows(0), search ? 200 : 0)   // typing waits a moment so every key does not search
-    return () => clearTimeout(t)
+    void loadRows(0)
   }, [loadRows, refreshKey])
 
   // When the report is hidden (its toolbar slot is handed away), the panel closes

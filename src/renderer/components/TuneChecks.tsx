@@ -7,6 +7,7 @@ import AlbumFitSettings from './AlbumFitSettings'
 import AlbumKindList from './AlbumKindList'
 import MissingTagSettings from './MissingTagSettings'
 import LocationHintSettings from './LocationHintSettings'
+import { LocationScope } from './HealthScopeSettings'
 import DuplicateSettings from './DuplicateSettings'
 import RichNote from '../ui/RichNote'
 
@@ -136,6 +137,7 @@ export default function TuneChecks({ stateOf, setState }: Props): React.JSX.Elem
                   {mine.length > 0 && <div style={styles.small}>Your reasons for marking fine: {mine.map(x => `${x.reason} (${x.count})`).join(', ')}</div>}
                   {r.id === 'albums:misfit' && <AlbumFitSettings />}
                   {r.id === 'tags:missing' && <MissingTagSettings />}
+                  {r.id === 'photos:location' && <LocationScope />}
                   {r.id === 'photos:location' && <LocationHintSettings />}
                   {r.id === 'photos:duplicates' && <DuplicateSettings />}
                   {r.list && (

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { useFindShortcut } from '../hooks/useFindShortcut'
+import { DEBOUNCE, useDebouncedEffect } from '../ui/useDebounce'
 import type { FlickrPhoto, PhotoSearchParams, SearchOperator, DateRangeField, TagMode, LicenseFilter } from '../../shared/types'
 import { MediaFilter, PhotoViewMode, DownloadFilter, PrivacyFilter, PrivacyLevel, PRIVACY_OPTIONS, PRIVACY_LABELS, GRID_COLUMNS, JustifiedIcon, GridIcon, ListIcon, PrivacyIcon, Tooltip, Chip, PhotoListRow, DownloadFilterSelect, LicenseFilterSelect, matchesLicenseFilter, LICENSE_FILTER_LABEL, sameSearchParams, getPrivacyLevel, sharedStyles, DateMode, getPresetDates, formatDateChip, loadPhotoViewMode, savePhotoViewMode, loadRowHeight, saveRowHeight, computeJustifiedRows, DOWNLOAD_FILTER_LABEL } from './PhotoGridShared'
 import EmptyState from './EmptyState'
@@ -26,7 +27,7 @@ interface PhotoGridProps {
   // Remembers which request was already applied, so remounting this grid (Refresh) doesn't replay it
   handledTagRequest?: React.MutableRefObject<number>
   // From On This Day or the Timeline: show the photos taken between two dates (replaces any search or filters in place)
-  dateSearchRequest?: { from: string; to: string; publicOnly?: boolean; tag?: string; backLabel?: string; nonce: number } | null
+  dateSearchRequest?: { from: string; to: string; privacy?: PrivacyFilter; media?: 'photo' | 'video'; tag?: string; backLabel?: string; nonce: number } | null
   handledDateRequest?: React.MutableRefObject<number>
   onBackToDates?: () => void
   active?: boolean   // this tab is showing (Cmd+F then jumps to the search box)
@@ -147,11 +148,7 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
   // Searches go to Flickr (one request each), so they run shortly after you stop typing
   // rather than on every keystroke. Enter runs the search immediately. Dropdowns and
   // buttons apply right away; this also covers custom dates once they're entered.
-  useEffect(() => {
-    const t = setTimeout(triggerSearch, 600)
-    return () => clearTimeout(t)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery, searchOperator, tagQuery, tagMode, dateField, dateMode, dateCustomMin, dateCustomMax])
+  useDebouncedEffect(triggerSearch, [searchQuery, searchOperator, tagQuery, tagMode, dateField, dateMode, dateCustomMin, dateCustomMax], DEBOUNCE.flickrSearch)
 
   // 'View photos' in the Tags tab: start over with just that tag search
   useEffect(() => {
@@ -169,7 +166,7 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
   useEffect(() => {
     if (!dateSearchRequest || handledDateRequest?.current === dateSearchRequest.nonce) return
     if (handledDateRequest) handledDateRequest.current = dateSearchRequest.nonce
-    setMediaFilter('all'); setPrivacyFilter(dateSearchRequest.publicOnly ? 'public' : 'all'); setDownloadFilter('all'); setLicenseFilter('all')
+    setMediaFilter(dateSearchRequest.media ?? 'all'); setPrivacyFilter(dateSearchRequest.privacy ?? 'all'); setDownloadFilter('all'); setLicenseFilter('all')
     // A tag chosen on the On This Day page narrows the Photostream too (commas would split it into several tags)
     const tq = (dateSearchRequest.tag ?? '').replace(/,/g, ' ').trim()
     setSearchQuery(''); setTagQuery(tq)

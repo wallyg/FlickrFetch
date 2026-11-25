@@ -91,7 +91,7 @@ function index(db: Database.Database): Index {
 
 const lowerBound = <T extends { ts: number }>(a: T[], t: number): number => { let lo = 0, hi = a.length; while (lo < hi) { const m = (lo + hi) >> 1; if (a[m].ts < t) lo = m + 1; else hi = m } return lo }
 
-export interface Hint { text: string; mapUrl?: string }
+export interface Hint { text: string; mapUrl?: string; geo?: { lat: number; lon: number } }   // geo: the place the map link points at, so the app's own Map can open on it
 const osm = (lat: number, lon: number): string => `https://www.openstreetmap.org/?mlat=${lat.toFixed(6)}&mlon=${lon.toFixed(6)}#map=17/${lat.toFixed(6)}/${lon.toFixed(6)}`
 
 // #186: where a photo with no location probably was taken
@@ -102,7 +102,7 @@ function locationHint(idx: Index, ts: number): Hint | null {
   if (near.length < MIN_NEIGHBOURS) return null
   const lat = median(near.map(p => p.lat)), lon = median(near.map(p => p.lon))
   if (Math.max(...near.map(p => km(lat, lon, p.lat, p.lon))) > s.meters / 1000) return null   // the photos around it do not agree with each other
-  return { text: `${near.length} photos taken within ${s.minutes} minutes of it were taken here, within ${s.meters} m of each other. Add this location in Flickr's batch editor.`, mapUrl: osm(lat, lon) }
+  return { text: `${near.length} photos taken within ${s.minutes} minutes of it were taken here, within ${s.meters} m of each other. Add this location in Flickr's batch editor.`, mapUrl: osm(lat, lon), geo: { lat, lon } }
 }
 
 // #187: how a photo's title could start, when the photos taken beside it all start theirs the same way
@@ -134,7 +134,7 @@ export function hintFor(db: Database.Database, condition: string, photoId: strin
     const f = idx.far.get(photoId)
     if (!f) return null
     const d = f.km >= 100 ? Math.round(f.km).toLocaleString('en-US') : f.km.toFixed(0)
-    return { text: `Its title names ${f.city}, but it is geotagged ${d} km from where your other ${f.city} photos are.`, mapUrl: geo ? osm(geo.lat, geo.lon) : undefined }
+    return { text: `Its title names ${f.city}, but it is geotagged ${d} km from where your other ${f.city} photos are.`, mapUrl: geo ? osm(geo.lat, geo.lon) : undefined, ...(geo ? { geo } : {}) }
   }
   return null
 }

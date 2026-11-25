@@ -77,6 +77,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
   const [onThisDayNotify, setOnThisDayNotify] = useState(false)
   const [mapStreet, setMapStreet] = useState<boolean | undefined>(undefined)   // undefined = never asked
   const [mapCacheMb, setMapCacheMb] = useState(cacheLimitMb(undefined))
+  const [pretendFree, setPretendFree] = useState(false)   // development builds only (#126)
 
   // Downloads tab
   const [downloadFolder, setDownloadFolder] = useState('')
@@ -142,6 +143,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
     setOnThisDayNotify(settings.onThisDayNotify ?? false)
     setMapStreet(settings.mapStreet)
     setMapCacheMb(cacheLimitMb(settings.mapCacheMb))
+    setPretendFree(settings.devPretendFree === true)
     setDownloadFolder(settings.downloadFolder)
     setConflictBehavior(settings.conflictBehavior ?? 'rename')
     setDownloadSize(settings.downloadSize ?? 'original')
@@ -434,6 +436,17 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
                   ))}
                 </div>
               </div>
+
+              {import.meta.env.DEV && (
+                <div style={{ ...s.section, borderTop: '1px solid #f0ede8' }}>
+                  <p style={s.sectionTitle}>Development only</p>
+                  <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13 }}>
+                    <input type="checkbox" checked={pretendFree} onChange={e => { setPretendFree(e.target.checked); void window.flickrAPI.setSettings({ devPretendFree: e.target.checked }) }} />
+                    Act as a free account in the download box (to see the size note)
+                  </label>
+                  <p style={s.radioDesc}>Only in <code>npm run dev</code>. Your account is Pro; this does not change any download.</p>
+                </div>
+              )}
 
               {/* Conflict behavior */}
               <div style={{ ...s.section, borderTop: '1px solid #f0ede8' }}>

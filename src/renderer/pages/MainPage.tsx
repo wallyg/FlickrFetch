@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useRememberScroll } from '../hooks/useRememberScroll'
 import MapPanel from '../components/MapPanel'
+import type { RangeOpts } from '../components/DateFilterBar'
+import type { PrivacyFilter } from '../components/PhotoGridShared'
 import BatchEditButton from '../components/BatchEditButton'
 import type { FlickrUser, FlickrPhoto, FlickrAlbum, FlickrCollection, FlickrSet, BatchProgress, TagMode } from '../../shared/types'
 import PhotoGrid from '../components/PhotoGrid'
-import type { PrivacyFilter } from '../components/PhotoGridShared'
 import PhotoDetail from '../components/PhotoDetail'
 import SettingsModal from '../components/SettingsModal'
 import type { SettingsTab } from '../components/SettingsModal'
@@ -87,8 +88,13 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
   const [onThisDayVisited, setOnThisDayVisited] = useState(false)
   const [timelineVisited, setTimelineVisited] = useState(false)
   const [mapVisited, setMapVisited] = useState(false)
+  const [mapTarget, setMapTarget] = useState<{ lat: number; lon: number; nonce: number } | null>(null)   // Health Check's "Show on the map"
+  const showOnMap = (lat: number, lon: number): void => { setMapTarget({ lat, lon, nonce: Date.now() }); setMapVisited(true); setView('map') }
+  // A finished download that came down smaller than the Original: open Health Check > Backup > Saved smaller than the original (#126)
+  const [backupRequest, setBackupRequest] = useState<{ list: 'smaller'; nonce: number } | null>(null)
+  const showSmaller = (): void => { setBackupRequest({ list: 'smaller', nonce: Date.now() }); setCleanupVisited(true); setView('cleanup') }
   // Set by 'Open in Photostream' in On This Day or the Timeline; the photostream applies it as a date range
-  const [dateSearchRequest, setDateSearchRequest] = useState<{ from: string; to: string; publicOnly?: boolean; tag?: string; backLabel?: string; nonce: number } | null>(null)
+  const [dateSearchRequest, setDateSearchRequest] = useState<{ from: string; to: string; privacy?: PrivacyFilter; media?: 'photo' | 'video'; tag?: string; backLabel?: string; nonce: number } | null>(null)
   const handledDateSearch = useRef(0)
   const [dateBackView, setDateBackView] = useState<'onthisday' | 'timeline'>('onthisday')
   const [otdJump, setOtdJump] = useState<{ month: number; day: number; year?: number; nonce: number } | null>(null)
@@ -296,10 +302,10 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
       },
     })
   }
-  const openDateRange = (from: string, to: string, publicOnly: boolean, from_view: 'onthisday' | 'timeline', tag?: string): void => {
+  const openDateRange = (from: string, to: string, opts: RangeOpts, from_view: 'onthisday' | 'timeline'): void => {
     exitPhotostreamSelect()
     setDateBackView(from_view)
-    setDateSearchRequest({ from, to, publicOnly, tag, backLabel: from_view === 'onthisday' ? 'On This Day' : 'Timeline', nonce: Date.now() })
+    setDateSearchRequest({ from, to, privacy: opts.privacy, media: opts.media, tag: opts.tag, backLabel: from_view === 'onthisday' ? 'On This Day' : 'Timeline', nonce: Date.now() })
     setView('photostream')
   }
 
@@ -842,7 +848,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             <OnThisDayPanel
               refreshKey={dataKey}
               jumpTo={otdJump}
-              onOpenRange={(from, to, publicOnly, tag) => openDateRange(from, to, publicOnly, 'onthisday', tag)}
+              onOpenRange={(from, to, opts) => openDateRange(from, to, opts, 'onthisday')}
               onDownload={startDateDownload}
               onFullRescan={() => { setCleanupVisited(true); setView('cleanup') }}
             />
@@ -853,7 +859,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             <TimelinePanel
               active={view === 'timeline' && !showSettings && !showHistory && !aboutVersion && !pendingDownload && !showResetConfirm && !showSignOutConfirm}
               refreshKey={dataKey}
-              onOpenRange={(from, to, publicOnly) => openDateRange(from, to, publicOnly, 'timeline')}
+              onOpenRange={(from, to, opts) => openDateRange(from, to, opts, 'timeline')}
               onDownload={startDateDownload}
               onOpenDay={(month, day, year) => { setOtdJump({ month, day, year, nonce: Date.now() }); setOnThisDayVisited(true); setView('onthisday') }}
               onFullRescan={() => { setCleanupVisited(true); setView('cleanup') }}
@@ -880,6 +886,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
               active={view === 'map'}
               refreshKey={dataKey}
               settingsKey={settingsKey}
+              target={mapTarget}
               onDownload={startDateDownload}
               onFullRescan={() => { setCleanupVisited(true); setView('cleanup') }}
             />
@@ -890,6 +897,8 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             <CleanupPanel
               settingsKey={settingsKey}
               onOpenSettings={() => openSettings('health')}
+              onShowOnMap={showOnMap}
+              backupRequest={backupRequest}
               onDownload={startDateDownload}
               onViewPhotos={(tags, mode) => {
                 exitPhotostreamSelect()
@@ -992,6 +1001,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
         <DownloadConfirmModal
           pending={pendingDownload}
           settingsKey={settingsKey}
+          isPro={user.isPro}
           onCancel={() => setPendingDownload(null)}
           onOpenSettings={() => openSettings()}
         />
@@ -1004,6 +1014,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
           onDismiss={handleBatchDismiss}
           onStackedDismiss={handleStackedDismiss}
           onDismissAll={handleDismissAll}
+          onShowSmaller={showSmaller}
         />
       )}
     </div>

@@ -209,3 +209,39 @@ test('album and tag answers are remembered while the library is unchanged, and d
   assert.deepEqual([...allow({ albumIds: ['A'] }, 's2')!].sort(), ['a', 'b'])  // a new library update: asked again
   assert.deepEqual([...allow({ tags: ['x', 'Y'] }, 's2')!], [])                // different choice, different answer
 })
+
+// The date line runs through the middle of one grid cell, so photos on either side of it become one circle (#252)
+test('photos either side of the date line become one circle, with its centre next to the line', () => {
+  const pts = [pt('a', 5, 179.9), pt('b', 5, -179.9), pt('far', 5, 0)]
+  for (const zoom of [2, 4, 6]) {
+    const r = clusterPoints(pts, { ...WORLD, zoom })
+    const seam = r.clusters.find(c => c.count === 2)
+    assert.ok(seam, 'one circle of two at zoom ' + zoom)
+    assert.ok(Math.abs(seam.lon) > 179.7, 'centre near the date line, lon ' + seam.lon + ' at zoom ' + zoom)
+    assert.equal(r.clusters.length, 2)                                  // the photo at 0 degrees is its own dot
+    assert.equal(r.inView, 3)
+  }
+})
+test('the centre of a circle across the date line is the average of where the photos are, not of their longitudes', () => {
+  const r = clusterPoints([pt('a', 10, 179.8), pt('b', 10, -179.6)], { ...WORLD, zoom: 6 })
+  assert.equal(r.clusters.length, 1)
+  assert.ok(Math.abs(r.clusters[0].lon - -179.9) < 0.01, 'lon ' + r.clusters[0].lon)     // 0.2 west of the line and 0.4 east of it: 0.1 east of the line
+  assert.ok(Math.abs(r.clusters[0].lat - 10) < 1e-9)
+})
+test('clicking a circle across the date line finds the photos on both sides', () => {
+  const pts = [pt('a', 5, 179.9), pt('b', 5, -179.9), pt('far', 5, 0)]
+  const seam = clusterPoints(pts, { ...WORLD, zoom: 4 }).clusters.find(c => c.count === 2)!
+  const page = cellPhotos(pts, { zoom: 4, cx: seam.cx, cy: seam.cy, offset: 0, limit: 10 })
+  assert.deepEqual([...page.ids].sort(), ['a', 'b'])
+  assert.equal(page.total, 2)
+})
+test('photos far apart across the date line stay separate once zoomed in far enough', () => {
+  const r = clusterPoints([pt('a', 5, 179.9), pt('b', 5, -179.9)], { ...WORLD, zoom: 10 })   // about 150 px apart at this zoom
+  assert.equal(r.clusters.length, 2)
+})
+test('a window at the edge of the map still counts the photos just across the date line', () => {
+  const pts = [pt('a', 5, 179.95), pt('b', 5, -179.95)]
+  const r = clusterPoints(pts, { west: -180, east: -150, south: -85, north: 85, zoom: 4 })   // the window starts at the date line and shows only the east side
+  assert.equal(r.clusters[0].count, 2)                                                       // the circle keeps both photos
+  assert.equal(r.clusters.length, 1)
+})

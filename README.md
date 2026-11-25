@@ -69,7 +69,7 @@ Metadata that lives only on a website disappears when the website does, or when 
 - **Read-only.** FlickrFetch asks Flickr for read access only. It cannot change or delete anything on your account.
 - **Your files stay on your Mac.** Photos, metadata and download history are stored locally.
 - **No FlickrFetch servers.** The app talks to Flickr, and to GitHub to check whether a new version is out. If you turn on the optional street map, it also asks OpenStreetMap for the map images of the area you are looking at, so OpenStreetMap learns roughly which part of the world that is, and nothing else. There is no analytics or tracking.
-- The source code is public, so you can see exactly what it does.
+- The source code is public, so you can see exactly what it does. It is all rights reserved on purpose (see [LICENSE](LICENSE)): you are welcome to read it, but not to copy or reuse it without asking.
 
 ## Install
 

@@ -7,6 +7,7 @@ import { quietBtn, primaryBtn, filterInput } from '../ui/kit'
 import { asButton } from '../ui/a11y'
 import BackToTop from '../ui/BackToTop'
 import { useFindShortcut } from '../hooks/useFindShortcut'
+import { DEBOUNCE, useDebouncedValue } from '../ui/useDebounce'
 
 // The Backup report in Health Check: how much of your library has been downloaded, worked out from FlickrFetch's own download
 // records and your library list. Nothing is asked of Flickr and nothing is changed.
@@ -15,6 +16,7 @@ interface Props {
   refreshKey: number
   toolbarLeft?: HTMLElement | null     // where the Summary | Lists switch goes
   onDownload: (photos: { id: string; title: string }[], title: string, note: string) => void   // opens the usual download confirmation
+  openRequest?: { list: BackupList; nonce: number } | null   // someone asking for one list (a finished download that came down smaller)
 }
 
 const PAGE = 100
@@ -23,11 +25,12 @@ const LISTS: BackupList[] = ['not', 'new', 'changed', 'smaller']
 
 const when = (ms: number | null): string => ms === null ? 'never' : new Date(ms).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
 
-export default function BackupPanel({ refreshKey, toolbarLeft, onDownload }: Props): React.JSX.Element {
+export default function BackupPanel({ refreshKey, toolbarLeft, onDownload, openRequest }: Props): React.JSX.Element {
   const [summary, setSummary] = useState<BackupSummary | null>(null)
   const [section, setSection] = useState<'overview' | 'lists'>('overview')
   const [list, setList] = useState<BackupList>('not')
   const [search, setSearch] = useState('')
+  const typed = useDebouncedValue(search, search ? DEBOUNCE.typing : 0)   // typing waits a moment so every key does not search; clearing the box is at once
   const [sort, setSort] = useState<BackupSort>('uploaded')
   const [rows, setRows] = useState<HealthPhoto[]>([])
   const [total, setTotal] = useState(0)
@@ -35,6 +38,11 @@ export default function BackupPanel({ refreshKey, toolbarLeft, onDownload }: Pro
   const requestRef = useRef(0)
   const filterRef = useRef<HTMLInputElement | null>(null)
   useFindShortcut(!!toolbarLeft && section === 'lists', filterRef)
+
+  useEffect(() => {
+    if (!openRequest) return
+    setList(openRequest.list); setSearch(''); setSection('lists')
+  }, [openRequest?.nonce])   // eslint-disable-line react-hooks/exhaustive-deps
 
   const [summaryFailed, setSummaryFailed] = useState(false)
   const [attempt, setAttempt] = useState(0)
@@ -48,17 +56,16 @@ export default function BackupPanel({ refreshKey, toolbarLeft, onDownload }: Pro
   const loadRows = useCallback(async (offset: number): Promise<void> => {
     const req = ++requestRef.current
     if (offset === 0) setLoading(true)
-    const page = await window.flickrAPI.listBackupPhotos({ list, search, sort, offset, limit: PAGE })
+    const page = await window.flickrAPI.listBackupPhotos({ list, search: typed, sort, offset, limit: PAGE })
     if (req !== requestRef.current) return
     setRows(prev => (offset === 0 ? page.rows : [...prev, ...page.rows]))
     setTotal(page.total)
     setLoading(false)
-  }, [list, search, sort])
+  }, [list, typed, sort])
 
   useEffect(() => {
     if (section !== 'lists') return
-    const t = setTimeout(() => void loadRows(0), search ? 200 : 0)
-    return () => clearTimeout(t)
+    void loadRows(0)
   }, [loadRows, refreshKey, section])
 
   const open = (l: BackupList): void => { setList(l); setSearch(''); setSection('lists') }

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import BatchEditButton from './BatchEditButton'
-import type { CameraRollDay, DayPhoto, PrivacyScope } from '../../shared/types'
+import { openTitle, rangeOpts, type RangeOpts } from './DateFilterBar'
+import type { CameraRollDay, DayPhoto, PrivacyScope, DateExtra } from '../../shared/types'
 import { PhotoTile } from './DateViewParts'
 import { itemsLabel } from '../../shared/counts'
 import { quietBtn, primaryBtn, linkBtn, segGroup, selectedOn, segBtn as segBtnBase } from '../ui/kit'
@@ -13,7 +14,9 @@ interface Props {
   to: string
   title: string                 // "November 2018" or "November 22, 2018"
   scope: PrivacyScope
-  onOpenRange: (from: string, to: string, publicOnly: boolean) => void
+  extra?: DateExtra             // the Photos / Videos switch and the album choice of the Timeline
+  extraText?: string            // the same, in words, for counts and download notes
+  onOpenRange: (from: string, to: string, opts: RangeOpts) => void
   onDownload: (photos: { id: string; title: string }[], title: string, note: string) => void
   onSeeOnThisDay: (() => void) | null   // for a single day: the same date across the years
   heading?: React.ReactNode             // replaces the plain title (the Timeline puts its back button and arrows here)
@@ -26,8 +29,10 @@ function dayHeading(date: string): string {
   return new Date(y, m - 1, d).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
 }
 
-export default function CameraRoll({ from, to, title, scope, onOpenRange, onDownload, onSeeOnThisDay, heading }: Props): React.JSX.Element {
+export default function CameraRoll({ from, to, title, scope, extra, extraText, onOpenRange, onDownload, onSeeOnThisDay, heading }: Props): React.JSX.Element {
   const [order, setOrder] = useState<'asc' | 'desc'>('asc')
+  const xk = JSON.stringify(extra ?? null)   // a stable key, so a new but equal choice does not reload the roll
+  const extraOf = (): DateExtra => (JSON.parse(xk) as DateExtra | null) ?? {}
   const [days, setDays] = useState<CameraRollDay[]>([])
   const [totalDays, setTotalDays] = useState(0)
   const [totalPhotos, setTotalPhotos] = useState(0)
@@ -39,23 +44,23 @@ export default function CameraRoll({ from, to, title, scope, onOpenRange, onDown
   const load = useCallback(async (offset: number): Promise<void> => {
     const req = ++reqRef.current
     if (offset === 0) setLoading(true)
-    const v = await window.flickrAPI.getCameraRoll({ from, to, scope, order, offset, limit: PAGE_DAYS })
+    const v = await window.flickrAPI.getCameraRoll({ from, to, scope, order, offset, limit: PAGE_DAYS, ...extraOf() })
     if (req !== reqRef.current) return
     setDays(prev => (offset === 0 ? v.days : [...prev, ...v.days]))
     setTotalDays(v.totalDays); setTotalPhotos(v.totalPhotos); setTotalVideos(v.totalVideos)
     setLoading(false)
-  }, [from, to, scope, order])
+  }, [from, to, scope, order, xk]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { setSelected(new Map()); void load(0) }, [load])
 
-  const scopeNote = scope === 'public' ? ' (public only)' : scope === 'notpublic' ? ' (not public only)' : ''
+  const scopeNote = (scope === 'public' ? ' (public only)' : scope === 'notpublic' ? ' (not public only)' : '') + (extraText ?? '')
   const toggle = (p: DayPhoto): void => setSelected(prev => { const n = new Map(prev); if (n.has(p.id)) n.delete(p.id); else n.set(p.id, p); return n })
   const downloadDay = async (date: string, label: string): Promise<void> => {
-    const photos = await window.flickrAPI.getDatePhotoIds({ kind: 'range', from: date, to: date, scope })
+    const photos = await window.flickrAPI.getDatePhotoIds({ kind: 'range', from: date, to: date, scope, ...extraOf() })
     if (photos.length) onDownload(photos, `Camera roll, ${label}`, `Photos taken on ${label}${scopeNote}`)
   }
   const downloadAll = async (): Promise<void> => {
-    const photos = await window.flickrAPI.getDatePhotoIds({ kind: 'range', from, to, scope })
+    const photos = await window.flickrAPI.getDatePhotoIds({ kind: 'range', from, to, scope, ...extraOf() })
     if (photos.length) onDownload(photos, `Camera roll, ${title}`, `Photos taken in ${title}${scopeNote}`)
   }
 
@@ -71,8 +76,8 @@ export default function CameraRoll({ from, to, title, scope, onOpenRange, onDown
           ))}
         </div>
         {onSeeOnThisDay && <button style={styles.btn} onClick={onSeeOnThisDay} title="This date in every year">See in On This Day</button>}
-        <button style={styles.btn} title={scope === 'notpublic' ? 'The Photostream cannot show only not-public photos, so this opens every photo from that period' : undefined} onClick={() => onOpenRange(from, to, scope === 'public')}>{scope === 'notpublic' ? 'Open all in Photostream' : 'Open in Photostream'}</button>
-        <BatchEditButton inline style={styles.btn} label="Batch editor" getIds={async () => (await window.flickrAPI.getDatePhotoIds({ kind: 'range', from, to, scope })).map(p => p.id)} />
+        <button style={styles.btn} title={extra?.albumIds?.length ? openTitle(extra, 'that period') : undefined} onClick={() => onOpenRange(from, to, rangeOpts(extra))}>Open in Photostream</button>
+        <BatchEditButton inline style={styles.btn} label="Batch editor" getIds={async () => (await window.flickrAPI.getDatePhotoIds({ kind: 'range', from, to, scope, ...extraOf() })).map(p => p.id)} />
         <button style={{ ...styles.btn, ...styles.primary }} disabled={totalPhotos === 0} onClick={() => void downloadAll()}>Download all {totalPhotos.toLocaleString()}</button>
       </div>
 
@@ -93,7 +98,7 @@ export default function CameraRoll({ from, to, title, scope, onOpenRange, onDown
               <b style={{ fontSize: 15, color: 'var(--ff-navy)' }}>{dayHeading(d.date)}</b>
               <span style={styles.muted}>{itemsLabel(d.count, d.videos)}</span>
               <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: 12 }}>
-                <button style={styles.link} onClick={() => onOpenRange(d.date, d.date, scope === 'public')}>{scope === 'notpublic' ? 'Open all in Photostream' : 'Open in Photostream'}</button>
+                <button style={styles.link} onClick={() => onOpenRange(d.date, d.date, rangeOpts(extra))}>Open in Photostream</button>
                 <button style={styles.link} onClick={() => void downloadDay(d.date, dayHeading(d.date))}>Download this day</button>
               </span>
             </div>

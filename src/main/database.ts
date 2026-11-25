@@ -126,6 +126,8 @@ function rowToRecord(row: Record<string, unknown>): PhotoDownloadRecord {
     flickrLastUpdate: row['flickr_last_update'] as number,
     title: (row['title'] as string) || '',
     thumbnailUrl: (row['thumbnail_url'] as string) || '',
+    sizeLabel: (row['size_label'] as string) || '',
+    sizeLimited: row['size_limited'] === 1,
   }
 }
 
