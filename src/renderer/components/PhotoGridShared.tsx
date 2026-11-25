@@ -465,7 +465,7 @@ export const sharedStyles: Record<string, React.CSSProperties> = {
   videoOverlay: { position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' },
   privacyBadge: { position: 'absolute', top: '5px', left: '5px', width: '18px', height: '18px', borderRadius: '50%', backgroundColor: 'var(--ff-badge-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2, cursor: 'default' },
   selectBadge: { position: 'absolute' as const, top: '6px', right: '6px', width: '22px', height: '22px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 },
-  selectCheck: { color: 'var(--ff-white)', fontSize: '13px', fontWeight: 'bold', lineHeight: 1 },
+  selectCheck: { color: 'var(--ff-white)', fontSize: '13px', fontWeight: 700, lineHeight: 1 },
   // Drawer date/tag controls
   dateModeSelect: { border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '5px 8px', fontSize: '12px', color: 'var(--ff-text)', background: 'var(--ff-surface)', cursor: 'pointer' },
   dateInputsInline: { display: 'flex', alignItems: 'center', gap: '5px' },

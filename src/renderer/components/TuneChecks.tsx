@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import Icon from '../ui/Icon'
 import type { FineReasonSummaryRow } from '../../shared/types'
 import { CLEANUP_RULES, DEFAULT_GENERIC_WORDS, logicOf } from '../../shared/cleanupRules'
 import type { CleanupRuleState } from '../../shared/cleanupRules'
@@ -108,7 +109,7 @@ export default function TuneChecks({ stateOf, setState, onOpenAlbumTab }: Props)
             <div key={r.id} style={styles.rule}>
               <div style={styles.ruleTop}>
                 <button style={styles.ruleToggle} aria-expanded={isOpen} onClick={() => setOpen(o => ({ ...o, [r.id]: !isOpen }))}>
-                  <span aria-hidden="true" style={styles.chev}>{isOpen ? '▾' : '▸'}</span>
+                  <span aria-hidden="true" style={styles.chev}><Icon name={isOpen ? 'chevronDown' : 'chevronRight'} /></span>
                   <span style={{ fontWeight: 700 }}>{r.name}</span>
                   {counts[r.id] !== undefined && <span style={styles.count}> · {counts[r.id].toLocaleString()} {unitOf(r.id)}</span>}
                   {now !== r.defaultState && <span style={styles.changed}>changed</span>}

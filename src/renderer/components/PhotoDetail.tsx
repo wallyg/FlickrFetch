@@ -622,7 +622,7 @@ export default function PhotoDetail({
 
         {showScrollFade && (
           <div style={styles.scrollFade}>
-            <span style={styles.scrollChevron}>▼</span>
+            <span style={styles.scrollChevron}><Icon name="chevronDown" /></span>
           </div>
         )}
 

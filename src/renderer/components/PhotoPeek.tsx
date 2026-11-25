@@ -13,22 +13,23 @@ export default function PhotoPeek({ photos, start, sourceName, hasMore = false, 
   start: number                       // which photo was clicked
   sourceName: string
   hasMore?: boolean                   // more photos could be loaded at the end of the list (the Map loads a page at a time)
-  loadMore?: () => Promise<void>
+  loadMore?: () => Promise<number>   // how many photos it added; 0 when none could be loaded
   onClose: () => void
 }): React.JSX.Element | null {
   const [index, setIndex] = useState(start)
-  const photo = photos[index]
+  const at = Math.min(index, photos.length - 1)   // never past the end, even if the list is shorter than when it was opened
+  const photo = photos[at]
   if (!photo) return null
   const next = async (): Promise<void> => {
-    if (index < photos.length - 1) setIndex(index + 1)
-    else if (hasMore && loadMore) { await loadMore(); setIndex(i => i + 1) }
+    if (at < photos.length - 1) setIndex(at + 1)
+    else if (hasMore && loadMore) { if ((await loadMore()) > 0) setIndex(at + 1) }   // a failed or empty load leaves the view where it is
   }
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 'var(--ff-z-dialog)', background: 'var(--ff-surface)' }}>
       <PhotoDetail
-        photo={asFlickrPhoto(photo)} index={index} total={photos.length} hasMore={hasMore}
-        canGoPrev={index > 0} canGoNext={index < photos.length - 1 || hasMore}
-        onPrev={() => setIndex(i => Math.max(0, i - 1))} onNext={() => void next()} onClose={onClose} sourceName={sourceName}
+        photo={asFlickrPhoto(photo)} index={at} total={photos.length} hasMore={hasMore}
+        canGoPrev={at > 0} canGoNext={at < photos.length - 1 || hasMore}
+        onPrev={() => setIndex(Math.max(0, at - 1))} onNext={() => void next()} onClose={onClose} sourceName={sourceName}
       />
     </div>
   )

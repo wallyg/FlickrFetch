@@ -40,7 +40,7 @@ export function Ring({ fraction, color, label }: { fraction: number; color: stri
     <svg width="130" height="130" viewBox="0 0 42 42" role="img" aria-label={label}>
       <circle cx="21" cy="21" r="15.9" fill="none" stroke="var(--ff-warm)" strokeWidth="6" />
       <circle cx="21" cy="21" r="15.9" fill="none" stroke={color} strokeWidth="6" strokeDasharray={`${pct} ${100 - pct}`} strokeDashoffset="25" />
-      <text x="21" y="22.5" textAnchor="middle" fontSize="7" fontWeight="600" fill="var(--ff-navy)">{label}</text>
+      <text x="21" y="22.5" textAnchor="middle" fontSize="7" fontWeight="700" fill="var(--ff-navy)">{label}</text>
     </svg>
   )
 }
@@ -78,7 +78,7 @@ export function RingParts({ parts, label, active, onActive }: {
           <text x="21" y="26" textAnchor="middle" fontSize="3" fill="var(--ff-text-secondary)" style={{ pointerEvents: 'none' }}>{cur.short}</text>
         </>
       ) : (
-        <text x="21" y="22.5" textAnchor="middle" fontSize="7" fontWeight="600" fill="var(--ff-navy)" style={{ pointerEvents: 'none' }}>{label}</text>
+        <text x="21" y="22.5" textAnchor="middle" fontSize="7" fontWeight="700" fill="var(--ff-navy)" style={{ pointerEvents: 'none' }}>{label}</text>
       )}
     </svg>
   )

@@ -88,7 +88,7 @@ function ExpandableSection({ label, color, defaultExpanded, children }: {
   return (
     <div style={styles.expandableWrap}>
       <button style={{ ...styles.expandableToggle, color }} onClick={() => setExpanded(e => !e)}>
-        {expanded ? '▾' : '▸'} {label}
+        <Icon name={expanded ? 'chevronDown' : 'chevronRight'} /> {label}
       </button>
       {expanded && <div style={styles.expandableBody}>{children}</div>}
     </div>

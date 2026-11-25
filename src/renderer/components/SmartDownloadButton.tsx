@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
+import Icon from '../ui/Icon'
 
 type SmartMode = 'all' | 'updated' | 'never-downloaded'
 
@@ -41,7 +42,7 @@ export default function SmartDownloadButton({ label, onDownload, disabled }: Sma
         onClick={() => setOpen(v => !v)}
         aria-label="More download options"
       >
-        ▾
+        <Icon name="chevronDown" />
       </button>
 
       {open && (

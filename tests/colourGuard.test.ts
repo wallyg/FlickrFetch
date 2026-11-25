@@ -62,7 +62,7 @@ test('no component types a layer number above 2', () => {
   const bad: string[] = []
   for (const f of files(SRC)) {
     const code = readFileSync(f, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1')
-    for (const m of code.matchAll(/zIndex:\s*(\d+)/g)) if (Number(m[1]) > 2) bad.push(`${relative(root, f)}: zIndex ${m[1]}`)
+    for (const m of code.matchAll(/zIndex:\s*'?(\d+)'?/g)) if (Number(m[1]) > 2) bad.push(`${relative(root, f)}: zIndex ${m[1]}`)
   }
   assert.deepEqual(bad, [], 'Use var(--ff-z-menu), var(--ff-z-dialog) and the other layer tokens from assets/brand/brand-tokens.md.')
 })

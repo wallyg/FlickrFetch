@@ -805,7 +805,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
         {/* Scroll fade + chevron — shown whenever content is scrollable and not at the bottom */}
         {showFade && (
           <div style={s.scrollFade}>
-            <span style={s.scrollChevron}>▼</span>
+            <span style={s.scrollChevron}><Icon name="chevronDown" /></span>
           </div>
         )}
 

@@ -170,7 +170,7 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
                       {(b.failedPhotos ?? []).length > 0 && (
                         <>
                           <button style={styles.failureToggle} onClick={() => toggleFailures(`stacked-${i}`)}>
-                            {expandedFailures.has(`stacked-${i}`) ? '▾' : '▸'} See {b.failedPhotos!.length} failed
+                            <Icon name={expandedFailures.has(`stacked-${i}`) ? 'chevronDown' : 'chevronRight'} /> See {b.failedPhotos!.length} failed
                           </button>
                           {expandedFailures.has(`stacked-${i}`) && (
                             <div style={styles.failureList}>
@@ -264,7 +264,7 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
                 {isDone && (progress?.failedPhotos ?? []).length > 0 && (
                   <>
                     <button style={styles.failureToggle} onClick={() => toggleFailures('current')}>
-                      {expandedFailures.has('current') ? '▾' : '▸'} See {progress!.failedPhotos!.length} failed
+                      <Icon name={expandedFailures.has('current') ? 'chevronDown' : 'chevronRight'} /> See {progress!.failedPhotos!.length} failed
                     </button>
                     {expandedFailures.has('current') && (
                       <div style={styles.failureList}>
@@ -297,7 +297,7 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
       <div style={{ ...styles.bar, borderLeft: `4px solid ${borderColor}` }}>
         <div style={styles.left}>
           <button style={styles.expandBtn} onClick={() => setExpanded((v) => !v)} title={expanded ? 'Collapse' : 'Expand'}>
-            {expanded ? '▾' : '▸'}
+            <Icon name={expanded ? 'chevronDown' : 'chevronRight'} />
           </button>
           {isRunning && (
             <div style={styles.progressTrack}>
