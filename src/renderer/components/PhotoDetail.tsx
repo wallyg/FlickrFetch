@@ -40,8 +40,8 @@ const LICENSE_ICONS: Record<string, string[]> = {
 function CcBadge({ label }: { label: string }): React.JSX.Element {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0 }}>
-      <circle cx="8" cy="8" r="7" stroke="#666" strokeWidth="1.2" fill="none" />
-      <text x="8" y="11" textAnchor="middle" fontSize={label.length > 2 ? '5' : '6.5'} fontFamily="sans-serif" fontWeight="bold" fill="#666">{label}</text>
+      <circle cx="8" cy="8" r="7" stroke="var(--ff-text-secondary)" strokeWidth="1.2" fill="none" />
+      <text x="8" y="11" textAnchor="middle" fontSize={label.length > 2 ? '5' : '6.5'} fontFamily="sans-serif" fontWeight="bold" fill="var(--ff-text-secondary)">{label}</text>
     </svg>
   )
 }
@@ -99,7 +99,7 @@ function formatDownloadDateTime(ms: number): string {
 
 function getPrivacyBadge(photo: FlickrPhoto): { label: string; bg: string; color: string } {
   if (photo.ispublic === 1) return { label: 'Public', bg: 'var(--ff-success-bg)', color: 'var(--ff-success)' }
-  if (photo.ispublic === undefined) return { label: 'Unknown', bg: 'var(--ff-grey-100)', color: '#999' }
+  if (photo.ispublic === undefined) return { label: 'Unknown', bg: 'var(--ff-grey-100)', color: 'var(--ff-text-secondary)' }
   if (photo.isfriend === 1 && photo.isfamily === 1) return { label: 'Friends & Family', bg: '#fff3e0', color: '#e67e22' }
   if (photo.isfriend === 1) return { label: 'Friends', bg: '#e8f4fd', color: '#2980b9' }
   if (photo.isfamily === 1) return { label: 'Family', bg: '#f0e8fd', color: '#8e44ad' }
@@ -423,7 +423,7 @@ export default function PhotoDetail({
               >
                 <div style={styles.videoPlayIcon}>
                   {videoResolving ? (
-                    <div style={{ width: '20px', height: '20px', border: '2px solid rgba(255,255,255,0.25)', borderTopColor: 'rgba(255,255,255,0.9)', borderRadius: '50%', animation: 'ff-spin 0.75s linear infinite' }} />
+                    <div style={{ width: '20px', height: '20px', border: '2px solid color-mix(in srgb, var(--ff-white) 25%, transparent)', borderTopColor: 'var(--ff-glass)', borderRadius: '50%', animation: 'ff-spin 0.75s linear infinite' }} />
                   ) : (
                     <svg width="18" height="18" viewBox="0 0 18 18" fill="white">
                       <polygon points="4,2 16,9 4,16" />
@@ -529,7 +529,7 @@ export default function PhotoDetail({
                     <p style={{ ...styles.fieldValue, marginBottom: '4px' }}>{info.locationName}</p>
                   )}
                   <div style={styles.fieldRow}>
-                    <span style={{ ...styles.fieldValue, fontSize: '11px', color: '#aaa', flex: 1 }}>
+                    <span style={{ ...styles.fieldValue, fontSize: '11px', color: 'var(--ff-text-secondary)', flex: 1 }}>
                       {info.latitude.toFixed(5)}°, {info.longitude.toFixed(5)}°
                     </span>
                     <CopyButton text={`${info.latitude}, ${info.longitude}`} />
@@ -549,7 +549,7 @@ export default function PhotoDetail({
               </div>
               {info.description
                 ? <DescriptionView html={info.description} style={{ ...styles.fieldValue, margin: 0 }} />
-                : <p style={{ ...styles.fieldValue, margin: 0, color: '#bbb', fontStyle: 'italic' as const }}>No description</p>
+                : <p style={{ ...styles.fieldValue, margin: 0, color: 'var(--ff-text-secondary)', fontStyle: 'italic' as const }}>No description</p>
               }
             </div>
           )}
@@ -565,7 +565,7 @@ export default function PhotoDetail({
                     ? <button key={tag} style={styles.tagButton} title={`Show photos tagged "${tag}"`} onClick={() => onTagClick(tag)}>{tag}</button>
                     : <span key={tag} style={styles.tag}>{tag}</span>
                   )}</div>
-                : <p style={{ ...styles.fieldValue, margin: 0, color: '#bbb', fontStyle: 'italic' as const }}>No tags</p>
+                : <p style={{ ...styles.fieldValue, margin: 0, color: 'var(--ff-text-secondary)', fontStyle: 'italic' as const }}>No tags</p>
               }
             </div>
           )}
@@ -574,7 +574,7 @@ export default function PhotoDetail({
             <div style={styles.section}>
               <p style={styles.fieldLabel}>Camera</p>
               {exif.camera && <p style={{ ...styles.fieldValue, marginBottom: '6px' }}>{exif.camera}</p>}
-              {exif.lens && <p style={{ ...styles.fieldValue, fontSize: '12px', color: '#555', marginBottom: '6px' }}>{exif.lens}</p>}
+              {exif.lens && <p style={{ ...styles.fieldValue, fontSize: '12px', color: 'var(--ff-text-secondary)', marginBottom: '6px' }}>{exif.lens}</p>}
               <div style={styles.exifGrid}>
                 {exif.aperture && <><span style={styles.exifLabel}>Aperture</span><span style={styles.exifVal}>{exif.aperture}</span></>}
                 {exif.shutterSpeed && <><span style={styles.exifLabel}>Shutter</span><span style={styles.exifVal}>{exif.shutterSpeed}</span></>}
@@ -725,7 +725,7 @@ const styles: Record<string, React.CSSProperties> = {
   imagePanel: {
     flex: 1,
     minWidth: 0,
-    backgroundColor: '#111',
+    backgroundColor: 'var(--ff-stage)',
     position: 'relative',
     display: 'flex',
     alignItems: 'center',
@@ -751,7 +751,7 @@ const styles: Record<string, React.CSSProperties> = {
     left: 0,
     right: 0,
     textAlign: 'center' as const,
-    color: '#ff6b6b',
+    color: 'var(--ff-error-ink)',
     fontSize: '12px',
     margin: 0,
     pointerEvents: 'none' as const,
@@ -760,7 +760,7 @@ const styles: Record<string, React.CSSProperties> = {
     position: 'absolute',
     top: '50%',
     transform: 'translateY(-50%)',
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    backgroundColor: 'var(--ff-scrim)',
     border: 'none',
     color: 'var(--ff-white)',
     borderRadius: '50%',
@@ -778,8 +778,8 @@ const styles: Record<string, React.CSSProperties> = {
     position: 'absolute',
     bottom: '12px',
     left: '12px',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    color: '#ccc',
+    backgroundColor: 'var(--ff-scrim)',
+    color: 'var(--ff-text-muted)',
     fontSize: '11px',
     padding: '3px 8px',
     borderRadius: '10px',
@@ -790,7 +790,7 @@ const styles: Record<string, React.CSSProperties> = {
     flexShrink: 0,
     cursor: 'col-resize',
     backgroundColor: 'transparent',
-    borderLeft: '1px solid #e8e4de',
+    borderLeft: '1px solid var(--ff-border)',
     position: 'relative',
     zIndex: 1,
     display: 'flex',
@@ -809,7 +809,7 @@ const styles: Record<string, React.CSSProperties> = {
     position: 'absolute' as const,
     top: '14px',
     left: '14px',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'var(--ff-scrim)',
     border: 'none',
     color: 'var(--ff-white)',
     borderRadius: '20px',
@@ -834,7 +834,7 @@ const styles: Record<string, React.CSSProperties> = {
   photoTitle: {
     fontSize: '15px',
     fontWeight: '600',
-    color: '#111',
+    color: 'var(--ff-text)',
     margin: 0,
     lineHeight: 1.3,
   },
@@ -846,7 +846,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   dateLabel: {
     fontSize: '11px',
-    color: '#aaa',
+    color: 'var(--ff-text-secondary)',
     fontWeight: '500',
     width: '42px',
     flexShrink: 0,
@@ -860,7 +860,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   metaDate: {
     fontSize: '12px',
-    color: '#888',
+    color: 'var(--ff-text-secondary)',
   },
   badge: {
     fontSize: '10px',
@@ -870,17 +870,17 @@ const styles: Record<string, React.CSSProperties> = {
   },
   metaDim: {
     fontSize: '11px',
-    color: '#888',
+    color: 'var(--ff-text-secondary)',
     margin: '0 0 4px',
   },
   section: {
     marginTop: '18px',
     paddingTop: '18px',
-    borderTop: '1px solid #f0ece6',
+    borderTop: '1px solid var(--ff-border)',
   },
   fieldLabel: {
     fontSize: '10px',
-    color: '#888',
+    color: 'var(--ff-text-secondary)',
     textTransform: 'uppercase' as const,
     letterSpacing: '0.06em',
     margin: '0 0 4px',
@@ -888,7 +888,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   fieldValue: {
     fontSize: '13px',
-    color: '#333',
+    color: 'var(--ff-text)',
     margin: 0,
     lineHeight: 1.5,
     userSelect: 'text' as const,
@@ -909,16 +909,16 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '11px',
     padding: '2px 8px',
     borderRadius: '20px',
-    backgroundColor: '#f0ece6',
-    color: '#666',
+    backgroundColor: 'var(--ff-grey-100)',
+    color: 'var(--ff-text-secondary)',
     userSelect: 'text' as const,
   },
   tagButton: {
     fontSize: '11px',
     padding: '2px 8px',
     borderRadius: '20px',
-    backgroundColor: '#f0ece6',
-    color: '#666',
+    backgroundColor: 'var(--ff-grey-100)',
+    color: 'var(--ff-text-secondary)',
     border: 'none',
     cursor: 'pointer',
     fontFamily: 'inherit',
@@ -931,19 +931,19 @@ const styles: Record<string, React.CSSProperties> = {
   },
   actionBtn: {
     background: 'var(--ff-surface)',
-    border: '1px solid #ddd',
+    border: '1px solid var(--ff-line-strong)',
     borderRadius: '6px',
     padding: '4px 9px',
     fontSize: '12px',
-    color: '#555',
+    color: 'var(--ff-text-secondary)',
     cursor: 'pointer',
   },
   copyBtn: {
     background: 'none',
-    border: '1px solid #ddd',
+    border: '1px solid var(--ff-line-strong)',
     borderRadius: '4px',
     padding: '2px 5px',
-    color: '#999',
+    color: 'var(--ff-text-secondary)',
     cursor: 'pointer',
     flexShrink: 0,
     display: 'flex',
@@ -954,19 +954,19 @@ const styles: Record<string, React.CSSProperties> = {
   },
   downloadArea: {
     padding: '12px 16px 14px',
-    borderTop: '1px solid #e8e4de',
+    borderTop: '1px solid var(--ff-border)',
     flexShrink: 0,
     backgroundColor: 'var(--ff-cream)',
   },
   sizeSelect: {
     width: '100%',
     padding: '6px 8px',
-    border: '1px solid #ddd',
+    border: '1px solid var(--ff-line-strong)',
     borderRadius: '6px',
     fontSize: '12px',
     marginBottom: '10px',
     backgroundColor: 'var(--ff-surface)',
-    color: '#333',
+    color: 'var(--ff-text)',
   },
   downloadBtn: {
     width: '100%',
@@ -981,7 +981,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   progressTrack: {
     height: '6px',
-    backgroundColor: '#eee',
+    backgroundColor: 'var(--ff-border)',
     borderRadius: '3px',
     overflow: 'hidden',
     marginBottom: '5px',
@@ -999,20 +999,20 @@ const styles: Record<string, React.CSSProperties> = {
   },
   progressLabel: {
     fontSize: '12px',
-    color: '#888',
+    color: 'var(--ff-text-secondary)',
   },
   cancelBtn: {
     background: 'none',
     border: 'none',
     fontSize: '12px',
-    color: '#888',
+    color: 'var(--ff-text-secondary)',
     cursor: 'pointer',
     textDecoration: 'underline',
     padding: 0,
   },
   successText: {
     fontSize: '13px',
-    color: '#2a7a2a',
+    color: 'var(--ff-success-ink)',
     margin: '0 0 8px',
     wordBreak: 'break-all' as const,
   },
@@ -1035,15 +1035,15 @@ const styles: Record<string, React.CSSProperties> = {
     flex: 1,
     padding: '8px',
     backgroundColor: 'transparent',
-    color: '#888',
-    border: '1px solid #ddd',
+    color: 'var(--ff-text-secondary)',
+    border: '1px solid var(--ff-line-strong)',
     borderRadius: '6px',
     fontSize: '12px',
     cursor: 'pointer',
   },
   errorText: {
     fontSize: '12px',
-    color: '#cc0000',
+    color: 'var(--ff-error-ink)',
     margin: '0 0 0',
   },
   dragGrip: {
@@ -1056,7 +1056,7 @@ const styles: Record<string, React.CSSProperties> = {
     width: '3px',
     height: '3px',
     borderRadius: '50%',
-    backgroundColor: '#b8b4ae',
+    backgroundColor: 'var(--ff-text-muted)',
   },
   videoPlayOverlay: {
     position: 'absolute' as const,
@@ -1070,7 +1070,7 @@ const styles: Record<string, React.CSSProperties> = {
     width: '54px',
     height: '54px',
     borderRadius: '50%',
-    backgroundColor: 'rgba(0,0,0,0.55)',
+    backgroundColor: 'var(--ff-badge-bg)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1084,7 +1084,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   lastDownloaded: {
     fontSize: '10px',
-    color: '#888',
+    color: 'var(--ff-text-secondary)',
     textTransform: 'uppercase' as const,
     letterSpacing: '0.06em',
     fontWeight: '600',
@@ -1092,7 +1092,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   lastDownloadedDate: {
     fontSize: '12px',
-    color: '#555',
+    color: 'var(--ff-text-secondary)',
     margin: 0,
   },
   resetRecordBtn: {
@@ -1100,7 +1100,7 @@ const styles: Record<string, React.CSSProperties> = {
     border: 'none',
     padding: '2px 6px',
     fontSize: '11px',
-    color: '#bbb',
+    color: 'var(--ff-text-secondary)',
     cursor: 'pointer',
     flexShrink: 0,
   },
@@ -1108,13 +1108,13 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     gap: '6px',
-    backgroundColor: '#fffbeb',
-    border: '1px solid #fcd34d',
+    backgroundColor: 'var(--ff-warning-bg)',
+    border: '1px solid var(--ff-warning)',
     borderRadius: '6px',
     padding: '6px 10px',
     fontSize: '12px',
     fontWeight: 600,
-    color: '#b45309',
+    color: 'var(--ff-warning-text)',
     margin: '0 0 6px',
     textAlign: 'center' as const,
   },
@@ -1134,7 +1134,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   noGeoText: {
     fontSize: '12px',
-    color: '#bbb',
+    color: 'var(--ff-text-secondary)',
     margin: 0,
     fontStyle: 'italic' as const,
   },
@@ -1146,12 +1146,12 @@ const styles: Record<string, React.CSSProperties> = {
   },
   exifLabel: {
     fontSize: '11px',
-    color: '#777',
+    color: 'var(--ff-text-secondary)',
     whiteSpace: 'nowrap' as const,
   },
   exifVal: {
     fontSize: '11px',
-    color: '#444',
+    color: 'var(--ff-text)',
   },
   scrollFade: {
     height: '36px',
@@ -1168,8 +1168,8 @@ const styles: Record<string, React.CSSProperties> = {
   },
   scrollChevron: {
     fontSize: '9px',
-    color: '#888',
-    background: 'rgba(0,0,0,0.07)',
+    color: 'var(--ff-text-secondary)',
+    background: 'var(--ff-shadow-soft)',
     borderRadius: '10px',
     padding: '2px 9px',
     lineHeight: 1,

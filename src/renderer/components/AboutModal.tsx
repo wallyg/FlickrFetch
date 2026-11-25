@@ -65,7 +65,7 @@ export default function AboutModal({ version, onClose }: AboutModalProps): React
               </div>
 
               <div style={styles.section}>
-                <div style={{ ...styles.iconBadge, backgroundColor: '#FEE8F3' }}>
+                <div style={{ ...styles.iconBadge, backgroundColor: 'var(--ff-tint)' }}>
                   <span style={{ fontSize: '14px', letterSpacing: '-1px', lineHeight: 1 }}>
                     <span style={{ color: 'var(--ff-blue)' }}>●</span><span style={{ color: 'var(--ff-pink)' }}>●</span>
                   </span>
@@ -124,18 +124,18 @@ const styles: Record<string, React.CSSProperties> = {
   overlay: {
     position: 'fixed',
     inset: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'var(--ff-scrim)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 200
+    zIndex: 'var(--ff-z-dialog)'
   },
   card: {
-    backgroundColor: '#FEF4EA',
+    backgroundColor: 'var(--ff-warning-bg)',
     borderRadius: '16px',
     width: '720px',
     maxWidth: '92vw',
-    boxShadow: '0 12px 48px rgba(0,0,0,0.3)',
+    boxShadow: '0 12px 48px var(--ff-shadow-strong)',
     position: 'relative',
     overflow: 'hidden',
     display: 'flex',
@@ -148,7 +148,7 @@ const styles: Record<string, React.CSSProperties> = {
     background: 'none',
     border: 'none',
     fontSize: '15px',
-    color: '#aaa',
+    color: 'var(--ff-text-secondary)',
     cursor: 'pointer',
     padding: '4px',
     zIndex: 1
@@ -166,7 +166,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'center',
     padding: '24px 20px 70px',
-    borderRight: '1px solid rgba(0,0,0,0.07)',
+    borderRight: '1px solid var(--ff-shadow-soft)',
     gap: '14px',
     position: 'relative',
     overflow: 'hidden'
@@ -193,7 +193,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   subtext: {
     fontSize: '12px',
-    color: '#666',
+    color: 'var(--ff-text-secondary)',
     margin: 0,
     lineHeight: 1.6
   },
@@ -206,7 +206,7 @@ const styles: Record<string, React.CSSProperties> = {
     width: '36px',
     height: '36px',
     borderRadius: '10px',
-    backgroundColor: '#EBF3FF',
+    backgroundColor: 'var(--ff-info-bg)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -215,12 +215,12 @@ const styles: Record<string, React.CSSProperties> = {
   sectionLabel: {
     fontSize: '12px',
     fontWeight: '700',
-    color: '#222',
+    color: 'var(--ff-text)',
     margin: '0 0 3px'
   },
   sectionText: {
     fontSize: '12px',
-    color: '#666',
+    color: 'var(--ff-text-secondary)',
     margin: 0,
     lineHeight: 1.55
   },
@@ -232,7 +232,7 @@ const styles: Record<string, React.CSSProperties> = {
     transform: 'translateX(-50%)',
     whiteSpace: 'nowrap',
     zIndex: 1,
-    boxShadow: '0 1px 4px rgba(27,41,70,0.2)',
+    boxShadow: '0 1px 4px color-mix(in srgb, var(--ff-navy) 20%, transparent)',
     backgroundColor: 'var(--ff-surface)',
     border: 'none',
     borderRadius: '20px',
@@ -254,7 +254,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'stretch',
     marginTop: 'auto',
-    borderTop: '1px solid #f0ede8',
+    borderTop: '1px solid var(--ff-border)',
     paddingTop: '16px'
   },
   linkItem: {
@@ -275,17 +275,17 @@ const styles: Record<string, React.CSSProperties> = {
   },
   linkSub: {
     fontSize: '10px',
-    color: '#999',
+    color: 'var(--ff-text-secondary)',
     textAlign: 'center' as const
   },
   footer: {
-    borderTop: '1px solid rgba(0,0,0,0.08)',
+    borderTop: '1px solid var(--ff-shadow-soft)',
     padding: '11px 24px',
-    backgroundColor: '#FEF4EA'
+    backgroundColor: 'var(--ff-warning-bg)'
   },
   copyright: {
     fontSize: '11px',
-    color: '#888',
+    color: 'var(--ff-text-secondary)',
     margin: 0,
     textAlign: 'center' as const
   }

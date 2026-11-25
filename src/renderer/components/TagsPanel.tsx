@@ -374,7 +374,7 @@ const styles: Record<string, React.CSSProperties> = {
   muted: { color: 'var(--ff-text-secondary)', fontSize: '13px' },
   error: { color: 'var(--ff-error)', fontSize: '13px', maxWidth: '420px' },
   notice: { margin: '0 24px 6px', padding: '8px 12px', background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: '8px', fontSize: '13px', color: 'var(--ff-text-secondary)' },
-  hint: { margin: '0 24px 4px', padding: '6px 12px', background: '#eef5ff', border: '1px solid #cfe0f7', borderRadius: '8px', fontSize: '13px', color: 'var(--ff-text-secondary)' },
+  hint: { margin: '0 24px 4px', padding: '6px 12px', background: 'var(--ff-info-bg)', border: '1px solid var(--ff-info-line)', borderRadius: '8px', fontSize: '13px', color: 'var(--ff-text-secondary)' },
   controls: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px', padding: '6px 24px' },
   searchGroup: { display: 'flex', alignItems: 'center', gap: '6px', flex: '1 1 340px', maxWidth: '620px', position: 'relative' },
   optionGroup: { display: 'flex', alignItems: 'center', gap: '12px' },
@@ -409,6 +409,6 @@ const styles: Record<string, React.CSSProperties> = {
   linkBtn: { background: 'none', border: 'none', color: 'var(--ff-blue)', fontSize: '13px', cursor: 'pointer', padding: '4px 6px' },
   progressCard: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', width: '360px', padding: '28px', background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: '12px' },
   cardTitle: { fontSize: '15px', fontWeight: 700, color: 'var(--ff-navy)' },
-  barTrack: { width: '100%', height: '8px', background: '#eee', borderRadius: '4px', overflow: 'hidden' },
+  barTrack: { width: '100%', height: '8px', background: 'var(--ff-border)', borderRadius: '4px', overflow: 'hidden' },
   barFill: { height: '100%', background: 'var(--ff-pink)', transition: 'width 0.3s' }
 }

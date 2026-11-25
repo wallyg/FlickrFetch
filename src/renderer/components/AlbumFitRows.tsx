@@ -94,7 +94,7 @@ export function MissingRow({ item, onFine, onKind }: { item: AlbumItem; onFine: 
 
 const styles: Record<string, React.CSSProperties> = {
   card: { display: 'flex', gap: 12, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 10, padding: 10, marginBottom: 8 },
-  thumb: { width: 76, height: 76, borderRadius: 6, objectFit: 'cover', background: '#eee', flexShrink: 0 },
+  thumb: { width: 76, height: 76, borderRadius: 6, objectFit: 'cover', background: 'var(--ff-border)', flexShrink: 0 },
   body: { flex: 1, minWidth: 0 },
   title: { fontSize: 14, fontWeight: 600, color: 'var(--ff-text)', overflowWrap: 'anywhere' },
   muted: { fontSize: 13, color: 'var(--ff-text-secondary)' },

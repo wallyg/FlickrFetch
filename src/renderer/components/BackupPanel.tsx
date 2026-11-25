@@ -179,7 +179,7 @@ const styles: Record<string, React.CSSProperties> = {
   main: { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: 0 },
   list: { flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: 4 },
   card: { display: 'flex', gap: 12, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 10, padding: 10, marginBottom: 8 },
-  thumb: { width: 76, height: 76, borderRadius: 6, objectFit: 'cover', background: '#eee', flexShrink: 0 },
+  thumb: { width: 76, height: 76, borderRadius: 6, objectFit: 'cover', background: 'var(--ff-border)', flexShrink: 0 },
   l1: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   title: { fontSize: 14, fontWeight: 600, color: 'var(--ff-text)', overflowWrap: 'anywhere' },
   pill: { fontSize: 11, borderRadius: 10, padding: '1px 8px', background: 'var(--ff-warm)', color: 'var(--ff-text-secondary)' },

@@ -111,9 +111,9 @@ function SubCollectionCard({ collection, onClick }: { collection: FlickrCollecti
 function StackIcon(): React.JSX.Element {
   return (
     <svg width="54" height="44" viewBox="0 0 54 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="14" y="14" width="38" height="28" rx="5" fill="#9e9a93" stroke="rgba(0,0,0,0.12)" strokeWidth="1.5"/>
-      <rect x="8"  y="8"  width="38" height="28" rx="5" fill="#c2bdb6" stroke="rgba(0,0,0,0.10)" strokeWidth="1.5"/>
-      <rect x="2"  y="2"  width="38" height="28" rx="5" fill="var(--ff-white)" stroke="rgba(0,0,0,0.12)" strokeWidth="1.5"/>
+      <rect x="14" y="14" width="38" height="28" rx="5" fill="var(--ff-text-muted)" stroke="var(--ff-shadow-soft)" strokeWidth="1.5"/>
+      <rect x="8"  y="8"  width="38" height="28" rx="5" fill="var(--ff-text-muted)" stroke="var(--ff-shadow-soft)" strokeWidth="1.5"/>
+      <rect x="2"  y="2"  width="38" height="28" rx="5" fill="var(--ff-white)" stroke="var(--ff-shadow-soft)" strokeWidth="1.5"/>
     </svg>
   )
 }
@@ -153,7 +153,7 @@ function AlbumRow({ set, onClick }: { set: FlickrSet; onClick: () => void }): Re
       <div style={styles.albumThumb}>
         {set.coverPhotoUrl
           ? <img src={set.coverPhotoUrl} alt="" style={styles.albumThumbImg} />
-          : <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="1" y="3" width="14" height="12" rx="2" fill="#d4cfc8" /><rect x="3" y="1" width="14" height="12" rx="2" fill="#e8e4de" stroke="#ccc" strokeWidth="0.75" /></svg>
+          : <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="1" y="3" width="14" height="12" rx="2" fill="var(--ff-line-strong)" /><rect x="3" y="1" width="14" height="12" rx="2" fill="var(--ff-border)" stroke="var(--ff-text-muted)" strokeWidth="0.75" /></svg>
         }
       </div>
       <span style={styles.albumRowTitle}>{set.title}</span>
@@ -170,7 +170,7 @@ const styles: Record<string, React.CSSProperties> = {
     height: '100%'
   },
   message: {
-    color: '#888',
+    color: 'var(--ff-text-secondary)',
     fontSize: '15px'
   },
   scroll: {
@@ -182,7 +182,7 @@ const styles: Record<string, React.CSSProperties> = {
   sectionLabel: {
     fontSize: '11px',
     fontWeight: '600',
-    color: '#aaa',
+    color: 'var(--ff-text-secondary)',
     textTransform: 'uppercase',
     letterSpacing: '0.06em',
     margin: '0 0 12px 0'
@@ -197,7 +197,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'block',
     width: '100%',
     background: 'var(--ff-surface)',
-    border: '1px solid #e8e4de',
+    border: '1px solid var(--ff-border)',
     borderRadius: '12px',
     overflow: 'hidden',
     cursor: 'pointer',
@@ -207,7 +207,7 @@ const styles: Record<string, React.CSSProperties> = {
   iconArea: {
     width: '100%',
     aspectRatio: '1',
-    background: '#f0ede8',
+    background: 'var(--ff-grey-100)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -236,7 +236,7 @@ const styles: Record<string, React.CSSProperties> = {
   cardTitle: {
     fontSize: '13px',
     fontWeight: '600',
-    color: '#111',
+    color: 'var(--ff-text)',
     whiteSpace: 'nowrap',
     overflow: 'hidden',
     textOverflow: 'ellipsis'
@@ -248,7 +248,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   chip: {
     fontSize: '11px',
-    color: '#999',
+    color: 'var(--ff-text-secondary)',
     background: 'var(--ff-warm)',
     borderRadius: '4px',
     padding: '2px 6px'
@@ -272,11 +272,11 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: '5px',
     display: 'flex',
     alignItems: 'center',
-    color: '#bbb',
+    color: 'var(--ff-text-secondary)',
   },
   densityBtnActive: {
-    backgroundColor: '#ece8e2',
-    color: '#333',
+    backgroundColor: 'var(--ff-border)',
+    color: 'var(--ff-text)',
   },
   albumGrid: {
     display: 'grid',
@@ -286,7 +286,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'block',
     width: '100%',
     background: 'var(--ff-surface)',
-    border: '1px solid #e8e4de',
+    border: '1px solid var(--ff-border)',
     borderRadius: '10px',
     overflow: 'hidden',
     cursor: 'pointer',
@@ -298,7 +298,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   albumCardIcon: {
     width: '100%',
-    background: '#f0ede8',
+    background: 'var(--ff-grey-100)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -315,7 +315,7 @@ const styles: Record<string, React.CSSProperties> = {
   albumCardTitle: {
     fontSize: '12px',
     fontWeight: '600' as const,
-    color: '#111',
+    color: 'var(--ff-text)',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap' as const,
@@ -332,7 +332,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '12px',
     padding: '8px 14px',
     background: 'var(--ff-surface)',
-    border: '1px solid #e8e4de',
+    border: '1px solid var(--ff-border)',
     borderRadius: '8px',
     cursor: 'pointer',
     textAlign: 'left',
@@ -347,7 +347,7 @@ const styles: Record<string, React.CSSProperties> = {
     height: '44px',
     borderRadius: '6px',
     overflow: 'hidden',
-    background: '#f0ede8',
+    background: 'var(--ff-grey-100)',
     flexShrink: 0,
     display: 'flex',
     alignItems: 'center',
@@ -362,14 +362,14 @@ const styles: Record<string, React.CSSProperties> = {
   albumRowTitle: {
     flex: 1,
     fontSize: '13px',
-    color: '#111',
+    color: 'var(--ff-text)',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap'
   },
   albumRowChevron: {
     fontSize: '16px',
-    color: '#ccc',
+    color: 'var(--ff-text-muted)',
     flexShrink: 0
   }
 }

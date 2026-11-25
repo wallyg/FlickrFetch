@@ -158,15 +158,15 @@ const styles: Record<string, React.CSSProperties> = {
   btn: { ...quietBtn },
   tiles: { display: 'grid', gap: 10, gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))' },
   tile: { border: '1px solid var(--ff-border)', borderRadius: 8, padding: 8, minWidth: 0, background: 'var(--ff-surface)' },
-  tileOn: { borderColor: 'var(--ff-blue)', background: 'rgba(0,99,220,0.06)' },
+  tileOn: { borderColor: 'var(--ff-blue)', background: 'color-mix(in srgb, var(--ff-blue) 6%, transparent)' },
   top: { display: 'flex', gap: 8, alignItems: 'flex-start' },
   tick: { marginTop: 3, flexShrink: 0, cursor: 'pointer' },
-  thumb: { flex: 1, minWidth: 0, height: 90, borderRadius: 6, objectFit: 'cover', background: '#eee' },
+  thumb: { flex: 1, minWidth: 0, height: 90, borderRadius: 6, objectFit: 'cover', background: 'var(--ff-border)' },
   title: { fontSize: 13, fontWeight: 600, color: 'var(--ff-text)', marginTop: 6, overflowWrap: 'anywhere' },
   foot: { display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, flexWrap: 'wrap' },
-  badge: { fontSize: 11, borderRadius: 10, padding: '1px 8px', background: '#eee', color: 'var(--ff-text-secondary)' },
+  badge: { fontSize: 11, borderRadius: 10, padding: '1px 8px', background: 'var(--ff-border)', color: 'var(--ff-text-secondary)' },
   badgeFirst: { background: 'var(--ff-success-bg)', color: 'var(--ff-success)' },
   open: { marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--ff-blue)', fontSize: 12, cursor: 'pointer', padding: 0 },
   link: { background: 'none', border: 'none', color: 'var(--ff-blue)', cursor: 'pointer', fontSize: 'inherit', textDecoration: 'underline', padding: 0 },
-  more: { width: '100%', padding: 8, background: 'none', border: '1px dashed #ccc', borderRadius: 8, color: 'var(--ff-text-secondary)', fontSize: 13, cursor: 'pointer', marginBottom: 12 }
+  more: { width: '100%', padding: 8, background: 'none', border: '1px dashed var(--ff-line-strong)', borderRadius: 8, color: 'var(--ff-text-secondary)', fontSize: 13, cursor: 'pointer', marginBottom: 12 }
 }

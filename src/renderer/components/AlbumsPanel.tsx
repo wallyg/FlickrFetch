@@ -276,7 +276,7 @@ const styles: Record<string, React.CSSProperties> = {
   card: { display: 'flex', gap: 12, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 10, padding: 10, marginBottom: 8 },
   tick: { alignSelf: 'flex-start', marginTop: 4, flexShrink: 0, cursor: 'pointer' },
   quietAction: { ...quietBtn },
-  thumb: { width: 76, height: 76, borderRadius: 6, objectFit: 'cover', background: '#eee', flexShrink: 0 },
+  thumb: { width: 76, height: 76, borderRadius: 6, objectFit: 'cover', background: 'var(--ff-border)', flexShrink: 0 },
   cardBody: { flex: 1, minWidth: 0 },
   title: { fontSize: 14, fontWeight: 600, color: 'var(--ff-text)', overflowWrap: 'anywhere' },
   actions: { display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, flexWrap: 'wrap' },

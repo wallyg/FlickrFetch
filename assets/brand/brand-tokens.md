@@ -157,3 +157,18 @@ Lato, bundled via `@fontsource/lato` (400, 700, 400 italic) and applied globally
 - Dark-background wordmark (white "Flickr", pink "Fetch" on navy) is shown in the style guide but no source file exists here. It needs the original artwork exported.
 - No vector (SVG) source for the icon or wordmark.
 - The sweep (replacing hand-typed colours, sizes and hover texts with the above) and the `npm test` guard against new hand-typed colours are still to do.
+
+
+## Added in the 3.12 sweep (#234, #233)
+
+| Token | Value | Use |
+|---|---|---|
+| `--ff-info-bg` / `--ff-info-line` | `#EEF5FF` / `#CFE0F7` | Pale blue fill and edge for a note or chip that informs. Words on it use `--ff-blue` |
+| `--ff-stage` | `#111111` | The dark behind a photo or video |
+| `--ff-shadow-soft` / `-mid` / `-strong` | black at 12% / 18% / 30% | The colour of a shadow: small raised things, menus and panels, dialogs and the photo view |
+| `--ff-shadow-menu` | `0 6px 20px` in `--ff-shadow-mid`-like black | A whole shadow for a menu or card floating over the page |
+| `--ff-scrim` / `--ff-scrim-strong` | black at 50% / 65% | The dimmed backdrop behind a dialog; a darker veil over a photo |
+| `--ff-badge-bg` | black at 55% | A small label sitting on a photo |
+| `--ff-glass` / `--ff-glass-soft` | white at 85% / 75% | A white panel or chip over a photo or the map |
+
+Tints of a brand colour (a hover wash, a selected row) are written `color-mix(in srgb, var(--ff-pink) 6%, transparent)`, so the colour stays the token's. Nothing in the interface types a hex or rgba colour; `npm test` keeps it that way (tests/colourGuard.test.ts). Left on purpose: the collage picture's own artwork (Share dialog), the three privacy badge hues in the photo view, the brand wave, and computed heat colours.

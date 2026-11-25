@@ -812,18 +812,18 @@ export default function DiscoverPeople({ isActive, findActive = true }: { isActi
                               style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                             {photo.media === 'video' && (
                               <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-                                <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--ff-badge-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                   <svg width="10" height="12" viewBox="0 0 10 12" fill="white"><path d="M1 1l8 5-8 5V1z"/></svg>
                                 </div>
                               </div>
                             )}
                             {hoveredId === photo.id && (
-                              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(transparent, rgba(0,0,0,0.6))', padding: '12px 6px 4px', pointerEvents: 'none' }}>
+                              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(transparent, var(--ff-badge-bg))', padding: '12px 6px 4px', pointerEvents: 'none' }}>
                                 <div style={{ color: 'var(--ff-white)', fontSize: '11px', fontWeight: 500, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{photo.title}</div>
                               </div>
                             )}
                             {albumSelectMode && (
-                              <div style={{ position: 'absolute', top: 4, right: 4, width: 18, height: 18, borderRadius: '50%', border: '2px solid var(--ff-white)', background: isSelected ? 'var(--ff-blue)' : 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <div style={{ position: 'absolute', top: 4, right: 4, width: 18, height: 18, borderRadius: '50%', border: '2px solid var(--ff-white)', background: isSelected ? 'var(--ff-blue)' : 'var(--ff-shadow-strong)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 {isSelected && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="var(--ff-white)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                               </div>
                             )}
@@ -1228,18 +1228,18 @@ export default function DiscoverPeople({ isActive, findActive = true }: { isActi
                                   style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                                 {photo.media === 'video' && (
                                   <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-                                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--ff-badge-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                       <svg width="10" height="12" viewBox="0 0 10 12" fill="white"><path d="M1 1l8 5-8 5V1z"/></svg>
                                     </div>
                                   </div>
                                 )}
                                 {hoveredId === photo.id && (
-                                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(transparent, rgba(0,0,0,0.6))', padding: '12px 6px 4px', pointerEvents: 'none' }}>
+                                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(transparent, var(--ff-badge-bg))', padding: '12px 6px 4px', pointerEvents: 'none' }}>
                                     <div style={{ color: 'var(--ff-white)', fontSize: '11px', fontWeight: 500, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{photo.title}</div>
                                   </div>
                                 )}
                                 {userSelectMode && (
-                                  <div style={{ position: 'absolute', top: 4, right: 4, width: 18, height: 18, borderRadius: '50%', border: '2px solid var(--ff-white)', background: isSelected ? 'var(--ff-blue)' : 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                  <div style={{ position: 'absolute', top: 4, right: 4, width: 18, height: 18, borderRadius: '50%', border: '2px solid var(--ff-white)', background: isSelected ? 'var(--ff-blue)' : 'var(--ff-shadow-strong)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                     {isSelected && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="var(--ff-white)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                                   </div>
                                 )}
@@ -1539,9 +1539,9 @@ function ContactCard({ contact, onClick }: { contact: DiscoverContact; onClick: 
 function CollectionStackIcon(): React.JSX.Element {
   return (
     <svg width="54" height="44" viewBox="0 0 54 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="14" y="14" width="38" height="28" rx="5" fill="#9e9a93" stroke="rgba(0,0,0,0.12)" strokeWidth="1.5"/>
-      <rect x="8"  y="8"  width="38" height="28" rx="5" fill="#c2bdb6" stroke="rgba(0,0,0,0.10)" strokeWidth="1.5"/>
-      <rect x="2"  y="2"  width="38" height="28" rx="5" fill="var(--ff-white)" stroke="rgba(0,0,0,0.12)" strokeWidth="1.5"/>
+      <rect x="14" y="14" width="38" height="28" rx="5" fill="var(--ff-text-muted)" stroke="var(--ff-shadow-soft)" strokeWidth="1.5"/>
+      <rect x="8"  y="8"  width="38" height="28" rx="5" fill="var(--ff-text-muted)" stroke="var(--ff-shadow-soft)" strokeWidth="1.5"/>
+      <rect x="2"  y="2"  width="38" height="28" rx="5" fill="var(--ff-white)" stroke="var(--ff-shadow-soft)" strokeWidth="1.5"/>
     </svg>
   )
 }
@@ -1582,15 +1582,15 @@ function DiscoverCollCard({ col, onClick }: { col: FlickrCollection; onClick: ()
 
 const s: Record<string, React.CSSProperties> = {
   container: { display: 'flex', flexDirection: 'column', gap: '16px', padding: `0 ${DISCOVER_GUTTER}px 32px` },
-  stickyHeader: { position: 'sticky' as const, top: 0, zIndex: 10, background: 'var(--ff-surface)', display: 'flex', flexDirection: 'column' as const },
+  stickyHeader: { position: 'sticky' as const, top: 0, zIndex: 'var(--ff-z-sticky)', background: 'var(--ff-surface)', display: 'flex', flexDirection: 'column' as const },
   headerRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', paddingTop: '20px', paddingBottom: '8px' },
-  heading: { margin: 0, fontSize: '18px', fontWeight: 600, color: '#1a1a1a' },
-  subheading: { margin: '4px 0 0', fontSize: '13px', color: '#888' },
+  heading: { margin: 0, fontSize: '18px', fontWeight: 600, color: 'var(--ff-text)' },
+  subheading: { margin: '4px 0 0', fontSize: '13px', color: 'var(--ff-text-secondary)' },
   backBtn: { background: 'none', border: 'none', color: 'var(--ff-blue)', cursor: 'pointer', fontSize: '14px', padding: '4px 0', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '4px' },
-  selectBtn: { background: 'none', border: '1px solid #ccc', borderRadius: '6px', padding: '5px 12px', fontSize: '13px', color: '#555', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px' },
+  selectBtn: { background: 'none', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '5px 12px', fontSize: '13px', color: 'var(--ff-text-secondary)', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px' },
   searchForm: { display: 'flex', gap: '8px' },
   searchInput: {
-    flex: 1, height: '36px', borderRadius: '8px', border: '1px solid #ddd',
+    flex: 1, height: '36px', borderRadius: '8px', border: '1px solid var(--ff-line-strong)',
     padding: '0 12px', fontSize: '14px', outline: 'none',
   },
   searchBtn: {
@@ -1600,7 +1600,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   searchError: { color: 'var(--ff-error)', fontSize: '13px' },
   contactsSection: { display: 'flex', flexDirection: 'column', gap: '12px' },
-  contactsLabel: { fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#aaa' },
+  contactsLabel: { fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--ff-text-secondary)' },
   contactsGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
@@ -1611,74 +1611,74 @@ const s: Record<string, React.CSSProperties> = {
     padding: '12px 8px', borderRadius: '10px', cursor: 'pointer',
     border: '1px solid transparent',
   },
-  contactCardHover: { background: 'var(--ff-cream)', border: '1px solid #eee' },
+  contactCardHover: { background: 'var(--ff-cream)', border: '1px solid var(--ff-border)' },
   contactAvatar: { width: '52px', height: '52px', borderRadius: '50%', objectFit: 'cover' },
-  contactName: { fontSize: '12px', fontWeight: 500, color: '#1a1a1a', textAlign: 'center', lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' },
-  contactHandle: { fontSize: '11px', color: '#aaa', textAlign: 'center', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' },
-  userTabBar: { display: 'flex', gap: '0', borderBottom: '1px solid #e8e8e8', marginBottom: '0' },
+  contactName: { fontSize: '12px', fontWeight: 500, color: 'var(--ff-text)', textAlign: 'center', lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' },
+  contactHandle: { fontSize: '11px', color: 'var(--ff-text-secondary)', textAlign: 'center', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' },
+  userTabBar: { display: 'flex', gap: '0', borderBottom: '1px solid var(--ff-border)', marginBottom: '0' },
   userTabBtn: {
     background: 'none', border: 'none', borderBottom: '2px solid transparent',
     padding: '8px 16px', cursor: 'pointer', fontSize: '14px', fontWeight: 500,
-    color: '#888', marginBottom: '-1px', outline: 'none',
+    color: 'var(--ff-text-secondary)', marginBottom: '-1px', outline: 'none',
   },
   userTabActive: { borderBottom: '2px solid var(--ff-pink)', color: 'var(--ff-pink)' },
   userAvatar: { width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 },
-  userName: { fontSize: '16px', fontWeight: 600, color: '#1a1a1a' },
-  userHandle: { fontSize: '12px', color: '#888' },
+  userName: { fontSize: '16px', fontWeight: 600, color: 'var(--ff-text)' },
+  userHandle: { fontSize: '12px', color: 'var(--ff-text-secondary)' },
   toolbarArea: {
     display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' as const,
     padding: '8px 0 6px', backgroundColor: 'var(--ff-grey-100)',
-    borderBottom: '1px solid #f0ede8',
+    borderBottom: '1px solid var(--ff-border)',
     marginLeft: '-20px', marginRight: '-20px',
     paddingLeft: '20px', paddingRight: '20px',
   },
   drawerInput: {
-    border: '1px solid #ddd', borderRadius: '6px', padding: '4px 8px',
+    border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '4px 8px',
     fontSize: '12px', outline: 'none', minWidth: '140px',
   },
   dateInput: {
-    border: '1px solid #ddd', borderRadius: '6px', padding: '4px 8px',
+    border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '4px 8px',
     fontSize: '12px', outline: 'none', cursor: 'pointer',
   },
-  dateSep: { fontSize: '12px', color: '#888' },
+  dateSep: { fontSize: '12px', color: 'var(--ff-text-secondary)' },
   grid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px' },
   albumGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
     gap: '16px',
   },
-  albumCard: { cursor: 'pointer', borderRadius: '8px', overflow: 'hidden', border: '1px solid #eee' },
+  albumCard: { cursor: 'pointer', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--ff-border)' },
   albumCover: { aspectRatio: '1', overflow: 'hidden', background: 'var(--ff-grey-100)' },
   albumCoverImg: { width: '100%', height: '100%', objectFit: 'cover' },
-  albumCoverPlaceholder: { width: '100%', height: '100%', background: '#e8e8e8' },
+  albumCoverPlaceholder: { width: '100%', height: '100%', background: 'var(--ff-border)' },
   albumInfo: { padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: '2px' },
-  albumTitle: { fontSize: '13px', fontWeight: 500, color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-  albumMeta: { fontSize: '11px', color: '#888' },
+  albumTitle: { fontSize: '13px', fontWeight: 500, color: 'var(--ff-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  albumMeta: { fontSize: '11px', color: 'var(--ff-text-secondary)' },
   albumListContainer: { display: 'flex', flexDirection: 'column' },
   albumListRow: { display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 16px', background: 'var(--ff-surface)', border: 'none', borderBottom: '1px solid var(--ff-warm)', cursor: 'pointer', textAlign: 'left', width: '100%' },
-  albumListThumb: { width: '44px', height: '44px', borderRadius: '6px', overflow: 'hidden', background: '#f0ede8', flexShrink: 0 },
+  albumListThumb: { width: '44px', height: '44px', borderRadius: '6px', overflow: 'hidden', background: 'var(--ff-grey-100)', flexShrink: 0 },
   albumListThumbImg: { width: '100%', height: '100%', objectFit: 'cover', display: 'block' },
   albumListInfo: { flex: 1, display: 'flex', flexDirection: 'column', gap: '2px', overflow: 'hidden', minWidth: 0 },
-  albumListChevron: { fontSize: '18px', color: '#ccc', flexShrink: 0, lineHeight: 1 },
+  albumListChevron: { fontSize: '18px', color: 'var(--ff-text-muted)', flexShrink: 0, lineHeight: 1 },
   loadMoreRow: { display: 'flex', justifyContent: 'center', paddingTop: '8px' },
-  loadMoreBtn: { padding: '8px 24px', borderRadius: '8px', border: '1px solid #ddd', background: 'var(--ff-surface)', cursor: 'pointer', fontSize: '13px', color: '#444' },
-  loadingState: { textAlign: 'center', color: '#888', fontSize: '14px', paddingTop: '48px' },
+  loadMoreBtn: { padding: '8px 24px', borderRadius: '8px', border: '1px solid var(--ff-line-strong)', background: 'var(--ff-surface)', cursor: 'pointer', fontSize: '13px', color: 'var(--ff-text)' },
+  loadingState: { textAlign: 'center', color: 'var(--ff-text-secondary)', fontSize: '14px', paddingTop: '48px' },
   errorState: { textAlign: 'center', color: 'var(--ff-error)', fontSize: '14px', paddingTop: '48px' },
-  emptyState: { textAlign: 'center', color: '#888', fontSize: '14px', paddingTop: '48px' },
+  emptyState: { textAlign: 'center', color: 'var(--ff-text-secondary)', fontSize: '14px', paddingTop: '48px' },
   // Collections tab
   collectionGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px', marginBottom: '16px' },
-  collectionCard: { display: 'block', width: '100%', background: 'var(--ff-surface)', border: '1px solid #e8e4de', borderRadius: '12px', overflow: 'hidden', cursor: 'pointer', textAlign: 'left' as const, padding: 0 },
+  collectionCard: { display: 'block', width: '100%', background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: '12px', overflow: 'hidden', cursor: 'pointer', textAlign: 'left' as const, padding: 0 },
   collectionCardHover: { background: 'var(--ff-cream)' },
-  collectionIconArea: { width: '100%', aspectRatio: '1', background: '#f0ede8', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' as const },
+  collectionIconArea: { width: '100%', aspectRatio: '1', background: 'var(--ff-grey-100)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' as const },
   collectionCollage: { position: 'absolute' as const, inset: 0, display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr' },
   collectionCollageCell: { width: '100%', height: '100%', objectFit: 'cover' as const, display: 'block' },
   collectionCardInfo: { padding: '10px 12px', display: 'flex', flexDirection: 'column' as const, gap: '5px' },
-  collectionCardTitle: { fontSize: '13px', fontWeight: 600, color: '#111', whiteSpace: 'nowrap' as const, overflow: 'hidden', textOverflow: 'ellipsis' },
+  collectionCardTitle: { fontSize: '13px', fontWeight: 600, color: 'var(--ff-text)', whiteSpace: 'nowrap' as const, overflow: 'hidden', textOverflow: 'ellipsis' },
   collectionChips: { display: 'flex', gap: '5px', flexWrap: 'wrap' as const },
-  collectionChip: { fontSize: '11px', color: '#999', background: 'var(--ff-warm)', borderRadius: '4px', padding: '2px 6px' },
-  collectionSectionLabel: { fontSize: '11px', fontWeight: 600, color: '#aaa', textTransform: 'uppercase' as const, letterSpacing: '0.06em', margin: '0 0 12px 0' },
+  collectionChip: { fontSize: '11px', color: 'var(--ff-text-secondary)', background: 'var(--ff-warm)', borderRadius: '4px', padding: '2px 6px' },
+  collectionSectionLabel: { fontSize: '11px', fontWeight: 600, color: 'var(--ff-text-secondary)', textTransform: 'uppercase' as const, letterSpacing: '0.06em', margin: '0 0 12px 0' },
   collectionAlbumsHeader: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' },
   collectionSizerGroup: { display: 'flex', gap: '2px', marginLeft: 'auto' },
   collectionBreadcrumb: { display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '4px' },
-  collectionBreadcrumbTitle: { fontSize: '14px', color: '#888' },
+  collectionBreadcrumbTitle: { fontSize: '14px', color: 'var(--ff-text-secondary)' },
 }

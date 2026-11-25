@@ -561,11 +561,11 @@ export default function AlbumPhotoGrid({ albumId, findActive, onPhotoSelect, sel
                   overflow: 'hidden',
                   borderRadius: '2px',
                   cursor: 'pointer',
-                  backgroundColor: '#e8e8e8',
+                  backgroundColor: 'var(--ff-border)',
                   transition: 'transform 0.15s ease, box-shadow 0.15s ease',
                   ...(isSelected ? { outline: '3px solid var(--ff-pink)', outlineOffset: '-3px', zIndex: 1 } : {}),
                   ...(selectMode && !isSelected ? { opacity: 0.75 } : {}),
-                  ...(!selectMode && hoveredId === photo.id ? { transform: 'scale(1.015)', boxShadow: '0 4px 16px rgba(0,0,0,0.18)', zIndex: 2 } : {})
+                  ...(!selectMode && hoveredId === photo.id ? { transform: 'scale(1.015)', boxShadow: '0 4px 16px var(--ff-shadow-mid)', zIndex: 2 } : {})
                 }}
                 onClick={(e) => selectMode ? onToggleSelect?.(photo, e.shiftKey) : onPhotoSelect(photo)}
                 onContextMenu={() => window.flickrAPI.showPhotoMenu(photo.id)}
@@ -581,7 +581,7 @@ export default function AlbumPhotoGrid({ albumId, findActive, onPhotoSelect, sel
                 {photo.media === 'video' && (
                   <div style={styles.videoOverlay}>
                     <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
-                      <circle cx="15" cy="15" r="15" fill="rgba(0,0,0,0.52)"/>
+                      <circle cx="15" cy="15" r="15" fill="var(--ff-badge-bg)"/>
                       <polygon points="12,9 23,15 12,21" fill="white"/>
                     </svg>
                   </div>
@@ -599,15 +599,15 @@ export default function AlbumPhotoGrid({ albumId, findActive, onPhotoSelect, sel
                   </div>
                 )}
                 {!selectMode && (
-                  <div style={{ ...styles.overlay, opacity: hoveredId === photo.id ? 1 : 0, background: hoveredId === photo.id ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0)' }}>
+                  <div style={{ ...styles.overlay, opacity: hoveredId === photo.id ? 1 : 0, background: hoveredId === photo.id ? 'var(--ff-shadow-strong)' : 'transparent' }}>
                     <span style={styles.overlayTitle}>{photo.title}</span>
                   </div>
                 )}
                 {selectMode && (
                   <div style={{
                     ...styles.selectBadge,
-                    backgroundColor: isSelected ? 'var(--ff-pink)' : 'rgba(255,255,255,0.75)',
-                    border: isSelected ? '2px solid var(--ff-pink)' : '2px solid rgba(255,255,255,0.9)'
+                    backgroundColor: isSelected ? 'var(--ff-pink)' : 'var(--ff-glass-soft)',
+                    border: isSelected ? '2px solid var(--ff-pink)' : '2px solid var(--ff-glass)'
                   }}>
                     {isSelected && <span style={{ ...styles.selectCheck, animation: 'ff-pop 0.18s ease-out' }}>✓</span>}
                   </div>
@@ -638,7 +638,7 @@ export default function AlbumPhotoGrid({ albumId, findActive, onPhotoSelect, sel
                       transition: 'transform 0.15s ease, box-shadow 0.15s ease',
                       ...(isSelected ? { outline: '3px solid var(--ff-pink)', outlineOffset: '-3px', zIndex: 1 } : {}),
                       ...(selectMode && !isSelected ? { opacity: 0.75 } : {}),
-                      ...(!selectMode && hoveredId === photo.id ? { transform: 'scale(1.015)', boxShadow: '0 4px 16px rgba(0,0,0,0.18)', zIndex: 2 } : {})
+                      ...(!selectMode && hoveredId === photo.id ? { transform: 'scale(1.015)', boxShadow: '0 4px 16px var(--ff-shadow-mid)', zIndex: 2 } : {})
                     }}
                     onClick={(e) => selectMode ? onToggleSelect?.(photo, e.shiftKey) : onPhotoSelect(photo)}
                     onContextMenu={() => window.flickrAPI.showPhotoMenu(photo.id)}
@@ -654,7 +654,7 @@ export default function AlbumPhotoGrid({ albumId, findActive, onPhotoSelect, sel
                     {photo.media === 'video' && (
                       <div style={styles.videoOverlay}>
                         <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
-                          <circle cx="15" cy="15" r="15" fill="rgba(0,0,0,0.52)"/>
+                          <circle cx="15" cy="15" r="15" fill="var(--ff-badge-bg)"/>
                           <polygon points="12,9 23,15 12,21" fill="white"/>
                         </svg>
                       </div>
@@ -672,15 +672,15 @@ export default function AlbumPhotoGrid({ albumId, findActive, onPhotoSelect, sel
                       </div>
                     )}
                     {!selectMode && (
-                      <div style={{ ...styles.overlay, opacity: hoveredId === photo.id ? 1 : 0, background: hoveredId === photo.id ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0)' }}>
+                      <div style={{ ...styles.overlay, opacity: hoveredId === photo.id ? 1 : 0, background: hoveredId === photo.id ? 'var(--ff-shadow-strong)' : 'transparent' }}>
                         <span style={styles.overlayTitle}>{photo.title}</span>
                       </div>
                     )}
                     {selectMode && (
                       <div style={{
                         ...styles.selectBadge,
-                        backgroundColor: isSelected ? 'var(--ff-pink)' : 'rgba(255,255,255,0.75)',
-                        border: isSelected ? '2px solid var(--ff-pink)' : '2px solid rgba(255,255,255,0.9)'
+                        backgroundColor: isSelected ? 'var(--ff-pink)' : 'var(--ff-glass-soft)',
+                        border: isSelected ? '2px solid var(--ff-pink)' : '2px solid var(--ff-glass)'
                       }}>
                         {isSelected && <span style={{ ...styles.selectCheck, animation: 'ff-pop 0.18s ease-out' }}>✓</span>}
                       </div>
@@ -713,8 +713,8 @@ const styles: Record<string, React.CSSProperties> = {
   gridContainer: { display: 'grid', gap: '4px', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', padding: '4px' },
   // Album tile uses opacity transition for hover overlay; PhotoGrid conditionally renders its overlay instead
   overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'flex-end', padding: '8px', opacity: 0, transition: 'opacity 0.15s' },
-  overlayTitle: { color: 'var(--ff-white)', fontSize: '12px', fontWeight: '500', textShadow: '0 1px 3px rgba(0,0,0,0.8)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', width: '100%' } as React.CSSProperties,
-  downloadBadge: { position: 'absolute', bottom: '6px', right: '6px', width: '16px', height: '16px', borderRadius: '50%', backgroundColor: 'rgba(34,168,93,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2, boxShadow: '0 0 0 1.5px rgba(255,255,255,0.9), 0 1px 4px rgba(0,0,0,0.12)' },
+  overlayTitle: { color: 'var(--ff-white)', fontSize: '12px', fontWeight: '500', textShadow: '0 1px 3px var(--ff-scrim-strong)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', width: '100%' } as React.CSSProperties,
+  downloadBadge: { position: 'absolute', bottom: '6px', right: '6px', width: '16px', height: '16px', borderRadius: '50%', backgroundColor: 'color-mix(in srgb, var(--ff-success) 90%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2, boxShadow: '0 0 0 1.5px var(--ff-glass), 0 1px 4px var(--ff-shadow-soft)' },
   loadMore: { padding: '16px', textAlign: 'center' },
-  loadMoreBtn: { background: 'transparent', border: '1px solid #ccc', borderRadius: '6px', padding: '8px 20px', fontSize: '13px', color: '#555', cursor: 'pointer' },
+  loadMoreBtn: { background: 'transparent', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '8px 20px', fontSize: '13px', color: 'var(--ff-text-secondary)', cursor: 'pointer' },
 }

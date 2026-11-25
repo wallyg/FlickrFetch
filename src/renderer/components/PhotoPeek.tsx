@@ -24,7 +24,7 @@ export default function PhotoPeek({ photos, start, sourceName, hasMore = false, 
     else if (hasMore && loadMore) { await loadMore(); setIndex(i => i + 1) }
   }
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 400, background: 'var(--ff-surface)' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 'var(--ff-z-dialog)', background: 'var(--ff-surface)' }}>
       <PhotoDetail
         photo={asFlickrPhoto(photo)} index={index} total={photos.length} hasMore={hasMore}
         canGoPrev={index > 0} canGoNext={index < photos.length - 1 || hasMore}

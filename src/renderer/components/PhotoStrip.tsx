@@ -34,7 +34,7 @@ export default function PhotoStrip({ photos, ticked, onToggle }: { photos: Album
 
 const styles: Record<string, React.CSSProperties> = {
   strip: { display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 10 },
-  tile: { position: 'relative', width: 72, height: 72, borderRadius: 6, border: '1px solid var(--ff-border)', overflow: 'hidden', background: '#eee' },
+  tile: { position: 'relative', width: 72, height: 72, borderRadius: 6, border: '1px solid var(--ff-border)', overflow: 'hidden', background: 'var(--ff-border)' },
   tileOn: { borderColor: 'var(--ff-blue)', boxShadow: '0 0 0 1px var(--ff-blue)' },
   tileImg: { display: 'block', width: '100%', height: '100%', padding: 0, border: 'none', background: 'none', cursor: 'pointer' },
   tileThumb: { width: '100%', height: '100%', objectFit: 'cover', display: 'block' },

@@ -388,13 +388,13 @@ export default function DiscoverGroups({ findActive = true }: { findActive?: boo
             />
           )}
           {groupDownloadWarning && (
-            <div style={{ padding: '8px 16px', backgroundColor: 'rgba(240,165,51,0.1)', borderBottom: '1px solid rgba(240,165,51,0.25)', display: 'flex', alignItems: 'center', gap: '12px', fontSize: '13px' }}>
-              <span style={{ color: '#f0a533', fontSize: '15px', flexShrink: 0 }}>⚠</span>
+            <div style={{ padding: '8px 16px', backgroundColor: 'color-mix(in srgb, var(--ff-warning) 10%, transparent)', borderBottom: '1px solid color-mix(in srgb, var(--ff-warning) 25%, transparent)', display: 'flex', alignItems: 'center', gap: '12px', fontSize: '13px' }}>
+              <span style={{ color: 'var(--ff-warning-text)', fontSize: '15px', flexShrink: 0 }}>⚠</span>
               <span style={{ flex: 1 }}>
                 This group has {groupDownloadWarning.photoCount.toLocaleString()} photos. Downloading all may take a while to start.
               </span>
               <button
-                style={{ background: 'none', border: '1px solid rgba(240,165,51,0.5)', borderRadius: '5px', padding: '4px 10px', fontSize: '12px', color: '#f0a533', cursor: 'pointer', flexShrink: 0 }}
+                style={{ background: 'none', border: '1px solid color-mix(in srgb, var(--ff-warning) 50%, transparent)', borderRadius: '5px', padding: '4px 10px', fontSize: '12px', color: 'var(--ff-warning-text)', cursor: 'pointer', flexShrink: 0 }}
                 onClick={() => {
                   setGroupDownloadWarning(null)
                   void window.flickrAPI.startDiscoverGroupBatch(activeGroup.id, activeGroup.name, `↓ ${activeGroup.name}`, true, undefined)
@@ -403,7 +403,7 @@ export default function DiscoverGroups({ findActive = true }: { findActive?: boo
                 Download anyway
               </button>
               <button
-                style={{ background: 'none', border: 'none', fontSize: '16px', color: '#999', cursor: 'pointer', lineHeight: 1, flexShrink: 0 }}
+                style={{ background: 'none', border: 'none', fontSize: '16px', color: 'var(--ff-text-secondary)', cursor: 'pointer', lineHeight: 1, flexShrink: 0 }}
                 onClick={() => setGroupDownloadWarning(null)}
               >✕</button>
             </div>
@@ -492,7 +492,7 @@ export default function DiscoverGroups({ findActive = true }: { findActive?: boo
                   <div style={ss.drawerRow}>
                     <span style={ss.drawerLabel}>Tags</span>
                     <input
-                      style={{ ...ss.searchInput, border: '1px solid #ddd', borderRadius: '6px', padding: '5px 8px' }}
+                      style={{ ...ss.searchInput, border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '5px 8px' }}
                       placeholder="tag1 tag2…"
                       value={poolPendingTagInput}
                       onChange={e => setPoolPendingTagInput(e.target.value)}
@@ -536,11 +536,11 @@ export default function DiscoverGroups({ findActive = true }: { findActive?: boo
                   {poolPendingDatePreset === 'custom' && (
                     <div style={{ ...ss.drawerRow, paddingLeft: `${16 + DRAWER_LABEL_WIDTH + 8}px`, gap: '6px' }}>
                       <input type="date"
-                        style={{ ...ss.searchInput, border: '1px solid #ddd', borderRadius: '6px', padding: '4px 8px', fontSize: '12px' }}
+                        style={{ ...ss.searchInput, border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '4px 8px', fontSize: '12px' }}
                         value={poolPendingDateFrom} onChange={e => setPoolPendingDateFrom(e.target.value)} />
-                      <span style={{ color: '#999', fontSize: '12px' }}>–</span>
+                      <span style={{ color: 'var(--ff-text-secondary)', fontSize: '12px' }}>–</span>
                       <input type="date"
-                        style={{ ...ss.searchInput, border: '1px solid #ddd', borderRadius: '6px', padding: '4px 8px', fontSize: '12px' }}
+                        style={{ ...ss.searchInput, border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '4px 8px', fontSize: '12px' }}
                         value={poolPendingDateTo} onChange={e => setPoolPendingDateTo(e.target.value)} />
                     </div>
                   )}
@@ -652,7 +652,7 @@ export default function DiscoverGroups({ findActive = true }: { findActive?: boo
                             transition: 'transform 0.15s ease, box-shadow 0.15s ease',
                             ...(isSelected ? { outline: '3px solid var(--ff-pink)', outlineOffset: '-3px', zIndex: 1 } : {}),
                             ...(selectMode && !isSelected ? { opacity: 0.75 } : {}),
-                            ...(!selectMode && hoveredId === photo.id ? { transform: 'scale(1.015)', boxShadow: '0 4px 16px rgba(0,0,0,0.18)', zIndex: 2 } : {})
+                            ...(!selectMode && hoveredId === photo.id ? { transform: 'scale(1.015)', boxShadow: '0 4px 16px var(--ff-shadow-mid)', zIndex: 2 } : {})
                           }}
                             onMouseEnter={() => setHoveredId(photo.id)}
                             onMouseLeave={() => setHoveredId(null)}
@@ -662,16 +662,16 @@ export default function DiscoverGroups({ findActive = true }: { findActive?: boo
                               style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} loading="lazy" />
                             {photo.media === 'video' && (
                               <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-                                <svg width="30" height="30" viewBox="0 0 30 30" fill="none"><circle cx="15" cy="15" r="15" fill="rgba(0,0,0,0.52)"/><polygon points="12,9 23,15 12,21" fill="white"/></svg>
+                                <svg width="30" height="30" viewBox="0 0 30 30" fill="none"><circle cx="15" cy="15" r="15" fill="var(--ff-badge-bg)"/><polygon points="12,9 23,15 12,21" fill="white"/></svg>
                               </div>
                             )}
                             {!selectMode && (
-                              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.65)', padding: '6px 8px', opacity: hoveredId === photo.id ? 1 : 0, transition: 'opacity 0.15s ease' }}>
+                              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'var(--ff-scrim-strong)', padding: '6px 8px', opacity: hoveredId === photo.id ? 1 : 0, transition: 'opacity 0.15s ease' }}>
                                 <span style={{ color: 'var(--ff-white)', fontSize: '12px', lineHeight: '1.3', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as React.CSSProperties}>{photo.title}</span>
                               </div>
                             )}
                             {selectMode && (
-                              <div style={{ position: 'absolute', top: '6px', right: '6px', width: '20px', height: '20px', borderRadius: '50%', border: `2px solid ${isSelected ? 'var(--ff-pink)' : 'rgba(255,255,255,0.9)'}`, backgroundColor: isSelected ? 'var(--ff-pink)' : 'rgba(255,255,255,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <div style={{ position: 'absolute', top: '6px', right: '6px', width: '20px', height: '20px', borderRadius: '50%', border: `2px solid ${isSelected ? 'var(--ff-pink)' : 'var(--ff-glass)'}`, backgroundColor: isSelected ? 'var(--ff-pink)' : 'var(--ff-glass-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 {isSelected && <span style={{ color: 'var(--ff-white)', fontSize: '11px', fontWeight: 700 }}>✓</span>}
                               </div>
                             )}
@@ -756,20 +756,20 @@ export default function DiscoverGroups({ findActive = true }: { findActive?: boo
 
 const s: Record<string, React.CSSProperties> = {
   container: { display: 'flex', flexDirection: 'column', gap: '16px', padding: `0 ${DISCOVER_GUTTER}px 32px` },
-  stickyHeader: { position: 'sticky' as const, top: 0, zIndex: 10, background: 'var(--ff-surface)', paddingBottom: '8px' },
+  stickyHeader: { position: 'sticky' as const, top: 0, zIndex: 'var(--ff-z-sticky)', background: 'var(--ff-surface)', paddingBottom: '8px' },
   headerRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '20px' },
-  heading: { margin: 0, fontSize: '18px', fontWeight: 600, color: '#1a1a1a' },
-  subheading: { margin: '4px 0 0', fontSize: '13px', color: '#888' },
+  heading: { margin: 0, fontSize: '18px', fontWeight: 600, color: 'var(--ff-text)' },
+  subheading: { margin: '4px 0 0', fontSize: '13px', color: 'var(--ff-text-secondary)' },
   backBtn: { background: 'none', border: 'none', color: 'var(--ff-blue)', cursor: 'pointer', fontSize: '14px', padding: '4px 0', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '4px' },
-  selectBtn: { padding: '6px 14px', borderRadius: '8px', border: '1px solid #ddd', background: 'var(--ff-surface)', cursor: 'pointer', fontSize: '13px', color: '#444', flexShrink: 0 },
+  selectBtn: { padding: '6px 14px', borderRadius: '8px', border: '1px solid var(--ff-line-strong)', background: 'var(--ff-surface)', cursor: 'pointer', fontSize: '13px', color: 'var(--ff-text)', flexShrink: 0 },
   filterInput: {
-    height: '36px', borderRadius: '8px', border: '1px solid #ddd',
+    height: '36px', borderRadius: '8px', border: '1px solid var(--ff-line-strong)',
     padding: '0 12px', fontSize: '14px', outline: 'none', width: '100%', boxSizing: 'border-box',
   },
   groupList: { display: 'flex', flexDirection: 'column', gap: '0' },
   groupRow: {
     display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0',
-    borderBottom: '1px solid #f0ede8', cursor: 'pointer',
+    borderBottom: '1px solid var(--ff-border)', cursor: 'pointer',
   },
   groupAvatarWrap: { width: '44px', height: '44px', flexShrink: 0 },
   groupAvatar: { width: '44px', height: '44px', borderRadius: '8px', objectFit: 'cover' },
@@ -779,15 +779,15 @@ const s: Record<string, React.CSSProperties> = {
     justifyContent: 'center', fontSize: '18px', fontWeight: 700
   },
   groupInfo: { flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' },
-  groupName: { fontSize: '14px', fontWeight: 500, color: '#1a1a1a' },
-  groupMeta: { fontSize: '12px', color: '#888' },
-  chevron: { color: '#ccc' },
+  groupName: { fontSize: '14px', fontWeight: 500, color: 'var(--ff-text)' },
+  groupMeta: { fontSize: '12px', color: 'var(--ff-text-secondary)' },
+  chevron: { color: 'var(--ff-text-muted)' },
   groupIcon: { width: '36px', height: '36px', borderRadius: '6px', objectFit: 'cover' },
   grid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px' },
   justifiedContainer: { padding: '0' },
   loadMoreRow: { display: 'flex', justifyContent: 'center', paddingTop: '8px' },
-  loadMoreBtn: { padding: '8px 24px', borderRadius: '8px', border: '1px solid #ddd', background: 'var(--ff-surface)', cursor: 'pointer', fontSize: '13px', color: '#444' },
-  loadingState: { textAlign: 'center', color: '#888', fontSize: '14px', paddingTop: '48px' },
+  loadMoreBtn: { padding: '8px 24px', borderRadius: '8px', border: '1px solid var(--ff-line-strong)', background: 'var(--ff-surface)', cursor: 'pointer', fontSize: '13px', color: 'var(--ff-text)' },
+  loadingState: { textAlign: 'center', color: 'var(--ff-text-secondary)', fontSize: '14px', paddingTop: '48px' },
   errorState: { textAlign: 'center', color: 'var(--ff-error)', fontSize: '14px', paddingTop: '48px' },
-  emptyState: { textAlign: 'center', color: '#888', fontSize: '14px', paddingTop: '48px' },
+  emptyState: { textAlign: 'center', color: 'var(--ff-text-secondary)', fontSize: '14px', paddingTop: '48px' },
 }

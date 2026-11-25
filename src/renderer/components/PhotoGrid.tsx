@@ -355,7 +355,7 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
       <style>{`@keyframes ff-shimmer { 0%,100% { opacity: 0.55; } 50% { opacity: 1; } }`}</style>
       <div style={{ ...styles.grid, gridTemplateColumns: GRID_COLUMNS['medium'], padding: '16px' }}>
         {Array.from({ length: 24 }, (_, i) => (
-          <div key={i} style={{ ...styles.tile, background: '#e8e4de', animation: `ff-shimmer 1.4s ease-in-out infinite`, animationDelay: `${(i % 6) * 0.08}s` }} />
+          <div key={i} style={{ ...styles.tile, background: 'var(--ff-border)', animation: `ff-shimmer 1.4s ease-in-out infinite`, animationDelay: `${(i % 6) * 0.08}s` }} />
         ))}
       </div>
     </div>
@@ -675,7 +675,7 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
       {loading && photos.length === 0 && (
         <div style={{ ...styles.grid, gridTemplateColumns: GRID_COLUMNS['medium'], padding: '16px' }}>
           {Array.from({ length: 12 }, (_, i) => (
-            <div key={i} style={{ ...styles.tile, background: '#e8e4de', animation: `ff-shimmer 1.4s ease-in-out infinite`, animationDelay: `${(i % 6) * 0.08}s` }} />
+            <div key={i} style={{ ...styles.tile, background: 'var(--ff-border)', animation: `ff-shimmer 1.4s ease-in-out infinite`, animationDelay: `${(i % 6) * 0.08}s` }} />
           ))}
         </div>
       )}
@@ -734,11 +734,11 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
                   overflow: 'hidden',
                   borderRadius: '2px',
                   cursor: 'pointer',
-                  backgroundColor: '#e8e8e8',
+                  backgroundColor: 'var(--ff-border)',
                   transition: 'transform 0.15s ease, box-shadow 0.15s ease',
                   ...(isSelected ? { outline: '3px solid var(--ff-pink)', outlineOffset: '-3px', zIndex: 1 } : {}),
                   ...(selectMode && !isSelected ? { opacity: 0.75 } : {}),
-                  ...(!selectMode && hoveredId === photo.id ? { transform: 'scale(1.015)', boxShadow: '0 4px 16px rgba(0,0,0,0.18)', zIndex: 2 } : {})
+                  ...(!selectMode && hoveredId === photo.id ? { transform: 'scale(1.015)', boxShadow: '0 4px 16px var(--ff-shadow-mid)', zIndex: 2 } : {})
                 }}
                 onMouseEnter={() => setHoveredId(photo.id)}
                 onMouseLeave={() => setHoveredId(null)}
@@ -754,7 +754,7 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
                 {photo.media === 'video' && (
                   <div style={styles.videoOverlay}>
                     <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
-                      <circle cx="15" cy="15" r="15" fill="rgba(0,0,0,0.52)"/>
+                      <circle cx="15" cy="15" r="15" fill="var(--ff-badge-bg)"/>
                       <polygon points="12,9 23,15 12,21" fill="white"/>
                     </svg>
                   </div>
@@ -779,8 +779,8 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
                 {selectMode && (
                   <div style={{
                     ...styles.selectBadge,
-                    backgroundColor: isSelected ? 'var(--ff-pink)' : 'rgba(255,255,255,0.75)',
-                    border: isSelected ? '2px solid var(--ff-pink)' : '2px solid rgba(255,255,255,0.9)'
+                    backgroundColor: isSelected ? 'var(--ff-pink)' : 'var(--ff-glass-soft)',
+                    border: isSelected ? '2px solid var(--ff-pink)' : '2px solid var(--ff-glass)'
                   }}>
                     {isSelected && <span style={{ ...styles.selectCheck, animation: 'ff-pop 0.18s ease-out' }}>✓</span>}
                   </div>
@@ -810,7 +810,7 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
                       transition: 'transform 0.15s ease, box-shadow 0.15s ease',
                       ...(isSelected ? { outline: '3px solid var(--ff-pink)', outlineOffset: '-3px', zIndex: 1 } : {}),
                       ...(selectMode && !isSelected ? { opacity: 0.75 } : {}),
-                      ...(!selectMode && hoveredId === photo.id ? { transform: 'scale(1.015)', boxShadow: '0 4px 16px rgba(0,0,0,0.18)', zIndex: 2 } : {})
+                      ...(!selectMode && hoveredId === photo.id ? { transform: 'scale(1.015)', boxShadow: '0 4px 16px var(--ff-shadow-mid)', zIndex: 2 } : {})
                     }}
                     onMouseEnter={() => setHoveredId(photo.id)}
                     onMouseLeave={() => setHoveredId(null)}
@@ -826,7 +826,7 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
                     {photo.media === 'video' && (
                       <div style={styles.videoOverlay}>
                         <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
-                          <circle cx="15" cy="15" r="15" fill="rgba(0,0,0,0.52)"/>
+                          <circle cx="15" cy="15" r="15" fill="var(--ff-badge-bg)"/>
                           <polygon points="12,9 23,15 12,21" fill="white"/>
                         </svg>
                       </div>
@@ -851,8 +851,8 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
                     {selectMode && (
                       <div style={{
                         ...styles.selectBadge,
-                        backgroundColor: isSelected ? 'var(--ff-pink)' : 'rgba(255,255,255,0.75)',
-                        border: isSelected ? '2px solid var(--ff-pink)' : '2px solid rgba(255,255,255,0.9)'
+                        backgroundColor: isSelected ? 'var(--ff-pink)' : 'var(--ff-glass-soft)',
+                        border: isSelected ? '2px solid var(--ff-pink)' : '2px solid var(--ff-glass)'
                       }}>
                         {isSelected && <span style={{ ...styles.selectCheck, animation: 'ff-pop 0.18s ease-out' }}>✓</span>}
                       </div>
@@ -890,16 +890,16 @@ const styles: Record<string, React.CSSProperties> = {
   grid: { display: 'grid', gap: '4px', padding: '4px 16px 16px' },
   justifiedContainer: { padding: '4px 16px 16px' },
   gridContainer: { display: 'grid', gap: '4px', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', padding: '4px 16px 16px' },
-  thumbPlaceholder: { width: '100%', height: '100%', backgroundColor: '#d0d0d0' },
-  overlay: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.65)', padding: '6px 8px', display: 'flex', alignItems: 'flex-start', gap: '6px', opacity: 0, transition: 'opacity 0.15s ease' },
+  thumbPlaceholder: { width: '100%', height: '100%', backgroundColor: 'var(--ff-line-strong)' },
+  overlay: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'var(--ff-scrim-strong)', padding: '6px 8px', display: 'flex', alignItems: 'flex-start', gap: '6px', opacity: 0, transition: 'opacity 0.15s ease' },
   overlayTitle: { flex: 1, color: 'var(--ff-white)', fontSize: '12px', lineHeight: '1.3', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as React.CSSProperties,
-  downloadBadge: { position: 'absolute', bottom: '6px', right: '6px', width: '16px', height: '16px', borderRadius: '50%', backgroundColor: 'rgba(34,168,93,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2, boxShadow: '0 0 0 1.5px rgba(255,255,255,0.9), 0 1px 4px rgba(0,0,0,0.12)' },
-  errorText: { color: '#cc0000', fontSize: '14px', margin: 0 },
+  downloadBadge: { position: 'absolute', bottom: '6px', right: '6px', width: '16px', height: '16px', borderRadius: '50%', backgroundColor: 'color-mix(in srgb, var(--ff-success) 90%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2, boxShadow: '0 0 0 1.5px var(--ff-glass), 0 1px 4px var(--ff-shadow-soft)' },
+  errorText: { color: 'var(--ff-error-ink)', fontSize: '14px', margin: 0 },
   retryButton: { backgroundColor: 'var(--ff-pink-action)', color: 'var(--ff-white)', border: 'none', borderRadius: '6px', padding: '10px 20px', fontSize: '14px', cursor: 'pointer' },
   loadMoreRow: { display: 'flex', justifyContent: 'center', padding: '24px 16px' },
-  loadMoreButton: { backgroundColor: 'var(--ff-surface)', border: '1px solid #ccc', borderRadius: '6px', padding: '10px 28px', fontSize: '14px', color: '#444', cursor: 'pointer' },
+  loadMoreButton: { backgroundColor: 'var(--ff-surface)', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '10px 28px', fontSize: '14px', color: 'var(--ff-text)', cursor: 'pointer' },
   disabled: { opacity: 0.6, cursor: 'not-allowed' },
-  keepSearchingBtn: { background: '#111', border: 'none', borderRadius: '6px', padding: '6px 16px', fontSize: '13px', color: 'var(--ff-white)', cursor: 'pointer' },
-  scanProgressBar: { height: '3px', background: '#e0dcd6', borderRadius: '2px', overflow: 'hidden', margin: '4px 0 2px' },
+  keepSearchingBtn: { background: 'var(--ff-stage)', border: 'none', borderRadius: '6px', padding: '6px 16px', fontSize: '13px', color: 'var(--ff-white)', cursor: 'pointer' },
+  scanProgressBar: { height: '3px', background: 'var(--ff-border)', borderRadius: '2px', overflow: 'hidden', margin: '4px 0 2px' },
   scanProgressFill: { height: '100%', background: 'var(--ff-blue)', borderRadius: '2px', transition: 'width 0.4s ease' },
 }

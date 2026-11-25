@@ -55,3 +55,14 @@ test('no file has more hand-typed colours than its ceiling, and a file that has 
   const fewer = Object.keys(max).filter(f => (now[f] ?? 0) < max[f]).map(f => `${f}: ${now[f] ?? 0} (ceiling ${max[f]})`)
   assert.deepEqual(fewer, [], 'Fewer colours than the ceiling: lower it with  UPDATE_COLOUR_CEILING=1 node scripts/test.mjs colourGuard')
 })
+
+// The layer guard (#233): what sits above what comes from the six steps in index.html (--ff-z-sticky, -menu, -dialog, -toast, -hover), never from a number
+// typed in a component. Only the small numbers 0 to 2, used to order things inside one component, may be typed.
+test('no component types a layer number above 2', () => {
+  const bad: string[] = []
+  for (const f of files(SRC)) {
+    const code = readFileSync(f, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1')
+    for (const m of code.matchAll(/zIndex:\s*(\d+)/g)) if (Number(m[1]) > 2) bad.push(`${relative(root, f)}: zIndex ${m[1]}`)
+  }
+  assert.deepEqual(bad, [], 'Use var(--ff-z-menu), var(--ff-z-dialog) and the other layer tokens from assets/brand/brand-tokens.md.')
+})

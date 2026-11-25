@@ -80,7 +80,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   arrowBtn: {
     background: BTN_BG, color: 'var(--ff-white)',
-    border: 'none', borderLeft: '1px solid rgba(255,255,255,0.25)',
+    border: 'none', borderLeft: '1px solid color-mix(in srgb, var(--ff-white) 25%, transparent)',
     borderRadius: '0 6px 6px 0',
     padding: '7px 8px', fontSize: 11,
     cursor: 'pointer',
@@ -90,12 +90,12 @@ const styles: Record<string, React.CSSProperties> = {
     opacity: 0.5, cursor: 'not-allowed',
   },
   dropdown: {
-    position: 'absolute', top: '100%', right: 0, zIndex: 200,
+    position: 'absolute', top: '100%', right: 0, zIndex: 'var(--ff-z-menu)',
     marginTop: 4,
     background: 'var(--ff-surface)',
     border: '1px solid var(--ff-border)',
     borderRadius: 8,
-    boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+    boxShadow: '0 8px 24px var(--ff-shadow-soft)',
     minWidth: 240,
     overflow: 'hidden',
   },

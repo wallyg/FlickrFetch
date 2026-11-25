@@ -203,7 +203,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
               <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                 {data.years.map(g => (
                   <div key={g.year} style={styles.yearBar} {...asButton(() => document.getElementById(`otd-year-${g.year}`)?.scrollIntoView({ block: 'start', behavior: 'smooth' }))} title={`${g.count.toLocaleString()} photo${g.count === 1 ? '' : 's'} in ${g.year}. Click to jump there.`}>
-                    <span style={{ width: 34, color: '#444' }}>{g.year}</span>
+                    <span style={{ width: 34, color: 'var(--ff-text)' }}>{g.year}</span>
                     <span style={{ flex: 1, minWidth: 0 }}><i style={{ display: 'block', height: 9, borderRadius: 5, width: `${Math.max(3, (g.count / (topYear?.count || 1)) * 100)}%`, background: g === topYear ? 'var(--ff-pink)' : '#e6b0cb' }} /></span>
                     <span style={{ color: 'var(--ff-text-secondary)', minWidth: 58, textAlign: 'right' }}>{g.count.toLocaleString()}{g === topYear && data.years.length > 1 ? ' · most' : ''}</span>
                   </div>
@@ -284,7 +284,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
 
 function Insight({ icon, title, children }: { icon: string; title: string; children: React.ReactNode }): React.JSX.Element {
   return (
-    <div style={{ background: 'var(--ff-warm)', borderRadius: 10, padding: '10px 12px', fontSize: 12.5, color: '#444' }}>
+    <div style={{ background: 'var(--ff-warm)', borderRadius: 10, padding: '10px 12px', fontSize: 12.5, color: 'var(--ff-text)' }}>
       <b style={{ display: 'block', fontSize: 11, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--ff-text-secondary)', marginBottom: 8 }}>{icon} {title}</b>
       {children}
     </div>
@@ -296,7 +296,7 @@ const styles: Record<string, React.CSSProperties> = {
   pad: { padding: '40px 24px' },
   muted: { fontSize: 12, color: 'var(--ff-text-secondary)' },
   hero: { display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', padding: '4px 0 14px', borderBottom: '1px solid var(--ff-line-strong)' },
-  bigTile: { width: 72, flexShrink: 0, borderRadius: 12, overflow: 'hidden', background: 'var(--ff-surface)', boxShadow: '0 3px 12px rgba(27,41,70,0.22)', textAlign: 'center', border: 'none', padding: 0, cursor: 'pointer' },
+  bigTile: { width: 72, flexShrink: 0, borderRadius: 12, overflow: 'hidden', background: 'var(--ff-surface)', boxShadow: '0 3px 12px color-mix(in srgb, var(--ff-navy) 22%, transparent)', textAlign: 'center', border: 'none', padding: 0, cursor: 'pointer' },
   bigMonth: { background: 'var(--ff-pink)', color: 'var(--ff-white)', fontSize: 12, fontWeight: 700, letterSpacing: '0.2em', padding: '5px 0 4px' },
   bigDay: { fontSize: 38, fontWeight: 700, color: 'var(--ff-navy)', lineHeight: '48px' },
   headText: { flex: '1 1 320px', minWidth: 0 },
@@ -308,7 +308,7 @@ const styles: Record<string, React.CSSProperties> = {
   navBtn: { background: 'var(--ff-surface)', border: 'none', borderRight: '1px solid var(--ff-border)', padding: '5px 13px', fontSize: 13, color: 'var(--ff-text)', cursor: 'pointer', whiteSpace: 'nowrap' },
   cta: { ...primaryBtn, display: 'inline-flex', alignItems: 'center', gap: 9, padding: '4px 13px 4px 13px' },   // the Main button, the same size as the buttons beside it, with a small picture as its icon (#251)
   stack: { position: 'relative', width: 26, height: 16, flexShrink: 0, display: 'block', marginLeft: 2 },   // room for the tilted left card, so it never touches the button's edge
-  stackCard: { position: 'absolute', width: 13, height: 15, background: 'linear-gradient(135deg, #f0b15a, #6f93b8)', border: '1px solid var(--ff-white)', borderBottomWidth: 3, borderRadius: 1, boxShadow: '0 1px 2px rgba(0,0,0,0.4)', display: 'block' },
+  stackCard: { position: 'absolute', width: 13, height: 15, background: 'linear-gradient(135deg, #f0b15a, #6f93b8)', border: '1px solid var(--ff-white)', borderBottomWidth: 3, borderRadius: 1, boxShadow: '0 1px 2px var(--ff-shadow-strong)', display: 'block' },
   row: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', margin: '12px 0 10px' },
   insights: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10, margin: '4px 0' },
   yearBar: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, cursor: 'pointer' },
@@ -318,5 +318,5 @@ const styles: Record<string, React.CSSProperties> = {
   sectionRule: { display: 'flex', alignItems: 'center', gap: 10, margin: '26px 0 2px', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ff-text-secondary)' },
   yearHead: { display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 6 },
   
-  more: { display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed #bbb', borderRadius: 8, color: 'var(--ff-text-secondary)', fontSize: 12, minHeight: 120, background: 'transparent', cursor: 'pointer' }
+  more: { display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed var(--ff-line-strong)', borderRadius: 8, color: 'var(--ff-text-secondary)', fontSize: 12, minHeight: 120, background: 'transparent', cursor: 'pointer' }
 }

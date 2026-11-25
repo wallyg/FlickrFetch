@@ -233,7 +233,7 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
                       title={`${n.toLocaleString()} photo${n === 1 ? '' : 's'}, ${monthTitle(y, m)}`}
                       style={{ height: 18, borderRadius: 3, background: shade(n), cursor: n ? 'pointer' : 'default', outline: came ? '2px solid var(--ff-pink)' : 'none', outlineOffset: 1,
                         display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '0 6px', fontSize: 10.5, lineHeight: 1, fontVariantNumeric: 'tabular-nums',
-                        color: strength(n, grid.max) > 0.55 ? 'rgba(255,255,255,0.85)' : 'rgba(27,41,70,0.55)', userSelect: 'none' }}
+                        color: strength(n, grid.max) > 0.55 ? 'var(--ff-glass)' : 'color-mix(in srgb, var(--ff-navy) 55%, transparent)', userSelect: 'none' }}
                       onMouseEnter={() => setHover({ year: y, month: m, n, v: grid.vmap.get(`${y}-${m}`) ?? 0 })}
                       onMouseLeave={() => setHover(null)}
                       {...(n ? asButton(() => openMonth(y, m)) : {})}

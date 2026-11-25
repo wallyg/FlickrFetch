@@ -79,8 +79,8 @@ export default function LoginPage({ onAuthSuccess }: LoginPageProps): React.JSX.
           {/* Subtle wave at the bottom */}
           <div style={styles.waveContainer} aria-hidden="true">
             <svg viewBox="0 0 320 52" preserveAspectRatio="none" style={{ width: '100%', height: '52px', display: 'block' }}>
-              <path d="M0,36 Q80,8 160,28 Q240,48 320,18 L320,52 L0,52 Z" fill="rgba(0,99,220,0.07)" />
-              <path d="M0,46 Q80,28 160,42 Q240,56 320,32 L320,52 L0,52 Z" fill="rgba(255,0,132,0.05)" />
+              <path d="M0,36 Q80,8 160,28 Q240,48 320,18 L320,52 L0,52 Z" fill="color-mix(in srgb, var(--ff-blue) 7%, transparent)" />
+              <path d="M0,46 Q80,28 160,42 Q240,56 320,32 L320,52 L0,52 Z" fill="color-mix(in srgb, var(--ff-pink) 5%, transparent)" />
             </svg>
           </div>
         </div>
@@ -212,7 +212,7 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: 'row',
     backgroundColor: 'var(--ff-surface)',
     borderRadius: '20px',
-    boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
+    boxShadow: '0 6px 20px var(--ff-shadow-soft)',
     width: '880px',
     maxWidth: 'calc(100vw - 48px)',
     minHeight: '520px',
@@ -267,7 +267,7 @@ const styles: Record<string, React.CSSProperties> = {
   // ── Divider ──
   columnDivider: {
     width: '1px',
-    backgroundColor: 'rgba(0,0,0,0.07)',
+    backgroundColor: 'var(--ff-shadow-soft)',
     flexShrink: 0,
     alignSelf: 'stretch'
   },
@@ -296,7 +296,7 @@ const styles: Record<string, React.CSSProperties> = {
   intro: {
     fontSize: '14px',
     lineHeight: '21px',
-    color: '#555',
+    color: 'var(--ff-text-secondary)',
     margin: '0'
   },
   stepsArea: {
@@ -315,7 +315,7 @@ const styles: Record<string, React.CSSProperties> = {
   stepBody: {
     fontSize: '13px',
     lineHeight: '19px',
-    color: '#666',
+    color: 'var(--ff-text-secondary)',
     margin: '6px 0 0'
   },
   statusText: {
@@ -329,7 +329,7 @@ const styles: Record<string, React.CSSProperties> = {
     height: '38px',
     backgroundColor: 'transparent',
     color: 'var(--ff-navy)',
-    border: '1.5px solid rgba(0,0,0,0.18)',
+    border: '1.5px solid var(--ff-shadow-mid)',
     borderRadius: '8px',
     fontSize: '14px',
     fontWeight: '500',
@@ -340,7 +340,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   input: {
     height: '38px',
-    border: '1.5px solid #ddd',
+    border: '1.5px solid var(--ff-line-strong)',
     borderRadius: '8px',
     padding: '0 12px',
     fontSize: '15px',
@@ -372,13 +372,13 @@ const styles: Record<string, React.CSSProperties> = {
   },
   errorText: {
     fontSize: '13px',
-    color: '#c0000a',
+    color: 'var(--ff-error-ink)',
     margin: '0',
     lineHeight: 1.5
   },
   trustText: {
     fontSize: '12px',
-    color: '#aaa',
+    color: 'var(--ff-text-secondary)',
     margin: '16px 0 0',
     lineHeight: 1.5
   },
@@ -401,7 +401,7 @@ const styles: Record<string, React.CSSProperties> = {
   taglineBody: {
     fontSize: '14px',
     lineHeight: '1.65',
-    color: '#5a5a6a',
+    color: 'var(--ff-text-secondary)',
     margin: '0 0 28px',
     maxWidth: '420px',
   },
@@ -436,6 +436,6 @@ const styles: Record<string, React.CSSProperties> = {
     width: '10px',
     height: '10px',
     borderRadius: '50%',
-    backgroundColor: 'rgba(255,255,255,0.65)',
+    backgroundColor: 'var(--ff-glass-soft)',
   } as React.CSSProperties,
 }

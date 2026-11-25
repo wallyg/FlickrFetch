@@ -99,12 +99,12 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
   const doneWithIssues = isDone && (skipped > 0 || sizeUnavailable > 0 || failed > 0)
 
   // Color-coded left border by status
-  const borderColor = isPaused ? '#f59e0b'
+  const borderColor = isPaused ? 'var(--ff-warning)'
     : isRunning ? 'var(--ff-pink)'
-    : doneWithIssues ? '#ff8c00'
+    : doneWithIssues ? 'var(--ff-warning)'
     : isDone ? 'var(--ff-success)'
-    : isCancelled ? '#cc6600'
-    : completedBatches.length > 0 ? (((completedBatches[0].skippedCount ?? 0) + (completedBatches[0].skippedSizeUnavailableCount ?? 0) + (completedBatches[0].failedCount ?? 0)) > 0 ? '#ff8c00' : 'var(--ff-success)')
+    : isCancelled ? 'var(--ff-warning)'
+    : completedBatches.length > 0 ? (((completedBatches[0].skippedCount ?? 0) + (completedBatches[0].skippedSizeUnavailableCount ?? 0) + (completedBatches[0].failedCount ?? 0)) > 0 ? 'var(--ff-warning)' : 'var(--ff-success)')
     : 'transparent'
 
   const handleCancel = (): void => {
@@ -380,16 +380,16 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
 const styles: Record<string, React.CSSProperties> = {
   wrapper: {
     flexShrink: 0,
-    borderTop: '1px solid #e0dbd4',
+    borderTop: '1px solid var(--ff-line-strong)',
     backgroundColor: 'var(--ff-cream)'
   },
   toast: {
     padding: '7px 20px',
     fontSize: '12px',
     fontWeight: '500',
-    color: '#555',
+    color: 'var(--ff-text-secondary)',
     backgroundColor: 'var(--ff-surface)',
-    borderBottom: '1px solid #e8e4de'
+    borderBottom: '1px solid var(--ff-border)'
   },
   bar: {
     display: 'flex',
@@ -407,10 +407,10 @@ const styles: Record<string, React.CSSProperties> = {
   },
   expandBtn: {
     background: 'none',
-    border: '1px solid #ccc',
+    border: '1px solid var(--ff-line-strong)',
     borderRadius: '5px',
     fontSize: '12px',
-    color: '#555',
+    color: 'var(--ff-text-secondary)',
     cursor: 'pointer',
     padding: '3px 8px',
     flexShrink: 0,
@@ -419,7 +419,7 @@ const styles: Record<string, React.CSSProperties> = {
   progressTrack: {
     width: '120px',
     height: '6px',
-    backgroundColor: '#e0dbd4',
+    backgroundColor: 'var(--ff-line-strong)',
     borderRadius: '3px',
     overflow: 'hidden',
     flexShrink: 0
@@ -440,14 +440,14 @@ const styles: Record<string, React.CSSProperties> = {
   labelPrimary: {
     fontSize: '13px',
     fontWeight: '500',
-    color: '#222',
+    color: 'var(--ff-text)',
     whiteSpace: 'nowrap',
     overflow: 'hidden',
     textOverflow: 'ellipsis'
   },
   labelSecondary: {
     fontSize: '11px',
-    color: '#aaa',
+    color: 'var(--ff-text-secondary)',
     whiteSpace: 'nowrap',
     overflow: 'hidden',
     textOverflow: 'ellipsis'
@@ -460,35 +460,35 @@ const styles: Record<string, React.CSSProperties> = {
   },
   pauseBtn: {
     background: 'none',
-    border: '1px solid #ccc',
+    border: '1px solid var(--ff-line-strong)',
     borderRadius: '6px',
     fontSize: '12px',
-    color: '#666',
+    color: 'var(--ff-text-secondary)',
     cursor: 'pointer',
     padding: '4px 12px'
   },
   resumeBtn: {
     background: 'none',
-    border: '1px solid #f59e0b',
+    border: '1px solid var(--ff-warning)',
     borderRadius: '6px',
     fontSize: '12px',
-    color: '#b45309',
+    color: 'var(--ff-warning-text)',
     cursor: 'pointer',
     padding: '4px 12px',
     fontWeight: '500'
   },
   skipBtn: {
     background: 'none',
-    border: '1px solid #ccc',
+    border: '1px solid var(--ff-line-strong)',
     borderRadius: '6px',
     fontSize: '12px',
-    color: '#666',
+    color: 'var(--ff-text-secondary)',
     cursor: 'pointer',
     padding: '4px 10px'
   },
   cancelBtn: {
     background: 'none',
-    border: '1px solid #e57373',
+    border: '1px solid var(--ff-error)',
     borderRadius: '6px',
     fontSize: '12px',
     color: 'var(--ff-error)',
@@ -499,13 +499,13 @@ const styles: Record<string, React.CSSProperties> = {
     background: 'none',
     border: 'none',
     fontSize: '15px',
-    color: '#999',
+    color: 'var(--ff-text-secondary)',
     cursor: 'pointer',
     padding: '2px 4px',
     lineHeight: 1
   },
   panel: {
-    borderTop: '1px solid #e8e4de',
+    borderTop: '1px solid var(--ff-border)',
     backgroundColor: 'var(--ff-surface)',
     maxHeight: '280px',
     overflowY: 'auto'
@@ -531,13 +531,13 @@ const styles: Record<string, React.CSSProperties> = {
   },
   dotCancelled: {
     fontSize: '13px',
-    color: '#cc6600',
+    color: 'var(--ff-warning-text)',
     flexShrink: 0,
     marginTop: '2px'
   },
   dotSkipped: {
     fontSize: '13px',
-    color: '#ff8c00',
+    color: 'var(--ff-warning-text)',
     flexShrink: 0,
     marginTop: '2px'
   },
@@ -549,7 +549,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   dotQueued: {
     fontSize: '13px',
-    color: '#ccc',
+    color: 'var(--ff-text-muted)',
     flexShrink: 0,
     marginTop: '2px'
   },
@@ -568,7 +568,7 @@ const styles: Record<string, React.CSSProperties> = {
   batchTitle: {
     fontSize: '13px',
     fontWeight: '600',
-    color: '#222',
+    color: 'var(--ff-text)',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
@@ -578,18 +578,18 @@ const styles: Record<string, React.CSSProperties> = {
   batchTitleQueued: {
     fontSize: '13px',
     fontWeight: '500',
-    color: '#999',
+    color: 'var(--ff-text-secondary)',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap'
   },
   batchMeta: {
     fontSize: '12px',
-    color: '#aaa'
+    color: 'var(--ff-text-secondary)'
   },
   activeTicker: {
     fontSize: '11px',
-    color: '#bbb',
+    color: 'var(--ff-text-secondary)',
     fontStyle: 'italic',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
@@ -607,7 +607,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   finderLinkBar: {
     background: 'none',
-    border: '1px solid #ccc',
+    border: '1px solid var(--ff-line-strong)',
     borderRadius: '6px',
     fontSize: '12px',
     color: 'var(--ff-blue)',
@@ -620,7 +620,7 @@ const styles: Record<string, React.CSSProperties> = {
     background: 'none',
     border: 'none',
     fontSize: '12px',
-    color: '#bbb',
+    color: 'var(--ff-text-secondary)',
     cursor: 'pointer',
     padding: '5px 9px',
     flexShrink: 0,
@@ -630,23 +630,23 @@ const styles: Record<string, React.CSSProperties> = {
   },
   dismissAllBtn: {
     background: 'none',
-    border: '1px solid #ccc',
+    border: '1px solid var(--ff-line-strong)',
     borderRadius: '6px',
     fontSize: '12px',
-    color: '#666',
+    color: 'var(--ff-text-secondary)',
     cursor: 'pointer',
     padding: '4px 10px'
   },
   divider: {
     height: '1px',
-    backgroundColor: '#f0ede8',
+    backgroundColor: 'var(--ff-grey-100)',
     margin: '0 20px'
   },
   failureToggle: {
     background: 'none',
     border: 'none',
     fontSize: '11px',
-    color: '#cc4400',
+    color: 'var(--ff-warning-text)',
     cursor: 'pointer',
     padding: '2px 0',
     textAlign: 'left' as const
@@ -657,15 +657,15 @@ const styles: Record<string, React.CSSProperties> = {
   },
   failureItem: {
     fontSize: '11px',
-    color: '#cc4400',
+    color: 'var(--ff-warning-text)',
     padding: '1px 0'
   },
   retryBtn: {
     background: 'none',
-    border: '1px solid #cc4400',
+    border: '1px solid var(--ff-warning)',
     borderRadius: '5px',
     fontSize: '11px',
-    color: '#cc4400',
+    color: 'var(--ff-warning-text)',
     cursor: 'pointer',
     padding: '3px 8px',
     marginTop: '4px',

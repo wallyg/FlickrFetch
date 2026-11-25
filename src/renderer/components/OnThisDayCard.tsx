@@ -119,17 +119,17 @@ export default function OnThisDayCard({ refreshKey, onOpen }: { refreshKey: numb
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  card: { display: 'flex', alignItems: 'center', gap: 12, background: 'var(--ff-surface)', border: '1px solid #D8E0EE', borderLeft: '4px solid var(--ff-blue)', borderRadius: 6, padding: '7px 10px 7px 12px', margin: '10px 24px 8px', position: 'relative' },
-  calendar: { width: 34, flexShrink: 0, borderRadius: 7, overflow: 'hidden', background: 'var(--ff-surface)', boxShadow: '0 1px 4px rgba(27,41,70,0.18)', textAlign: 'center' },
+  card: { display: 'flex', alignItems: 'center', gap: 12, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderLeft: '4px solid var(--ff-blue)', borderRadius: 6, padding: '7px 10px 7px 12px', margin: '10px 24px 8px', position: 'relative' },
+  calendar: { width: 34, flexShrink: 0, borderRadius: 7, overflow: 'hidden', background: 'var(--ff-surface)', boxShadow: '0 1px 4px color-mix(in srgb, var(--ff-navy) 18%, transparent)', textAlign: 'center' },
   calMonth: { background: 'var(--ff-pink)', color: 'var(--ff-white)', fontSize: 8, fontWeight: 700, letterSpacing: '0.14em', padding: '2px 0 1px' },
   calDay: { fontSize: 15, fontWeight: 700, color: 'var(--ff-navy)', lineHeight: '20px' },
   title: { fontSize: 13.5, fontWeight: 700, color: 'var(--ff-navy)' },
   cue: { marginLeft: 6, display: 'inline-flex', alignItems: 'center', verticalAlign: 'middle', background: 'none', border: 'none', padding: 4, borderRadius: 6, cursor: 'pointer' },
   seeBtn: { ...quietBtn, borderColor: 'var(--ff-blue)', color: 'var(--ff-blue)', fontWeight: 600, whiteSpace: 'nowrap' },
-  hideBtn: { ...quietBtn, color: '#374151', borderColor: '#C4C9D2', whiteSpace: 'nowrap' },
+  hideBtn: { ...quietBtn, color: 'var(--ff-text)', borderColor: 'var(--ff-line-strong)', whiteSpace: 'nowrap' },
   bell: { background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, padding: 2, lineHeight: 1, opacity: 0.7 },
   confirmed: { fontSize: 12, color: 'var(--ff-success)', whiteSpace: 'nowrap' },
-  peek: { position: 'absolute', left: 0, top: 'calc(100% + 10px)', width: 470, maxWidth: '80vw', background: 'var(--ff-surface)', border: '1px solid var(--ff-line-strong)', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,0.18)', padding: '12px 14px', zIndex: 30, cursor: 'default' },
+  peek: { position: 'absolute', left: 0, top: 'calc(100% + 10px)', width: 470, maxWidth: '80vw', background: 'var(--ff-surface)', border: '1px solid var(--ff-line-strong)', borderRadius: 12, boxShadow: '0 10px 30px var(--ff-shadow-mid)', padding: '12px 14px', zIndex: 'var(--ff-z-menu)', cursor: 'default' },
   peekHead: { fontSize: 13, fontWeight: 700, color: 'var(--ff-navy)' },
   peekLine: { fontSize: 12, color: 'var(--ff-text-secondary)', marginTop: 2 },
   bars: { display: 'flex', alignItems: 'flex-end', gap: 4, height: 40 },
@@ -138,6 +138,6 @@ const styles: Record<string, React.CSSProperties> = {
   chips: { display: 'flex', flexWrap: 'wrap', gap: 5, margin: '10px 0 2px' },
   chip: { background: 'var(--ff-warm)', border: '1px solid var(--ff-border)', borderRadius: 14, padding: '1px 9px', fontSize: 12 },
   thumbs: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 10 },
-  thumb: { width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: 7, background: '#ddd', display: 'block' },
+  thumb: { width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: 7, background: 'var(--ff-line-strong)', display: 'block' },
   peekFoot: { fontSize: 11.5, color: 'var(--ff-text-secondary)', marginTop: 8 }
 }

@@ -125,5 +125,5 @@ const styles: Record<string, React.CSSProperties> = {
   link: { ...linkBtn },
   dayHead: { display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 6 },
   tiles: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8 },
-  more: { width: '100%', margin: '16px 0 8px', padding: 10, background: 'none', border: '1px dashed #bbb', borderRadius: 8, color: 'var(--ff-text-secondary)', fontSize: 13, cursor: 'pointer' }
+  more: { width: '100%', margin: '16px 0 8px', padding: 10, background: 'none', border: '1px dashed var(--ff-line-strong)', borderRadius: 8, color: 'var(--ff-text-secondary)', fontSize: 13, cursor: 'pointer' }
 }

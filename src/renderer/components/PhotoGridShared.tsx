@@ -161,8 +161,8 @@ export function PhotoListRow({ photo, isDownloaded, isSelected, selectMode, onCl
       style={{
         display: 'flex', alignItems: 'center', gap: '10px',
         padding: '7px 16px', cursor: 'pointer',
-        borderBottom: '1px solid #f0ece6',
-        background: isSelected ? 'rgba(255,0,132,0.06)' : 'transparent',
+        borderBottom: '1px solid var(--ff-border)',
+        background: isSelected ? 'color-mix(in srgb, var(--ff-pink) 6%, transparent)' : 'transparent',
       }}
       onClick={onClick}
       onContextMenu={onContextMenu}
@@ -170,7 +170,7 @@ export function PhotoListRow({ photo, isDownloaded, isSelected, selectMode, onCl
       {selectMode && (
         <div style={{
           width: 18, height: 18, borderRadius: '50%', flexShrink: 0,
-          border: `2px solid ${isSelected ? 'var(--ff-pink)' : '#ccc'}`,
+          border: `2px solid ${isSelected ? 'var(--ff-pink)' : 'var(--ff-line-strong)'}`,
           background: isSelected ? 'var(--ff-pink)' : 'transparent',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
@@ -179,18 +179,18 @@ export function PhotoListRow({ photo, isDownloaded, isSelected, selectMode, onCl
       )}
       {photo.thumbnailUrl
         ? <img src={photo.thumbnailUrl} alt={photo.title} loading="lazy" style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: '4px', flexShrink: 0 }} />
-        : <div style={{ width: 40, height: 40, background: '#d0d0d0', borderRadius: '4px', flexShrink: 0 }} />
+        : <div style={{ width: 40, height: 40, background: 'var(--ff-line-strong)', borderRadius: '4px', flexShrink: 0 }} />
       }
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: '13px', fontWeight: 600, color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ff-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {photo.title || '(untitled)'}
         </div>
-        <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
+        <div style={{ fontSize: '11px', color: 'var(--ff-text-secondary)', marginTop: '2px' }}>
           {formatRowDate(photo.dateTaken)}
         </div>
       </div>
       {photo.media === 'video' && (
-        <span style={{ fontSize: '11px', color: '#888', background: '#f0ece6', borderRadius: '3px', padding: '2px 6px', flexShrink: 0 }}>Video</span>
+        <span style={{ fontSize: '11px', color: 'var(--ff-text-secondary)', background: 'var(--ff-grey-100)', borderRadius: '3px', padding: '2px 6px', flexShrink: 0 }}>Video</span>
       )}
       {privacyLevel !== 'public' && (
         <span style={{ flexShrink: 0 }}><PrivacyIcon level={privacyLevel} /></span>
@@ -198,8 +198,8 @@ export function PhotoListRow({ photo, isDownloaded, isSelected, selectMode, onCl
       <span style={{ flexShrink: 0, width: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {isDownloaded && (
           <svg width="13" height="13" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M7 1v8M4 6.5l3 3 3-3" stroke="#22a85d" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M2 11.5h10" stroke="#22a85d" strokeWidth="1.8" strokeLinecap="round"/>
+            <path d="M7 1v8M4 6.5l3 3 3-3" stroke="var(--ff-success)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M2 11.5h10" stroke="var(--ff-success)" strokeWidth="1.8" strokeLinecap="round"/>
           </svg>
         )}
       </span>
@@ -300,9 +300,9 @@ export function Tooltip({ text, children, align = 'center', side = 'above' }: { 
         <span style={{
           position: 'absolute', ...(side === 'below' ? { top: 'calc(100% + 6px)' } : { bottom: 'calc(100% + 6px)' }),
           ...(align === 'right' ? { right: 0 } : align === 'left' ? { left: 0 } : { left: '50%', transform: 'translateX(-50%)' }),
-          backgroundColor: '#333', color: 'var(--ff-white)', fontSize: '11px', lineHeight: '1.5',
+          backgroundColor: 'var(--ff-text)', color: 'var(--ff-white)', fontSize: '11px', lineHeight: '1.5',
           padding: '5px 9px', borderRadius: '5px', maxWidth: '220px', width: 'max-content', whiteSpace: 'pre-line',
-          zIndex: 100, pointerEvents: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+          zIndex: 'var(--ff-z-menu)', pointerEvents: 'none', boxShadow: '0 2px 8px var(--ff-shadow-mid)',
           textAlign: 'left' as const
         }}>
           {text}
@@ -314,12 +314,12 @@ export function Tooltip({ text, children, align = 'center', side = 'above' }: { 
 
 export const chipStyle: React.CSSProperties = {
   display: 'inline-flex', alignItems: 'center', gap: '4px',
-  backgroundColor: '#e8e4de', borderRadius: '12px',
-  padding: '2px 8px 2px 10px', fontSize: '11px', color: '#444', whiteSpace: 'nowrap'
+  backgroundColor: 'var(--ff-border)', borderRadius: '12px',
+  padding: '2px 8px 2px 10px', fontSize: '11px', color: 'var(--ff-text)', whiteSpace: 'nowrap'
 }
 export const chipDismissStyle: React.CSSProperties = {
   background: 'none', border: 'none', padding: '0 0 0 2px',
-  fontSize: '10px', color: '#888', cursor: 'pointer', lineHeight: 1
+  fontSize: '10px', color: 'var(--ff-text-secondary)', cursor: 'pointer', lineHeight: 1
 }
 
 export function DownloadFilterSelect({ value, onChange }: { value: DownloadFilter; onChange: (v: DownloadFilter) => void }): React.JSX.Element {
@@ -428,55 +428,55 @@ export function formatDateChip(min: string, max: string, field: import('../../sh
 // a key defined here without a documented reason.
 export const sharedStyles: Record<string, React.CSSProperties> = {
   // Toolbar chrome
-  toolbarWrap: { position: 'sticky' as const, top: 0, zIndex: 10, backgroundColor: 'var(--ff-grey-100)', borderBottom: '1px solid #f0ede8' },
+  toolbarWrap: { position: 'sticky' as const, top: 0, zIndex: 'var(--ff-z-sticky)', backgroundColor: 'var(--ff-grey-100)', borderBottom: '1px solid var(--ff-border)' },
   toolbar: { display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' as const, padding: '10px 16px 8px' },
-  drawer: { display: 'flex', flexDirection: 'column' as const, borderTop: '1px solid #ece8e2', backgroundColor: 'var(--ff-cream)' },
-  drawerRow: { display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' as const, padding: '7px 16px', borderBottom: '1px solid #f0ede8' },
-  drawerLabel: { fontSize: '11px', fontWeight: '600', color: '#999', textTransform: 'uppercase' as const, letterSpacing: '0.04em', minWidth: `${DRAWER_LABEL_WIDTH}px` },
+  drawer: { display: 'flex', flexDirection: 'column' as const, borderTop: '1px solid var(--ff-border)', backgroundColor: 'var(--ff-cream)' },
+  drawerRow: { display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' as const, padding: '7px 16px', borderBottom: '1px solid var(--ff-border)' },
+  drawerLabel: { fontSize: '11px', fontWeight: '600', color: 'var(--ff-text-secondary)', textTransform: 'uppercase' as const, letterSpacing: '0.04em', minWidth: `${DRAWER_LABEL_WIDTH}px` },
   // Search / filter controls
-  searchGroup: { display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '6px', overflow: 'hidden', backgroundColor: 'var(--ff-surface)' },
-  searchIcon: { display: 'flex', alignItems: 'center', padding: '0 4px 0 8px', color: '#aaa', flexShrink: 0 },
-  operatorSelect: { background: 'var(--ff-grey-100)', border: 'none', borderRight: '1px solid #ddd', padding: '5px 6px', fontSize: '11px', color: '#555', cursor: 'pointer', outline: 'none' },
-  searchInput: { border: 'none', outline: 'none', padding: '5px 8px', fontSize: '12px', color: '#333', minWidth: '160px', background: 'transparent' },
-  searchClearBtn: { background: 'none', border: 'none', padding: '0 6px', fontSize: '11px', color: '#aaa', cursor: 'pointer' },
+  searchGroup: { display: 'flex', alignItems: 'center', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', overflow: 'hidden', backgroundColor: 'var(--ff-surface)' },
+  searchIcon: { display: 'flex', alignItems: 'center', padding: '0 4px 0 8px', color: 'var(--ff-text-secondary)', flexShrink: 0 },
+  operatorSelect: { background: 'var(--ff-grey-100)', border: 'none', borderRight: '1px solid var(--ff-line-strong)', padding: '5px 6px', fontSize: '11px', color: 'var(--ff-text-secondary)', cursor: 'pointer', outline: 'none' },
+  searchInput: { border: 'none', outline: 'none', padding: '5px 8px', fontSize: '12px', color: 'var(--ff-text)', minWidth: '160px', background: 'transparent' },
+  searchClearBtn: { background: 'none', border: 'none', padding: '0 6px', fontSize: '11px', color: 'var(--ff-text-secondary)', cursor: 'pointer' },
   idStatus: { fontSize: '11px', color: 'var(--ff-text-muted)', padding: '0 6px', flexShrink: 0 },
-  idStatusErr: { fontSize: '11px', color: '#ef4444', padding: '0 6px', flexShrink: 0 },
+  idStatusErr: { fontSize: '11px', color: 'var(--ff-error-ink)', padding: '0 6px', flexShrink: 0 },
   idOpenDetailBtn: { background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: 'var(--ff-blue)', padding: '0 6px', flexShrink: 0 } as React.CSSProperties,
   segGroup: { ...kitSegGroup },
   seg: { ...kitSegBtn, padding: '5px 10px', fontSize: '12px', lineHeight: 1 },
   segActive: { ...kitSelectedOn },
-  sortSelect: { fontSize: '12px', color: '#555', border: '1px solid #ddd', borderRadius: '6px', padding: '5px 8px', background: 'none', cursor: 'pointer' },
+  sortSelect: { fontSize: '12px', color: 'var(--ff-text-secondary)', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '5px 8px', background: 'none', cursor: 'pointer' },
   segGroupDensity: { display: 'flex', alignItems: 'center', gap: '2px', marginLeft: 'auto' },
-  densityBtn: { background: 'none', border: 'none', padding: '4px 5px', cursor: 'pointer', borderRadius: '5px', display: 'flex', alignItems: 'center', color: '#bbb' },
-  densityBtnActive: { backgroundColor: '#ece8e2', color: '#333' },
+  densityBtn: { background: 'none', border: 'none', padding: '4px 5px', cursor: 'pointer', borderRadius: '5px', display: 'flex', alignItems: 'center', color: 'var(--ff-text-secondary)' },
+  densityBtnActive: { backgroundColor: 'var(--ff-border)', color: 'var(--ff-text)' },
   rowHeightSlider: { width: '72px', height: '3px', cursor: 'pointer', accentColor: 'var(--ff-blue)', margin: '0 4px' },
-  moreFiltersBtn: { display: 'flex', alignItems: 'center', gap: '4px', background: 'none', border: '1px solid #ddd', borderRadius: '6px', padding: '5px 10px', fontSize: '12px', color: '#555', cursor: 'pointer' },
-  moreFiltersBtnActive: { backgroundColor: '#111', color: 'var(--ff-white)', borderColor: '#111' },
+  moreFiltersBtn: { display: 'flex', alignItems: 'center', gap: '4px', background: 'none', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '5px 10px', fontSize: '12px', color: 'var(--ff-text-secondary)', cursor: 'pointer' },
+  moreFiltersBtnActive: { backgroundColor: 'var(--ff-stage)', color: 'var(--ff-white)', borderColor: 'var(--ff-stage)' },
   drawerBadge: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--ff-pink)', color: 'var(--ff-white)', borderRadius: '50%', width: '14px', height: '14px', fontSize: '9px', fontWeight: '700' },
   clearFiltersLink: { background: 'none', border: 'none', fontSize: '12px', color: 'var(--ff-blue)', cursor: 'pointer', padding: '0', textDecoration: 'underline' as const },
   // Active filter chips
   chipRow: { display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' as const, padding: '5px 16px 6px' },
-  countLabel: { fontSize: '12px', color: '#777', margin: '0', padding: '0 16px 8px' },
-  selectModeCount: { fontSize: '12px', color: '#777', padding: '8px 16px', backgroundColor: 'var(--ff-grey-100)', borderBottom: '1px solid #f0ede8' },
+  countLabel: { fontSize: '12px', color: 'var(--ff-text-secondary)', margin: '0', padding: '0 16px 8px' },
+  selectModeCount: { fontSize: '12px', color: 'var(--ff-text-secondary)', padding: '8px 16px', backgroundColor: 'var(--ff-grey-100)', borderBottom: '1px solid var(--ff-border)' },
   // Grid tiles
-  tile: { position: 'relative', aspectRatio: '1', overflow: 'hidden', backgroundColor: '#e8e8e8', cursor: 'pointer' },
+  tile: { position: 'relative', aspectRatio: '1', overflow: 'hidden', backgroundColor: 'var(--ff-border)', cursor: 'pointer' },
   thumb: { width: '100%', height: '100%', objectFit: 'cover', display: 'block' },
   videoOverlay: { position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' },
-  privacyBadge: { position: 'absolute', top: '5px', left: '5px', width: '18px', height: '18px', borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.52)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2, cursor: 'default' },
+  privacyBadge: { position: 'absolute', top: '5px', left: '5px', width: '18px', height: '18px', borderRadius: '50%', backgroundColor: 'var(--ff-badge-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2, cursor: 'default' },
   selectBadge: { position: 'absolute' as const, top: '6px', right: '6px', width: '22px', height: '22px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 },
   selectCheck: { color: 'var(--ff-white)', fontSize: '13px', fontWeight: 'bold', lineHeight: 1 },
   // Drawer date/tag controls
-  dateModeSelect: { border: '1px solid #ddd', borderRadius: '6px', padding: '5px 8px', fontSize: '12px', color: '#444', background: 'var(--ff-surface)', cursor: 'pointer' },
+  dateModeSelect: { border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '5px 8px', fontSize: '12px', color: 'var(--ff-text)', background: 'var(--ff-surface)', cursor: 'pointer' },
   dateInputsInline: { display: 'flex', alignItems: 'center', gap: '5px' },
-  dateInput: { border: '1px solid #ddd', borderRadius: '5px', padding: '4px 6px', fontSize: '12px', color: '#444', background: 'var(--ff-surface)' },
-  dateToLabel: { fontSize: '12px', color: '#888' },
-  comingSoon: { fontSize: '12px', color: '#bbb' },
-  downloadFilterBtn: { background: 'none', border: '1px solid #ddd', borderRadius: '6px', padding: '5px 10px', fontSize: '12px', color: '#555', cursor: 'pointer', whiteSpace: 'nowrap' as const },
-  downloadFilterBtnActive: { backgroundColor: '#111', color: 'var(--ff-white)', borderColor: '#111' },
+  dateInput: { border: '1px solid var(--ff-line-strong)', borderRadius: '5px', padding: '4px 6px', fontSize: '12px', color: 'var(--ff-text)', background: 'var(--ff-surface)' },
+  dateToLabel: { fontSize: '12px', color: 'var(--ff-text-secondary)' },
+  comingSoon: { fontSize: '12px', color: 'var(--ff-text-secondary)' },
+  downloadFilterBtn: { background: 'none', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '5px 10px', fontSize: '12px', color: 'var(--ff-text-secondary)', cursor: 'pointer', whiteSpace: 'nowrap' as const },
+  downloadFilterBtnActive: { backgroundColor: 'var(--ff-stage)', color: 'var(--ff-white)', borderColor: 'var(--ff-stage)' },
   listContainer: { display: 'flex', flexDirection: 'column' as const },
-  tagHint: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#ddd', fontSize: '10px', color: '#666', cursor: 'default', fontWeight: '600', flexShrink: 0 } as React.CSSProperties,
+  tagHint: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '16px', height: '16px', borderRadius: '50%', backgroundColor: 'var(--ff-line-strong)', fontSize: '10px', color: 'var(--ff-text-secondary)', cursor: 'default', fontWeight: '600', flexShrink: 0 } as React.CSSProperties,
   // Empty / error states
   centered: { display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', height: '100%', gap: '12px' },
-  mutedText: { color: '#888', fontSize: '15px', margin: 0 },
-  clearFiltersBtn: { background: 'none', border: '1px solid #ccc', borderRadius: '6px', padding: '6px 16px', fontSize: '13px', color: '#555', cursor: 'pointer' },
+  mutedText: { color: 'var(--ff-text-secondary)', fontSize: '15px', margin: 0 },
+  clearFiltersBtn: { background: 'none', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '6px 16px', fontSize: '13px', color: 'var(--ff-text-secondary)', cursor: 'pointer' },
 }

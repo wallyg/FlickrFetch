@@ -64,11 +64,11 @@ const styles: Record<string, React.CSSProperties> = {
   overlay: {
     position: 'fixed',
     inset: 0,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'var(--ff-badge-bg)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 300
+    zIndex: 'var(--ff-z-dialog)'
   },
   card: {
     backgroundColor: 'var(--ff-surface)',
@@ -76,7 +76,7 @@ const styles: Record<string, React.CSSProperties> = {
     width: '480px',
     maxWidth: '90vw',
     maxHeight: '70vh',
-    boxShadow: '0 16px 56px rgba(0,0,0,0.35)',
+    boxShadow: '0 16px 56px var(--ff-shadow-strong)',
     display: 'flex',
     flexDirection: 'column',
     overflow: 'hidden'
@@ -86,20 +86,20 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: '20px 24px 16px',
-    borderBottom: '1px solid #e8e4de',
+    borderBottom: '1px solid var(--ff-border)',
     flexShrink: 0
   },
   title: {
     fontSize: '16px',
     fontWeight: '700',
-    color: '#111',
+    color: 'var(--ff-text)',
     margin: 0
   },
   closeBtn: {
     background: 'none',
     border: 'none',
     fontSize: '15px',
-    color: '#aaa',
+    color: 'var(--ff-text-secondary)',
     cursor: 'pointer',
     padding: '4px'
   },
@@ -108,7 +108,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '0 24px 20px'
   },
   release: {
-    borderTop: '1px solid #e8e4de',
+    borderTop: '1px solid var(--ff-border)',
     paddingTop: '16px',
     paddingBottom: '4px',
     marginBottom: '4px'
@@ -118,7 +118,7 @@ const styles: Record<string, React.CSSProperties> = {
     paddingTop: '16px'
   },
   releaseMajor: {
-    borderTop: '2px solid #e0dbd2',
+    borderTop: '2px solid var(--ff-line-strong)',
     marginTop: '8px'
   },
   releaseVersionMajor: {
@@ -127,7 +127,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   milestone: {
     fontSize: '13px',
-    color: '#444',
+    color: 'var(--ff-text)',
     fontStyle: 'italic',
     margin: 0,
     lineHeight: '1.5'
@@ -141,7 +141,7 @@ const styles: Record<string, React.CSSProperties> = {
   releaseVersion: {
     fontSize: '13px',
     fontWeight: '700',
-    color: '#222',
+    color: 'var(--ff-text)',
     display: 'flex',
     alignItems: 'center',
     gap: '8px'
@@ -150,14 +150,14 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '10px',
     fontWeight: '600',
     color: 'var(--ff-pink)',
-    backgroundColor: 'rgba(255,0,132,0.1)',
+    backgroundColor: 'color-mix(in srgb, var(--ff-pink) 10%, transparent)',
     borderRadius: '4px',
     padding: '1px 6px',
     letterSpacing: '0.02em'
   },
   releaseDate: {
     fontSize: '11px',
-    color: '#bbb'
+    color: 'var(--ff-text-secondary)'
   },
   bullets: {
     margin: 0,
@@ -166,7 +166,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   bullet: {
     fontSize: '13px',
-    color: '#555',
+    color: 'var(--ff-text-secondary)',
     lineHeight: '1.7',
     paddingLeft: '2px'
   }

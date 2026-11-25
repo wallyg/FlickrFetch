@@ -94,10 +94,10 @@ export default function AlbumList({ onAlbumSelect, active = true }: AlbumListPro
         <div style={{ ...styles.grid, gridTemplateColumns: GRID_COLUMNS['medium'], padding: '16px' }}>
           {Array.from({ length: 18 }, (_, i) => (
             <div key={i} style={{ borderRadius: '10px', overflow: 'hidden', animation: `ff-al-shimmer 1.4s ease-in-out infinite`, animationDelay: `${(i % 6) * 0.08}s` }}>
-              <div style={{ height: '180px', background: '#e8e4de' }} />
-              <div style={{ padding: '10px 12px', background: '#f0ede8' }}>
-                <div style={{ height: '12px', background: '#e0dcd6', borderRadius: '4px', marginBottom: '6px', width: '75%' }} />
-                <div style={{ height: '10px', background: '#e8e4de', borderRadius: '4px', width: '45%' }} />
+              <div style={{ height: '180px', background: 'var(--ff-border)' }} />
+              <div style={{ padding: '10px 12px', background: 'var(--ff-grey-100)' }}>
+                <div style={{ height: '12px', background: 'var(--ff-border)', borderRadius: '4px', marginBottom: '6px', width: '75%' }} />
+                <div style={{ height: '10px', background: 'var(--ff-border)', borderRadius: '4px', width: '45%' }} />
               </div>
             </div>
           ))}
@@ -174,8 +174,8 @@ export default function AlbumList({ onAlbumSelect, active = true }: AlbumListPro
       </div>
       {filteredAlbums.length === 0 && searchQuery && (
         <div style={{ padding: '48px 24px', textAlign: 'center' }}>
-          <p style={{ color: '#888', fontSize: '14px', margin: '0 0 12px' }}>No albums match "{searchQuery}".</p>
-          <button style={{ background: 'none', border: '1px solid #ccc', borderRadius: '6px', padding: '6px 16px', fontSize: '13px', color: '#555', cursor: 'pointer' }} onClick={() => setSearchQuery('')}>
+          <p style={{ color: 'var(--ff-text-secondary)', fontSize: '14px', margin: '0 0 12px' }}>No albums match "{searchQuery}".</p>
+          <button style={{ background: 'none', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '6px 16px', fontSize: '13px', color: 'var(--ff-text-secondary)', cursor: 'pointer' }} onClick={() => setSearchQuery('')}>
             Clear Search
           </button>
         </div>
@@ -199,7 +199,7 @@ export default function AlbumList({ onAlbumSelect, active = true }: AlbumListPro
                   src={album.coverPhotoUrl}
                   alt={album.title}
                   style={styles.cover}
-                  onError={(e) => { e.currentTarget.style.background = '#ddd' }}
+                  onError={(e) => { e.currentTarget.style.background = 'var(--ff-line-strong)' }}
                 />
               </div>
               <div style={styles.info}>
@@ -224,7 +224,7 @@ export default function AlbumList({ onAlbumSelect, active = true }: AlbumListPro
         </div>
       )}
       {tooltip && (
-        <div style={{ position: 'fixed', left: tooltip.x, top: tooltip.y - 4, transform: 'translateY(-100%)', background: 'rgba(30,28,26,0.92)', color: 'var(--ff-white)', padding: '4px 9px', borderRadius: '5px', fontSize: '12px', whiteSpace: 'nowrap', pointerEvents: 'none', zIndex: 9999, maxWidth: '320px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <div style={{ position: 'fixed', left: tooltip.x, top: tooltip.y - 4, transform: 'translateY(-100%)', background: 'color-mix(in srgb, var(--ff-text) 92%, transparent)', color: 'var(--ff-white)', padding: '4px 9px', borderRadius: '5px', fontSize: '12px', whiteSpace: 'nowrap', pointerEvents: 'none', zIndex: 'var(--ff-z-hover)', maxWidth: '320px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {tooltip.title}
         </div>
       )}
@@ -265,7 +265,7 @@ const styles: Record<string, React.CSSProperties> = {
     height: '100%'
   },
   message: {
-    color: '#888',
+    color: 'var(--ff-text-secondary)',
     fontSize: '15px'
   },
   scroll: {
@@ -279,9 +279,9 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '10px 16px 8px',
     position: 'sticky' as const,
     top: 0,
-    zIndex: 10,
+    zIndex: 'var(--ff-z-sticky)',
     backgroundColor: 'var(--ff-grey-100)',
-    borderBottom: '1px solid #f0ede8',
+    borderBottom: '1px solid var(--ff-border)',
   },
   rightGroup: {
     marginLeft: 'auto',
@@ -292,29 +292,29 @@ const styles: Record<string, React.CSSProperties> = {
   },
   countLabel: {
     fontSize: '12px',
-    color: '#888',
+    color: 'var(--ff-text-secondary)',
   },
   searchGroup: {
     display: 'flex', alignItems: 'center',
-    border: '1px solid #ddd', borderRadius: '6px',
+    border: '1px solid var(--ff-line-strong)', borderRadius: '6px',
     overflow: 'hidden', backgroundColor: 'var(--ff-surface)'
   },
   operatorSelect: {
-    background: 'var(--ff-grey-100)', border: 'none', borderRight: '1px solid #ddd',
-    padding: '5px 6px', fontSize: '11px', color: '#555', cursor: 'pointer',
+    background: 'var(--ff-grey-100)', border: 'none', borderRight: '1px solid var(--ff-line-strong)',
+    padding: '5px 6px', fontSize: '11px', color: 'var(--ff-text-secondary)', cursor: 'pointer',
     outline: 'none'
   },
   searchInput: {
     border: 'none', outline: 'none', padding: '5px 8px',
-    fontSize: '12px', color: '#333', minWidth: '160px', background: 'transparent'
+    fontSize: '12px', color: 'var(--ff-text)', minWidth: '160px', background: 'transparent'
   },
   searchClearBtn: {
     background: 'none', border: 'none', padding: '0 6px',
-    fontSize: '11px', color: '#aaa', cursor: 'pointer'
+    fontSize: '11px', color: 'var(--ff-text-secondary)', cursor: 'pointer'
   },
   segGroupDensity: { display: 'flex', gap: '2px' },
-  densityBtn: { background: 'none', border: 'none', padding: '4px 5px', cursor: 'pointer', borderRadius: '5px', display: 'flex', alignItems: 'center', color: '#bbb' },
-  densityBtnActive: { backgroundColor: '#ece8e2', color: '#333' },
+  densityBtn: { background: 'none', border: 'none', padding: '4px 5px', cursor: 'pointer', borderRadius: '5px', display: 'flex', alignItems: 'center', color: 'var(--ff-text-secondary)' },
+  densityBtnActive: { backgroundColor: 'var(--ff-border)', color: 'var(--ff-text)' },
   grid: {
     display: 'grid',
     gap: '16px',
@@ -325,7 +325,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'block',
     width: '100%',
     background: 'var(--ff-surface)',
-    border: '1px solid #e8e4de',
+    border: '1px solid var(--ff-border)',
     borderRadius: '10px',
     overflow: 'hidden',
     cursor: 'pointer',
@@ -336,7 +336,7 @@ const styles: Record<string, React.CSSProperties> = {
   coverWrap: {
     width: '100%',
     overflow: 'hidden',
-    background: '#f0ede8'
+    background: 'var(--ff-grey-100)'
   },
   cover: {
     width: '100%',
@@ -353,14 +353,14 @@ const styles: Record<string, React.CSSProperties> = {
   title: {
     fontSize: '13px',
     fontWeight: '600',
-    color: '#111',
+    color: 'var(--ff-text)',
     whiteSpace: 'nowrap',
     overflow: 'hidden',
     textOverflow: 'ellipsis'
   },
   count: {
     fontSize: '12px',
-    color: '#999'
+    color: 'var(--ff-text-secondary)'
   },
   listContainer: {
     display: 'flex',
@@ -388,7 +388,7 @@ const styles: Record<string, React.CSSProperties> = {
     height: '44px',
     borderRadius: '6px',
     overflow: 'hidden',
-    background: '#f0ede8',
+    background: 'var(--ff-grey-100)',
     flexShrink: 0,
   },
   listThumbImg: {
@@ -408,18 +408,18 @@ const styles: Record<string, React.CSSProperties> = {
   listTitle: {
     fontSize: '13px',
     fontWeight: '600',
-    color: '#111',
+    color: 'var(--ff-text)',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
   },
   listCount: {
     fontSize: '11px',
-    color: '#999',
+    color: 'var(--ff-text-secondary)',
   },
   listChevron: {
     fontSize: '18px',
-    color: '#ccc',
+    color: 'var(--ff-text-muted)',
     flexShrink: 0,
     lineHeight: 1,
   },

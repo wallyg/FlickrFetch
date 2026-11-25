@@ -136,9 +136,9 @@ function CollageThumbnail({ urls }: { urls: string[] }): React.JSX.Element {
 function StackIcon(): React.JSX.Element {
   return (
     <svg width="54" height="44" viewBox="0 0 54 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="14" y="14" width="38" height="28" rx="5" fill="#9e9a93" stroke="rgba(0,0,0,0.12)" strokeWidth="1.5"/>
-      <rect x="8"  y="8"  width="38" height="28" rx="5" fill="#c2bdb6" stroke="rgba(0,0,0,0.10)" strokeWidth="1.5"/>
-      <rect x="2"  y="2"  width="38" height="28" rx="5" fill="var(--ff-white)" stroke="rgba(0,0,0,0.12)" strokeWidth="1.5"/>
+      <rect x="14" y="14" width="38" height="28" rx="5" fill="var(--ff-text-muted)" stroke="var(--ff-shadow-soft)" strokeWidth="1.5"/>
+      <rect x="8"  y="8"  width="38" height="28" rx="5" fill="var(--ff-text-muted)" stroke="var(--ff-shadow-soft)" strokeWidth="1.5"/>
+      <rect x="2"  y="2"  width="38" height="28" rx="5" fill="var(--ff-white)" stroke="var(--ff-shadow-soft)" strokeWidth="1.5"/>
     </svg>
   )
 }
@@ -155,7 +155,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     gap: '12px',
     padding: '12px 24px',
-    borderBottom: '1px solid #ede9e3',
+    borderBottom: '1px solid var(--ff-border)',
     flexShrink: 0
   },
   searchGroup: {
@@ -166,9 +166,9 @@ const styles: Record<string, React.CSSProperties> = {
   },
   operatorSelect: {
     fontSize: '12px',
-    color: '#555',
+    color: 'var(--ff-text-secondary)',
     background: 'var(--ff-warm)',
-    border: '1px solid #ddd8d1',
+    border: '1px solid var(--ff-line-strong)',
     borderRadius: '6px',
     padding: '5px 8px',
     cursor: 'pointer',
@@ -178,15 +178,15 @@ const styles: Record<string, React.CSSProperties> = {
     flex: 1,
     fontSize: '13px',
     padding: '5px 10px',
-    border: '1px solid #ddd8d1',
+    border: '1px solid var(--ff-line-strong)',
     borderRadius: '6px',
     background: 'var(--ff-surface)',
-    color: '#111',
+    color: 'var(--ff-text)',
     outline: 'none'
   },
   clearBtn: {
     fontSize: '11px',
-    color: '#999',
+    color: 'var(--ff-text-secondary)',
     background: 'none',
     border: 'none',
     cursor: 'pointer',
@@ -195,7 +195,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   countLabel: {
     fontSize: '12px',
-    color: '#aaa',
+    color: 'var(--ff-text-secondary)',
     whiteSpace: 'nowrap' as const,
     flexShrink: 0
   },
@@ -206,7 +206,7 @@ const styles: Record<string, React.CSSProperties> = {
     height: '100%'
   },
   message: {
-    color: '#888',
+    color: 'var(--ff-text-secondary)',
     fontSize: '15px'
   },
   scroll: {
@@ -224,7 +224,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'block',
     width: '100%',
     background: 'var(--ff-surface)',
-    border: '1px solid #e8e4de',
+    border: '1px solid var(--ff-border)',
     borderRadius: '12px',
     overflow: 'hidden',
     cursor: 'pointer',
@@ -234,7 +234,7 @@ const styles: Record<string, React.CSSProperties> = {
   iconArea: {
     width: '100%',
     aspectRatio: '1',
-    background: '#f0ede8',
+    background: 'var(--ff-grey-100)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -263,7 +263,7 @@ const styles: Record<string, React.CSSProperties> = {
   title: {
     fontSize: '13px',
     fontWeight: '600',
-    color: '#111',
+    color: 'var(--ff-text)',
     whiteSpace: 'nowrap',
     overflow: 'hidden',
     textOverflow: 'ellipsis'
@@ -275,7 +275,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   chip: {
     fontSize: '11px',
-    color: '#999',
+    color: 'var(--ff-text-secondary)',
     background: 'var(--ff-warm)',
     borderRadius: '4px',
     padding: '2px 6px'

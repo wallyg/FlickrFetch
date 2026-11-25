@@ -233,7 +233,7 @@ export default function DiscoverExplore({ onDownload }: Props): React.JSX.Elemen
                           transition: 'transform 0.15s ease, box-shadow 0.15s ease',
                           ...(isSelected ? { outline: '3px solid var(--ff-pink)', outlineOffset: '-3px', zIndex: 1 } : {}),
                           ...(selectMode && !isSelected ? { opacity: 0.75 } : {}),
-                          ...(!selectMode && hoveredId === photo.id ? { transform: 'scale(1.015)', boxShadow: '0 4px 16px rgba(0,0,0,0.18)', zIndex: 2 } : {})
+                          ...(!selectMode && hoveredId === photo.id ? { transform: 'scale(1.015)', boxShadow: '0 4px 16px var(--ff-shadow-mid)', zIndex: 2 } : {})
                         }}
                           onMouseEnter={() => setHoveredId(photo.id)}
                           onMouseLeave={() => setHoveredId(null)}
@@ -243,16 +243,16 @@ export default function DiscoverExplore({ onDownload }: Props): React.JSX.Elemen
                             style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} loading="lazy" />
                           {photo.media === 'video' && (
                             <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-                              <svg width="30" height="30" viewBox="0 0 30 30" fill="none"><circle cx="15" cy="15" r="15" fill="rgba(0,0,0,0.52)"/><polygon points="12,9 23,15 12,21" fill="white"/></svg>
+                              <svg width="30" height="30" viewBox="0 0 30 30" fill="none"><circle cx="15" cy="15" r="15" fill="var(--ff-badge-bg)"/><polygon points="12,9 23,15 12,21" fill="white"/></svg>
                             </div>
                           )}
                           {!selectMode && (
-                            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.65)', padding: '6px 8px', opacity: hoveredId === photo.id ? 1 : 0, transition: 'opacity 0.15s ease' }}>
+                            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'var(--ff-scrim-strong)', padding: '6px 8px', opacity: hoveredId === photo.id ? 1 : 0, transition: 'opacity 0.15s ease' }}>
                               <span style={{ color: 'var(--ff-white)', fontSize: '12px', lineHeight: '1.3', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as React.CSSProperties}>{photo.title}</span>
                             </div>
                           )}
                           {selectMode && (
-                            <div style={{ position: 'absolute', top: '6px', right: '6px', width: '20px', height: '20px', borderRadius: '50%', border: `2px solid ${isSelected ? 'var(--ff-pink)' : 'rgba(255,255,255,0.9)'}`, backgroundColor: isSelected ? 'var(--ff-pink)' : 'rgba(255,255,255,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <div style={{ position: 'absolute', top: '6px', right: '6px', width: '20px', height: '20px', borderRadius: '50%', border: `2px solid ${isSelected ? 'var(--ff-pink)' : 'var(--ff-glass)'}`, backgroundColor: isSelected ? 'var(--ff-pink)' : 'var(--ff-glass-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                               {isSelected && <span style={{ color: 'var(--ff-white)', fontSize: '11px', fontWeight: 700 }}>✓</span>}
                             </div>
                           )}
@@ -362,12 +362,12 @@ const sb: Record<string, React.CSSProperties> = {
   bar: {
     display: 'flex', alignItems: 'center',
     gap: '10px', padding: '8px 0',
-    borderBottom: '1px solid #e8e4de', marginBottom: '4px',
+    borderBottom: '1px solid var(--ff-border)', marginBottom: '4px',
   },
-  label: { fontSize: '13px', color: '#555' },
+  label: { fontSize: '13px', color: 'var(--ff-text-secondary)' },
   clearBtn: {
-    background: 'none', border: '1px solid #ccc', borderRadius: '6px',
-    padding: '5px 12px', fontSize: '13px', color: '#555', cursor: 'pointer', flexShrink: 0,
+    background: 'none', border: '1px solid var(--ff-line-strong)', borderRadius: '6px',
+    padding: '5px 12px', fontSize: '13px', color: 'var(--ff-text-secondary)', cursor: 'pointer', flexShrink: 0,
   },
   downloadBtn: {
     backgroundColor: 'var(--ff-pink-action)', color: 'var(--ff-white)', border: 'none',
@@ -383,14 +383,14 @@ const sb: Record<string, React.CSSProperties> = {
 
 const s: Record<string, React.CSSProperties> = {
   container: { display: 'flex', flexDirection: 'column', gap: '16px', padding: `0 ${DISCOVER_GUTTER}px 32px` },
-  stickyHeader: { position: 'sticky' as const, top: 0, zIndex: 10, background: 'var(--ff-surface)', paddingBottom: '8px' },
+  stickyHeader: { position: 'sticky' as const, top: 0, zIndex: 'var(--ff-z-sticky)', background: 'var(--ff-surface)', paddingBottom: '8px' },
   headerRow: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', paddingTop: '20px' },
-  heading: { margin: 0, fontSize: '18px', fontWeight: 600, color: '#1a1a1a' },
-  subheading: { margin: '4px 0 0', fontSize: '13px', color: '#888' },
+  heading: { margin: 0, fontSize: '18px', fontWeight: 600, color: 'var(--ff-text)' },
+  subheading: { margin: '4px 0 0', fontSize: '13px', color: 'var(--ff-text-secondary)' },
   attrNotice: {
     display: 'flex', alignItems: 'flex-start', gap: '8px',
     background: 'var(--ff-cream)', border: '1px solid #f0dfc0', borderRadius: '8px',
-    padding: '10px 14px', fontSize: '12px', color: '#7a5a1a', lineHeight: 1.5
+    padding: '10px 14px', fontSize: '12px', color: 'var(--ff-warning-text)', lineHeight: 1.5
   },
   lockIcon: { fontSize: '14px', flexShrink: 0, marginTop: '1px' },
   grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '4px' },
@@ -402,7 +402,7 @@ const s: Record<string, React.CSSProperties> = {
   tileHover: { opacity: 0.9 },
   tileSelected: { outline: '3px solid var(--ff-pink)', outlineOffset: '-3px' },
   checkOverlay: {
-    position: 'absolute', inset: 0, background: 'rgba(255,0,132,0.25)',
+    position: 'absolute', inset: 0, background: 'color-mix(in srgb, var(--ff-pink) 25%, transparent)',
     display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', padding: '6px',
   },
   check: {
@@ -411,20 +411,20 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'center', justifyContent: 'center',
   },
   thumb: { width: '100%', height: '100%', objectFit: 'cover', display: 'block' },
-  thumbPlaceholder: { width: '100%', height: '100%', background: '#e8e8e8' },
+  thumbPlaceholder: { width: '100%', height: '100%', background: 'var(--ff-border)' },
   overlay: {
-    position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)',
+    position: 'absolute', inset: 0, background: 'var(--ff-scrim)',
     display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
     padding: '8px',
   },
   overlayTitle: { color: 'var(--ff-white)', fontSize: '11px', fontWeight: 500, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-  videoTag: { color: '#ccc', fontSize: '10px', marginTop: '2px' },
+  videoTag: { color: 'var(--ff-text-muted)', fontSize: '10px', marginTop: '2px' },
   loadMoreRow: { display: 'flex', justifyContent: 'center', paddingTop: '8px' },
   loadMoreBtn: {
-    padding: '8px 24px', borderRadius: '8px', border: '1px solid #ddd',
-    background: 'var(--ff-surface)', cursor: 'pointer', fontSize: '13px', color: '#444'
+    padding: '8px 24px', borderRadius: '8px', border: '1px solid var(--ff-line-strong)',
+    background: 'var(--ff-surface)', cursor: 'pointer', fontSize: '13px', color: 'var(--ff-text)'
   },
-  loadingState: { textAlign: 'center', color: '#888', fontSize: '14px', paddingTop: '48px' },
+  loadingState: { textAlign: 'center', color: 'var(--ff-text-secondary)', fontSize: '14px', paddingTop: '48px' },
   errorState: { textAlign: 'center', color: 'var(--ff-error)', fontSize: '14px', paddingTop: '48px' },
-  selectToggleBtn: { padding: '6px 14px', borderRadius: '8px', border: '1px solid #ddd', background: 'var(--ff-surface)', cursor: 'pointer', fontSize: '13px', color: '#444', flexShrink: 0 },
+  selectToggleBtn: { padding: '6px 14px', borderRadius: '8px', border: '1px solid var(--ff-line-strong)', background: 'var(--ff-surface)', cursor: 'pointer', fontSize: '13px', color: 'var(--ff-text)', flexShrink: 0 },
 }

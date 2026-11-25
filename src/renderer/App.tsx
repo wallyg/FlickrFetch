@@ -57,7 +57,7 @@ const styles: Record<string, React.CSSProperties> = {
     height: '100vh',
   },
   loadingText: {
-    color: '#999',
+    color: 'var(--ff-text-secondary)',
     fontSize: '16px'
   }
 }

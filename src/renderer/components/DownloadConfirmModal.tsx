@@ -108,12 +108,12 @@ export default function DownloadConfirmModal({ pending, settingsKey, isPro, onCa
                       {onFields.map(({ key, label }) => (
                         <div key={key} style={s.metaItem}>
                           <span style={{ ...s.metaCheck, color: 'var(--ff-success)' }}>✓</span>
-                          <span style={{ ...s.metaLabel, color: '#222' }}>{label}</span>
+                          <span style={{ ...s.metaLabel, color: 'var(--ff-text)' }}>{label}</span>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p style={{ fontSize: '12px', color: '#bbb', margin: '0 0 4px' }}>None</p>
+                    <p style={{ fontSize: '12px', color: 'var(--ff-text-secondary)', margin: '0 0 4px' }}>None</p>
                   )}
                   {offFields.length > 0 && (
                     <p style={s.offFields}>
@@ -123,7 +123,7 @@ export default function DownloadConfirmModal({ pending, settingsKey, isPro, onCa
                 </>
               )
             })() : (
-              <p style={{ fontSize: '13px', color: '#bbb', margin: 0 }}>Loading…</p>
+              <p style={{ fontSize: '13px', color: 'var(--ff-text-secondary)', margin: 0 }}>Loading…</p>
             )}
           </div>
         </div>
@@ -169,12 +169,12 @@ export default function DownloadConfirmModal({ pending, settingsKey, isPro, onCa
 
 const s: Record<string, React.CSSProperties> = {
   overlay: {
-    position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.45)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 500,
+    position: 'fixed', inset: 0, backgroundColor: 'var(--ff-scrim)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 'var(--ff-z-dialog)',
   },
   modal: {
     backgroundColor: 'var(--ff-surface)', borderRadius: '12px', width: '420px', maxWidth: '90vw',
-    boxShadow: '0 20px 60px rgba(0,0,0,0.22)', overflow: 'hidden',
+    boxShadow: '0 20px 60px var(--ff-shadow-mid)', overflow: 'hidden',
   },
   header: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -184,20 +184,20 @@ const s: Record<string, React.CSSProperties> = {
     margin: 0, fontSize: '16px', fontWeight: '700', color: 'var(--ff-navy)',
   },
   closeBtn: {
-    background: 'none', border: 'none', fontSize: '15px', color: '#aaa',
+    background: 'none', border: 'none', fontSize: '15px', color: 'var(--ff-text-secondary)',
     cursor: 'pointer', padding: '0 4px', lineHeight: 1,
   },
   body: {
     padding: '16px 20px 0',
   },
   batchTitle: {
-    margin: '0 0 4px', fontSize: '14px', fontWeight: '600', color: '#111',
+    margin: '0 0 4px', fontSize: '14px', fontWeight: '600', color: 'var(--ff-text)',
   },
   countLine: {
-    margin: '0 0 4px', fontSize: '13px', color: '#666',
+    margin: '0 0 4px', fontSize: '13px', color: 'var(--ff-text-secondary)',
   },
   countNote: {
-    margin: '0 0 0', fontSize: '11px', color: '#999', fontStyle: 'italic' as const,
+    margin: '0 0 0', fontSize: '11px', color: 'var(--ff-text-secondary)', fontStyle: 'italic' as const,
   },
   limitNote: {
     fontSize: '12px', lineHeight: 1.5, color: 'var(--ff-text-secondary)', backgroundColor: 'var(--ff-tint)', borderRadius: '8px', padding: '8px 12px', margin: '10px 0 0',
@@ -210,17 +210,17 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '6px',
   },
   settingLabel: {
-    fontSize: '12px', color: '#999', width: '52px', flexShrink: 0,
+    fontSize: '12px', color: 'var(--ff-text-secondary)', width: '52px', flexShrink: 0,
   },
   settingValue: {
-    fontSize: '14px', color: '#111', fontWeight: '500', overflow: 'hidden',
+    fontSize: '14px', color: 'var(--ff-text)', fontWeight: '500', overflow: 'hidden',
     textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const, flex: 1,
   },
   metaSection: {
-    marginTop: '16px', borderTop: '1px solid #f0ede8', paddingTop: '12px',
+    marginTop: '16px', borderTop: '1px solid var(--ff-border)', paddingTop: '12px',
   },
   metaHeading: {
-    margin: '0 0 10px', fontSize: '11px', fontWeight: '600', color: '#999',
+    margin: '0 0 10px', fontSize: '11px', fontWeight: '600', color: 'var(--ff-text-secondary)',
     textTransform: 'uppercase' as const, letterSpacing: '0.5px',
   },
   metaGrid: {
@@ -237,22 +237,22 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: '12px',
   },
   offFields: {
-    margin: '0', fontSize: '11px', color: '#bbb', lineHeight: '1.4',
+    margin: '0', fontSize: '11px', color: 'var(--ff-text-secondary)', lineHeight: '1.4',
   },
   formatRow: {
     display: 'flex', alignItems: 'center', gap: '12px',
     padding: '14px 20px 0',
   },
   formatLabel: {
-    fontSize: '13px', color: '#555', fontWeight: '500', flexShrink: 0,
+    fontSize: '13px', color: 'var(--ff-text-secondary)', fontWeight: '500', flexShrink: 0,
   },
   segGroup: {
-    display: 'flex', borderRadius: '7px', border: '1px solid #d8d4ce', overflow: 'hidden',
+    display: 'flex', borderRadius: '7px', border: '1px solid var(--ff-line-strong)', overflow: 'hidden',
   },
   segBtn: {
     padding: '5px 12px', fontSize: '13px', fontWeight: '500',
-    background: 'var(--ff-surface)', border: 'none', borderRight: '1px solid #d8d4ce',
-    cursor: 'pointer', color: '#555',
+    background: 'var(--ff-surface)', border: 'none', borderRight: '1px solid var(--ff-line-strong)',
+    cursor: 'pointer', color: 'var(--ff-text-secondary)',
   },
   segBtnActive: {
     background: 'var(--ff-tint)', color: 'var(--ff-pink-action)', fontWeight: 700,
@@ -265,12 +265,12 @@ const s: Record<string, React.CSSProperties> = {
     padding: '12px 20px 0',
   },
   trackLabel: {
-    display: 'flex', alignItems: 'center', fontSize: 13, color: '#555',
+    display: 'flex', alignItems: 'center', fontSize: 13, color: 'var(--ff-text-secondary)',
     cursor: 'pointer', fontWeight: '500',
   },
   footer: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '14px 20px 18px', borderTop: '1px solid #f0ede8', marginTop: '14px',
+    padding: '14px 20px 18px', borderTop: '1px solid var(--ff-border)', marginTop: '14px',
   },
   footerBtns: {
     display: 'flex', gap: '8px',
@@ -280,8 +280,8 @@ const s: Record<string, React.CSSProperties> = {
     cursor: 'pointer', padding: 0,
   },
   cancelBtn: {
-    background: 'none', border: '1px solid #ccc', borderRadius: '7px',
-    fontSize: '13px', color: '#555', cursor: 'pointer', padding: '7px 16px',
+    background: 'none', border: '1px solid var(--ff-line-strong)', borderRadius: '7px',
+    fontSize: '13px', color: 'var(--ff-text-secondary)', cursor: 'pointer', padding: '7px 16px',
   },
   confirmBtn: {
     background: 'var(--ff-pink-action)', border: 'none', borderRadius: '7px',

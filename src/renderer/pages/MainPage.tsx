@@ -536,12 +536,12 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
                 onError={(e) => { e.currentTarget.src = 'https://www.flickr.com/images/buddyicon.gif' }}
               />
               <svg width="9" height="6" viewBox="0 0 9 6" fill="none" style={{ flexShrink: 0 }}>
-                <path d="M1 1l3.5 3.5L8 1" stroke="#aaa" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M1 1l3.5 3.5L8 1" stroke="var(--ff-text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </button>
             {showAvatarPopover && (
               <>
-                <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setShowAvatarPopover(false)} />
+                <div style={{ position: 'fixed', inset: 0, zIndex: 'calc(var(--ff-z-menu) - 1)' }} onClick={() => setShowAvatarPopover(false)} />
                 <div style={styles.avatarPopover}>
                   <div style={styles.avatarPopoverUser}>
                     <img
@@ -745,7 +745,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
                 <button style={styles.overflowBtn} onClick={() => setShowAlbumOverflow(o => !o)} title="More actions">⋯</button>
                 {showAlbumOverflow && (
                   <>
-                    <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setShowAlbumOverflow(false)} />
+                    <div style={{ position: 'fixed', inset: 0, zIndex: 'calc(var(--ff-z-menu) - 1)' }} onClick={() => setShowAlbumOverflow(false)} />
                     <div style={styles.overflowMenu}>
                       <button
                         style={styles.overflowMenuItemDestructive}
@@ -1034,7 +1034,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'stretch',
     justifyContent: 'space-between',
     backgroundColor: 'var(--ff-cream)',
-    borderBottom: '1px solid #e8e4de',
+    borderBottom: '1px solid var(--ff-border)',
     minHeight: '52px',
   },
   headerLeft: {
@@ -1053,7 +1053,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   headerDivider: {
     width: '1px',
-    backgroundColor: '#e8e4de',
+    backgroundColor: 'var(--ff-border)',
     margin: '8px 0',
   },
   modeTabs: {
@@ -1067,7 +1067,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '0 20px',
     fontSize: '15px',
     fontWeight: '600',
-    color: '#bbb',
+    color: 'var(--ff-text-secondary)',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
@@ -1082,8 +1082,8 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '9px',
     fontWeight: '700',
     color: 'var(--ff-pink)',
-    backgroundColor: 'rgba(255,0,132,0.1)',
-    border: '1px solid rgba(255,0,132,0.3)',
+    backgroundColor: 'color-mix(in srgb, var(--ff-pink) 10%, transparent)',
+    border: '1px solid color-mix(in srgb, var(--ff-pink) 30%, transparent)',
     borderRadius: '4px',
     padding: '1px 5px',
     letterSpacing: '0.06em',
@@ -1096,7 +1096,7 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: '20px',
     overflow: 'visible',
     cursor: 'pointer',
-    border: '1px solid #ccc',
+    border: '1px solid var(--ff-line-strong)',
     background: 'none',
     padding: '3px 8px 3px 3px',
     flexShrink: 0,
@@ -1114,10 +1114,10 @@ const styles: Record<string, React.CSSProperties> = {
     top: 'calc(100% + 8px)',
     right: 0,
     backgroundColor: 'var(--ff-surface)',
-    border: '1px solid #e0dcd8',
+    border: '1px solid var(--ff-line-strong)',
     borderRadius: '10px',
-    boxShadow: '0 4px 20px rgba(0,0,0,.14)',
-    zIndex: 100,
+    boxShadow: '0 4px 20px var(--ff-shadow-mid)',
+    zIndex: 'var(--ff-z-menu)',
     minWidth: '220px',
     padding: '14px',
   },
@@ -1132,12 +1132,12 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: '50%',
     objectFit: 'cover' as const,
     flexShrink: 0,
-    border: '1.5px solid #e0dcd8',
+    border: '1.5px solid var(--ff-line-strong)',
   },
   avatarPopoverName: {
     fontSize: '14px',
     fontWeight: '600',
-    color: '#111',
+    color: 'var(--ff-text)',
     display: 'flex',
     alignItems: 'center',
     gap: '5px',
@@ -1145,16 +1145,16 @@ const styles: Record<string, React.CSSProperties> = {
   },
   avatarPopoverHandle: {
     fontSize: '12px',
-    color: '#888',
+    color: 'var(--ff-text-secondary)',
     marginBottom: '2px',
   },
   avatarPopoverSince: {
     fontSize: '11px',
-    color: '#bbb',
+    color: 'var(--ff-text-secondary)',
   },
   avatarPopoverDivider: {
     height: '1px',
-    backgroundColor: '#f0ede8',
+    backgroundColor: 'var(--ff-grey-100)',
     margin: '10px 0',
   },
   avatarPopoverSignOut: {
@@ -1162,7 +1162,7 @@ const styles: Record<string, React.CSSProperties> = {
     border: 'none',
     padding: '0',
     fontSize: '13px',
-    color: '#888',
+    color: 'var(--ff-text-secondary)',
     cursor: 'pointer',
     textDecoration: 'underline',
     textDecorationStyle: 'dotted' as const,
@@ -1173,7 +1173,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'space-between',
     rowGap: '2px',
-    borderBottom: '1px solid #e8e4de',
+    borderBottom: '1px solid var(--ff-border)',
     backgroundColor: 'var(--ff-surface)',
     paddingLeft: '24px',
     paddingRight: '16px'
@@ -1187,7 +1187,7 @@ const styles: Record<string, React.CSSProperties> = {
   tabDivider: {
     width: '1px',
     height: '18px',
-    background: '#d9d6d0',
+    background: 'var(--ff-border)',
     margin: '0 10px',
     alignSelf: 'center',
     flexShrink: 0
@@ -1199,7 +1199,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '10px 16px',
     fontSize: '14px',
     fontWeight: '500',
-    color: '#888',
+    color: 'var(--ff-text-secondary)',
     cursor: 'pointer',
     marginBottom: '-1px',
     whiteSpace: 'nowrap',       // "On This Day" and "Health Check" used to fold onto two or three lines in a narrow window
@@ -1215,7 +1215,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '12px',
     padding: '10px 24px',
     backgroundColor: 'var(--ff-surface)',
-    borderBottom: '1px solid #e8e4de'
+    borderBottom: '1px solid var(--ff-border)'
   },
   backButton: {
     background: 'none',
@@ -1229,11 +1229,11 @@ const styles: Record<string, React.CSSProperties> = {
   albumTitle: {
     fontSize: '14px',
     fontWeight: '600',
-    color: '#111'
+    color: 'var(--ff-text)'
   },
   albumCount: {
     fontSize: '13px',
-    color: '#999'
+    color: 'var(--ff-text-secondary)'
   },
   downloadAllBtn: {
     fontSize: '12px',
@@ -1255,10 +1255,10 @@ const styles: Record<string, React.CSSProperties> = {
   },
   iconButton: {
     backgroundColor: 'transparent',
-    border: '1px solid #ccc',
+    border: '1px solid var(--ff-line-strong)',
     borderRadius: '6px',
     padding: '8px',
-    color: '#555',
+    color: 'var(--ff-text-secondary)',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
@@ -1271,7 +1271,7 @@ const styles: Record<string, React.CSSProperties> = {
   iconButtonLabel: {
     fontSize: '12px',
     fontWeight: '500',
-    color: '#666',
+    color: 'var(--ff-text-secondary)',
     letterSpacing: '-0.01em',
     lineHeight: 1,
   },
@@ -1286,14 +1286,14 @@ const styles: Record<string, React.CSSProperties> = {
     position: 'absolute' as const,
     top: 'calc(100% + 6px)',
     right: 0,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'var(--ff-text)',
     color: 'var(--ff-white)',
     fontSize: '12px',
     padding: '4px 8px',
     borderRadius: '5px',
     whiteSpace: 'nowrap' as const,
     pointerEvents: 'none' as const,
-    zIndex: 999,
+    zIndex: 'var(--ff-z-hover)',
   },
   downloadAllButton: {
     backgroundColor: 'var(--ff-pink-action)',
@@ -1312,10 +1312,10 @@ const styles: Record<string, React.CSSProperties> = {
   },
   refreshButton: {
     background: 'none',
-    border: '1px solid #ccc',
+    border: '1px solid var(--ff-line-strong)',
     borderRadius: '6px',
     padding: '5px 8px',
-    color: '#555',
+    color: 'var(--ff-text-secondary)',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
@@ -1324,11 +1324,11 @@ const styles: Record<string, React.CSSProperties> = {
   },
   selectButton: {
     background: 'none',
-    border: '1px solid #ccc',
+    border: '1px solid var(--ff-line-strong)',
     borderRadius: '6px',
     padding: '5px 12px',
     fontSize: '13px',
-    color: '#555',
+    color: 'var(--ff-text-secondary)',
     cursor: 'pointer',
     flexShrink: 0,
     display: 'flex',
@@ -1351,12 +1351,12 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '10px',
     padding: '8px 24px',
     backgroundColor: 'var(--ff-surface)',
-    borderBottom: '1px solid #e8e4de',
+    borderBottom: '1px solid var(--ff-border)',
     minHeight: '40px'
   },
   selectedCount: {
     fontSize: '13px',
-    color: '#555'
+    color: 'var(--ff-text-secondary)'
   },
   main: {
     flex: 1,
@@ -1375,33 +1375,33 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'none'
   },
   overflowBtn: {
-    background: 'none', border: '1px solid #ccc', borderRadius: '6px',
-    padding: '5px 10px', fontSize: '16px', color: '#555', cursor: 'pointer',
+    background: 'none', border: '1px solid var(--ff-line-strong)', borderRadius: '6px',
+    padding: '5px 10px', fontSize: '16px', color: 'var(--ff-text-secondary)', cursor: 'pointer',
     flexShrink: 0, lineHeight: 1,
   },
   overflowMenu: {
     position: 'absolute' as const, top: 'calc(100% + 4px)', right: 0,
-    background: 'var(--ff-surface)', border: '1px solid #e0dcd8', borderRadius: '8px',
-    boxShadow: '0 4px 16px rgba(0,0,0,0.12)', zIndex: 100, minWidth: '190px', padding: '4px',
+    background: 'var(--ff-surface)', border: '1px solid var(--ff-line-strong)', borderRadius: '8px',
+    boxShadow: '0 4px 16px var(--ff-shadow-soft)', zIndex: 'var(--ff-z-menu)', minWidth: '190px', padding: '4px',
   },
   overflowMenuItemDestructive: {
     display: 'block', width: '100%', textAlign: 'left' as const, background: 'none', border: 'none',
     padding: '8px 12px', fontSize: '13px', color: 'var(--ff-error)', cursor: 'pointer', borderRadius: '5px',
   },
   confirmOverlay: {
-    position: 'fixed' as const, inset: 0, backgroundColor: 'rgba(0,0,0,0.4)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 700,
+    position: 'fixed' as const, inset: 0, backgroundColor: 'var(--ff-scrim)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 'var(--ff-z-dialog)',
   },
   confirmCard: {
     backgroundColor: 'var(--ff-surface)', borderRadius: '12px', padding: '24px',
-    width: '360px', maxWidth: '90vw', boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
+    width: '360px', maxWidth: '90vw', boxShadow: '0 8px 32px var(--ff-shadow-mid)',
   },
-  confirmTitle: { fontSize: '16px', fontWeight: '600' as const, color: '#111', margin: '0 0 8px' },
-  confirmBody: { fontSize: '13px', color: '#555', lineHeight: '1.5', margin: '0 0 20px' },
+  confirmTitle: { fontSize: '16px', fontWeight: '600' as const, color: 'var(--ff-text)', margin: '0 0 8px' },
+  confirmBody: { fontSize: '13px', color: 'var(--ff-text-secondary)', lineHeight: '1.5', margin: '0 0 20px' },
   confirmActions: { display: 'flex', gap: '10px', justifyContent: 'flex-end' as const },
   confirmCancel: {
-    background: 'none', border: '1px solid #d8d4ce', borderRadius: '8px',
-    padding: '8px 18px', fontSize: '14px', color: '#555', cursor: 'pointer',
+    background: 'none', border: '1px solid var(--ff-line-strong)', borderRadius: '8px',
+    padding: '8px 18px', fontSize: '14px', color: 'var(--ff-text-secondary)', cursor: 'pointer',
   },
   confirmDestructive: {
     background: 'var(--ff-error)', border: 'none', borderRadius: '8px',

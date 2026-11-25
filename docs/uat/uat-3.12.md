@@ -28,3 +28,24 @@ Nothing to try in the app. `npm test` now counts the hand-typed colours in each 
 
 - [ ] D1 **Map.** Click a circle, then a photo in the side panel: the photo opens in the app's own photo view over the window (the same view as the Photostream). Left and right arrows (or the arrow buttons) go through the circle's photos; at the end of the loaded ones it loads more. "Open on Flickr ↗" is a button inside the view. Esc closes it and you are back on the map with the same circle picked.
 - [ ] D2 **Album fit and Tags suggestions.** Health Check > Albums > May be missing from an album > Show the photos (and Tags > Photos missing a tag): clicking a thumbnail opens the same photo view, with arrows through that strip. The tick boxes still tick without opening anything.
+
+## Colour sweep, pass 2, batch 1: the shared styles and the dialogs (#234)
+
+138 colours in the shared Photostream styles (filter bars, chips, drawers), Settings, the download box, About, What's new and the sign-in page now use the guide's greys. **These are visible, small changes**:
+- Grey text that was `#888`, `#999`, `#aaa`, `#bbb` or `#555` and `#666` is now the guide's secondary grey (a little darker, easier to read). Near-black text (`#111` to `#444`) is the guide's text colour.
+- Hairlines and dividers (the warm beige `#f0ede8`, `#e8e4de` and similar, and `#eee`) are now the one cool light grey; box and button edges (`#ccc`, `#ddd`) are the guide's slightly darker edge grey.
+
+- [ ] E1 **Settings (all six tabs), the download box, About, What's new, the sign-in page.** Walk them and look at the grey text and the lines. Anything that is now too faint, too dark or too cold? Hints and descriptions should be a little darker than before; nothing should disappear.
+- [ ] E2 **Photostream bars and drawers.** The filter row, chips, the Filters drawer and the sort and search boxes: same layout, lines a touch cooler.
+
+## Colour sweep, pass 2: every other screen, plus shadows and overlays (#234, #233)
+
+950 typed colours are down to 66 (45 of them the collage picture's own artwork). All the hand-typed greys, warm lines, status colours, shadows, dimmed backdrops and white panels over photos now use the guide's tokens. **Most things look the same; these are the visible shifts:** grey text is a little darker, beige hairlines are cool grey, old oranges and reds are the guide's amber and red, the pale blues are one pale blue, shadows come in three strengths and backdrops in two.
+
+- [ ] F1 **Photostream, Albums, Collections** (grid, list, a collection's detail, the photo view with its arrows and the dark stage behind the photo).
+- [ ] F2 **Discover** (People, Groups, Explore) and **History** (Photos and Batches tabs).
+- [ ] F3 **Download bar at the bottom**: a finished batch with skips or failures reads amber or red like a warning or issue, not a stray orange; the progress and "See the list" button look right.
+- [ ] F4 **Timeline, On This Day, Camera roll, the Tags tab, the Health Check Overview.**
+- [ ] F5 **Shadows and backdrops.** Open Settings, the download box, About, the Share dialog, a menu or the album suggestions list, the Map side panel: the backdrop behind a dialog is the same dimmed black as before; shadows look the same or a hair lighter.
+- [ ] F6 **Labels on photos.** Small badges on thumbnails (video badge, privacy lock, counts) and the white chips over photos or the map are still readable.
+Write down anything that looks off, with the screen. (The three privacy badge colours in the photo view, the collage picture and the brand wave are untouched on purpose.)

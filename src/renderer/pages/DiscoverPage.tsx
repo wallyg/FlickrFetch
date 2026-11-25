@@ -61,7 +61,7 @@ const s: Record<string, React.CSSProperties> = {
   tabBar: {
     display: 'flex', alignItems: 'center',
     paddingLeft: '24px', paddingRight: '16px',
-    borderBottom: '1px solid #e8e4de',
+    borderBottom: '1px solid var(--ff-border)',
     background: 'var(--ff-surface)',
     flexShrink: 0,
   },
@@ -69,7 +69,7 @@ const s: Record<string, React.CSSProperties> = {
   tab: {
     background: 'none', border: 'none', borderBottom: '2px solid transparent',
     padding: '10px 16px', cursor: 'pointer', fontSize: '14px', fontWeight: 500,
-    color: '#888', marginBottom: '-1px', outline: 'none',
+    color: 'var(--ff-text-secondary)', marginBottom: '-1px', outline: 'none',
   },
   tabActive: { borderBottom: '2px solid var(--ff-pink)', color: 'var(--ff-pink)' },
   content: { flex: 1, overflowY: 'auto', position: 'relative' },

@@ -240,7 +240,7 @@ const styles: Record<string, React.CSSProperties> = {
   list: { flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: 4 },
   card: { display: 'flex', gap: 12, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 10, padding: 10, marginBottom: 8 },
   tick: { alignSelf: 'flex-start', marginTop: 4, flexShrink: 0, cursor: 'pointer' },
-  thumb: { width: 76, height: 76, borderRadius: 6, objectFit: 'cover', background: '#eee', flexShrink: 0 },
+  thumb: { width: 76, height: 76, borderRadius: 6, objectFit: 'cover', background: 'var(--ff-border)', flexShrink: 0 },
   cardBody: { flex: 1, minWidth: 0 },
   l1: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   title: { fontSize: 14, fontWeight: 600, color: 'var(--ff-text)', overflowWrap: 'anywhere' },
@@ -251,5 +251,5 @@ const styles: Record<string, React.CSSProperties> = {
   // Fixing a photo happens on Flickr, so this is the card's main action: the blue outline used for "See them" on the notice
   mainActionBtn: { ...quietBtn, borderColor: 'var(--ff-blue)', color: 'var(--ff-blue)', fontWeight: 600 },
   linkBtn: { background: 'none', border: 'none', color: 'var(--ff-blue)', fontSize: 12, cursor: 'pointer' },
-  moreBtn: { width: '100%', padding: 8, background: 'none', border: '1px dashed #ccc', borderRadius: 8, color: 'var(--ff-text-secondary)', fontSize: 13, cursor: 'pointer', marginBottom: 12 }
+  moreBtn: { width: '100%', padding: 8, background: 'none', border: '1px dashed var(--ff-line-strong)', borderRadius: 8, color: 'var(--ff-text-secondary)', fontSize: 13, cursor: 'pointer', marginBottom: 12 }
 }
