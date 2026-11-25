@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import Icon from '../ui/Icon'
 import logoTrayImg from '../assets/logo-tray.png'
 import ChangelogModal from './ChangelogModal'
 import ProblemModal from './ProblemModal'
@@ -26,7 +27,7 @@ export default function AboutModal({ version, onClose }: AboutModalProps): React
     <>
       <div style={styles.overlay}>
         <div style={styles.card}>
-          <button style={styles.closeBtn} onClick={onClose}>✕</button>
+          <button style={styles.closeBtn} onClick={onClose}><Icon name="close" /></button>
 
           <div style={styles.body}>
             {/* Left column — identity */}
@@ -51,7 +52,7 @@ export default function AboutModal({ version, onClose }: AboutModalProps): React
 
               <div style={styles.section}>
                 <div style={styles.iconBadge}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ff-blue)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ff-blue)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                     <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                   </svg>
@@ -81,7 +82,7 @@ export default function AboutModal({ version, onClose }: AboutModalProps): React
               <div style={styles.linkRow}>
                 <a href="#" style={styles.linkItem}
                   onClick={(e) => { e.preventDefault(); window.flickrAPI.openExternal('mailto:wallyg@gmail.com?subject=FlickrFetch Feedback') }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ff-blue)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ff-blue)" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                     <polyline points="22,6 12,13 2,6"/>
                   </svg>

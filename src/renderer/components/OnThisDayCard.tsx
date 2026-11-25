@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import Icon from '../ui/Icon'
 import type { TodaySummary } from '../../shared/types'
 import { MONTHS } from './DateViewParts'
 import { quietBtn, doThisBtn } from '../ui/kit'
@@ -108,12 +109,12 @@ export default function OnThisDayCard({ refreshKey, onOpen }: { refreshKey: numb
         )}
       </div>
 
-      {justTurnedOn && s.notifyEnabled && <span style={styles.confirmed} title="One macOS notification a day while FlickrFetch is open. Turn it off any time in Settings.">🔔 Daily notification on</span>}
+      {justTurnedOn && s.notifyEnabled && <span style={styles.confirmed} title="One macOS notification a day while FlickrFetch is open. Turn it off any time in Settings."><Icon name="bell" /> Daily notification on</span>}
       {!s.notifyEnabled && (
-        <button style={styles.bell} onClick={() => void notifyOn()} title="Notify me daily: one macOS notification a day while FlickrFetch is open. You can turn it off in Settings." aria-label="Notify me daily">🔔</button>
+        <button style={styles.bell} onClick={() => void notifyOn()} title="Notify me daily: one macOS notification a day while FlickrFetch is open. You can turn it off in Settings." aria-label="Notify me daily"><Icon name="bell" /></button>
       )}
       <button style={styles.seeBtn} onClick={onOpen}>See them ›</button>
-      <button style={styles.hideBtn} onClick={() => { setHidden(true); void window.flickrAPI.hideOnThisDayCardToday() }} title="Hide this notice until tomorrow">Hide for today ✕</button>
+      <button style={styles.hideBtn} onClick={() => { setHidden(true); void window.flickrAPI.hideOnThisDayCardToday() }} title="Hide this notice until tomorrow">Hide for today <Icon name="close" /></button>
     </div>
   )
 }

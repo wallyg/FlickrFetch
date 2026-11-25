@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react'
+import Icon from '../ui/Icon'
 import type { FlickrAlbum } from '../../shared/types'
 import { GridIcon, ListIcon, loadAlbumViewMode, saveAlbumViewMode, type AlbumViewMode, type GridSize } from './PhotoGridShared'
 import BackToTop from '../ui/BackToTop'
@@ -139,7 +140,7 @@ export default function AlbumList({ onAlbumSelect, active = true }: AlbumListPro
             onChange={e => setSearchQuery(e.target.value)}
           />
           {searchQuery && (
-            <button style={styles.searchClearBtn} onClick={() => setSearchQuery('')}>✕</button>
+            <button style={styles.searchClearBtn} onClick={() => setSearchQuery('')}><Icon name="close" /></button>
           )}
         </div>
         <div style={styles.rightGroup}>

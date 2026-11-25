@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react'
+import Icon from '../ui/Icon'
 import { useFindShortcut } from '../hooks/useFindShortcut'
 import { quietBtn, dangerBtn, putAsideBtn } from '../ui/kit'
 import type { BatchLogEntry, PhotoDownloadRecord, DiscoverDownloadRecord, FlickrAlbum } from '../../shared/types'
@@ -72,7 +73,7 @@ function StatusCircle({ status }: { status: BatchLogEntry['status'] }): React.JS
   )
 }
 
-function CountPill({ label, color }: { label: string; color: string }): React.JSX.Element {
+function CountPill({ label, color }: { label: React.ReactNode; color: string }): React.JSX.Element {
   return (
     <span style={{ ...styles.pill, color, borderColor: color, background: `color-mix(in srgb, ${color} 10%, transparent)` }}>
       {label}
@@ -149,10 +150,10 @@ function BatchesTab({ onClear }: { onClear: () => void }) {
               </div>
               <div style={styles.rowCounts}>
                 {entry.downloaded > 0 && (
-                  <CountPill label={`✓ ${entry.downloaded} downloaded`} color={C.downloaded} />
+                  <CountPill label={<><Icon name="check" /> {entry.downloaded} downloaded</>} color={C.downloaded} />
                 )}
                 {entry.failed > 0 && (
-                  <CountPill label={`✕ ${entry.failed} errors`} color={C.error} />
+                  <CountPill label={<><Icon name="close" /> {entry.failed} errors</>} color={C.error} />
                 )}
                 {entry.skippedCollision > 0 && (
                   <CountPill label={`— ${entry.skippedCollision} skipped`} color={C.skipped} />
@@ -445,7 +446,7 @@ function PhotosTab() {
               style={styles.searchClearBtn}
               onClick={() => searchMode === 'title' ? setTitleFilter('') : setPhotoIdQuery('')}
               title="Clear search"
-            >✕</button>
+            ><Icon name="close" /></button>
           )}
         </div>
 
@@ -465,7 +466,7 @@ function PhotosTab() {
             <option value="custom">Custom range…</option>
           </select>
           {hasDateFilter && (
-            <button style={styles.clearFilterX} onClick={handleClearDateFilter} title="Clear date filter">✕</button>
+            <button style={styles.clearFilterX} onClick={handleClearDateFilter} title="Clear date filter"><Icon name="close" /></button>
           )}
         </div>
 
@@ -475,14 +476,14 @@ function PhotosTab() {
             <div style={styles.dateFieldWrap}>
               <input type="date" style={styles.dateInput} value={customDateMin} onChange={e => setCustomDateMin(e.target.value)} />
               {customDateMin && (
-                <button style={styles.dateFieldClear} onClick={() => setCustomDateMin('')} title="Clear start date">✕</button>
+                <button style={styles.dateFieldClear} onClick={() => setCustomDateMin('')} title="Clear start date"><Icon name="close" /></button>
               )}
             </div>
             <span style={styles.filterLabel}>–</span>
             <div style={styles.dateFieldWrap}>
               <input type="date" style={styles.dateInput} value={customDateMax} onChange={e => setCustomDateMax(e.target.value)} />
               {customDateMax && (
-                <button style={styles.dateFieldClear} onClick={() => setCustomDateMax('')} title="Clear end date">✕</button>
+                <button style={styles.dateFieldClear} onClick={() => setCustomDateMax('')} title="Clear end date"><Icon name="close" /></button>
               )}
             </div>
             <button style={styles.applyBtn} onClick={handleApplyCustomDate}>Apply</button>
@@ -509,7 +510,7 @@ function PhotosTab() {
               </select>
               {albumFilterLoading && <span style={styles.filterLabel}>Loading…</span>}
               {selectedAlbum && !albumFilterLoading && (
-                <button style={styles.clearFilterX} onClick={() => handleAlbumSelect('')} title="Clear album filter">✕</button>
+                <button style={styles.clearFilterX} onClick={() => handleAlbumSelect('')} title="Clear album filter"><Icon name="close" /></button>
               )}
             </>
           )}
@@ -552,7 +553,7 @@ function PhotosTab() {
                 </div>
                 <div style={styles.photoSub}>
                   {isStale(r) && (
-                    <span style={styles.staleIcon} title="Updated on Flickr since last download">⚠</span>
+                    <span style={styles.staleIcon} title="Updated on Flickr since last download"><Icon name="warning" /></span>
                   )}
                   <span style={styles.photoDate}>{formatDateShort(r.lastDownloadedAt)}</span>
                   {sizeTag(r) && <span style={sizeTag(r) === 'Smaller size' ? styles.sizeTagSmaller : styles.sizeTag} title={sizeTag(r) === 'Smaller size' ? 'The Original was asked for and Flickr gave a smaller size' : 'Saved at the Original size'}>{sizeTag(r)}</span>}
@@ -566,19 +567,19 @@ function PhotosTab() {
                     style={styles.deleteConfirmYes}
                     onClick={() => { setPendingDeleteId(null); handleDeleteRecord(r.photoId) }}
                     title="Confirm removal"
-                  >✓</button>
+                  ><Icon name="check" /></button>
                   <button
                     style={styles.deleteConfirmNo}
                     onClick={() => setPendingDeleteId(null)}
                     title="Cancel"
-                  >✕</button>
+                  ><Icon name="close" /></button>
                 </div>
               ) : (
                 <button
                   style={styles.deleteRecordBtn}
                   onClick={() => setPendingDeleteId(r.photoId)}
                   title="Remove this download record"
-                >✕</button>
+                ><Icon name="close" /></button>
               )}
             </div>
           ))

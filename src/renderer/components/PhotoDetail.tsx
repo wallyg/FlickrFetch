@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import Icon from '../ui/Icon'
 import type { FlickrPhoto, PhotoSize, PhotoInfo, DownloadSize, CameraExif } from '../../shared/types'
 import { descriptionToPlainText } from '../../shared/description'
 import { buildAttribution, canCopyAttribution, LICENSE_MAP } from '../../shared/licenses'
@@ -40,7 +41,7 @@ const LICENSE_ICONS: Record<string, string[]> = {
 function CcBadge({ label }: { label: string }): React.JSX.Element {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0 }}>
-      <circle cx="8" cy="8" r="7" stroke="var(--ff-text-secondary)" strokeWidth="1.2" fill="none" />
+      <circle cx="8" cy="8" r="7" stroke="var(--ff-text-secondary)" strokeWidth="1.5" fill="none" />
       <text x="8" y="11" textAnchor="middle" fontSize={label.length > 2 ? '5' : '6.5'} fontFamily="sans-serif" fontWeight="bold" fill="var(--ff-text-secondary)">{label}</text>
     </svg>
   )
@@ -116,11 +117,11 @@ function CopyButton({ text }: { text: string }): React.JSX.Element {
   return (
     <button style={styles.copyBtn} onClick={handleCopy} title="Copy to clipboard">
       {copied ? (
-        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.18" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="13 4 6 11 3 8" />
         </svg>
       ) : (
-        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.18" strokeLinecap="round" strokeLinejoin="round">
           <rect x="5" y="5" width="9" height="9" rx="1"/>
           <path d="M10 5V4a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1h1"/>
         </svg>
@@ -141,7 +142,7 @@ function CopyActionButton({ label, title, getText }: { label: string; title: str
           .then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500) })
           .catch(() => {})
       }}
-    >{copied ? '✓ Copied' : label}</button>
+    >{copied ? <><Icon name="check" /> Copied</> : label}</button>
   )
 }
 
@@ -399,7 +400,7 @@ export default function PhotoDetail({
       {/* Left: dark image panel */}
       <div style={styles.imagePanel}>
         <button style={styles.backBtnOverlay} onClick={onClose}>
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '5px', flexShrink: 0 }}><path d="M7.5 1.5L3 6l4.5 4.5"/></svg>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '5px', flexShrink: 0 }}><path d="M7.5 1.5L3 6l4.5 4.5"/></svg>
           {sourceName}
         </button>
 
@@ -440,12 +441,12 @@ export default function PhotoDetail({
 
         {canGoPrev && (
           <button style={{ ...styles.navArrow, left: '12px' }} onClick={onPrev} title="Previous (←)">
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M8.5 1.5L4 6.5l4.5 5"/></svg>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M8.5 1.5L4 6.5l4.5 5"/></svg>
           </button>
         )}
         {canGoNext && (
           <button style={{ ...styles.navArrow, right: '12px' }} onClick={onNext} title="Next (→)">
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M4.5 1.5L9 6.5l-4.5 5"/></svg>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4.5 1.5L9 6.5l-4.5 5"/></svg>
           </button>
         )}
 
@@ -476,7 +477,7 @@ export default function PhotoDetail({
           </div>
 
           <div style={styles.actionRow}>
-            <button style={styles.actionBtn} title="Open this photo's page on Flickr" onClick={() => window.flickrAPI.openExternal(photoUrl)}>Open on Flickr ↗</button>
+            <button style={styles.actionBtn} title="Open this photo's page on Flickr" onClick={() => window.flickrAPI.openExternal(photoUrl)}>Open on Flickr <Icon name="external" /></button>
             {info && canCopyAttribution(info.license) && (
               <CopyActionButton
                 label="Copy attribution"
@@ -662,7 +663,7 @@ export default function PhotoDetail({
             <div style={{ marginTop: '10px' }}>
               {photo.lastUpdate != null && photo.lastUpdate > 0 && photo.lastUpdate * 1000 > lastDownloadedAt && (
                 <div style={styles.stalenessWarning}>
-                  <span style={styles.stalenessIcon}>⚠</span>
+                  <span style={styles.stalenessIcon}><Icon name="warning" /></span>
                   <span>Updated on Flickr since your last download</span>
                 </div>
               )}
@@ -690,7 +691,7 @@ export default function PhotoDetail({
 
           {downloadState === 'done' && savedPath && (
             <div>
-              <p style={{ ...styles.successText, animation: 'ff-pop 0.2s ease-out' }}>✓ {savedPath.split('/').pop()}</p>
+              <p style={{ ...styles.successText, animation: 'ff-pop 0.2s ease-out' }}><Icon name="check" /> {savedPath.split('/').pop()}</p>
               <div style={styles.successBtns}>
                 <button style={styles.finderBtn} onClick={() => window.flickrAPI.showInFinder(savedPath)}>
                   Show in Finder
@@ -704,7 +705,7 @@ export default function PhotoDetail({
 
           {downloadState === 'error' && (
             <div>
-              <p style={styles.errorText}>⚠️ {downloadError}</p>
+              <p style={styles.errorText}><Icon name="warning" />️ {downloadError}</p>
               <button style={{ ...styles.downloadBtn, marginTop: '8px' }} onClick={() => setDownloadState('idle')}>
                 Try again
               </button>

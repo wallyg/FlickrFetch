@@ -1,4 +1,5 @@
 import React from 'react'
+import Icon from '../ui/Icon'
 import changelog from '../data/changelog'
 
 interface ChangelogModalProps {
@@ -20,7 +21,7 @@ export default function ChangelogModal({ onClose }: ChangelogModalProps): React.
       <div style={styles.card}>
         <div style={styles.header}>
           <h2 style={styles.title}>What's New</h2>
-          <button style={styles.closeBtn} onClick={onClose}>✕</button>
+          <button style={styles.closeBtn} onClick={onClose}><Icon name="close" /></button>
         </div>
         <div style={styles.content}>
           {changelog.map((release, i) => {

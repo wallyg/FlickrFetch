@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import Icon from '../ui/Icon'
 import { createPortal } from 'react-dom'
 import type { CleanupRuleState } from '../../shared/cleanupRules'
 import { ruleById, logicOf } from '../../shared/cleanupRules'
@@ -243,9 +244,9 @@ export default function AlbumsPanel({ refreshKey, onFullRescan, toolbarLeft, sta
                       {item.why && <div style={{ ...styles.muted, marginTop: 3 }}>{item.why}</div>}
                       <JudgedBy item={item} onChange={kind => void changeKind(item.albumId, kind)} />
                       <div style={styles.actions}>
-                        <button style={actionStyles.link} onClick={() => window.flickrAPI.openExternal(item.flickrUrl)}>{condition === 'misfit' ? 'Open photo ↗' : 'Open on Flickr ↗'}</button>
+                        <button style={actionStyles.link} onClick={() => window.flickrAPI.openExternal(item.flickrUrl)}>{condition === 'misfit' ? <>Open photo <Icon name="external" /></> : <>Open on Flickr <Icon name="external" /></>}</button>
                         {item.isPhoto && item.status === 'open' && <BatchEditButton inline key={`b${item.id}`} style={actionStyles.fix} label="Open in Flickr's organizer" getIds={async () => [photoIdOf(item)]} />}
-                        {condition === 'misfit' && <button style={actionStyles.link} title="Opens the album's page on Flickr. Click Edit there to change the album or take the photo out." onClick={() => window.flickrAPI.openExternal(item.albumUrl)}>Open album ↗</button>}
+                        {condition === 'misfit' && <button style={actionStyles.link} title="Opens the album's page on Flickr. Click Edit there to change the album or take the photo out." onClick={() => window.flickrAPI.openExternal(item.albumUrl)}>Open album <Icon name="external" /></button>}
                         {item.status === 'open'
                           ? <button style={actionStyles.quiet} onClick={() => void mark(item, 'fine')}>This one is fine</button>
                           : <button style={actionStyles.quiet} onClick={() => void mark(item, 'open')}>Undo</button>}

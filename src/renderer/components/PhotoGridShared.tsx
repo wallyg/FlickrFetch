@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import Icon from '../ui/Icon'
 import { segGroup as kitSegGroup, segBtn as kitSegBtn, selectedOn as kitSelectedOn } from '../ui/kit'
 import type { FlickrPhoto, LicenseFilter, PhotoSearchParams } from '../../shared/types'
 export type { LicenseFilter }
@@ -174,7 +175,7 @@ export function PhotoListRow({ photo, isDownloaded, isSelected, selectMode, onCl
           background: isSelected ? 'var(--ff-pink)' : 'transparent',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          {isSelected && <span style={{ color: 'var(--ff-white)', fontSize: '11px', fontWeight: 700 }}>✓</span>}
+          {isSelected && <span style={{ color: 'var(--ff-white)', fontSize: '11px', fontWeight: 700 }}><Icon name="check" /></span>}
         </div>
       )}
       {photo.thumbnailUrl
@@ -198,8 +199,8 @@ export function PhotoListRow({ photo, isDownloaded, isSelected, selectMode, onCl
       <span style={{ flexShrink: 0, width: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {isDownloaded && (
           <svg width="13" height="13" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M7 1v8M4 6.5l3 3 3-3" stroke="var(--ff-success)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M2 11.5h10" stroke="var(--ff-success)" strokeWidth="1.8" strokeLinecap="round"/>
+            <path d="M7 1v8M4 6.5l3 3 3-3" stroke="var(--ff-success)" strokeWidth="1.62" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M2 11.5h10" stroke="var(--ff-success)" strokeWidth="1.62" strokeLinecap="round"/>
           </svg>
         )}
       </span>
@@ -233,7 +234,7 @@ export function JustifiedIcon(): React.JSX.Element {
 
 export function ChevronLeftIcon(): React.JSX.Element {
   return (
-    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
       <path d="M7.5 1.5L3 6l4.5 4.5"/>
     </svg>
   )
@@ -241,7 +242,7 @@ export function ChevronLeftIcon(): React.JSX.Element {
 
 export function ChevronRightIcon(): React.JSX.Element {
   return (
-    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
       <path d="M4.5 1.5L9 6l-4.5 4.5"/>
     </svg>
   )
@@ -274,18 +275,18 @@ export function GridIcon({ size }: { size?: GridSize }): React.JSX.Element {
 export function PrivacyIcon({ level }: { level: PrivacyLevel }): React.JSX.Element | null {
   if (level === 'public') return null
   if (level === 'private') return (
-    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round">
       <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
     </svg>
   )
   if (level === 'family' || level === 'friendsFamily') return (
-    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round">
       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
       <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
     </svg>
   )
   return (
-    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round">
       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
     </svg>
   )
@@ -393,7 +394,7 @@ export function Chip({ label, onDismiss }: { label: string; onDismiss: () => voi
   return (
     <span style={chipStyle}>
       {label}
-      <button style={chipDismissStyle} onClick={onDismiss}>✕</button>
+      <button style={chipDismissStyle} onClick={onDismiss}><Icon name="close" /></button>
     </span>
   )
 }

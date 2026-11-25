@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import Icon from '../ui/Icon'
 import type { MapAlbumHit } from '../../shared/types'
 import { sharedStyles } from './PhotoGridShared'
 import { DEBOUNCE, useDebouncedValue } from '../ui/useDebounce'
@@ -35,7 +36,7 @@ export default function AlbumBox({ chosen, onToggle, minWidth = 200 }: { chosen:
           {hits.map(h => (
             <button key={h.id} style={{ ...styles.suggestItem, ...(isOn(h.id) ? styles.suggestOn : {}) }} role="option" aria-selected={isOn(h.id)}
               onMouseDown={e => { e.preventDefault(); onToggle({ id: h.id, title: h.title }) }}>
-              <span style={styles.tick} aria-hidden="true">{isOn(h.id) ? '✓' : ''}</span>
+              <span style={styles.tick} aria-hidden="true">{isOn(h.id) ? <Icon name="check" /> : ''}</span>
               <span style={{ overflowWrap: 'anywhere', flex: 1, textAlign: 'left' }}>{h.title || '(no title)'}</span>
               <span style={styles.suggestCount}>{h.count.toLocaleString()}</span>
             </button>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import Icon from '../ui/Icon'
 import logoTrayImg from '../assets/logo-tray.png'
 import type { FlickrUser } from '../../shared/types'
 import ProblemModal from '../components/ProblemModal'
@@ -122,7 +123,7 @@ export default function LoginPage({ onAuthSuccess }: LoginPageProps): React.JSX.
                   </button>
                 </div>
 
-                {error && <p style={styles.errorText} role="alert">⚠️ {error}</p>}
+                {error && <p style={styles.errorText} role="alert"><Icon name="warning" />️ {error}</p>}
 
                 <p style={styles.trustText}>
                   Authorization takes place on Flickr in your browser. We never see your password.
@@ -168,7 +169,7 @@ export default function LoginPage({ onAuthSuccess }: LoginPageProps): React.JSX.
                     aria-label="Authorization code"
                   />
                   {error && (
-                    <p style={styles.errorText} role="alert">⚠️ {error}</p>
+                    <p style={styles.errorText} role="alert"><Icon name="warning" />️ {error}</p>
                   )}
                   <button
                     style={{

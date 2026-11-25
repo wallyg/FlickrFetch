@@ -23,3 +23,15 @@ function offences(key: string, ok: (n: number) => boolean): string[] {
 test('font weights are only 400 and 700', () => assert.deepEqual(offences('fontWeight', n => WEIGHTS.has(n)), []))
 test('text sizes are on the scale, and never below 11 px', () => assert.deepEqual(offences('fontSize', n => SIZES.has(n) || n > 24), []))
 test('corner radii are on the scale', () => assert.deepEqual(offences('borderRadius', n => RADII.has(n)), []))
+
+// The icon guard (#229): icons come from ui/Icon.tsx, never from an emoji or a plain character (the cross, tick, up-right arrow, warning sign ...).
+// The collage picture (ShareDialog.tsx) draws on a canvas and is left alone, and arrows inside text (a tooltip, a saved batch name) stay text.
+test('no emoji or symbol characters stand in for icons', () => {
+  const found: string[] = []
+  for (const f of files(SRC)) {
+    if (/ShareDialog\.tsx$|data\/changelog\.ts$/.test(f)) continue   // the release notes are history, written in words
+    const code = readFileSync(f, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1')
+    for (const m of code.matchAll(/[✕✗✓⚠↗↳↻⬆\u{1F300}-\u{1FAFF}]/gu)) found.push(`${relative(root, f)}: ${m[0]}`)
+  }
+  assert.deepEqual(found, [], 'Use <Icon name="..." /> from src/renderer/ui/Icon.tsx.')
+})

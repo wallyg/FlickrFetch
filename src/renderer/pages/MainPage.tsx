@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
+import Icon from '../ui/Icon'
 import { useRememberScroll } from '../hooks/useRememberScroll'
 import MapPanel from '../components/MapPanel'
 import type { RangeOpts } from '../components/DateFilterBar'
@@ -511,21 +512,10 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
         </div>
         <div style={styles.headerActions}>
           <IconBtn label="History" onClick={() => setShowHistory(true)} showLabel={!compactHeader}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" strokeWidth="1.5" fill="currentColor" fillOpacity="0.1"/>
-              <circle cx="12" cy="12" r="1.8" fill="currentColor" strokeWidth="0"/>
-              <polyline points="12 7 12 12 15.5 14" strokeWidth="2"/>
-            </svg>
+            <Icon name="clock" size={18} />
           </IconBtn>
           <IconBtn label="Settings" onClick={() => openSettings()} badge={!!updateVersion} showLabel={!compactHeader}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <line x1="4" y1="6" x2="20" y2="6"/>
-              <line x1="4" y1="12" x2="20" y2="12"/>
-              <line x1="4" y1="18" x2="20" y2="18"/>
-              <circle cx="8" cy="6" r="2.2" fill="white" strokeWidth="1.8"/>
-              <circle cx="16" cy="12" r="2.2" fill="white" strokeWidth="1.8"/>
-              <circle cx="10" cy="18" r="2.2" fill="white" strokeWidth="1.8"/>
-            </svg>
+            <Icon name="cog" size={18} />
           </IconBtn>
           <div style={{ position: 'relative' }}>
             <button style={styles.avatarBtn} onClick={() => setShowAvatarPopover(o => !o)}>
@@ -634,7 +624,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
                 setPhotostreamRefreshKey(k => k + 1)
               }}
             >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.77" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="23 4 23 10 17 10"/>
                 <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
               </svg>
@@ -669,7 +659,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
               />
             )}
             <button style={styles.selectButton} onClick={() => setPhotostreamSelectMode(true)}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                 <rect x="2" y="3" width="7" height="7" rx="1"/><rect x="13" y="3" width="7" height="7" rx="1"/><rect x="2" y="14" width="7" height="7" rx="1"/><path d="M14 17l2 2 4-4"/>
               </svg>
               Select Photos
@@ -684,7 +674,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
       {appMode === 'you' && view === 'album-detail' && selectedAlbum && (
         <div style={styles.albumHeader}>
           <button style={styles.backButton} onClick={handleBackFromAlbumDetail}>
-            ← {albumDetailOrigin === 'collections' ? (currentCollection?.title ?? 'Collection') : 'Albums'}
+            <Icon name="arrowLeft" /> {albumDetailOrigin === 'collections' ? (currentCollection?.title ?? 'Collection') : 'Albums'}
           </button>
           <span style={styles.albumTitle}>{selectedAlbum.title}</span>
           {!albumSelectMode && selectedAlbum.photoCount > 0 && (
@@ -736,7 +726,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
                 />
               )}
               <button style={styles.selectButton} onClick={() => setAlbumSelectMode(true)}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                   <rect x="2" y="3" width="7" height="7" rx="1"/><rect x="13" y="3" width="7" height="7" rx="1"/><rect x="2" y="14" width="7" height="7" rx="1"/><path d="M14 17l2 2 4-4"/>
                 </svg>
                 Select Photos
@@ -773,7 +763,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
                 disabled={albumSelectedIds.size === 0}
                 onClick={handleDownloadAlbumSelected}
               >
-                ↓ Download Selected ({albumSelectedIds.size})
+                <Icon name="arrowDown" /> Download Selected ({albumSelectedIds.size})
               </button>
               <button style={styles.doneButton} onClick={exitAlbumSelect}>Cancel</button>
             </>
@@ -794,7 +784,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             disabled={photostreamSelectedIds.size === 0}
             onClick={handleDownloadPhotostreamSelected}
           >
-            ↓ Download Selected ({photostreamSelectedIds.size})
+            <Icon name="arrowDown" /> Download Selected ({photostreamSelectedIds.size})
           </button>
           <button style={styles.doneButton} onClick={exitPhotostreamSelect}>Cancel</button>
         </div>
@@ -803,7 +793,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
       {appMode === 'you' && view === 'collection-detail' && currentCollection && (
         <div style={styles.albumHeader}>
           <button style={styles.backButton} onClick={handleBackInCollections}>
-            ← {collectionPath.length > 1 ? collectionPath[collectionPath.length - 2].title : 'Collections'}
+            <Icon name="arrowLeft" /> {collectionPath.length > 1 ? collectionPath[collectionPath.length - 2].title : 'Collections'}
           </button>
           <span style={styles.albumTitle}>{currentCollection.title}</span>
           <div style={{ flex: 1 }} />
@@ -811,7 +801,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             style={styles.downloadAllBtn}
             onClick={() => void window.flickrAPI.startCollectionBatch(currentCollection)}
           >
-            ↓ Download All Albums
+            <Icon name="arrowDown" /> Download All Albums
           </button>
         </div>
       )}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo } from 'react'
+import Icon from '../ui/Icon'
 import type { FlickrPhoto, PhotoPage } from '../../shared/types'
 import PhotoDetail from './PhotoDetail'
 import { GridIcon, ListIcon, JustifiedIcon, sharedStyles as ss, type PhotoViewMode, PhotoListRow, loadPhotoViewMode, savePhotoViewMode, loadRowHeight, saveRowHeight, computeJustifiedRows } from './PhotoGridShared'
@@ -253,7 +254,7 @@ export default function DiscoverExplore({ onDownload }: Props): React.JSX.Elemen
                           )}
                           {selectMode && (
                             <div style={{ position: 'absolute', top: '6px', right: '6px', width: '20px', height: '20px', borderRadius: '50%', border: `2px solid ${isSelected ? 'var(--ff-pink)' : 'var(--ff-glass)'}`, backgroundColor: isSelected ? 'var(--ff-pink)' : 'var(--ff-glass-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              {isSelected && <span style={{ color: 'var(--ff-white)', fontSize: '11px', fontWeight: 700 }}>✓</span>}
+                              {isSelected && <span style={{ color: 'var(--ff-white)', fontSize: '11px', fontWeight: 700 }}><Icon name="check" /></span>}
                             </div>
                           )}
                         </div>
@@ -284,7 +285,7 @@ export default function DiscoverExplore({ onDownload }: Props): React.JSX.Elemen
 export function AttributionNotice(): React.JSX.Element {
   return (
     <div style={s.attrNotice}>
-      <span style={s.lockIcon}>🔒</span>
+      <span style={s.lockIcon}><Icon name="lock" /></span>
       <span>
         <strong>Creator, License, Photo URL, and Photo ID</strong> are always embedded when downloading Discover photos — required for proper attribution of others' work.
       </span>
@@ -318,7 +319,7 @@ export function DiscoverTile({ photo, onClick, selectMode, selected, onSelect }:
         ? <img src={photo.thumbnailUrl} alt={photo.title} style={s.thumb} loading="lazy" />
         : <div style={s.thumbPlaceholder} />
       }
-      {selected && <div style={s.checkOverlay}><span style={s.check}>✓</span></div>}
+      {selected && <div style={s.checkOverlay}><span style={s.check}><Icon name="check" /></span></div>}
       {!selected && hovered && (
         <div style={s.overlay}>
           <span style={s.overlayTitle}>{photo.title || 'Untitled'}</span>
@@ -351,7 +352,7 @@ export function DiscoverSelectBar({ count, onDownload, onCancel, onClearSelectio
         disabled={count === 0 || downloading}
         onClick={onDownload}
       >
-        {downloading ? 'Queueing…' : `↓ Download Selected (${count})`}
+        {downloading ? 'Queueing…' : <><Icon name="arrowDown" /> Download Selected ({count})</>}
       </button>
       <button style={sb.cancelBtn} onClick={onCancel}>Cancel</button>
     </div>

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import Icon from '../ui/Icon'
 import type { AlbumFitPhoto, MapAccuracy, MapCluster, MapFilter, MapView } from '../../shared/types'
 import { anchorAfterResize, limitCentre, minZoomFor, placeAt, usableSize, visibleTiles, wheelIntent, worldCopies, worldPixel, wrapLon } from '../../shared/mapGeo'
 import { loadOutline } from '../ui/mapOutline'
@@ -425,7 +426,7 @@ export default function MapPanel({ active, onDownload, onFullRescan, refreshKey,
             <div style={sharedStyles.searchGroup}>
               <input style={{ ...sharedStyles.searchInput, minWidth: 160 }} type="text" placeholder="paris, travel…" value={tagText} aria-label="Tags"
                 onChange={e => setTagText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') setTagsApplied(tagText.trim()) }} />
-              {tagText && <button style={styles.xBtn} aria-label="Clear tags" onClick={() => { setTagText(''); setTagsApplied('') }}>✕</button>}
+              {tagText && <button style={styles.xBtn} aria-label="Clear tags" onClick={() => { setTagText(''); setTagsApplied('') }}><Icon name="close" /></button>}
             </div>
             <div style={sharedStyles.segGroup}>
               {(['any', 'all'] as const).map(v => (
@@ -529,7 +530,7 @@ export default function MapPanel({ active, onDownload, onFullRescan, refreshKey,
           <aside style={styles.side} aria-label="Photos at this spot">
             <div style={styles.sideHead}>
               <b>{n(pick.cluster.count)} photo{pick.cluster.count === 1 ? '' : 's'}</b>
-              <button style={styles.close} onClick={() => setPick(null)} aria-label="Close">✕</button>
+              <button style={styles.close} onClick={() => setPick(null)} aria-label="Close"><Icon name="close" /></button>
             </div>
             <div style={styles.sideActions}>
               {pick.cluster.count > 1 && <button style={quietBtn} onClick={zoomHere}>Zoom in here</button>}

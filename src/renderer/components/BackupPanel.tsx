@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import Icon from '../ui/Icon'
 import { createPortal } from 'react-dom'
 import type { BackupList, BackupSort, BackupSummary, HealthPhoto } from '../../shared/types'
 import { dash, SectionSwitch } from './DashboardParts'
@@ -155,7 +156,7 @@ export default function BackupPanel({ refreshKey, toolbarLeft, onDownload, openR
                       <div style={styles.l1}><span style={styles.title}>{p.title || '(no title)'}</span><span style={styles.pill}>{p.kind}</span></div>
                       <div style={dash.muted}>{p.dateTaken ? `Taken ${p.dateTaken.slice(0, 10)}` : 'No date taken'}</div>
                       <div style={styles.actions}>
-                        <button style={styles.mainActionBtn} onClick={() => window.flickrAPI.openExternal(p.flickrUrl)}>Open on Flickr ↗</button>
+                        <button style={styles.mainActionBtn} onClick={() => window.flickrAPI.openExternal(p.flickrUrl)}>Open on Flickr <Icon name="external" /></button>
                         {list !== 'smaller' && <button style={quietBtn} onClick={() => onDownload([{ id: p.photoId, title: p.title }], `Backup: ${p.title || p.photoId}`, 'One photo')}>Download this one</button>}
                       </div>
                     </div>

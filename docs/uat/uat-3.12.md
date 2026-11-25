@@ -64,3 +64,14 @@ The duplicated "Do this", Main, Secondary, put-aside and danger button styles no
 - [ ] H1 **Photostream filter row.** Filters and the download filter, when switched on, show the soft pink selected look (not black). The "Keep searching" and History "Apply" buttons are plain grey Secondary buttons.
 - [ ] H2 **History panel.** Clear history, its confirm step, the remove record question: grey Secondary buttons, red only for the destructive step.
 - [ ] H3 **Download box and dialogs.** Cancel (grey) and the pink Download button look right and are the same height.
+
+## Icons (#229)
+
+One icon set (`src/renderer/ui/Icon.tsx`): line icons, 1.5 px line, round ends, in the colour of the text beside them. The six colour emoji (lock, calendar, bell, tag, clock, pin) and the plain characters (cross, tick, up-right arrow, warning sign, return, refresh and up arrows) are now these icons; the old icons were all redrawn to the same 1.5 px line; the top bar's History is a clock and Settings is a cog. Arrows inside sentences (tooltips, the names of saved downloads such as "↓ Download…") stay as text on purpose. The Health Check pulse icon is in the set but not placed anywhere yet.
+
+- [ ] I1 **The top bar.** History is a clock outline and Settings is a cog outline, side by side with the avatar. Do they read as a clock and a cog? Is the cog's shape right (eight teeth, round hub)?
+- [ ] I2 **Close buttons.** The cross in every dialog, panel, chip, filter box and the Plan box is a drawn cross, centred in its button, not a text character.
+- [ ] I3 **Ticks and warnings.** The tick on picked albums in the album box, the tick on finished downloads, History's "downloaded" and "errors" pills, the warning sign on batches with problems, the "Copied" confirmations.
+- [ ] I4 **"Open on Flickr ↗" and the other open links** (Health Check, Albums, Backup, Duplicates, the photo view, Tags): a small drawn up-right arrow after the words.
+- [ ] I5 **On This Day.** The four insight headings (Across the years, Most-used tags, Time of day, Places) have a drawn calendar, tag, clock and pin instead of emoji. The "Jump to date…" button has a calendar; the card's bell, lock on private photos.
+- [ ] I6 **Size and weight.** Icons beside text are the same size as the text and the same line weight as each other (View icons in the Photostream, the Tune checks switches icon, the chevrons). Any that look much heavier or lighter than their neighbours?

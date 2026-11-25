@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import Icon from '../ui/Icon'
 import HealthCheckSettings from './HealthCheckSettings'
 import AlbumCheckSettings from './AlbumCheckSettings'
 import InfoTip from '../ui/InfoTip'
@@ -294,12 +295,12 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
         {/* Header */}
         <div style={s.header}>
           <h2 style={s.title}>Settings</h2>
-          <button style={s.closeBtn} onClick={onClose}>✕</button>
+          <button style={s.closeBtn} onClick={onClose}><Icon name="close" /></button>
         </div>
 
         {updateVersion && (
           <div style={s.updateBanner}>
-            <span style={s.updateText}>⬆ FlickrFetch {updateVersion} is available</span>
+            <span style={s.updateText}><Icon name="arrowUp" /> FlickrFetch {updateVersion} is available</span>
             <button style={s.updateBtn} onClick={() => window.flickrAPI.openExternal('https://github.com/wallyg/FlickrFetch/releases/latest')}>
               Get Update
             </button>
@@ -716,7 +717,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
                     {key === 'embedDescription' && embedDescription && (
                       <div style={{ ...s.optRow, marginTop: '4px', marginLeft: '22px' }}>
                         <div style={s.optLabelGroup}>
-                          <span style={s.optName}><span style={s.subArrow} aria-hidden="true">↳</span>Keep Flickr's HTML</span>
+                          <span style={s.optName}><span style={s.subArrow} aria-hidden="true"><Icon name="return" /></span>Keep Flickr's HTML</span>
                           <InfoTip text={"Off (recommended): saved as plain text. Line breaks are kept, list items start with a dash, and each link is written as “text (address)”.\n\nOn: saved exactly as Flickr stores it, including tags like <a href=...>.\n\nThe optional sidecar file always keeps the original."} />
                         </div>
                         <div style={s.posGroup}>
@@ -745,7 +746,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
                 {embedGps && (
                   <div style={{ ...s.optRow, marginTop: '4px', marginLeft: '22px' }}>
                     <div style={s.optLabelGroup}>
-                      <span style={s.optName}><span style={s.subArrow} aria-hidden="true">↳</span>Strip GPS from private</span>
+                      <span style={s.optName}><span style={s.subArrow} aria-hidden="true"><Icon name="return" /></span>Strip GPS from private</span>
                       <InfoTip text={"When a photo is private, skip GPS even if GPS embedding is on.\n\nUseful for location privacy."} />
                     </div>
                     <div style={s.posGroup}>
@@ -828,7 +829,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
                 <button style={s.resetConfirmBtn} onClick={handleReset}>Reset</button>
               </div>
             ) : resetDone ? (
-              <span style={s.resetDoneText}>✓ Defaults restored</span>
+              <span style={s.resetDoneText}><Icon name="check" /> Defaults restored</span>
             ) : (
               <button style={s.restoreDefaultsBtn} onClick={() => setConfirmReset(true)}>Restore defaults</button>
             )}

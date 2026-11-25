@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react'
+import Icon from '../ui/Icon'
 import SelectBar from './SelectBar'
 import BatchEditButton from './BatchEditButton'
 import { forgetOverview } from './LibraryOverview'
@@ -133,7 +134,7 @@ export default function DuplicatesList({ status, search, sort, selected, setSele
                     <div style={styles.foot}>
                       {i === 0 && <span style={{ ...styles.badge, ...styles.badgeFirst }}>First upload</span>}
                       {i > 0 && !sameTitle(p.title, first.title) && <span style={styles.badge}>Different title</span>}
-                      <button style={styles.open} onClick={() => window.flickrAPI.openExternal(p.flickrUrl)}>Open on Flickr ↗</button>
+                      <button style={styles.open} onClick={() => window.flickrAPI.openExternal(p.flickrUrl)}>Open on Flickr <Icon name="external" /></button>
                     </div>
                   </div>
                 ))}

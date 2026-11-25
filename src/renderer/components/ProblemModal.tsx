@@ -1,4 +1,5 @@
 import React from 'react'
+import Icon from '../ui/Icon'
 
 interface ProblemModalProps {
   onClose: () => void
@@ -17,7 +18,7 @@ export default function ProblemModal({ onClose }: ProblemModalProps): React.JSX.
   return (
     <div style={s.overlay} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
       <div style={s.card}>
-        <button style={s.closeBtn} onClick={onClose} aria-label="Close">✕</button>
+        <button style={s.closeBtn} onClick={onClose} aria-label="Close"><Icon name="close" /></button>
         <h2 style={s.heading}>The Problem FlickrFetch Solves</h2>
         <div style={s.body}>
           <p style={s.para}>

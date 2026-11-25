@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from 'react'
+import Icon from '../ui/Icon'
 import { useFindShortcut } from '../hooks/useFindShortcut'
 import { DEBOUNCE, useDebouncedEffect } from '../ui/useDebounce'
 import type { FlickrPhoto, PhotoPage, SearchOperator, DateRangeField, TagMode, LicenseFilter } from '../../shared/types'
@@ -322,7 +323,7 @@ export default function AlbumPhotoGrid({ albumId, findActive, onPhotoSelect, sel
 
             <div style={styles.searchGroup}>
               <span style={styles.searchIcon}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.77" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
                 </svg>
               </span>
@@ -346,7 +347,7 @@ export default function AlbumPhotoGrid({ albumId, findActive, onPhotoSelect, sel
                 onKeyDown={e => e.key === 'Enter' && applyTitleSearch()}
               />
               {titleQuery && (
-                <button style={styles.searchClearBtn} onClick={() => { if (activeTitleQuery) dismissTitleSearch(); else setTitleQuery('') }}>✕</button>
+                <button style={styles.searchClearBtn} onClick={() => { if (activeTitleQuery) dismissTitleSearch(); else setTitleQuery('') }}><Icon name="close" /></button>
               )}
             </div>
 
@@ -430,7 +431,7 @@ export default function AlbumPhotoGrid({ albumId, findActive, onPhotoSelect, sel
                     onKeyDown={e => e.key === 'Enter' && applyTagSearch()}
                   />
                   {tagQuery && (
-                    <button style={styles.searchClearBtn} onClick={() => { if (activeTagQuery) dismissTagSearch(); else setTagQuery('') }}>✕</button>
+                    <button style={styles.searchClearBtn} onClick={() => { if (activeTagQuery) dismissTagSearch(); else setTagQuery('') }}><Icon name="close" /></button>
                   )}
                 </div>
                 <div style={styles.segGroup}>
@@ -609,7 +610,7 @@ export default function AlbumPhotoGrid({ albumId, findActive, onPhotoSelect, sel
                     backgroundColor: isSelected ? 'var(--ff-pink)' : 'var(--ff-glass-soft)',
                     border: isSelected ? '2px solid var(--ff-pink)' : '2px solid var(--ff-glass)'
                   }}>
-                    {isSelected && <span style={{ ...styles.selectCheck, animation: 'ff-pop 0.18s ease-out' }}>✓</span>}
+                    {isSelected && <span style={{ ...styles.selectCheck, animation: 'ff-pop 0.18s ease-out' }}><Icon name="check" /></span>}
                   </div>
                 )}
               </div>
@@ -682,7 +683,7 @@ export default function AlbumPhotoGrid({ albumId, findActive, onPhotoSelect, sel
                         backgroundColor: isSelected ? 'var(--ff-pink)' : 'var(--ff-glass-soft)',
                         border: isSelected ? '2px solid var(--ff-pink)' : '2px solid var(--ff-glass)'
                       }}>
-                        {isSelected && <span style={{ ...styles.selectCheck, animation: 'ff-pop 0.18s ease-out' }}>✓</span>}
+                        {isSelected && <span style={{ ...styles.selectCheck, animation: 'ff-pop 0.18s ease-out' }}><Icon name="check" /></span>}
                       </div>
                     )}
                   </div>

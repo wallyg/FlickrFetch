@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import Icon from '../ui/Icon'
 import { createPortal } from 'react-dom'
 import AuditOverview from './AuditOverview'
 import { dash, SectionSwitch } from './DashboardParts'
@@ -135,7 +136,7 @@ function MissingRow({ f, onChange }: { f: AuditFinding; onChange: (f: AuditFindi
           </>
         )}
         {f.status === 'fine' && <button style={styles.secondaryBtn} onClick={() => onChange(f, 'open')}>Undo</button>}
-        {f.flickrUrl && <button style={styles.secondaryBtn} title="Open this tag's page on your Flickr account" onClick={() => window.flickrAPI.openExternal(f.flickrUrl)}>Open on Flickr ↗</button>}
+        {f.flickrUrl && <button style={styles.secondaryBtn} title="Open this tag's page on your Flickr account" onClick={() => window.flickrAPI.openExternal(f.flickrUrl)}>Open on Flickr <Icon name="external" /></button>}
       </div>
     </div>
   )
@@ -263,18 +264,18 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
               </div>
               {plan.map(p => (
                 <div key={`${p.category}|${p.tag}`} style={styles.planLine}>
-                  <span style={{ color: p.status === 'fixed' ? 'var(--ff-success)' : 'var(--ff-text-muted)' }}>{p.status === 'fixed' ? '✓' : '○'}</span>
+                  <span style={{ color: p.status === 'fixed' ? 'var(--ff-success)' : 'var(--ff-text-muted)' }}>{p.status === 'fixed' ? <Icon name="check" /> : '○'}</span>
                   <span style={p.status === 'fixed' ? { textDecoration: 'line-through', color: 'var(--ff-text-muted)' } : undefined}>{p.line}</span>
                   <span style={styles.planType} title="The kind of problem this came from">{CATEGORY_INFO[p.category].name}</span>
-                  {p.flickrUrl && <button style={styles.viewBtn} onClick={() => { setPlan(null); window.flickrAPI.openExternal(p.flickrUrl) }}>Open on Flickr ↗</button>}
+                  {p.flickrUrl && <button style={styles.viewBtn} onClick={() => { setPlan(null); window.flickrAPI.openExternal(p.flickrUrl) }}>Open on Flickr <Icon name="external" /></button>}
                   <button style={{ ...styles.viewBtn, marginLeft: 0 }} onClick={() => { setPlan(null); onViewPhotos([p.display], 'any') }}>View photos</button>
                   {p.status === 'plan'
-                    ? <button style={styles.planRemove} title="Remove from plan" aria-label="Remove from plan" onClick={() => void removeFromPlan(p)}>✕</button>
+                    ? <button style={styles.planRemove} title="Remove from plan" aria-label="Remove from plan" onClick={() => void removeFromPlan(p)}><Icon name="close" /></button>
                     : <span style={{ width: 18 }} />}
                 </div>
               ))}
               <div style={styles.actions}>
-                <button style={styles.secondaryBtn} onClick={async () => { await window.flickrAPI.copyAuditPlan(); setCopied(true); setTimeout(() => setCopied(false), 1500) }}>{copied ? '✓ Copied' : 'Copy as checklist'}</button>
+                <button style={styles.secondaryBtn} onClick={async () => { await window.flickrAPI.copyAuditPlan(); setCopied(true); setTimeout(() => setCopied(false), 1500) }}>{copied ? <><Icon name="check" /> Copied</> : 'Copy as checklist'}</button>
                 <button style={styles.secondaryBtn} onClick={async () => { setSaved(await window.flickrAPI.saveAuditPlanCsv()) }}>Save as spreadsheet</button>
                 {saved && <><span style={styles.muted}>Saved to {saved.split('/').pop()}</span><button style={styles.viewBtn} onClick={() => window.flickrAPI.showInFinder(saved)}>Show in Finder</button></>}
               </div>
@@ -385,7 +386,7 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
                       )}
                       <button style={styles.secondaryBtn} onClick={() => onViewPhotos([f.display], 'any')}>View photos</button>
                       <BatchEditButton key={`${f.tag}|${f.category}`} label="Batch editor" style={styles.secondaryBtn} getIds={() => window.flickrAPI.getAuditPhotoIds(f.tag, f.category)} />
-                      {f.flickrUrl && <button style={styles.secondaryBtn} title="Open this tag's page on your Flickr account, to fix it there" onClick={() => window.flickrAPI.openExternal(f.flickrUrl)}>Open on Flickr ↗</button>}
+                      {f.flickrUrl && <button style={styles.secondaryBtn} title="Open this tag's page on your Flickr account, to fix it there" onClick={() => window.flickrAPI.openExternal(f.flickrUrl)}>Open on Flickr <Icon name="external" /></button>}
                     </div>
                   </div>
                 )

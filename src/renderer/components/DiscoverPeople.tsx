@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo } from 'react'
+import Icon from '../ui/Icon'
 import { useFindShortcut } from '../hooks/useFindShortcut'
 import { DEBOUNCE, useDebouncedEffect } from '../ui/useDebounce'
 import type { FlickrPhoto, FlickrAlbum, FlickrCollection, DiscoverUser, DiscoverContact, PhotoSearchParams, SearchOperator, DateRangeField, TagMode } from '../../shared/types'
@@ -655,7 +656,7 @@ export default function DiscoverPeople({ isActive, findActive = true }: { isActi
               )}
               {albumPhotos.length > 0 && !albumSelectMode && (
                 <button style={s.selectBtn} onClick={() => setAlbumSelectMode(true)}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.57" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                     <rect x="2" y="3" width="7" height="7" rx="1"/><rect x="13" y="3" width="7" height="7" rx="1"/><rect x="2" y="14" width="7" height="7" rx="1"/><path d="M14 17l2 2 4-4"/>
                   </svg>
                   Select Photos
@@ -694,11 +695,11 @@ export default function DiscoverPeople({ isActive, findActive = true }: { isActi
                 <option value="photo-id">Photo ID</option>
               </select>
               <span style={ss.searchIcon}>
-                <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.5"/><path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="2"/><path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
               </span>
               <input ref={albumFindRef} style={ss.searchInput} placeholder={albumPhotosSearchOperator === 'photo-id' ? 'Photo ID…' : 'Title…'} value={albumPhotosSearchInput} onChange={e => setAlbumPhotosSearchInput(e.target.value)} />
               {albumPhotosSearchInput && (
-                <button style={ss.searchClearBtn} onClick={() => setAlbumPhotosSearchInput('')}>✕</button>
+                <button style={ss.searchClearBtn} onClick={() => setAlbumPhotosSearchInput('')}><Icon name="close" /></button>
               )}
             </div>
             <button
@@ -888,7 +889,7 @@ export default function DiscoverPeople({ isActive, findActive = true }: { isActi
                 )}
                 {filteredPhotos.length > 0 && !userSelectMode && (
                   <button style={s.selectBtn} onClick={() => setUserSelectMode(true)}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.57" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                       <rect x="2" y="3" width="7" height="7" rx="1"/><rect x="13" y="3" width="7" height="7" rx="1"/><rect x="2" y="14" width="7" height="7" rx="1"/><path d="M14 17l2 2 4-4"/>
                     </svg>
                     Select Photos
@@ -947,7 +948,7 @@ export default function DiscoverPeople({ isActive, findActive = true }: { isActi
                     <option value="photo-id">Photo ID</option>
                   </select>
                   <span style={ss.searchIcon}>
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.5"/><path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="2"/><path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
                   </span>
                   <input
                     style={ss.searchInput}
@@ -970,7 +971,7 @@ export default function DiscoverPeople({ isActive, findActive = true }: { isActi
                           void applySearch(undefined, newSearch)
                         }
                       }}
-                    >✕</button>
+                    ><Icon name="close" /></button>
                   )}
                 </div>
 

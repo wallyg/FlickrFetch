@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import Icon from '../ui/Icon'
 import type { TagIndexStatus, TagScanProgress } from '../../shared/types'
 import { Tooltip } from './PhotoGridShared'
 import { quietBtn } from '../ui/kit'
@@ -63,7 +64,7 @@ export function LibraryDataChip({ status, info, onUpdate, onRebuild, compact }: 
         onClick={() => setOpen(o => !o)} aria-expanded={open} aria-label="Library data: update or rebuild"
       >
         <span title={dotNote} style={{ width: 8, height: 8, borderRadius: '50%', background: old ? 'var(--ff-warning)' : 'var(--ff-success)' }} />
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36" /><path d="M21 3v6h-6" /></svg>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36" /><path d="M21 3v6h-6" /></svg>
         {compact ? '' : 'Updated '}{formatWhen(status.lastScanAt, compact)}
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ opacity: 0.6 }}><path d="M5 9l7 7 7-7" /></svg>
       </button>
@@ -72,7 +73,7 @@ export function LibraryDataChip({ status, info, onUpdate, onRebuild, compact }: 
           <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ff-navy)' }}>Your library list</div>
           <div style={{ ...styles.muted, fontSize: 12, marginTop: 2 }}>{status.tagCount.toLocaleString()} tags · {status.indexedPhotos.toLocaleString()} photos · updated {when}</div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginTop: 12 }}>
-            <button style={styles.updateBtn} onClick={() => { setOpen(false); onUpdate() }}>↻ Update now</button>
+            <button style={styles.updateBtn} onClick={() => { setOpen(false); onUpdate() }}><Icon name="refresh" /> Update now</button>
             <span style={{ ...styles.muted, fontSize: 12 }}>Looks for new and edited photos, usually a few seconds. It does not notice deleted photos.</span>
           </div>
           <div style={{ height: 1, background: 'var(--ff-border)', margin: '14px 0 8px' }} />

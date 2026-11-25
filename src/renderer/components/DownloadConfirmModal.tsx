@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import Icon from '../ui/Icon'
 import type { AppSettings, MetadataSettings } from '../../shared/types'
 import { isFreeAccount, limitNotice } from '../../shared/downloadLimits'
 import { primaryBtn, quietBtn } from '../ui/kit'
@@ -68,7 +69,7 @@ export default function DownloadConfirmModal({ pending, settingsKey, isPro, onCa
 
         <div style={s.header}>
           <h2 style={s.title}>Confirm Download</h2>
-          <button style={s.closeBtn} onClick={onCancel}>✕</button>
+          <button style={s.closeBtn} onClick={onCancel}><Icon name="close" /></button>
         </div>
 
         <div style={s.body}>
@@ -108,7 +109,7 @@ export default function DownloadConfirmModal({ pending, settingsKey, isPro, onCa
                     <div style={s.metaGrid}>
                       {onFields.map(({ key, label }) => (
                         <div key={key} style={s.metaItem}>
-                          <span style={{ ...s.metaCheck, color: 'var(--ff-success)' }}>✓</span>
+                          <span style={{ ...s.metaCheck, color: 'var(--ff-success)' }}><Icon name="check" /></span>
                           <span style={{ ...s.metaLabel, color: 'var(--ff-text)' }}>{label}</span>
                         </div>
                       ))}

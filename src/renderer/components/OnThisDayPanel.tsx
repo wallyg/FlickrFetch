@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import Icon from '../ui/Icon'
 import BatchEditButton from './BatchEditButton'
 import type { DayPhoto, DayView, PrivacyScope } from '../../shared/types'
 import { MONTHS, pad2, hourLabel, PhotoTile } from './DateViewParts'
@@ -138,7 +139,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 8, position: 'relative', flexWrap: 'wrap' }}>
             <div style={styles.navSeg}>
               <button style={styles.navBtn} onClick={() => step(data.prev)}>‹ {isToday ? 'Yesterday' : 'Previous day'} <span style={styles.muted}>({data.prev.count.toLocaleString()})</span></button>
-              <button style={styles.navBtn} onClick={openPicker} title="Pick any date; only the month and day are used">📅 Jump to date…</button>
+              <button style={styles.navBtn} onClick={openPicker} title="Pick any date; only the month and day are used"><Icon name="calendar" /> Jump to date…</button>
               <button style={{ ...styles.navBtn, borderRight: 'none' }} onClick={() => step(data.next)}>{isToday ? 'Tomorrow' : 'Next day'} <span style={styles.muted}>({data.next.count.toLocaleString()})</span> ›</button>
             </div>
             {!isToday && <button style={quietBtn} onClick={goToday}>Today</button>}
@@ -166,7 +167,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
         <DateFilterBar media={media} onMedia={setMedia} privacy={privacy} onPrivacy={setPrivacy} albums={albums} onAlbums={setAlbums}
           levels={data.levels} hasCatalog={data.hasCatalog} onOpenHealth={onFullRescan}
           onClearAll={() => { setMedia('all'); setPrivacy('all'); setAlbums([]); setTag(null) }} />
-        {data.hasCatalog && <span style={styles.muted}>🔒 marks photos that are not public. Arrow counts follow the switches.</span>}
+        {data.hasCatalog && <span style={styles.muted}><Icon name="lock" /> marks photos that are not public. Arrow counts follow the switches.</span>}
         <label style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 6 }} title={`Photo size: ${tileSize}px`}>
           <span style={styles.muted}>Photo size</span>
           <input type="range" min={TILE_MIN} max={TILE_MAX} step={5} value={tileSize} onChange={e => setTileSize(Number(e.target.value))} style={{ width: 110 }} aria-label="Photo size" />
@@ -176,7 +177,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
       {tag && (
         <div style={styles.row}>
           <span style={{ ...styles.tagChip, ...selectedOn, cursor: 'default' }}>Only photos tagged {tag.label}
-            <button style={{ ...linkBtn, marginLeft: 8, color: 'var(--ff-pink-action)' }} onClick={() => setTag(null)} aria-label="Show all photos again">✕</button>
+            <button style={{ ...linkBtn, marginLeft: 8, color: 'var(--ff-pink-action)' }} onClick={() => setTag(null)} aria-label="Show all photos again"><Icon name="close" /></button>
           </span>
           <span style={styles.muted}>Counts, years and the boxes below follow this tag.</span>
         </div>
@@ -199,7 +200,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
       ) : (
         <>
           <div style={styles.insights}>
-            <Insight icon="📅" title="Across the years">
+            <Insight icon={<Icon name="calendar" />} title="Across the years">
               <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                 {data.years.map(g => (
                   <div key={g.year} style={styles.yearBar} {...asButton(() => document.getElementById(`otd-year-${g.year}`)?.scrollIntoView({ block: 'start', behavior: 'smooth' }))} title={`${g.count.toLocaleString()} photo${g.count === 1 ? '' : 's'} in ${g.year}. Click to jump there.`}>
@@ -211,7 +212,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
               </div>
             </Insight>
             {ins.topTags.length > 0 && (
-              <Insight icon="🏷" title="Most-used tags">
+              <Insight icon={<Icon name="tag" />} title="Most-used tags">
                 <div style={styles.chips}>{ins.topTags.slice(0, 5).map(t => {
                   const on = tag?.key === t.key
                   return (
@@ -223,7 +224,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
               </Insight>
             )}
             {hasHours && (
-              <Insight icon="🕒" title="Time of day">
+              <Insight icon={<Icon name="clock" />} title="Time of day">
                 <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 46 }}>
                   {ins.hourCounts.map((n, h) => <i key={h} title={`${hourLabel(h)}: ${n}`} style={{ flex: 1, display: 'block', height: Math.max(2, (n / maxHour) * 46), borderRadius: '2px 2px 0 0', background: h === peakHour ? 'var(--ff-navy)' : '#b8c4dc' }} />)}
                 </div>
@@ -231,7 +232,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
                 Busiest around {hourLabel(peakHour)} ({maxHour} photo{maxHour === 1 ? '' : 's'}).
               </Insight>
             )}
-            <Insight icon="📍" title="Places">
+            <Insight icon={<Icon name="pin" />} title="Places">
               <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--ff-navy)', lineHeight: 1 }}>{ins.withLocation.toLocaleString()} <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--ff-text-secondary)' }}>of {data.total.toLocaleString()}</span></div>
               <div style={{ marginTop: 4 }}>have a map location.</div>
             </Insight>
@@ -282,7 +283,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
   )
 }
 
-function Insight({ icon, title, children }: { icon: string; title: string; children: React.ReactNode }): React.JSX.Element {
+function Insight({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }): React.JSX.Element {
   return (
     <div style={{ background: 'var(--ff-warm)', borderRadius: 8, padding: '10px 12px', fontSize: 12, color: 'var(--ff-text)' }}>
       <b style={{ display: 'block', fontSize: 11, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--ff-text-secondary)', marginBottom: 8 }}>{icon} {title}</b>

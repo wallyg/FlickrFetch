@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import Icon from '../ui/Icon'
 import type { BatchProgress } from '../../shared/types'
 import { smallerPart } from '../../shared/downloadLimits'
 
@@ -154,7 +155,7 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
                 if (b.completedAt) bParts.push(new Date(b.completedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }))
                 return (
                   <div key={i} style={styles.batchRow}>
-                    <span style={bHasIssues && bDownloaded === 0 ? styles.dotFailed : bHasIssues ? styles.dotSkipped : styles.dotDone}>{bHasIssues ? '⚠' : '✓'}</span>
+                    <span style={bHasIssues && bDownloaded === 0 ? styles.dotFailed : bHasIssues ? styles.dotSkipped : styles.dotDone}>{bHasIssues ? <Icon name="warning" /> : <Icon name="check" />}</span>
                     <div style={styles.batchInfo}>
                       <div style={styles.batchTitleRow}>
                         <span style={styles.batchTitle}>{b.albumTitle}</span>
@@ -174,7 +175,7 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
                           {expandedFailures.has(`stacked-${i}`) && (
                             <div style={styles.failureList}>
                               {b.failedPhotos!.map((p, pi) => (
-                                <div key={pi} style={styles.failureItem}>✗ {p.title}</div>
+                                <div key={pi} style={styles.failureItem}><Icon name="close" /> {p.title}</div>
                               ))}
                             </div>
                           )}
@@ -190,7 +191,7 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
                         </>
                       )}
                     </div>
-                    <button style={styles.removeQueueBtn} title="Dismiss" onClick={() => onStackedDismiss?.(i)}>✕</button>
+                    <button style={styles.removeQueueBtn} title="Dismiss" onClick={() => onStackedDismiss?.(i)}><Icon name="close" /></button>
                   </div>
                 )
               })}
@@ -216,7 +217,7 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
                       style={styles.removeQueueBtn}
                       title="Remove from queue"
                       onClick={() => window.flickrAPI.removeFromQueue(album.id)}
-                    >✕</button>
+                    ><Icon name="close" /></button>
                   </div>
                 )
               })}
@@ -228,7 +229,7 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
           {progress !== null && (
             <div style={styles.batchRow}>
               <span style={isRunning ? styles.dotActive : (isDone && doneWithIssues && downloaded === 0) ? styles.dotFailed : (isDone && doneWithIssues) ? styles.dotSkipped : isDone ? styles.dotDone : styles.dotCancelled}>
-                {(isDone && doneWithIssues) ? '⚠' : isDone ? '✓' : isCancelled ? '✕' : '→'}
+                {(isDone && doneWithIssues) ? <Icon name="warning" /> : isDone ? <Icon name="check" /> : isCancelled ? <Icon name="close" /> : <Icon name="arrowRight" />}
               </span>
               <div style={styles.batchInfo}>
 
@@ -257,7 +258,7 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
                 </span>
                 {/* Live filename ticker */}
                 {isRunning && activeTitle && (
-                  <span style={styles.activeTicker}>↓ {activeTitle}</span>
+                  <span style={styles.activeTicker}><Icon name="arrowDown" /> {activeTitle}</span>
                 )}
                 {/* Failure list for current batch (shown after done) */}
                 {isDone && (progress?.failedPhotos ?? []).length > 0 && (
@@ -268,7 +269,7 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
                     {expandedFailures.has('current') && (
                       <div style={styles.failureList}>
                         {progress!.failedPhotos!.map((p, i) => (
-                          <div key={i} style={styles.failureItem}>✗ {p.title}</div>
+                          <div key={i} style={styles.failureItem}><Icon name="close" /> {p.title}</div>
                         ))}
                       </div>
                     )}
@@ -285,7 +286,7 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
                 )}
               </div>
               {(isDone || isCancelled) && !cancelling && (
-                <button style={styles.removeQueueBtn} title="Dismiss" onClick={handleDismiss}>✕</button>
+                <button style={styles.removeQueueBtn} title="Dismiss" onClick={handleDismiss}><Icon name="close" /></button>
               )}
             </div>
           )}
@@ -308,7 +309,7 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
               {cancelling && 'Cancelling…'}
               {!cancelling && isRunning && `${isPaused ? '⏸ ' : ''}${current.toLocaleString()} of ${total.toLocaleString()}${progress?.queuedCount ? ` · +${progress.queuedCount} queued` : ''}`}
               {!cancelling && isDone && (() => {
-                const parts: string[] = [`✓ ${downloaded.toLocaleString()} saved`]
+                const parts: string[] = [`${downloaded.toLocaleString()} saved`]
                 if (skipped > 0) parts.push(`${skipped.toLocaleString()} skipped`)
                 if (sizeUnavailable > 0) parts.push(`${sizeUnavailable.toLocaleString()} size unavailable`)
                 if (failed > 0) parts.push(`${failed.toLocaleString()} failed`)
@@ -325,7 +326,7 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
                 const nf = newest.failedCount ?? 0
                 const nsf = newest.smartFilteredCount ?? 0
                 const nd = (newest.total ?? 0) - ns - nsu - nf
-                const parts = [`✓ ${nd.toLocaleString()} saved`]
+                const parts = [`${nd.toLocaleString()} saved`]
                 if (ns > 0) parts.push(`${ns.toLocaleString()} skipped`)
                 if (nsu > 0) parts.push(`${nsu.toLocaleString()} size unavailable`)
                 if (nf > 0) parts.push(`${nf.toLocaleString()} failed`)

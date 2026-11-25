@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import Icon from '../ui/Icon'
 import type { AlbumFitPhoto, AlbumItem, AlbumKind } from '../../shared/types'
 import BatchEditButton from './BatchEditButton'
 import { quietBtn } from '../ui/kit'
@@ -84,7 +85,7 @@ export function MissingRow({ item, onFine, onKind }: { item: AlbumItem; onFine: 
             : <BatchEditButton inline key={`${item.albumId}|${open && photos ? ticked.size : 'all'}`} style={actionStyles.fix}
                 label={open && photos ? `Open ${ticked.size.toLocaleString()} in Flickr's organizer` : `Open all ${count.toLocaleString()} in Flickr's organizer`}
                 getIds={() => (open && photos ? Promise.resolve([...ticked]) : window.flickrAPI.getAlbumFitPhotoIds(item.albumId))} />)}
-          <button style={actionStyles.link} onClick={() => window.flickrAPI.openExternal(item.flickrUrl)}>Open album ↗</button>
+          <button style={actionStyles.link} onClick={() => window.flickrAPI.openExternal(item.flickrUrl)}>Open album <Icon name="external" /></button>
           {fine ? <button style={actionStyles.quiet} onClick={() => onFine('open')}>Undo</button> : <button style={actionStyles.quiet} onClick={() => onFine('fine')}>This one is fine</button>}
         </div>
       </div>

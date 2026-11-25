@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import Icon from '../ui/Icon'
 import type { TagRow, TagLetterGroup, TagListQuery, TagTextOperator, TagMode } from '../../shared/types'
 import EmptyState from './EmptyState'
 import { ScanLine, ScanProgressCard } from './TagScanParts'
@@ -282,12 +283,12 @@ export default function TagsPanel({ active, onViewPhotos, onOpenCleanup }: TagsP
             onChange={e => onTextChange(e.target.value)}
             onKeyDown={e => { if (e.key === 'Escape') { setText(''); e.currentTarget.blur() } }}
           />
-          {text && <button style={styles.clearX} onClick={() => setText('')}>✕</button>}
+          {text && <button style={styles.clearX} onClick={() => setText('')}><Icon name="close" /></button>}
         </div>
         <div style={styles.optionGroup}>
           <select style={styles.select} value={sort} onChange={e => setSort(e.target.value as NonNullable<TagListQuery['sort']>)}>
-            <option value="alpha">A → Z</option>
-            <option value="alphaDesc">Z → A</option>
+            <option value="alpha">A <Icon name="arrowRight" /> Z</option>
+            <option value="alphaDesc">Z <Icon name="arrowRight" /> A</option>
             <option value="count">Most photos first</option>
           </select>
           <label style={styles.checkLabel} title={"Machine tags look like namespace:key=value.\nThey are added by apps."}>
@@ -344,7 +345,7 @@ export default function TagsPanel({ active, onViewPhotos, onOpenCleanup }: TagsP
             {[...selected.entries()].map(([name, display]) => (
               <span key={name} style={styles.selChip}>
                 {display}
-                <button style={styles.selChipX} onClick={() => setSelected(prev => { const n = new Map(prev); n.delete(name); return n })}>✕</button>
+                <button style={styles.selChipX} onClick={() => setSelected(prev => { const n = new Map(prev); n.delete(name); return n })}><Icon name="close" /></button>
               </span>
             ))}
           </div>

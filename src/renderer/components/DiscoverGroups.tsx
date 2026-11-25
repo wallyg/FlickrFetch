@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo } from 'react'
+import Icon from '../ui/Icon'
 import { useFindShortcut } from '../hooks/useFindShortcut'
 import { DEBOUNCE, useDebouncedEffect } from '../ui/useDebounce'
 import type { FlickrPhoto, DiscoverGroup, TagMode } from '../../shared/types'
@@ -389,7 +390,7 @@ export default function DiscoverGroups({ findActive = true }: { findActive?: boo
           )}
           {groupDownloadWarning && (
             <div style={{ padding: '8px 16px', backgroundColor: 'color-mix(in srgb, var(--ff-warning) 10%, transparent)', borderBottom: '1px solid color-mix(in srgb, var(--ff-warning) 25%, transparent)', display: 'flex', alignItems: 'center', gap: '12px', fontSize: '13px' }}>
-              <span style={{ color: 'var(--ff-warning-text)', fontSize: '14px', flexShrink: 0 }}>⚠</span>
+              <span style={{ color: 'var(--ff-warning-text)', fontSize: '14px', flexShrink: 0 }}><Icon name="warning" /></span>
               <span style={{ flex: 1 }}>
                 This group has {groupDownloadWarning.photoCount.toLocaleString()} photos. Downloading all may take a while to start.
               </span>
@@ -405,7 +406,7 @@ export default function DiscoverGroups({ findActive = true }: { findActive?: boo
               <button
                 style={{ background: 'none', border: 'none', fontSize: '16px', color: 'var(--ff-text-secondary)', cursor: 'pointer', lineHeight: 1, flexShrink: 0 }}
                 onClick={() => setGroupDownloadWarning(null)}
-              >✕</button>
+              ><Icon name="close" /></button>
             </div>
           )}
           {!selectMode && (
@@ -426,7 +427,7 @@ export default function DiscoverGroups({ findActive = true }: { findActive?: boo
                 {/* Keyword search */}
                 <div style={ss.searchGroup}>
                   <span style={ss.searchIcon}>
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.5"/><path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="2"/><path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
                   </span>
                   <input
                     ref={findRef}
@@ -436,7 +437,7 @@ export default function DiscoverGroups({ findActive = true }: { findActive?: boo
                     onChange={e => setPoolSearchInput(e.target.value)}
                   />
                   {poolSearchInput && (
-                    <button style={ss.searchClearBtn} onClick={() => setPoolSearchInput('')}>✕</button>
+                    <button style={ss.searchClearBtn} onClick={() => setPoolSearchInput('')}><Icon name="close" /></button>
                   )}
                 </div>
 
@@ -672,7 +673,7 @@ export default function DiscoverGroups({ findActive = true }: { findActive?: boo
                             )}
                             {selectMode && (
                               <div style={{ position: 'absolute', top: '6px', right: '6px', width: '20px', height: '20px', borderRadius: '50%', border: `2px solid ${isSelected ? 'var(--ff-pink)' : 'var(--ff-glass)'}`, backgroundColor: isSelected ? 'var(--ff-pink)' : 'var(--ff-glass-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                {isSelected && <span style={{ color: 'var(--ff-white)', fontSize: '11px', fontWeight: 700 }}>✓</span>}
+                                {isSelected && <span style={{ color: 'var(--ff-white)', fontSize: '11px', fontWeight: 700 }}><Icon name="check" /></span>}
                               </div>
                             )}
                           </div>

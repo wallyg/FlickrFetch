@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react'
+import Icon from '../ui/Icon'
 import { useFindShortcut } from '../hooks/useFindShortcut'
 import type { FlickrCollection } from '../../shared/types'
 import BackToTop from '../ui/BackToTop'
@@ -73,7 +74,7 @@ export default function CollectionList({ onCollectionSelect, active = true }: Co
             onChange={e => setSearchQuery(e.target.value)}
           />
           {searchQuery && (
-            <button style={styles.clearBtn} onClick={() => setSearchQuery('')}>✕</button>
+            <button style={styles.clearBtn} onClick={() => setSearchQuery('')}><Icon name="close" /></button>
           )}
         </div>
         <span style={styles.countLabel}>

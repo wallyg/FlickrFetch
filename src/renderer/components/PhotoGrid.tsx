@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import Icon from '../ui/Icon'
 import { useFindShortcut } from '../hooks/useFindShortcut'
 import { quietBtn } from '../ui/kit'
 import { DEBOUNCE, useDebouncedEffect } from '../ui/useDebounce'
@@ -363,7 +364,7 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
   )
   if (error) return (
     <div style={styles.centered}>
-      <p style={styles.errorText}>⚠️ {error}</p>
+      <p style={styles.errorText}><Icon name="warning" />️ {error}</p>
       <button style={styles.retryButton} onClick={() => loadPage(1)}>Try again</button>
     </div>
   )
@@ -394,7 +395,7 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
 
             <div style={styles.searchGroup}>
               <span style={styles.searchIcon}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.77" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
                 </svg>
               </span>
@@ -424,7 +425,7 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
                     onKeyDown={e => e.key === 'Enter' && triggerSearch()}
                   />
                   {searchQuery && (
-                    <button style={styles.searchClearBtn} onClick={() => { if (activeSearch.query) dismissSearchQuery(); else setSearchQuery('') }}>✕</button>
+                    <button style={styles.searchClearBtn} onClick={() => { if (activeSearch.query) dismissSearchQuery(); else setSearchQuery('') }}><Icon name="close" /></button>
                   )}
                 </>
               ) : (
@@ -451,11 +452,11 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
                   {photoIdQuery.trim() && filteredPhotos.length === 0 && photoIdStatus !== 'searching' && (
                     photoIdStatus === 'not-found'
                       ? <span style={styles.idStatusErr}>Not on Flickr</span>
-                      : <button style={styles.idOpenDetailBtn} onClick={() => handlePhotoIdLookup(photoIdQuery)}>Open →</button>
+                      : <button style={styles.idOpenDetailBtn} onClick={() => handlePhotoIdLookup(photoIdQuery)}>Open <Icon name="arrowRight" /></button>
                   )}
                   {photoIdStatus === 'searching' && <span style={styles.idStatus}>…</span>}
                   {photoIdQuery && (
-                    <button style={styles.searchClearBtn} onClick={() => { setPhotoIdQuery(''); setPhotoIdStatus('idle') }}>✕</button>
+                    <button style={styles.searchClearBtn} onClick={() => { setPhotoIdQuery(''); setPhotoIdStatus('idle') }}><Icon name="close" /></button>
                   )}
                 </>
               )}
@@ -544,7 +545,7 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
                     onKeyDown={e => e.key === 'Enter' && triggerSearch()}
                   />
                   {tagQuery && (
-                    <button style={styles.searchClearBtn} onClick={() => { if (activeSearch.tagQuery) dismissTagQuery(); else setTagQuery('') }}>✕</button>
+                    <button style={styles.searchClearBtn} onClick={() => { if (activeSearch.tagQuery) dismissTagQuery(); else setTagQuery('') }}><Icon name="close" /></button>
                   )}
                 </div>
                 <div style={styles.segGroup}>
@@ -631,10 +632,10 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
                 />
               )}
               {onBackToDates && dateSearchRequest && activeSearch.dateMin === dateSearchRequest.from && activeSearch.dateMax === dateSearchRequest.to && (
-                <button style={styles.clearFiltersLink} onClick={onBackToDates}>← Back to {dateSearchRequest.backLabel ?? 'On This Day'}</button>
+                <button style={styles.clearFiltersLink} onClick={onBackToDates}><Icon name="arrowLeft" /> Back to {dateSearchRequest.backLabel ?? 'On This Day'}</button>
               )}
               {onBackToTags && tagSearchRequest && activeSearch.tagQuery === tagSearchRequest.tags.join(', ') && (
-                <button style={styles.clearFiltersLink} onClick={onBackToTags}>← Back to {backToTagsLabel ?? 'Tags'}</button>
+                <button style={styles.clearFiltersLink} onClick={onBackToTags}><Icon name="arrowLeft" /> Back to {backToTagsLabel ?? 'Tags'}</button>
               )}
               {(activeSearch.dateMin || activeSearch.dateMax) && (
                 <Chip
@@ -783,7 +784,7 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
                     backgroundColor: isSelected ? 'var(--ff-pink)' : 'var(--ff-glass-soft)',
                     border: isSelected ? '2px solid var(--ff-pink)' : '2px solid var(--ff-glass)'
                   }}>
-                    {isSelected && <span style={{ ...styles.selectCheck, animation: 'ff-pop 0.18s ease-out' }}>✓</span>}
+                    {isSelected && <span style={{ ...styles.selectCheck, animation: 'ff-pop 0.18s ease-out' }}><Icon name="check" /></span>}
                   </div>
                 )}
               </div>
@@ -855,7 +856,7 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
                         backgroundColor: isSelected ? 'var(--ff-pink)' : 'var(--ff-glass-soft)',
                         border: isSelected ? '2px solid var(--ff-pink)' : '2px solid var(--ff-glass)'
                       }}>
-                        {isSelected && <span style={{ ...styles.selectCheck, animation: 'ff-pop 0.18s ease-out' }}>✓</span>}
+                        {isSelected && <span style={{ ...styles.selectCheck, animation: 'ff-pop 0.18s ease-out' }}><Icon name="check" /></span>}
                       </div>
                     )}
                   </div>

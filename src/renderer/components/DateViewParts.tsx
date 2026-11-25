@@ -1,4 +1,5 @@
 import React from 'react'
+import Icon from '../ui/Icon'
 import type { DayPhoto, PrivacyScope } from '../../shared/types'
 import { segGroup, segBtn, selectedOn } from '../ui/kit'
 import { asButton } from '../ui/a11y'
@@ -54,13 +55,13 @@ export function PhotoTile({ photo, selected, onClick }: { photo: DayPhoto; selec
         outline: selected ? '3px solid var(--ff-pink)' : 'none', outlineOffset: -3 }}
     >
       {photo.privacy > 0 && (
-        <span style={{ position: 'absolute', left: 5, top: 5, zIndex: 2, fontSize: 11, background: 'var(--ff-glass)', borderRadius: 8, padding: '0 5px' }} title="Not public">🔒</span>
+        <span style={{ position: 'absolute', left: 5, top: 5, zIndex: 2, fontSize: 11, background: 'var(--ff-glass)', borderRadius: 8, padding: '0 5px' }} title="Not public"><Icon name="lock" /></span>
       )}
       {photo.media === 'video' && (
         <span style={{ position: 'absolute', right: 5, bottom: 26, zIndex: 2, fontSize: 11, background: 'var(--ff-scrim-strong)', color: 'var(--ff-white)', borderRadius: 8, padding: '1px 7px' }} title="Video">▶ Video</span>
       )}
       {selected && (
-        <span style={{ position: 'absolute', right: 5, top: 5, zIndex: 2, fontSize: 11, background: 'var(--ff-pink)', color: 'var(--ff-white)', borderRadius: 8, padding: '0 6px' }}>✓</span>
+        <span style={{ position: 'absolute', right: 5, top: 5, zIndex: 2, fontSize: 11, background: 'var(--ff-pink)', color: 'var(--ff-white)', borderRadius: 8, padding: '0 6px' }}><Icon name="check" /></span>
       )}
       <img src={photo.thumbUrl} alt="" loading="lazy" style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', display: 'block' }} />
       <span style={{ display: 'block', fontSize: 11, padding: '3px 5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', background: 'var(--ff-surface)', color: 'var(--ff-text)' }}>

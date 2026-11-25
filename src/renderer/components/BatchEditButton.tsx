@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import Icon from '../ui/Icon'
 import { quietBtn, linkBtn } from '../ui/kit'
 import HoverNote from '../ui/HoverNote'
 
@@ -54,7 +55,7 @@ export default function BatchEditButton({ getIds, label = "Fix in Flickr's batch
     <div style={{ display: 'flex', flexDirection: inline ? 'row' : 'column', flexWrap: 'wrap', gap: inline ? 10 : 6, alignItems: inline ? 'center' : 'flex-start' }}>
       <HoverNote mark={false} block={style?.width === '100%'} text={"Opens Flickr's batch editor with these photos loaded, so you can change them there. FlickrFetch does not edit anything.\nIt takes 500 photos at a time."}>
         <button style={style ?? quietBtn} disabled={busy} onClick={() => void open(0)}>
-          {busy ? 'Opening…' : label} <span aria-hidden>↗</span>
+          {busy ? 'Opening…' : label} <span aria-hidden><Icon name="external" /></span>
         </button>
       </HoverNote>
       {ids && note !== 'hidden' && (

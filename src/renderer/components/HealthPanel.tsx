@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import Icon from '../ui/Icon'
 import { createPortal } from 'react-dom'
 import type { CleanupRuleState } from '../../shared/cleanupRules'
 import type { DuplicateSort, HealthCondition, HealthPhoto, HealthSort, HealthSummary } from '../../shared/types'
@@ -164,7 +165,7 @@ export default function HealthPanel({ refreshKey, onFullRescan, toolbarLeft, sta
         </div>
 
         <div style={styles.main}>
-          {year && <div style={styles.statusRow}><button style={styles.statusChip} title="Show every year again" onClick={() => setYear('')}>Taken in {year} ✕</button></div>}
+          {year && <div style={styles.statusRow}><button style={styles.statusChip} title="Show every year again" onClick={() => setYear('')}>Taken in {year} <Icon name="close" /></button></div>}
           <ListHead sort={condition === 'title' && reasons ? (
             <span style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--ff-text-secondary)' }}>Reason
@@ -202,10 +203,10 @@ export default function HealthPanel({ refreshKey, onFullRescan, toolbarLeft, sta
                     <div style={styles.muted}>{p.dateTaken ? `Taken ${p.dateTaken.slice(0, 10)}` : 'No date taken'}</div>
                     {p.hint && <div style={{ ...styles.muted, marginTop: 3 }}>{p.hint}</div>}
                     <div style={styles.actions}>
-                      <button style={styles.mainActionBtn} onClick={() => window.flickrAPI.openExternal(p.flickrUrl)}>Open on Flickr ↗</button>
+                      <button style={styles.mainActionBtn} onClick={() => window.flickrAPI.openExternal(p.flickrUrl)}>Open on Flickr <Icon name="external" /></button>
                       {p.hintGeo && onShowOnMap
                         ? <button style={styles.secondaryBtn} title="Opens the Map tab on this place, with a mark" onClick={() => onShowOnMap((p.hintGeo as { lat: number; lon: number }).lat, (p.hintGeo as { lat: number; lon: number }).lon)}>Show on the map</button>
-                        : p.hintMapUrl && <button style={styles.secondaryBtn} onClick={() => window.flickrAPI.openExternal(p.hintMapUrl as string)}>Show on a map ↗</button>}
+                        : p.hintMapUrl && <button style={styles.secondaryBtn} onClick={() => window.flickrAPI.openExternal(p.hintMapUrl as string)}>Show on a map <Icon name="external" /></button>}
                       {p.status === 'open' && <BatchEditButton inline key={p.photoId} style={styles.secondaryBtn} label="Batch editor" getIds={async () => [p.photoId]} />}
                       {p.status === 'open'
                         ? <button style={styles.secondaryBtn} onClick={() => void mark(p, 'fine')}>This one is fine</button>
