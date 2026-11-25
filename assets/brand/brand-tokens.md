@@ -105,10 +105,20 @@ One style: line icons, stroke 1.5, round ends and corners, drawn on a 16 px grid
 
 ## States, focus and motion
 
-- **Focus:** every control shows a visible ring for keyboard users: 2 px `--ff-blue`, 2 px away from the edge, set once for the whole app with `:focus-visible`. 17 places turn the outline off today and nothing replaces it.
-- **Hover, pressed, disabled:** defined once in the shared styles, not per screen. Defaults: hover tints a quiet button with `--ff-grey-100`; pressed darkens that tint a step; disabled is half opacity with a not-allowed cursor. To be reviewed on screen in the sweep.
-- **Motion:** transitions are 200 ms or shorter. When the Mac is set to reduce motion, animations and transitions are switched off, set once for the whole app.
-- **Colour scheme:** the app declares itself light (`color-scheme: light`), so form controls and scrollbars stay light even in Mac Dark Mode.
+Written once, in `src/renderer/index.html` (built in 3.13, #232; `tests/states.test.ts` keeps them there):
+
+- **Focus:** every control shows a visible ring for keyboard users: 2 px `--ff-blue`, 2 px away from the edge, set once for the whole app with `:focus-visible` (with `!important`, because some controls turn their outline off inline). A mouse click does not show it.
+- **Hover and pressed:** a button with a 1 px edge, and a select, takes a grey wash over its own colour (`--ff-wash-hover` 5% black, `--ff-wash-press` 10%), so a pink button stays pink and gets darker. Buttons without an edge (text links, tiles) keep whatever hover look their component gives them. The older hand-written hover handlers stay until the button sweep (#262).
+- **Disabled:** half opacity and a not-allowed pointer; a disabled field is filled `--ff-grey-100`. A component that dims itself keeps its own opacity.
+- **Checkboxes and radio buttons** use `--ff-pink-action` as their accent, the same pink as every other selection.
+- **Motion:** transitions are 200 ms or shorter. When the Mac is set to reduce motion, animations and transitions are switched off. A spinner that shows work is going on keeps turning (`data-motion="keep"`).
+- **Dark Mode:** `color-scheme: light` is declared, so form controls and scrollbars stay light; looking at it on screen is #239.
+
+## Fields: text boxes, number boxes and selects (3.13, #237)
+
+One look in `ui/kit.ts`: a 1 px `--ff-line-strong` edge (the quiet button's edge), 6 px corners, `--ff-surface` fill, 13 px text. `fieldBox` is the standard size (5 px 8 px padding, about as tall as a quiet button); `fieldCompact` (3 px 6 px) sits inside a row of text or a settings line; `selectBox` and `selectCompact` add the pointer. Spread one and add only what is special (a width, a smaller text size, room for a clear button): `{ ...fieldCompact, width: 72 }`. A box typed out in full fails `tests/states.test.ts`.
+
+Found before the sweep: 14 text boxes and selects typed out by hand with six paddings (2 px 6 px up to 7 px 28 px) and two edge colours (`--ff-border` and `--ff-line-strong`); all 14 now use the kit. Left for later because they are search boxes inside their own wrapper with a search icon and a clear button (History, Discover people and groups, Collections, Albums, Photostream filter, Login): they look the same, but each lays itself out.
 
 ## Wording
 

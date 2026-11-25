@@ -3,7 +3,7 @@ import Icon from '../ui/Icon'
 import type { FineReasonSummaryRow } from '../../shared/types'
 import { CLEANUP_RULES, DEFAULT_GENERIC_WORDS, logicOf } from '../../shared/cleanupRules'
 import type { CleanupRuleState } from '../../shared/cleanupRules'
-import { segGroup, segBtn, selectedOn } from '../ui/kit'
+import { segGroup, segBtn, selectedOn, fieldBox, fieldCompact } from '../ui/kit'
 import AlbumFitSettings from './AlbumFitSettings'
 import MissingTagSettings from './MissingTagSettings'
 import LocationHintSettings from './LocationHintSettings'
@@ -204,8 +204,8 @@ const styles: Record<string, React.CSSProperties> = {
   chipN: { color: 'var(--ff-text-muted)', fontWeight: 400 },
   count: { fontWeight: 400, color: 'var(--ff-text-secondary)' },
   numberRow: { display: 'flex', alignItems: 'center', gap: 8, marginTop: 6, fontSize: 12, color: 'var(--ff-text)' },
-  numberInput: { width: 64, border: '1px solid var(--ff-line-strong)', borderRadius: 6, padding: '3px 6px', fontSize: 13, background: 'var(--ff-surface)', color: 'var(--ff-text)' },
-  wordsBox: { display: 'block', width: '100%', maxWidth: 320, marginTop: 4, border: '1px solid var(--ff-line-strong)', borderRadius: 6, padding: '6px 8px', fontSize: 12, fontFamily: 'inherit', background: 'var(--ff-surface)', color: 'var(--ff-text)', resize: 'vertical' },
+  numberInput: { ...fieldCompact, width: 64 },
+  wordsBox: { ...fieldBox, display: 'block', width: '100%', maxWidth: 320, marginTop: 4, fontSize: 12, fontFamily: 'inherit', resize: 'vertical' },
   resetBtn: { marginTop: 4, border: 'none', background: 'none', padding: 0, fontSize: 12, color: 'var(--ff-text-secondary)', textDecoration: 'underline', cursor: 'pointer' },
   blurb: { fontSize: 12, color: 'var(--ff-text-secondary)', marginTop: 2 },
 }

@@ -11,7 +11,7 @@ import { GLUE_BOUNDARY_SOURCE } from '../../shared/tags'
 import { logicOf, ruleById } from '../../shared/cleanupRules'
 import type { CleanupRuleState } from '../../shared/cleanupRules'
 import type { AlbumFitPhoto, AuditCategory, AuditClue, AuditFinding, AuditPlanRow, AuditSort, AuditStatus, AuditSummary, TagMode } from '../../shared/types'
-import { quietBtn, primaryBtn, selectedOn, filterInput } from '../ui/kit'
+import { quietBtn, primaryBtn, selectedOn, filterInput, fieldBox, selectBox } from '../ui/kit'
 import BatchEditButton from './BatchEditButton'
 import PhotoStrip from './PhotoStrip'
 import HoverNote from '../ui/HoverNote'
@@ -425,10 +425,10 @@ const styles: Record<string, React.CSSProperties> = {
   pillLow: { background: 'var(--ff-border)', color: 'var(--ff-text-secondary)' },
   reasonLabel: { fontSize: 12, color: 'var(--ff-text-secondary)', background: 'var(--ff-warm)', borderRadius: 8, padding: '1px 8px' },
   reasonBox: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--ff-text-secondary)' },
-  reasonSelect: { border: '1px solid var(--ff-border)', borderRadius: 6, padding: '5px 8px', fontSize: 13, background: 'var(--ff-surface)', color: 'var(--ff-text)' },
+  reasonSelect: { ...selectBox },
   count: { marginLeft: 'auto', fontSize: 12, color: 'var(--ff-text-secondary)', whiteSpace: 'nowrap' },
   l2: { display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, flexWrap: 'wrap' },
-  input: { flex: 1, minWidth: 220, border: '1px solid var(--ff-border)', borderRadius: 6, padding: '5px 9px', fontSize: 13, background: 'var(--ff-surface)', color: 'var(--ff-text)' },
+  input: { ...fieldBox, flex: 1, minWidth: 220 },
   ev: { fontSize: 12, color: 'var(--ff-text-secondary)', marginTop: 6, overflowWrap: 'anywhere' },
   actions: { display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, flexWrap: 'wrap' },
   primaryBtn: { ...primaryBtn },

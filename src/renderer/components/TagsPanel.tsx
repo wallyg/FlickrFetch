@@ -4,7 +4,7 @@ import type { TagRow, TagLetterGroup, TagListQuery, TagTextOperator, TagMode } f
 import EmptyState from './EmptyState'
 import { ScanLine, ScanProgressCard } from './TagScanParts'
 import { useTagScan } from '../hooks/useTagScan'
-import { quietBtn, selectedOn, primaryBtn as mainBtn } from '../ui/kit'
+import { quietBtn, selectedOn, primaryBtn as mainBtn, fieldBox, selectBox } from '../ui/kit'
 import BackToTop from '../ui/BackToTop'
 
 // The Tags tab: browse every tag you have used, narrow by letter or by typing, pick some,
@@ -379,8 +379,8 @@ const styles: Record<string, React.CSSProperties> = {
   controls: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px', padding: '6px 24px' },
   searchGroup: { display: 'flex', alignItems: 'center', gap: '6px', flex: '1 1 340px', maxWidth: '620px', position: 'relative' },
   optionGroup: { display: 'flex', alignItems: 'center', gap: '12px' },
-  select: { border: '1px solid var(--ff-border)', borderRadius: '6px', padding: '6px 8px', fontSize: '13px', background: 'var(--ff-surface)', color: 'var(--ff-text)' },
-  input: { flex: 1, border: '1px solid var(--ff-border)', borderRadius: '6px', padding: '7px 28px 7px 10px', fontSize: '13px', background: 'var(--ff-surface)', color: 'var(--ff-text)' },
+  select: { ...selectBox },
+  input: { ...fieldBox, flex: 1, padding: '7px 28px 7px 10px' },
   clearX: { position: 'absolute', right: '8px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ff-text-muted)', fontSize: '12px' },
   checkLabel: { display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px', color: 'var(--ff-text-secondary)', cursor: 'pointer' },
   strips: { display: 'flex', flexDirection: 'column', gap: '6px', padding: '4px 24px 2px' },

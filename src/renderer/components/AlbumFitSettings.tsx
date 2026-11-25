@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { fieldCompact } from '../ui/kit'
 import type { AlbumFitSettings as Settings, AlbumFitStats } from '../../shared/types'
 
 // The numbers behind the Album fit lists (Tune checks). Each is saved when you finish typing, and the counts underneath are worked out
@@ -125,7 +126,7 @@ const styles: Record<string, React.CSSProperties> = {
   head: { fontSize: 12, fontWeight: 700, color: 'var(--ff-text)', marginTop: 6 },
   grid: { display: 'flex', flexDirection: 'column', gap: 4 },
   row: { display: 'flex', alignItems: 'center', gap: 10, fontSize: 12, color: 'var(--ff-text)' },
-  input: { width: 72, border: '1px solid var(--ff-line-strong)', borderRadius: 6, padding: '3px 6px', fontSize: 13, background: 'var(--ff-surface)', color: 'var(--ff-text)' },
+  input: { ...fieldCompact, width: 72 },
   link: { alignSelf: 'flex-start', border: 'none', background: 'none', padding: 0, fontSize: 12, color: 'var(--ff-text-secondary)', textDecoration: 'underline', cursor: 'pointer' },
   stats: { fontSize: 12, color: 'var(--ff-text)', background: 'var(--ff-warm)', borderRadius: 6, padding: '6px 10px', display: 'flex', flexDirection: 'column', gap: 3 },
   statRow: { display: 'grid', gridTemplateColumns: '110px 1fr', gap: 8, alignItems: 'baseline' },

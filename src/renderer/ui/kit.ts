@@ -10,12 +10,18 @@ import type { CSSProperties } from 'react'
 //   dangerBtn   delete or clear: the Secondary shape in red
 // Titles are navy; navy is not used as a button colour.
 
+// A marker the global hover and pressed wash looks for (index.html). A custom property is written into the style attribute word for word, so the wash
+// finds every button built from these looks however the browser would otherwise write out its border.
+const BOXED = { '--ff-box': '1' } as CSSProperties
+
 export const primaryBtn: CSSProperties = {
+  ...BOXED,
   background: 'var(--ff-pink-action)', color: 'var(--ff-white)', border: '1px solid var(--ff-pink-action)',
   borderRadius: 6, padding: '5px 13px', fontSize: 13, fontWeight: 700, cursor: 'pointer'
 }
 
 export const quietBtn: CSSProperties = {
+  ...BOXED,
   background: 'var(--ff-surface)', color: 'var(--ff-text)', border: '1px solid var(--ff-line-strong)',
   borderRadius: 6, padding: '4px 11px', fontSize: 13, cursor: 'pointer'
 }
@@ -44,7 +50,17 @@ export const selectedOn: CSSProperties = {
   boxShadow: 'inset 0 0 0 1px var(--ff-pink)'
 }
 
+// Text boxes, number boxes and selects: one look (#237). The edge is the quiet button's edge, the corner is the button's corner.
+// fieldBox is the standard size, fieldCompact sits inside a row of text or a settings line; selectBox and selectCompact add the pointer.
+export const fieldBox: CSSProperties = {
+  border: '1px solid var(--ff-line-strong)', borderRadius: 6, padding: '5px 8px', fontSize: 13, background: 'var(--ff-surface)', color: 'var(--ff-text)'
+}
+export const fieldCompact: CSSProperties = { ...fieldBox, padding: '3px 6px' }
+export const selectBox: CSSProperties = { ...fieldBox, cursor: 'pointer' }
+export const selectCompact: CSSProperties = { ...fieldCompact, cursor: 'pointer' }
+
 export const chip: CSSProperties = {
+  ...BOXED,
   border: '1px solid var(--ff-border)', borderRadius: 12, padding: '3px 11px', fontSize: 13,
   background: 'var(--ff-surface)', color: 'var(--ff-text)', cursor: 'pointer'
 }
@@ -65,7 +81,4 @@ export const railItem: CSSProperties = {
 export const railSel: CSSProperties = { background: 'var(--ff-tint)', color: 'var(--ff-pink-action)' }
 
 // A small text box for filtering a list
-export const filterInput: CSSProperties = {
-  width: '100%', boxSizing: 'border-box', border: '1px solid var(--ff-border)', borderRadius: 6, padding: '5px 8px',
-  fontSize: 13, background: 'var(--ff-surface)', color: 'var(--ff-text)'
-}
+export const filterInput: CSSProperties = { ...fieldBox, width: '100%', boxSizing: 'border-box' }

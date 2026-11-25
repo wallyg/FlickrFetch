@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { fieldBox } from '../ui/kit'
 import Icon from '../ui/Icon'
 import HealthCheckSettings from './HealthCheckSettings'
 import AlbumCheckSettings from './AlbumCheckSettings'
@@ -911,7 +912,7 @@ const s: Record<string, React.CSSProperties> = {
   subOptRow: { display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' },
   fmtLabel: { flex: 1, fontSize: '12px', color: 'var(--ff-text)' },
   fmtExample: { fontSize: '11px', fontFamily: 'monospace', color: 'var(--ff-text-secondary)' },
-  textInput: { width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--ff-line-strong)', background: 'var(--ff-surface)', color: 'var(--ff-text)', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const },
+  textInput: { ...fieldBox, width: '100%', boxSizing: 'border-box' as const },
 
   // Scroll fade + chevron
   scrollFade: { height: '40px', background: 'linear-gradient(to top, var(--ff-white) 50%, transparent)', marginTop: '-40px', position: 'relative', zIndex: 1, pointerEvents: 'none', flexShrink: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: '6px' },

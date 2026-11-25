@@ -43,6 +43,8 @@
         --ff-info-bg:        #EEF5FF;   /* pale blue fill: a note or a chip that informs */
         --ff-info-line:      #CFE0F7;   /* the edge of that pale blue */
         --ff-stage:          #111111;   /* the dark behind a photo or video */
+        --ff-wash-hover:     rgba(0,0,0,0.05);   /* the tint a bordered button or select takes under the pointer (#232) */
+        --ff-wash-press:     rgba(0,0,0,0.10);   /* and while it is pressed */
         --ff-z-sticky:       10;    /* layers, lowest to highest: a sticky bar or raised card, */
         --ff-z-menu:         100;   /* a menu or dropdown, */
         --ff-z-dialog:       200;   /* a dialog with its backdrop (and the full-window photo view), */
@@ -60,6 +62,23 @@
       body { font-family: 'Lato', -apple-system, BlinkMacSystemFont, sans-serif; }
       button, input, select, textarea { font-family: inherit; }
       #root { height: 100%; }
+
+      /* States, set once for the whole app (#232). Components keep their own looks for the resting state; these add what they cannot write inline. */
+      /* Keyboard focus: one ring on everything. !important because some controls turn their outline off inline. Mouse clicks do not show it. */
+      :focus-visible { outline: 2px solid var(--ff-blue) !important; outline-offset: 2px !important; }
+      /* Hover and pressed: a bordered button or a select takes a grey tint (a wash over its own colour, so a pink button stays pink). Buttons from ui/kit.ts carry the --ff-box marker; other bordered buttons are matched by their written-out border. */
+      button[style*="--ff-box"]:not(:disabled):hover, button[style*="border: 1px"]:not(:disabled):hover, select:not(:disabled):hover { background-image: linear-gradient(var(--ff-wash-hover), var(--ff-wash-hover)); }
+      button[style*="--ff-box"]:not(:disabled):active, button[style*="border: 1px"]:not(:disabled):active { background-image: linear-gradient(var(--ff-wash-press), var(--ff-wash-press)); }
+      /* Disabled: half strength and a not-allowed pointer; a disabled field is filled grey. A component that dims itself keeps its own opacity. */
+      :disabled { cursor: not-allowed !important; }
+      button:disabled, select:disabled, input:disabled, textarea:disabled { opacity: 0.5; }
+      input:disabled:not([type="checkbox"]):not([type="radio"]), select:disabled, textarea:disabled { background-color: var(--ff-grey-100) !important; }
+      /* Checkboxes and radio buttons follow the pink selection rule. */
+      input[type="checkbox"], input[type="radio"] { accent-color: var(--ff-pink-action); }
+      /* Motion: when the Mac is set to reduce motion, animations and transitions are switched off. A spinner that shows work is going on keeps turning (data-motion="keep"). */
+      @media (prefers-reduced-motion: reduce) {
+        *:not([data-motion="keep"]), *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+      }
     </style>
   </head>
   <body>

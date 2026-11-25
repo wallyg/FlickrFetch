@@ -4,7 +4,7 @@ import type { AlbumFitPhoto, MapAccuracy, MapCluster, MapFilter, MapView } from 
 import { anchorAfterResize, limitCentre, minZoomFor, placeAt, usableSize, visibleTiles, wheelIntent, worldCopies, worldPixel, wrapLon } from '../../shared/mapGeo'
 import { loadOutline } from '../ui/mapOutline'
 import { mapColours } from '../ui/mapColours'
-import { quietBtn, primaryBtn } from '../ui/kit'
+import { quietBtn, primaryBtn, selectBox } from '../ui/kit'
 import { dash } from './DashboardParts'
 import AlbumBox from './AlbumBox'
 import PhotoPeek from './PhotoPeek'
@@ -566,7 +566,7 @@ const styles: Record<string, React.CSSProperties> = {
   xBtn: { border: 'none', background: 'none', padding: '0 8px', fontSize: 12, color: 'var(--ff-text-muted)', cursor: 'pointer' },
   hint: { fontSize: 12, color: 'var(--ff-text-secondary)' },
   field: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--ff-text-secondary)' },
-  select: { border: '1px solid var(--ff-border)', borderRadius: 6, padding: '4px 8px', fontSize: 13, background: 'var(--ff-surface)', color: 'var(--ff-text)' },
+  select: { ...selectBox },
   body: { flex: 1, minHeight: 0, display: 'flex', gap: 12, padding: '0 24px 12px' },
   mapBox: { position: 'relative', flex: 1, minWidth: 0, minHeight: 300, borderRadius: 8, overflow: 'hidden', border: '1px solid var(--ff-border)' },
   credit: { position: 'absolute', right: 0, bottom: 0, background: 'color-mix(in srgb, var(--ff-surface) 85%, transparent)', border: 'none', borderTopLeftRadius: 6, padding: '2px 8px', fontSize: 11, color: 'var(--ff-text-secondary)', cursor: 'pointer', textDecoration: 'underline' },

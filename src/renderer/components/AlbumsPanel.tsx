@@ -11,7 +11,7 @@ import { dash, SectionSwitch, RingParts, pctLabel, COLORS } from './DashboardPar
 import type { RingPart } from './DashboardParts'
 import { MissingRow, JudgedBy, actionStyles } from './AlbumFitRows'
 import RuleRail, { RailHead, RailRow, ListHead, SortBox } from './RuleRail'
-import { quietBtn, primaryBtn, filterInput, doThisBtn } from '../ui/kit'
+import { quietBtn, primaryBtn, filterInput, doThisBtn, selectBox } from '../ui/kit'
 import { asButton } from '../ui/a11y'
 import BatchEditButton from './BatchEditButton'
 import BackToTop from '../ui/BackToTop'
@@ -289,5 +289,5 @@ const styles: Record<string, React.CSSProperties> = {
   dot: { width: 8, height: 8, borderRadius: '50%', flex: 'none' },
   checkRow: { display: 'flex', alignItems: 'baseline', gap: 8, padding: '6px 0', borderTop: '1px solid var(--ff-warm)', fontSize: 14, cursor: 'pointer', color: 'var(--ff-text)' },
   reasonBox: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--ff-text-secondary)' },
-  reasonSelect: { border: '1px solid var(--ff-border)', borderRadius: 6, padding: '5px 8px', fontSize: 13, background: 'var(--ff-surface)', color: 'var(--ff-text)' }
+  reasonSelect: { ...selectBox }
 }

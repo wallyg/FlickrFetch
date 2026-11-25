@@ -424,7 +424,7 @@ export default function PhotoDetail({
               >
                 <div style={styles.videoPlayIcon}>
                   {videoResolving ? (
-                    <div style={{ width: '20px', height: '20px', border: '2px solid color-mix(in srgb, var(--ff-white) 25%, transparent)', borderTopColor: 'var(--ff-glass)', borderRadius: '50%', animation: 'ff-spin 0.75s linear infinite' }} />
+                    <div data-motion="keep" style={{ width: '20px', height: '20px', border: '2px solid color-mix(in srgb, var(--ff-white) 25%, transparent)', borderTopColor: 'var(--ff-glass)', borderRadius: '50%', animation: 'ff-spin 0.75s linear infinite' }} />
                   ) : (
                     <svg width="18" height="18" viewBox="0 0 18 18" fill="white">
                       <polygon points="4,2 16,9 4,16" />

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import Icon from '../ui/Icon'
-import { segGroup as kitSegGroup, segBtn as kitSegBtn, selectedOn as kitSelectedOn } from '../ui/kit'
+import { segGroup as kitSegGroup, segBtn as kitSegBtn, selectedOn as kitSelectedOn, fieldCompact, selectBox } from '../ui/kit'
 import type { FlickrPhoto, LicenseFilter, PhotoSearchParams } from '../../shared/types'
 export type { LicenseFilter }
 
@@ -467,9 +467,9 @@ export const sharedStyles: Record<string, React.CSSProperties> = {
   selectBadge: { position: 'absolute' as const, top: '6px', right: '6px', width: '22px', height: '22px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 },
   selectCheck: { color: 'var(--ff-white)', fontSize: '13px', fontWeight: 700, lineHeight: 1 },
   // Drawer date/tag controls
-  dateModeSelect: { border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '5px 8px', fontSize: '12px', color: 'var(--ff-text)', background: 'var(--ff-surface)', cursor: 'pointer' },
+  dateModeSelect: { ...selectBox, fontSize: '12px' },
   dateInputsInline: { display: 'flex', alignItems: 'center', gap: '5px' },
-  dateInput: { border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '4px 6px', fontSize: '12px', color: 'var(--ff-text)', background: 'var(--ff-surface)' },
+  dateInput: { ...fieldCompact, fontSize: '12px' },
   dateToLabel: { fontSize: '12px', color: 'var(--ff-text-secondary)' },
   comingSoon: { fontSize: '12px', color: 'var(--ff-text-secondary)' },
   downloadFilterBtn: { background: 'var(--ff-surface)', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '5px 10px', fontSize: '12px', color: 'var(--ff-text)', cursor: 'pointer', whiteSpace: 'nowrap' as const },

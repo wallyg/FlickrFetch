@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import Icon from '../ui/Icon'
 import type { AlbumFitPhoto, AlbumItem, AlbumKind } from '../../shared/types'
 import BatchEditButton from './BatchEditButton'
-import { quietBtn } from '../ui/kit'
+import { quietBtn, selectCompact } from '../ui/kit'
 import PhotoStrip from './PhotoStrip'
 
 // The rows of the album fit lists. A May be missing row is quiet until you open it: the album, how many photos may belong,
@@ -101,7 +101,7 @@ const styles: Record<string, React.CSSProperties> = {
   muted: { fontSize: 13, color: 'var(--ff-text-secondary)' },
   description: { fontSize: 13, fontStyle: 'italic', color: 'var(--ff-text-secondary)', marginTop: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
   judged: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 8, fontSize: 12, color: 'var(--ff-text-secondary)' },
-  select: { border: '1px solid var(--ff-border)', borderRadius: 6, padding: '2px 6px', fontSize: 12, background: 'var(--ff-surface)', color: 'var(--ff-text)' },
+  select: { ...selectCompact, fontSize: 12 },
   small: { background: 'none', border: 'none', padding: 0, fontSize: 12, color: 'var(--ff-blue)', textDecoration: 'underline', cursor: 'pointer' },
   actions: { display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, flexWrap: 'wrap' }
 }

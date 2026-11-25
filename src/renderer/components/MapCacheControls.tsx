@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react'
+import { fieldBox } from '../ui/kit'
 import { MAP_CACHE_MAX_MB, MAP_CACHE_MIN_MB } from '../../shared/mapGeo'
 import type { MapCacheInfo } from '../../shared/types'
 
@@ -58,7 +59,7 @@ const styles: Record<string, React.CSSProperties> = {
   box: { display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 },
   row: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
   label: { fontSize: 13, color: 'var(--ff-text)', minWidth: 110 },
-  input: { width: 80, border: '1px solid var(--ff-border)', borderRadius: 6, padding: '4px 8px', fontSize: 13, color: 'var(--ff-text)', background: 'var(--ff-surface)' },
+  input: { ...fieldBox, width: 80 },
   bad: { borderColor: 'var(--ff-error)' },
   unit: { fontSize: 13, color: 'var(--ff-text-secondary)' },
   help: { fontSize: 12, color: 'var(--ff-text-secondary)' },

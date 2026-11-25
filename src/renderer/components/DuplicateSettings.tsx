@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { fieldCompact } from '../ui/kit'
 import type { DuplicateSettings as Settings, DuplicateStats } from '../../shared/types'
 
 // The number behind Possible duplicates (Tune checks). Saved when you finish typing; the counts underneath are worked out again with it.
@@ -39,7 +40,7 @@ export default function DuplicateSettings(): React.JSX.Element {
 const styles: Record<string, React.CSSProperties> = {
   box: { marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6, maxWidth: 560 },
   row: { display: 'flex', alignItems: 'center', gap: 10, fontSize: 12, color: 'var(--ff-text)' },
-  input: { width: 80, border: '1px solid var(--ff-line-strong)', borderRadius: 6, padding: '3px 6px', fontSize: 13, background: 'var(--ff-surface)', color: 'var(--ff-text)' },
+  input: { ...fieldCompact, width: 80 },
   link: { alignSelf: 'flex-start', border: 'none', background: 'none', padding: 0, fontSize: 12, color: 'var(--ff-text-secondary)', textDecoration: 'underline', cursor: 'pointer' },
   stats: { fontSize: 12, color: 'var(--ff-text)', background: 'var(--ff-warm)', borderRadius: 6, padding: '6px 10px' }
 }

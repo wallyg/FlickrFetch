@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import type { AlbumKind, AlbumKindRow } from '../../shared/types'
-import { filterInput } from '../ui/kit'
+import { filterInput, selectCompact } from '../ui/kit'
 import Icon from '../ui/Icon'
 
 // Settings > Album Checks (part of Health Check). What an album is about decides how May not fit and May be missing judge its photos:
@@ -86,6 +86,6 @@ const styles: Record<string, React.CSSProperties> = {
   choice: { display: 'flex', alignItems: 'center', gap: 8, flex: 'none' },
   origin: { display: 'inline-flex', color: 'var(--ff-text-secondary)' },
   resetSlot: { width: 40, textAlign: 'right' },
-  select: { border: '1px solid var(--ff-border)', borderRadius: 6, padding: '3px 6px', fontSize: 12, background: 'var(--ff-surface)', color: 'var(--ff-text)' },
+  select: { ...selectCompact, fontSize: 12 },
   link: { background: 'none', border: 'none', padding: 0, fontSize: 12, color: 'var(--ff-blue)', textDecoration: 'underline', cursor: 'pointer' }
 }
