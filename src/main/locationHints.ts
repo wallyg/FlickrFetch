@@ -1,5 +1,6 @@
 import type Database from 'better-sqlite3'
 import { loadSettings } from './settings'
+import { normalizeScope, scopeSql } from '../shared/healthScope'
 import { titlePlace, cityText, placeText } from '../shared/titlePlace'
 import { isCameraTitle } from '../shared/cameraNames'
 import type { LocationHintSettings, LocationHintStats } from '../shared/types'
@@ -52,9 +53,12 @@ let cached: Index | null = null
 function index(db: Database.Database): Index {
   const meta = (k: string): string => (db.prepare('SELECT value FROM tag_index_meta WHERE key = ?').get(k) as { value: string } | undefined)?.value ?? ''
   const albumFit = loadSettings().albumFit ?? {}
-  const key = `${meta('last_scan_at')}|${JSON.stringify(hintSettings())}|${albumFit.titleMode ?? ''}|${albumFit.titleAutoMin ?? ''}`
+  // The No location counts follow that check's own scope (videos, privacy) from Tune checks, so they match the list
+  const scope = normalizeScope(loadSettings().healthScope)
+  const catalog = meta('has_catalog_v2') === '1'
+  const key = `${meta('last_scan_at')}|${JSON.stringify(hintSettings())}|${albumFit.titleMode ?? ''}|${albumFit.titleAutoMin ?? ''}|${JSON.stringify(scope)}|${catalog}`
   if (cached && cached.key === key) return cached
-  const rows = db.prepare('SELECT photo_id, title, date_taken, latitude, longitude, has_location FROM photo_meta').all() as { photo_id: string; title: string; date_taken: string; latitude: number | null; longitude: number | null; has_location: number }[]
+  const rows = db.prepare(`SELECT photo_id, title, date_taken, latitude, longitude, has_location, (1 = 1${scopeSql('location', scope, catalog)}) AS in_scope FROM photo_meta p`).all() as { photo_id: string; title: string; date_taken: string; latitude: number | null; longitude: number | null; has_location: number; in_scope: number }[]
   // Titles that start with a place are used only when switched on and enough titles have one (the same switch as the album checks)
   const titledShare = rows.length ? rows.filter(r => titlePlace(r.title)).length / rows.length : 0
   const titlesOn = (typeof albumFit.titleMode === 'number' ? albumFit.titleMode : 1) >= 1 && titledShare >= (typeof albumFit.titleAutoMin === 'number' ? albumFit.titleAutoMin : 30) / 100
@@ -62,12 +66,12 @@ function index(db: Database.Database): Index {
   const cities = new Map<string, { id: string; lat: number; lon: number; title: string }[]>()
   let noLocationAll = 0
   for (const r of rows) {
-    if (r.has_location === 0) noLocationAll++
+    if (r.has_location === 0 && r.in_scope === 1) noLocationAll++
     const ts = timeOf(r.date_taken)
     const geo = r.has_location === 1 && r.latitude !== null && r.longitude !== null
     if (ts !== null) {
       if (geo) located.push({ ts, lat: r.latitude as number, lon: r.longitude as number })
-      else if (r.has_location === 0) noLocation.push({ id: r.photo_id, ts })
+      else if (r.has_location === 0 && r.in_scope === 1) noLocation.push({ id: r.photo_id, ts })
       if (r.title.trim() === '' || isCameraTitle(r.title)) needTitle.push({ id: r.photo_id, ts })
     }
     if (!titlesOn) continue

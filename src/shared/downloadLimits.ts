@@ -2,6 +2,12 @@
 // sizes only up to 1024 px (Creative Commons photos and Flickr Commons are exempt), so a download that asks for the Original can come down smaller.
 // Nothing here blocks a download: it only tells the owner what happened. Pro accounts never see any of it.
 
+/** A free account is one Flickr said is not Pro. When the answer is unknown (the lookup failed), nothing is assumed, so no note is shown.
+ * `pretend` is the development-only switch. */
+export function isFreeAccount(isPro: boolean | undefined, pretend = false): boolean {
+  return isPro === false || pretend
+}
+
 /** What the Confirm Download box says about quality and whether it adds the short note: only for a free account asking for the Original. */
 export function limitNotice(isFree: boolean, downloadSize: string, qualityName: string): { quality: string; callout: string | null } {
   if (!isFree || downloadSize !== 'original') return { quality: qualityName, callout: null }

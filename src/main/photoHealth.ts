@@ -216,12 +216,19 @@ export function ownPlace(condition: string, lat: number | null, lon: number | nu
   return OWN_PLACE.has(condition) && lat !== null && lon !== null ? { lat, lon } : undefined
 }
 
+// The one rule for "how many photos do the checks speak about": videos are part of the total only while at least one check that is on looks at them.
+// The summary and the Overview both use it, so their totals always agree.
+function videosCounted(): boolean {
+  const cleanupRules = loadSettings().cleanupRules
+  const scope = scopeNow()
+  return HEALTH_CONDITIONS.some(c => ruleState(cleanupRules, `photos:${c}`) !== 'off' && includesVideos(c, scope))
+}
+const NOT_VIDEO = "COALESCE(p.media, 'photo') <> 'video'"
+
 export function healthSummary(): HealthSummary {
   const db = healthDb()
   if (!hasData(db)) return { hasData: false, photos: 0, rows: [] }
-  const scope = scopeNow()
-  // With videos left out of every check they are not part of the library the checks speak about
-  const photos = (db.prepare(`SELECT COUNT(*) AS n FROM photo_meta p WHERE 1 = 1${scopeSql('', scope, false)}`).get() as { n: number }).n
+  const photos = (db.prepare(`SELECT COUNT(*) AS n FROM photo_meta p${videosCounted() ? '' : ` WHERE ${NOT_VIDEO}`}`).get() as { n: number }).n
   const rows = HEALTH_CONDITIONS.map(condition => {
     const where = whereFor(db, condition)
     const count = (fine: boolean): number => (db.prepare(`
@@ -323,8 +330,7 @@ export function healthOverview(): HealthOverview {
   const conds = HEALTH_CONDITIONS.filter(c => stateOf(c) !== 'off')
   // One pass over every photo: a column per check that is switched on
   const select = conds.map((c, i) => `CASE WHEN ${whereFor(db, c)} THEN 1 ELSE 0 END AS c${i}`).join(', ')
-  // A video is part of the totals only when at least one check that is on looks at videos
-  const videoPart = conds.some(c => includesVideos(c, scopeNow())) ? '' : " WHERE COALESCE(p.media, 'photo') <> 'video'"
+  const videoPart = videosCounted() ? '' : ` WHERE ${NOT_VIDEO}`
   const rows = db.prepare(`SELECT p.photo_id AS id, substr(p.date_taken, 1, 4) AS y${select ? ', ' + select : ''} FROM photo_meta p${videoPart}`).all() as Record<string, number | string>[]
   // Gaps marked fine do not count
   const fine = new Set((db.prepare("SELECT photo_id || '|' || condition AS k FROM photo_health_state WHERE status = 'fine'").all() as { k: string }[]).map(r => r.k))

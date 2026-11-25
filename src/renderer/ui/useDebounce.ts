@@ -10,14 +10,15 @@ export const DEBOUNCE = {
   flickrSearch: 600     // a search that asks Flickr (slower, so it waits longer)
 } as const
 
-/** The value, once it has stopped changing for `ms` milliseconds. With 0 it follows on the next tick. */
+/** The value, once it has stopped changing for `ms` milliseconds. With 0 it is the value itself, in the same render: a box that is cleared, or a
+ * list that is switched, must not run one more search with the old words. */
 export function useDebouncedValue<T>(value: T, ms: number): T {
   const [settled, setSettled] = useState(value)
   useEffect(() => {
     const t = setTimeout(() => setSettled(value), ms)
     return () => clearTimeout(t)
   }, [value, ms])
-  return settled
+  return ms === 0 ? value : settled
 }
 
 /** Runs `fn` once `ms` after the last change in `deps`: the same wait-then-act that was written out by hand as setTimeout and clearTimeout in an effect.

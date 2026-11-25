@@ -3,11 +3,19 @@ import assert from 'node:assert/strict'
 import { openDatabase, writePhotoRecord, searchPhotoRecords, getPhotoRecord } from '../src/main/database'
 import { describeSize } from '../src/main/downloader'
 import { noteSize, resetSizeTally, smallerSoFar } from '../src/main/sizeTally'
-import { limitNotice, sizeTag, smallerPart } from '../src/shared/downloadLimits'
+import { isFreeAccount, limitNotice, sizeTag, smallerPart } from '../src/shared/downloadLimits'
 import type { PhotoSize } from '../src/shared/types'
 
 // Flickr's size limit on free accounts (#126, Phase 1): what the Confirm Download box says, the count after a download, and the tag in Download History.
 before(() => { openDatabase() })
+
+test('only an account Flickr said is not Pro counts as free: an unknown answer assumes nothing', () => {
+  assert.equal(isFreeAccount(false), true)
+  assert.equal(isFreeAccount(true), false)
+  assert.equal(isFreeAccount(undefined), false)             // the lookup failed (offline, throttled): no note for what may be a Pro account
+  assert.equal(isFreeAccount(true, true), true)             // the development-only switch pretends
+  assert.equal(isFreeAccount(undefined, true), true)
+})
 
 test('a Pro account never sees the note, whatever size it asks for', () => {
   assert.deepEqual(limitNotice(false, 'original', 'Original'), { quality: 'Original', callout: null })

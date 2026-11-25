@@ -49,3 +49,10 @@ Questions to answer by looking at it:
 - [ ] J1 **Cmd+F in a person's album (#166).** Discover > People, open a person, open one of their albums: Cmd+F puts the cursor in the title search above the album's photos. On the People list it still goes to the contacts box. On Timeline and On This Day it still does nothing, as decided.
 - [ ] J2 **Typing waits (#92).** In Health Check lists (Photos, Albums, Tags, Backup, Possible duplicates), the Photostream search, Discover > People and Groups and inside an album, type a few letters quickly: the list updates once you pause, not on every key; clearing the box brings the full list back at once. Nothing should feel slower than before.
 
+
+## Code review fixes (after the first test round)
+
+- [ ] R1 **Filter then switch list.** In Health Check > Backup, type a word in the Filter box, then go back to the overview and open a different list: the new list shows at once, unfiltered, with no flash of a filtered or empty list.
+- [ ] R2 **Tune checks counts match the list.** With "Include videos" off, the "photos have a suggestion" line under No location counts no videos, the same as the list.
+- [ ] R3 **Totals agree.** With "Include videos" off and No location set to Include videos, the photo total on the Overview and the one beside the Photos summary are the same number.
+- [ ] R4 **Free-account note only when known.** Your Pro account never shows the 1024 px note, including right after signing in with a poor connection.

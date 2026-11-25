@@ -33,7 +33,7 @@ function buildAvatarUrl(person: FlickrPersonResponse): string {
 
 export async function getUserInfo(tokenData: FlickrTokenData): Promise<FlickrUser> {
   let avatarUrl = DEFAULT_AVATAR
-  let isPro = false
+  let isPro: boolean | undefined   // stays unknown when the lookup fails, so a failed lookup is never taken for a free account
   let memberSince = new Date().getFullYear()
 
   try {

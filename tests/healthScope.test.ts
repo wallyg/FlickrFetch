@@ -80,6 +80,7 @@ test('overview totals: videos count only while some check that is on looks at th
   const o = healthOverview()
   assert.equal(o.photos, 3)
   scope({ videos: false, locVideos: 'include' })
+  assert.equal(healthSummary().photos, 7)                                    // the summary and the Overview use one rule, so they agree
   assert.equal(healthOverview().photos, 7)                                   // No location (a Warning by default, so not Off) still looks at videos
 })
 

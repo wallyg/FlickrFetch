@@ -5,12 +5,19 @@ import { segGroup, segBtn, selectedOn } from '../ui/kit'
 // Which photos the Photos checks look at (Tune checks, #246): one switch for videos, and the No location check's own privacy and video choice.
 // Saved at once. The counts and lists follow when Settings is closed.
 
-// Reads what is saved, changes one part, saves the whole choice (the two controls below can be on screen together)
-async function change(patch: Partial<HealthScope>): Promise<HealthScope> {
-  const now = normalizeScope((await window.flickrAPI.getSettings()).healthScope)
-  const next = { ...now, ...patch }
-  await window.flickrAPI.setSettings({ healthScope: next })
-  return next
+// Reads what is saved, changes one part, saves the whole choice (the two controls below can be on screen together). Changes go one after
+// another, so two quick clicks cannot both start from the old choice and lose one of them.
+let queue: Promise<unknown> = Promise.resolve()
+function change(patch: Partial<HealthScope>): Promise<HealthScope> {
+  const run = async (): Promise<HealthScope> => {
+    const now = normalizeScope((await window.flickrAPI.getSettings()).healthScope)
+    const next = { ...now, ...patch }
+    await window.flickrAPI.setSettings({ healthScope: next })
+    return next
+  }
+  const result = queue.then(run, run)
+  queue = result.catch(() => undefined)
+  return result
 }
 
 function useScope(): [HealthScope, (p: Partial<HealthScope>) => void, boolean | null] {
@@ -20,7 +27,7 @@ function useScope(): [HealthScope, (p: Partial<HealthScope>) => void, boolean | 
     void window.flickrAPI.getSettings().then(s => setScope(normalizeScope(s.healthScope)))
     void window.flickrAPI.getTagIndexStatus().then(st => setSaved(st.hasCatalog && st.hasCatalogV3)).catch(() => setSaved(null))
   }, [])
-  return [scope, p => { setScope(s => ({ ...s, ...p })); void change(p).then(setScope) }, saved]
+  return [scope, p => { setScope(s => ({ ...s, ...p })); void change(p).catch(() => { /* the choice on screen stays; the next change saves the whole of it */ }) }, saved]
 }
 
 const REBUILD = 'Which photos are videos, and their privacy, is saved by one Rebuild of your library list (Health Check > Update > Rebuild). Until then this has no effect.'

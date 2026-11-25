@@ -1,6 +1,9 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { hintFor, titleFarIds } from '../src/main/locationHints'
+import { writeFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { app } from 'electron'
+import { hintFor, hintStats, titleFarIds } from '../src/main/locationHints'
 import { addPhotos, memoryDb, type PhotoRow } from './helpers'
 
 // Each test starts a fresh library with its own "last scanned" stamp, because the hints are remembered until the library changes
@@ -77,4 +80,27 @@ test('a geotag far from its title place carries that geotag, and none when the p
   assert.ok(h, 'a hint is given')
   assert.deepEqual(h.geo, { lat: 51.5, lon: -0.12 })
   assert.equal(hintFor(db, 'locTitle', 'lost', '2018-01-01 09:00:00', null)?.geo, undefined)
+})
+
+// The No location numbers in Tune checks follow that check's own scope (#246), so they match the list
+test('the No location counts leave out videos and other privacy levels when the scope says so', () => {
+  const file = join(app.getPath('userData'), 'settings.json')
+  const db = library([
+    at('g1', '12:00:00'), at('g2', '12:02:00'), at('g3', '12:04:00'),
+    { id: 'p', taken: '2019-04-04 12:01:00', privacy: 0 },
+    { id: 'v', taken: '2019-04-04 12:03:00', privacy: 0, media: 'video' },
+    { id: 'q', taken: '2019-04-04 12:05:00', privacy: 4 }
+  ])
+  db.prepare("INSERT INTO tag_index_meta (key, value) VALUES ('has_catalog_v2', '1')").run()
+  const put = (scope: object | null): void => writeFileSync(file, JSON.stringify(scope === null ? {} : { healthScope: scope }))
+  try {
+    put(null)
+    assert.deepEqual([hintStats(db).noLocation, hintStats(db).locations], [3, 3])
+    put({ videos: false })
+    assert.deepEqual([hintStats(db).noLocation, hintStats(db).locations], [2, 2])              // the video is left out
+    put({ locPrivacy: 'notPublic' })
+    assert.deepEqual([hintStats(db).noLocation, hintStats(db).locations], [1, 1])              // only the private photo
+    put({ videos: false, locVideos: 'include', locPrivacy: 'public' })
+    assert.deepEqual([hintStats(db).noLocation, hintStats(db).locations], [2, 2])              // No location's own choice wins over the switch
+  } finally { put(null) }
 })
