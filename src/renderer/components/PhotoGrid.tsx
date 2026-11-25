@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { useFindShortcut } from '../hooks/useFindShortcut'
+import { quietBtn } from '../ui/kit'
 import { DEBOUNCE, useDebouncedEffect } from '../ui/useDebounce'
 import type { FlickrPhoto, PhotoSearchParams, SearchOperator, DateRangeField, TagMode, LicenseFilter } from '../../shared/types'
 import { MediaFilter, PhotoViewMode, DownloadFilter, PrivacyFilter, PrivacyLevel, PRIVACY_OPTIONS, PRIVACY_LABELS, GRID_COLUMNS, JustifiedIcon, GridIcon, ListIcon, PrivacyIcon, Tooltip, Chip, PhotoListRow, DownloadFilterSelect, LicenseFilterSelect, matchesLicenseFilter, LICENSE_FILTER_LABEL, sameSearchParams, getPrivacyLevel, sharedStyles, DateMode, getPresetDates, formatDateChip, loadPhotoViewMode, savePhotoViewMode, loadRowHeight, saveRowHeight, computeJustifiedRows, DOWNLOAD_FILTER_LABEL } from './PhotoGridShared'
@@ -899,7 +900,7 @@ const styles: Record<string, React.CSSProperties> = {
   loadMoreRow: { display: 'flex', justifyContent: 'center', padding: '24px 16px' },
   loadMoreButton: { backgroundColor: 'var(--ff-surface)', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '10px 28px', fontSize: '14px', color: 'var(--ff-text)', cursor: 'pointer' },
   disabled: { opacity: 0.6, cursor: 'not-allowed' },
-  keepSearchingBtn: { background: 'var(--ff-stage)', border: 'none', borderRadius: '6px', padding: '6px 16px', fontSize: '13px', color: 'var(--ff-white)', cursor: 'pointer' },
+  keepSearchingBtn: { ...quietBtn, padding: '6px 16px' },
   scanProgressBar: { height: '3px', background: 'var(--ff-border)', borderRadius: '4px', overflow: 'hidden', margin: '4px 0 2px' },
   scanProgressFill: { height: '100%', background: 'var(--ff-blue)', borderRadius: '4px', transition: 'width 0.4s ease' },
 }

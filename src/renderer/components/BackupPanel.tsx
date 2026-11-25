@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import type { BackupList, BackupSort, BackupSummary, HealthPhoto } from '../../shared/types'
 import { dash, SectionSwitch } from './DashboardParts'
 import { RailHead, RailRow, ListHead, SortBox } from './RuleRail'
-import { quietBtn, primaryBtn, filterInput } from '../ui/kit'
+import { quietBtn, primaryBtn, filterInput, doThisBtn } from '../ui/kit'
 import { asButton } from '../ui/a11y'
 import BackToTop from '../ui/BackToTop'
 import { useFindShortcut } from '../hooks/useFindShortcut'
@@ -184,7 +184,7 @@ const styles: Record<string, React.CSSProperties> = {
   title: { fontSize: 14, fontWeight: 700, color: 'var(--ff-text)', overflowWrap: 'anywhere' },
   pill: { fontSize: 11, borderRadius: 8, padding: '1px 8px', background: 'var(--ff-warm)', color: 'var(--ff-text-secondary)' },
   actions: { display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, flexWrap: 'wrap' },
-  mainActionBtn: { ...quietBtn, borderColor: 'var(--ff-blue)', color: 'var(--ff-blue)', fontWeight: 700 },
+  mainActionBtn: { ...doThisBtn },
   moreBtn: { ...quietBtn, width: '100%', marginBottom: 12 },
   track: { height: 10, borderRadius: 6, background: 'var(--ff-warm)', overflow: 'hidden', marginTop: 10 },
   fill: { height: 10, background: 'var(--ff-pink)' }

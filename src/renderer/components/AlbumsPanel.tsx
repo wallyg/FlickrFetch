@@ -10,7 +10,7 @@ import { dash, SectionSwitch, RingParts, pctLabel, COLORS } from './DashboardPar
 import type { RingPart } from './DashboardParts'
 import { MissingRow, JudgedBy, actionStyles } from './AlbumFitRows'
 import RuleRail, { RailHead, RailRow, ListHead, SortBox } from './RuleRail'
-import { quietBtn, primaryBtn, filterInput } from '../ui/kit'
+import { quietBtn, primaryBtn, filterInput, doThisBtn } from '../ui/kit'
 import { asButton } from '../ui/a11y'
 import BatchEditButton from './BatchEditButton'
 import BackToTop from '../ui/BackToTop'
@@ -280,7 +280,7 @@ const styles: Record<string, React.CSSProperties> = {
   cardBody: { flex: 1, minWidth: 0 },
   title: { fontSize: 14, fontWeight: 700, color: 'var(--ff-text)', overflowWrap: 'anywhere' },
   actions: { display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, flexWrap: 'wrap' },
-  mainActionBtn: { ...quietBtn, borderColor: 'var(--ff-blue)', color: 'var(--ff-blue)', fontWeight: 700 },
+  mainActionBtn: { ...doThisBtn },
   linkBtn: { background: 'none', border: 'none', color: 'var(--ff-blue)', fontSize: 12, cursor: 'pointer' },
   moreBtn: { ...quietBtn, width: '100%', marginBottom: 12 },
   legendRow: { display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: 13, color: 'var(--ff-text-secondary)', marginBottom: 6 },

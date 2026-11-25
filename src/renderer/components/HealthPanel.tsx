@@ -6,7 +6,7 @@ import HealthOverview from './HealthOverview'
 import { dash, SectionSwitch } from './DashboardParts'
 import RuleRail, { RailHead, RailRow, ListHead, SortBox } from './RuleRail'
 import { forgetOverview } from './LibraryOverview'
-import { quietBtn, primaryBtn, selectedOn, filterInput } from '../ui/kit'
+import { quietBtn, primaryBtn, selectedOn, filterInput, doThisBtn } from '../ui/kit'
 import BatchEditButton from './BatchEditButton'
 import BackToTop from '../ui/BackToTop'
 import { ruleById, logicOf } from '../../shared/cleanupRules'
@@ -249,7 +249,7 @@ const styles: Record<string, React.CSSProperties> = {
   primaryBtn: { ...primaryBtn },
   secondaryBtn: { ...quietBtn },
   // Fixing a photo happens on Flickr, so this is the card's main action: the blue outline used for "See them" on the notice
-  mainActionBtn: { ...quietBtn, borderColor: 'var(--ff-blue)', color: 'var(--ff-blue)', fontWeight: 700 },
+  mainActionBtn: { ...doThisBtn },
   linkBtn: { background: 'none', border: 'none', color: 'var(--ff-blue)', fontSize: 12, cursor: 'pointer' },
   moreBtn: { width: '100%', padding: 8, background: 'none', border: '1px dashed var(--ff-line-strong)', borderRadius: 8, color: 'var(--ff-text-secondary)', fontSize: 13, cursor: 'pointer', marginBottom: 12 }
 }

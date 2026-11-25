@@ -49,3 +49,18 @@ Nothing to try in the app. `npm test` now counts the hand-typed colours in each 
 - [ ] F5 **Shadows and backdrops.** Open Settings, the download box, About, the Share dialog, a menu or the album suggestions list, the Map side panel: the backdrop behind a dialog is the same dimmed black as before; shadows look the same or a hair lighter.
 - [ ] F6 **Labels on photos.** Small badges on thumbnails (video badge, privacy lock, counts) and the white chips over photos or the map are still readable.
 Write down anything that looks off, with the screen. (The three privacy badge colours in the photo view, the collage picture and the brand wave are untouched on purpose.)
+
+## Type and corner scales (#231)
+
+Weights are only regular and bold (what the screen already showed, so no change). Text smaller than 11 px is now 11 (the tiniest labels and badges grew by a pixel or two); 15 px text is 14; odd sizes moved to the nearest. Corners are on one scale (the 10 px cards are now 8; the small 2 and 3 px corners are 4).
+
+- [ ] G1 **Walk the busy screens and look for a squeezed label.** Photostream tiles and badges, the History panel, Health Check lists and the Overview, the download bar, Settings. Anything that now wraps, is cut off, or looks too big (a tiny badge that grew, a heading that shrank from 15 to 14)?
+- [ ] G2 **Corners.** Cards and panels are a touch squarer than the 10 px ones were; chips and pills are fully round. Anything that looks odd?
+
+## Buttons: one language (#230)
+
+The duplicated "Do this", Main, Secondary, put-aside and danger button styles now come from one place (`ui/kit.ts`). Visible shifts: the black "Apply" and "Keep searching" buttons are now the grey Secondary look; the black active "Filters" and "Download" filter buttons use the soft pink selected look like other chips; the History panel's clear and remove buttons use the Secondary and red looks; the download box's Cancel and Download buttons and the Tag and Cleanup panels' main buttons use the shared sizes.
+
+- [ ] H1 **Photostream filter row.** Filters and the download filter, when switched on, show the soft pink selected look (not black). The "Keep searching" and History "Apply" buttons are plain grey Secondary buttons.
+- [ ] H2 **History panel.** Clear history, its confirm step, the remove record question: grey Secondary buttons, red only for the destructive step.
+- [ ] H3 **Download box and dialogs.** Cancel (grey) and the pink Download button look right and are the same height.

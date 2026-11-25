@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react'
 import { useFindShortcut } from '../hooks/useFindShortcut'
+import { quietBtn, dangerBtn, putAsideBtn } from '../ui/kit'
 import type { BatchLogEntry, PhotoDownloadRecord, DiscoverDownloadRecord, FlickrAlbum } from '../../shared/types'
 import EmptyState from './EmptyState'
 import { sizeTag } from '../../shared/downloadLimits'
@@ -888,12 +889,10 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 11, color: 'var(--ff-text-muted)', padding: '2px 3px', lineHeight: 1, flexShrink: 0,
   },
   applyBtn: {
-    background: 'var(--ff-stage)', border: 'none', borderRadius: 4,
-    padding: '4px 10px', fontSize: 11, color: 'var(--ff-white)', cursor: 'pointer', flexShrink: 0,
+    ...quietBtn, borderRadius: 6, padding: '4px 10px', fontSize: 11, flexShrink: 0,
   },
   loadAlbumsBtn: {
-    background: 'none', border: '1px solid var(--ff-line-strong)', borderRadius: 4,
-    padding: '3px 8px', fontSize: 11, color: 'var(--ff-text-secondary)', cursor: 'pointer',
+    ...quietBtn, borderRadius: 6, padding: '3px 8px', fontSize: 11,
   },
   resultCount: {
     margin: 0, fontSize: 11, color: 'var(--ff-text-muted)',
@@ -975,15 +974,13 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap',
   },
   clearBtn: {
-    background: 'none', border: '1px solid var(--ff-line-strong)', borderRadius: 6,
-    padding: '6px 12px', fontSize: 12, color: 'var(--ff-text-secondary)', cursor: 'pointer',
+    ...quietBtn, padding: '6px 12px', fontSize: 12,
   },
   confirmBtn: {
-    background: 'var(--ff-error-bg)', border: '1px solid var(--ff-error)', borderRadius: 6,
-    padding: '6px 12px', fontSize: 12, color: 'var(--ff-error)', cursor: 'pointer',
+    ...dangerBtn, padding: '6px 12px', fontSize: 12,
   },
   cancelConfirm: {
-    background: 'none', border: 'none', fontSize: 12, color: 'var(--ff-text-secondary)', cursor: 'pointer',
+    ...putAsideBtn,
   },
   clearLabel: {
     fontSize: 11, color: 'var(--ff-text-muted)', flexShrink: 0,
@@ -992,12 +989,10 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap',
   },
   clearChoiceBtn: {
-    background: 'none', border: '1px solid var(--ff-line-strong)', borderRadius: 6,
-    padding: '5px 9px', fontSize: 11, color: 'var(--ff-text)', cursor: 'pointer',
+    ...quietBtn, padding: '5px 9px', fontSize: 11,
   },
   clearChoiceBtnDanger: {
-    background: 'none', border: '1px solid var(--ff-error)', borderRadius: 6,
-    padding: '5px 9px', fontSize: 11, color: 'var(--ff-error)', cursor: 'pointer',
+    ...dangerBtn, padding: '5px 9px', fontSize: 11,
   },
   clearNote: { display: 'block', marginTop: 2, fontSize: 11, fontWeight: 400, color: 'var(--ff-text-secondary)' },
   clearWarning: {

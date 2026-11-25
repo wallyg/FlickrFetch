@@ -5,6 +5,9 @@ import type { CSSProperties } from 'react'
 //   quietBtn    everything else you can press (white with a grey edge)
 //   selectedOn  added on top of a chip, segment or list row that is chosen (soft pink with a pink edge)
 //   linkBtn     text-only actions (blue)
+//   doThisBtn   the action on a row or card (outlined blue)
+//   putAsideBtn dismiss or defer: grey underlined text
+//   dangerBtn   delete or clear: the Secondary shape in red
 // Titles are navy; navy is not used as a button colour.
 
 export const primaryBtn: CSSProperties = {
@@ -21,6 +24,15 @@ export const quietBtn: CSSProperties = {
 export const pillBtn: CSSProperties = {
   ...quietBtn, display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 10px', fontSize: 12, whiteSpace: 'nowrap'
 }
+
+// The action on a row or card: outlined blue (Health Check rows, Backup, Album fit, the On This Day card)
+export const doThisBtn: CSSProperties = { ...quietBtn, borderColor: 'var(--ff-blue)', color: 'var(--ff-blue)', fontWeight: 700 }
+
+// Dismiss or defer ("This one is fine", "Not now", "Undo")
+export const putAsideBtn: CSSProperties = { background: 'none', border: 'none', padding: 0, fontSize: 12, color: 'var(--ff-text-secondary)', textDecoration: 'underline', cursor: 'pointer' }
+
+// Delete or Clear: the Secondary shape with red words and edge
+export const dangerBtn: CSSProperties = { ...quietBtn, color: 'var(--ff-error-ink)', borderColor: 'var(--ff-error-ink)' }
 
 export const linkBtn: CSSProperties = {
   background: 'none', border: 'none', color: 'var(--ff-blue)', fontSize: 12, cursor: 'pointer', padding: 0

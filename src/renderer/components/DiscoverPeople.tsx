@@ -1587,7 +1587,7 @@ const s: Record<string, React.CSSProperties> = {
   heading: { margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--ff-text)' },
   subheading: { margin: '4px 0 0', fontSize: '13px', color: 'var(--ff-text-secondary)' },
   backBtn: { background: 'none', border: 'none', color: 'var(--ff-blue)', cursor: 'pointer', fontSize: '14px', padding: '4px 0', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '4px' },
-  selectBtn: { background: 'none', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '5px 12px', fontSize: '13px', color: 'var(--ff-text-secondary)', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px' },
+  selectBtn: { background: 'var(--ff-surface)', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '5px 12px', fontSize: '13px', color: 'var(--ff-text)', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px' },
   searchForm: { display: 'flex', gap: '8px' },
   searchInput: {
     flex: 1, height: '36px', borderRadius: '8px', border: '1px solid var(--ff-line-strong)',

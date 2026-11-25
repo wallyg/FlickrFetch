@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import type { AppSettings, MetadataSettings } from '../../shared/types'
 import { isFreeAccount, limitNotice } from '../../shared/downloadLimits'
+import { primaryBtn, quietBtn } from '../ui/kit'
 
 const SIZE_LABELS: Record<string, string> = {
   original: 'Original',
@@ -279,13 +280,6 @@ const s: Record<string, React.CSSProperties> = {
     background: 'none', border: 'none', fontSize: '13px', color: 'var(--ff-blue)',
     cursor: 'pointer', padding: 0,
   },
-  cancelBtn: {
-    background: 'none', border: '1px solid var(--ff-line-strong)', borderRadius: '6px',
-    fontSize: '13px', color: 'var(--ff-text-secondary)', cursor: 'pointer', padding: '7px 16px',
-  },
-  confirmBtn: {
-    background: 'var(--ff-pink-action)', border: 'none', borderRadius: '6px',
-    fontSize: '13px', color: 'var(--ff-white)', fontWeight: '700', cursor: 'pointer',
-    padding: '7px 20px',
-  },
+  cancelBtn: { ...quietBtn, padding: '7px 16px' },
+  confirmBtn: { ...primaryBtn, padding: '7px 20px' },
 }

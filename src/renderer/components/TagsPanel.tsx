@@ -3,7 +3,7 @@ import type { TagRow, TagLetterGroup, TagListQuery, TagTextOperator, TagMode } f
 import EmptyState from './EmptyState'
 import { ScanLine, ScanProgressCard } from './TagScanParts'
 import { useTagScan } from '../hooks/useTagScan'
-import { quietBtn, selectedOn } from '../ui/kit'
+import { quietBtn, selectedOn, primaryBtn as mainBtn } from '../ui/kit'
 import BackToTop from '../ui/BackToTop'
 
 // The Tags tab: browse every tag you have used, narrow by letter or by typing, pick some,
@@ -404,7 +404,7 @@ const styles: Record<string, React.CSSProperties> = {
   segGroup: { display: 'flex', gap: '2px', padding: '2px', border: '1px solid var(--ff-line-strong)', borderRadius: '8px', background: 'var(--ff-surface)' },
   seg: { background: 'var(--ff-surface)', border: 'none', borderRadius: '6px', padding: '4px 12px', fontSize: '13px', cursor: 'pointer', color: 'var(--ff-text-secondary)' },
   segActive: { ...selectedOn },
-  primaryBtn: { background: 'var(--ff-pink-action)', color: 'var(--ff-white)', border: 'none', borderRadius: '6px', padding: '7px 16px', fontSize: '13px', fontWeight: 700, cursor: 'pointer' },
+  primaryBtn: { ...mainBtn },
   secondaryBtn: { ...quietBtn, padding: '5px 12px' },
   linkBtn: { background: 'none', border: 'none', color: 'var(--ff-blue)', fontSize: '13px', cursor: 'pointer', padding: '4px 6px' },
   progressCard: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', width: '360px', padding: '28px', background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: '12px' },

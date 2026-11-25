@@ -450,8 +450,8 @@ export const sharedStyles: Record<string, React.CSSProperties> = {
   densityBtn: { background: 'none', border: 'none', padding: '4px 5px', cursor: 'pointer', borderRadius: '6px', display: 'flex', alignItems: 'center', color: 'var(--ff-text-secondary)' },
   densityBtnActive: { backgroundColor: 'var(--ff-border)', color: 'var(--ff-text)' },
   rowHeightSlider: { width: '72px', height: '3px', cursor: 'pointer', accentColor: 'var(--ff-blue)', margin: '0 4px' },
-  moreFiltersBtn: { display: 'flex', alignItems: 'center', gap: '4px', background: 'none', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '5px 10px', fontSize: '12px', color: 'var(--ff-text-secondary)', cursor: 'pointer' },
-  moreFiltersBtnActive: { backgroundColor: 'var(--ff-stage)', color: 'var(--ff-white)', borderColor: 'var(--ff-stage)' },
+  moreFiltersBtn: { display: 'flex', alignItems: 'center', gap: '4px', background: 'var(--ff-surface)', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '5px 10px', fontSize: '12px', color: 'var(--ff-text)', cursor: 'pointer' },
+  moreFiltersBtnActive: { ...kitSelectedOn },
   drawerBadge: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--ff-pink)', color: 'var(--ff-white)', borderRadius: '50%', width: '14px', height: '14px', fontSize: '11px', fontWeight: '700' },
   clearFiltersLink: { background: 'none', border: 'none', fontSize: '12px', color: 'var(--ff-blue)', cursor: 'pointer', padding: '0', textDecoration: 'underline' as const },
   // Active filter chips
@@ -471,12 +471,12 @@ export const sharedStyles: Record<string, React.CSSProperties> = {
   dateInput: { border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '4px 6px', fontSize: '12px', color: 'var(--ff-text)', background: 'var(--ff-surface)' },
   dateToLabel: { fontSize: '12px', color: 'var(--ff-text-secondary)' },
   comingSoon: { fontSize: '12px', color: 'var(--ff-text-secondary)' },
-  downloadFilterBtn: { background: 'none', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '5px 10px', fontSize: '12px', color: 'var(--ff-text-secondary)', cursor: 'pointer', whiteSpace: 'nowrap' as const },
-  downloadFilterBtnActive: { backgroundColor: 'var(--ff-stage)', color: 'var(--ff-white)', borderColor: 'var(--ff-stage)' },
+  downloadFilterBtn: { background: 'var(--ff-surface)', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '5px 10px', fontSize: '12px', color: 'var(--ff-text)', cursor: 'pointer', whiteSpace: 'nowrap' as const },
+  downloadFilterBtnActive: { ...kitSelectedOn },
   listContainer: { display: 'flex', flexDirection: 'column' as const },
   tagHint: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '16px', height: '16px', borderRadius: '50%', backgroundColor: 'var(--ff-line-strong)', fontSize: '11px', color: 'var(--ff-text-secondary)', cursor: 'default', fontWeight: '700', flexShrink: 0 } as React.CSSProperties,
   // Empty / error states
   centered: { display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', height: '100%', gap: '12px' },
   mutedText: { color: 'var(--ff-text-secondary)', fontSize: '14px', margin: 0 },
-  clearFiltersBtn: { background: 'none', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '6px 16px', fontSize: '13px', color: 'var(--ff-text-secondary)', cursor: 'pointer' },
+  clearFiltersBtn: { background: 'var(--ff-surface)', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '6px 16px', fontSize: '13px', color: 'var(--ff-text)', cursor: 'pointer' },
 }

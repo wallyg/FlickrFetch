@@ -716,5 +716,5 @@ const styles: Record<string, React.CSSProperties> = {
   overlayTitle: { color: 'var(--ff-white)', fontSize: '12px', fontWeight: '400', textShadow: '0 1px 3px var(--ff-scrim-strong)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', width: '100%' } as React.CSSProperties,
   downloadBadge: { position: 'absolute', bottom: '6px', right: '6px', width: '16px', height: '16px', borderRadius: '50%', backgroundColor: 'color-mix(in srgb, var(--ff-success) 90%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2, boxShadow: '0 0 0 1.5px var(--ff-glass), 0 1px 4px var(--ff-shadow-soft)' },
   loadMore: { padding: '16px', textAlign: 'center' },
-  loadMoreBtn: { background: 'transparent', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '8px 20px', fontSize: '13px', color: 'var(--ff-text-secondary)', cursor: 'pointer' },
+  loadMoreBtn: { background: 'var(--ff-surface)', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '8px 20px', fontSize: '13px', color: 'var(--ff-text)', cursor: 'pointer' },
 }

@@ -864,7 +864,7 @@ const s: Record<string, React.CSSProperties> = {
   // Download folder
   folderRow: { display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--ff-border)', backgroundColor: 'var(--ff-cream)' },
   folderPath: { flex: 1, fontSize: '12px', color: 'var(--ff-text-secondary)', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const },
-  changeBtn: { background: 'none', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '4px 12px', fontSize: '12px', color: 'var(--ff-text-secondary)', cursor: 'pointer', flexShrink: 0 },
+  changeBtn: { background: 'var(--ff-surface)', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '4px 12px', fontSize: '12px', color: 'var(--ff-text)', cursor: 'pointer', flexShrink: 0 },
 
   // Radio option list
   optionList: { display: 'flex', flexDirection: 'column' as const, gap: '6px' },
@@ -904,7 +904,7 @@ const s: Record<string, React.CSSProperties> = {
   subArrow: { color: 'var(--ff-text-secondary)', marginRight: '7px', fontWeight: '400' },
   optName: { fontSize: '13px', fontWeight: '400', color: 'var(--ff-text)' },
   posGroup: { display: 'flex', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', overflow: 'hidden', flexShrink: 0 },
-  posBtn: { background: 'none', border: 'none', borderRight: '1px solid var(--ff-line-strong)', padding: '4px 10px', fontSize: '12px', color: 'var(--ff-text-secondary)', cursor: 'pointer', whiteSpace: 'nowrap' as const },
+  posBtn: { background: 'var(--ff-surface)', border: 'none', borderRight: '1px solid var(--ff-line-strong)', padding: '4px 10px', fontSize: '12px', color: 'var(--ff-text)', cursor: 'pointer', whiteSpace: 'nowrap' as const },
   posBtnActive: { background: 'var(--ff-pink)', color: 'var(--ff-white)', fontWeight: '700' },
   subOpts: { margin: '1px 0 0', padding: '10px 12px', background: 'color-mix(in srgb, var(--ff-pink) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--ff-pink) 12%, transparent)', borderTop: 'none', borderRadius: '0 0 8px 8px', display: 'flex', flexDirection: 'column' as const, gap: '7px' },
   subOptRow: { display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' },
@@ -929,10 +929,10 @@ const s: Record<string, React.CSSProperties> = {
   restoreDefaultsBtn: { background: 'none', border: 'none', padding: '4px 0', fontSize: '13px', color: 'var(--ff-text-secondary)', cursor: 'pointer', textDecoration: 'underline' },
   resetConfirm: { display: 'flex', alignItems: 'center', gap: '8px' },
   resetConfirmText: { fontSize: '12px', color: 'var(--ff-text-secondary)' },
-  resetCancelBtn: { background: 'none', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '4px 10px', fontSize: '12px', color: 'var(--ff-text-secondary)', cursor: 'pointer' },
+  resetCancelBtn: { background: 'var(--ff-surface)', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '4px 10px', fontSize: '12px', color: 'var(--ff-text)', cursor: 'pointer' },
   resetConfirmBtn: { background: 'var(--ff-error)', border: 'none', borderRadius: '6px', padding: '4px 10px', fontSize: '12px', fontWeight: '700', color: 'var(--ff-white)', cursor: 'pointer' },
   resetDoneText: { fontSize: '12px', color: 'var(--ff-text-secondary)' },
-  cancelBtn: { background: 'none', border: '1px solid var(--ff-line-strong)', borderRadius: '8px', padding: '10px 20px', fontSize: '14px', color: 'var(--ff-text-secondary)', cursor: 'pointer' },
+  cancelBtn: { background: 'var(--ff-surface)', border: '1px solid var(--ff-line-strong)', borderRadius: '8px', padding: '10px 20px', fontSize: '14px', color: 'var(--ff-text)', cursor: 'pointer' },
   saveBtn: { backgroundColor: 'var(--ff-pink-action)', color: 'var(--ff-white)', border: 'none', borderRadius: '8px', padding: '10px 28px', fontSize: '14px', fontWeight: '700', cursor: 'pointer' },
   saveBtnDisabled: { opacity: 0.6, cursor: 'not-allowed' },
 }

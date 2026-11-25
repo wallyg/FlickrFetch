@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import type { TodaySummary } from '../../shared/types'
 import { MONTHS } from './DateViewParts'
-import { quietBtn } from '../ui/kit'
+import { quietBtn, doThisBtn } from '../ui/kit'
 import { BarsIcon } from '../ui/icons'
 import { itemsLabel } from '../../shared/counts'
 
@@ -125,7 +125,7 @@ const styles: Record<string, React.CSSProperties> = {
   calDay: { fontSize: 14, fontWeight: 700, color: 'var(--ff-navy)', lineHeight: '20px' },
   title: { fontSize: 14, fontWeight: 700, color: 'var(--ff-navy)' },
   cue: { marginLeft: 6, display: 'inline-flex', alignItems: 'center', verticalAlign: 'middle', background: 'none', border: 'none', padding: 4, borderRadius: 6, cursor: 'pointer' },
-  seeBtn: { ...quietBtn, borderColor: 'var(--ff-blue)', color: 'var(--ff-blue)', fontWeight: 700, whiteSpace: 'nowrap' },
+  seeBtn: { ...doThisBtn, whiteSpace: 'nowrap' },
   hideBtn: { ...quietBtn, color: 'var(--ff-text)', borderColor: 'var(--ff-line-strong)', whiteSpace: 'nowrap' },
   bell: { background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, padding: 2, lineHeight: 1, opacity: 0.7 },
   confirmed: { fontSize: 12, color: 'var(--ff-success)', whiteSpace: 'nowrap' },
