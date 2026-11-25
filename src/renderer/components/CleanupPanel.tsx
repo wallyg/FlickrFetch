@@ -4,7 +4,7 @@ import type { AuditCategory, HealthCondition, TagMode } from '../../shared/types
 import { CLEANUP_RULES } from '../../shared/cleanupRules'
 import EmptyState from './EmptyState'
 import Icon from '../ui/Icon'
-import HoverNote from '../ui/HoverNote'
+import ClickNote from '../ui/ClickNote'
 import AuditPanel from './AuditPanel'
 import HealthPanel from './HealthPanel'
 import BackupPanel from './BackupPanel'
@@ -108,7 +108,7 @@ export default function CleanupPanel({ onViewPhotos, onDownload, settingsKey, on
         <span ref={setLeftSlot} style={styles.slot} />
         <div style={{ flex: 1 }} />
         <button style={quietBtn} onClick={onOpenSettings} aria-label="Tune checks" title="Tune checks: choose which checks are an Issue, a Warning or Off (opens Settings)"><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Icon name="switches" size={narrow ? 20 : 17} />{narrow ? '' : 'Tune checks'}</span></button>
-        <HoverNote mark={false} text={info}><button style={quietBtn} aria-label="How Health Check works"><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Icon name="pulse" size={narrow ? 20 : 17} />{narrow ? '' : 'How it works'}</span></button></HoverNote>
+        <ClickNote text={info} style={quietBtn} ariaLabel="How Health Check works"><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Icon name="pulse" size={narrow ? 20 : 17} />{narrow ? '' : 'How it works'}</span></ClickNote>
         <LibraryDataChip status={scan.status} compact={narrow} onUpdate={() => void scan.startScan('refresh')} onRebuild={rebuild} />
         <span ref={setRightSlot} style={styles.slot} />
       </div>
