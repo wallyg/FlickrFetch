@@ -6,6 +6,7 @@
     <title>FlickrFetch</title>
     <style>
       :root {
+        color-scheme: light;   /* the app is light only: keeps form controls and scrollbars light in Mac Dark Mode */
         --ff-blue:           #0063DC;
         --ff-pink:           #FF0084;
         --ff-pink-action:    #D00069;
@@ -18,9 +19,18 @@
         --ff-error:          #DC2626;
         --ff-success-bg:     #E8F8EA;
         --ff-error-bg:       #FCE8E8;
-        --ff-warning:        #F59E0B;
+        --ff-warning:        #D97706;   /* amber marks (dots, bars, rings): 3.2:1 on white. Was #F59E0B (2.2:1) */
         --ff-warning-bg:     #FEF3C7;
-        --ff-warning-text:   #92400E;
+        --ff-warning-text:   #92400E;   /* amber words on the pale amber */
+        --ff-error-ink:      #B91C1C;   /* red words on white or on --ff-error-bg */
+        --ff-success-ink:    #15803D;   /* green words on white or on --ff-success-bg */
+        --ff-fine:           #8693A6;   /* the thin outline of a Fine mark: 3.1:1 on white */
+        --ff-fine-fill:      #CBD0D8;   /* the light fill of a Fine mark */
+        --ff-surface:        #FFFFFF;   /* cards, panels, dialogs, inputs */
+        --ff-grey-100:       #F3F4F6;   /* quiet fill: disabled fields */
+        --ff-map-water:      #DBE7F3;   /* the Map tab's illustration */
+        --ff-map-land:       #F4F1EA;
+        --ff-map-edge:       #C4BEB0;
         --ff-slate:          #94A3B8;
         --ff-text:           #111827;
         --ff-text-muted:     #9CA3AF;
