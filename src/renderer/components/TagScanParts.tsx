@@ -55,18 +55,18 @@ export function LibraryDataChip({ status, info, onUpdate, onRebuild, compact }: 
   const days = status.lastScanAt ? Math.floor((Date.now() - status.lastScanAt) / 86400000) : null
   const dotNote = !status.lastScanAt ? 'Your library list has not been read yet. Open this menu to build it.'
     : old ? `Out of date: your library list was last read ${days} days ago. Open this menu and choose Update now.`
-    : 'Up to date: your library list was read within the last 7 days. This only reflects how old the list is; it does not check Flickr.'
+    : 'Up to date: read within the last 7 days. This shows only how old the list is; it does not check Flickr.'
   const when = status.lastScanAt ? new Date(status.lastScanAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'never'
   return (
     <span ref={box} style={{ position: 'relative', display: 'inline-flex' }}>
       <button
-        style={{ ...quietBtn, display: 'inline-flex', alignItems: 'center', gap: 8, padding: '5px 11px', ...(old ? { borderColor: '#f5d28b', background: 'var(--ff-warning-bg)' } : {}) }}
+        style={{ ...quietBtn, display: 'inline-flex', alignItems: 'center', gap: 8, padding: '5px 11px', ...(old ? { borderColor: 'var(--ff-warning)', background: 'var(--ff-warning-bg)' } : {}) }}
         onClick={() => setOpen(o => !o)} aria-expanded={open} aria-label="Library data: update or rebuild"
       >
         <span title={dotNote} style={{ width: 8, height: 8, borderRadius: '50%', background: old ? 'var(--ff-warning)' : 'var(--ff-success)' }} />
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36" /><path d="M21 3v6h-6" /></svg>
+        <Icon name="refresh" size={15} />
         {compact ? '' : 'Updated '}{formatWhen(status.lastScanAt, compact)}
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ opacity: 0.6 }}><path d="M5 9l7 7 7-7" /></svg>
+        <Icon name="chevronDown" size={10} style={{ opacity: 0.6 }} />
       </button>
       {open && (
         <div style={styles.dataPanel} role="dialog" aria-label="Your library list">

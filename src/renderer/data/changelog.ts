@@ -7,6 +7,17 @@ export interface Release {
 
 const changelog: Release[] = [
   {
+    version: '3.12',
+    date: 'November 2026',
+    highlights: [
+      'One look across the app — every colour now comes from one brand guide. Grey hints and descriptions are a little darker and easier to read, the thin lines are one cool grey, warnings are amber and problems red everywhere, and shadows, dimmed backdrops and white panels over photos come in a few set strengths. Text is only regular or bold, nothing is smaller than 11 points, and corners and layers follow one scale',
+      'One set of line icons — the emoji and the plain characters that stood in for icons (the cross, tick, warning sign and arrows) are now drawn icons of the same weight, and the top bar shows a clock for History and a cog for Settings',
+      'One kind of button — the main, "do this", grey, put-aside and red looks are now the same on every screen. On This Day\'s "Make a shareable collage" button is the same size as its neighbours, with a small picture on it',
+      'Clicking a photo in the Map\'s side panel, or in the suggested photos under Albums and Tags, opens it in the app (arrows move through the photos, "Open on Flickr" is a button) instead of jumping to the browser',
+      'Clearer hover notes in Settings, and the "Updated" menu in Health Check reads more plainly; the example for replacing spaces in filenames was wrong and is fixed'
+    ]
+  },
+  {
     version: '3.11',
     date: 'November 2026',
     highlights: [
@@ -15,6 +26,7 @@ const changelog: Release[] = [
       'Show on the map now works on every location check (Vague location, Far from its neighbours, Location at 0, 0 and the others), marking the photo\'s own place with a pink ring',
       'Free Flickr accounts — the Confirm Download box now says when Flickr limits downloads to 1024 px, a finished download says how many photos were saved smaller than the original (with a link to the list), and Download History tags each photo Original or Smaller size. Pro accounts see none of this',
       'The Map keeps a group of photos on both sides of the date line together as one circle',
+      'Settings has a new Album Checks tab for choosing how each of your albums is judged by the Health Check album checks (it was a long list inside Tune checks). An album that fits both a place and a date is now judged by place, and an album judged by subject names its tag',
       'Cmd+F now also finds in a person\'s album under Discover, and typing in filter boxes waits the same short moment everywhere before searching'
     ]
   },

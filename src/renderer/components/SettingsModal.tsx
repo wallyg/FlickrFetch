@@ -500,7 +500,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
               <div style={s.section}>
                 <div style={s.sectionRow}>
                   <p style={s.sectionTitle}>Core</p>
-                  <InfoTip text="The required center of every filename. Optional parts wrap around it." />
+                  <InfoTip text="The main part of every filename. The other parts go before or after it." />
                 </div>
                 <div style={s.coreGrid}>
                   {([
@@ -612,7 +612,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
               <div style={{ ...s.section, borderTop: '1px solid var(--ff-border)' }}>
                 <div style={s.sectionRow}>
                   <p style={s.sectionTitle}>Title Transform</p>
-                  <InfoTip direction="up" text="Applied to the entire assembled filename." />
+                  <InfoTip direction="up" text="Changes the capital letters of the whole filename." />
                 </div>
 
                 {/* Case */}
@@ -641,7 +641,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
                 <div style={{ ...s.optRow, marginTop: '6px' }}>
                   <div style={s.optLabelGroup}>
                     <span style={s.optName}>Replace spaces</span>
-                    <InfoTip direction="up" text="Replaces spaces in the title with the part separator. NYC - Highline → NYC.-.-Highline (with . separator)." />
+                    <InfoTip direction="up" text={'Replaces each space in the title with your separator. With a dot, "NYC - Highline" becomes "NYC.-.Highline".'} />
                   </div>
                   <div style={s.posGroup}>
                     <button
@@ -659,7 +659,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
                 <div style={{ ...s.optRow, marginTop: '6px', flexDirection: 'column', alignItems: 'stretch', gap: '6px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                     <span style={s.optName}>Character substitutions</span>
-                    <InfoTip direction="up" text="Parentheses and square brackets are legal in filenames and kept as-is by default. Turn these on to strip them for cleaner filenames." />
+                    <InfoTip direction="up" text="Brackets are kept in filenames by default. Turn these on to remove them." />
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '5px' }}>
                     {([
@@ -736,7 +736,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
                 <div style={s.optRow}>
                   <div style={s.optLabelGroup}>
                     <span style={s.optName}>GPS coordinates</span>
-                    <InfoTip text="Embeds GPS latitude and longitude from Flickr's location data, if available." />
+                    <InfoTip text="Saves the photo's location in the file, when Flickr has one." />
                   </div>
                   <div style={s.posGroup}>
                     <button style={{ ...s.posBtn, ...(!embedGps ? s.posBtnActive : {}) }} onClick={() => { setEmbedGps(false) }}>Off</button>
@@ -790,7 +790,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
                 <div style={s.optRow}>
                   <div style={s.optLabelGroup}>
                     <span style={s.optName}>Sidecar JSON</span>
-                    <InfoTip direction="up" text="Write a companion .json file alongside each downloaded photo and video containing Flickr metadata (title, tags, date, GPS, license, etc.)." />
+                    <InfoTip direction="up" text="Saves a .json file next to each photo or video with its Flickr details (title, tags, date, GPS, license and more)." />
                   </div>
                   <div style={s.posGroup}>
                     <button style={{ ...s.posBtn, ...(!writeSidecarJson ? s.posBtnActive : {}) }} onClick={() => { setWriteSidecarJson(false) }}>Off</button>

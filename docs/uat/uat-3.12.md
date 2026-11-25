@@ -75,3 +75,8 @@ One icon set (`src/renderer/ui/Icon.tsx`): line icons, 1.5 px line, round ends, 
 - [ ] I4 **"Open on Flickr ↗" and the other open links** (Health Check, Albums, Backup, Duplicates, the photo view, Tags): a small drawn up-right arrow after the words.
 - [ ] I5 **On This Day.** The four insight headings (Across the years, Most-used tags, Time of day, Places) have a drawn calendar, tag, clock and pin instead of emoji. The "Jump to date…" button has a calendar; the card's bell, lock on private photos.
 - [ ] I6 **Size and weight.** Icons beside text are the same size as the text and the same line weight as each other (View icons in the Photostream, the Tune checks switches icon, the chevrons). Any that look much heavier or lighter than their neighbours?
+
+## Hover notes (#135)
+
+- [ ] J1 **Settings hover notes.** Hover the (i) marks in Settings > Downloads and File Naming and Metadata: the notes are short and plain. The one for "Replace spaces" now shows the right example ("NYC - Highline" becomes "NYC.-.Highline"). The GPS, brackets, sidecar, capitalisation and filename-core notes were reworded.
+- [ ] J2 **The Updated menu in Health Check.** Hover the small dot beside "Updated": the note is one or two short sentences. Open the menu: Update now and Rebuild from scratch each have a one-line explanation.
