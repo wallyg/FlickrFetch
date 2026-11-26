@@ -82,3 +82,10 @@ test('the caption never overlaps itself or leaves its card, at every card size a
   }
   assert.ok(tried > 1000)
 })
+
+test('the collage header lines stop short of the "Created with FlickrFetch" block instead of running to the page edge', async () => {
+  const { readFileSync } = await import('node:fs')
+  const code = readFileSync('src/renderer/components/ShareDialog.tsx', 'utf8')
+  assert.match(code, /const brandLeft = OW - padX - markW/)
+  assert.match(code, /hMax = Math\.min\(OW - padX - hx, brandLeft - 40 - hx\)/)
+})

@@ -360,7 +360,11 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
     ctx.fillStyle = brand.white; ctx.font = `700 22px ${SANS}`; setSpacing('3.5px'); ctx.fillText(MONTHS[month - 1].slice(0, 3).toUpperCase(), tx + tileW / 2 + 1.75, ty + 27)
     setSpacing('0px'); ctx.fillStyle = brand.navy; ctx.font = `800 68px ${SANS}`; ctx.fillText(String(day), tx + tileW / 2, ty + 106)
     ctx.textAlign = 'left'
-    const hx = tx + tileW + 36, hMax = OW - padX - hx
+    // The "Created with FlickrFetch" block sits at the right; the lines under the title stop 40 px short of its left edge (the logo), not at the page edge
+    ctx.font = `700 44px Lato, ${SANS}`
+    const markW = ctx.measureText('Flickr').width + ctx.measureText('Fetch').width
+    const brandLeft = OW - padX - markW - (logoRef.current ? 62 + 14 : 0)
+    const hx = tx + tileW + 36, hMax = Math.min(OW - padX - hx, brandLeft - 40 - hx)
     ctx.fillStyle = theme.fg; ctx.font = `800 68px ${SANS}`; setSpacing('-1.5px'); ctx.fillText('On This Day', hx, ty + 66); setSpacing('0px')
     const nowYear = new Date().getFullYear()
     const years = ready.map(p => Number(p.dateTaken.slice(0, 4)))
