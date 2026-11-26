@@ -724,7 +724,7 @@ export default function HistoryPanel({ onClose }: HistoryPanelProps) {
       <div style={styles.panel} onClick={e => e.stopPropagation()}>
 
         <div style={styles.header}>
-          <h2 style={styles.title}>Download History</h2>
+          <h2 style={styles.title}>Download history</h2>
           <button style={styles.closeBtn} onClick={onClose} aria-label="Close">×</button>
         </div>
 

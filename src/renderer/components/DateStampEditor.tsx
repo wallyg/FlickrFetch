@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { DATE_EXAMPLE_TAKEN, DATE_QUICK_PICKS, DATE_TOKENS, checkDatePattern, formatDateStamp, usesTwelveHour } from '../../shared/dateStamp'
 import { fieldBox, selectedOn, smallBtn } from '../ui/kit'
 
-// The date stamp in a file name (Settings > File Naming, #266): type a pattern, or click the parts to add them, with a live example.
+// The date stamp in a file name (Settings > File naming, #266): type a pattern, or click the parts to add them, with a live example.
 // Only a pattern that works is passed up and saved; while it does not, the box says why and the last good one stays in use.
 
 const GROUPS = ['Year', 'Month', 'Day', 'Weekday', 'Time'] as const

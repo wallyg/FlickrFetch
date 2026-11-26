@@ -13,7 +13,7 @@ export default function ChangelogModal({ onClose }: ChangelogModalProps): React.
   return (
     <Dialog label="What's new" size="medium" onClose={onClose} cardStyle={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', maxHeight: '70vh' }}>
         <div style={styles.header}>
-          <h2 style={styles.title}>What's New</h2>
+          <h2 style={styles.title}>What's new</h2>
           <CloseButton onClick={onClose} />
         </div>
         <div style={styles.content}>

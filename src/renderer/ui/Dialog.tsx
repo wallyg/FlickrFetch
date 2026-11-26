@@ -1,5 +1,5 @@
-import React, { useEffect, useId, useRef } from 'react'
-import { isTopDialog, nextFocusIndex, popDialog, pushDialog } from './dialogStack'
+import React, { useEffect, useId, useRef, useState } from 'react'
+import { depthOf, isTopDialog, nextFocusIndex, popDialog, pushDialog } from './dialogStack'
 
 // The one shell for every dialog (#236): the dimmed backdrop, the card, and the behaviour a dialog must have.
 //   - Esc closes the dialog on top (and only that one); clicking the backdrop closes it too.
@@ -12,12 +12,13 @@ const WIDTH: Record<DialogSize, number> = { small: 360, medium: 480, wide: 640, 
 const FOCUSABLE = 'a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])'
 
 /** Esc closes this screen if it is the one on top (a dialog or a side panel). */
-export function useEscapeToClose(onClose: () => void, active = true): void {
+export function useEscapeToClose(onClose: () => void, active = true, onDepth?: (depth: number) => void): void {
   const ref = useRef(onClose)
   ref.current = onClose
   useEffect(() => {
     if (!active) return
     const id = pushDialog()
+    onDepth?.(depthOf(id))
     const onKey = (e: KeyboardEvent): void => { if (e.key === 'Escape' && isTopDialog(id)) { e.stopPropagation(); ref.current() } }
     document.addEventListener('keydown', onKey)
     return () => { document.removeEventListener('keydown', onKey); popDialog(id) }
@@ -35,7 +36,8 @@ export default function Dialog({ label, onClose, size = 'medium', width, cardSty
   const card = useRef<HTMLDivElement | null>(null)
   const downOnBackdrop = useRef(false)
   const labelId = useId()
-  useEscapeToClose(onClose)
+  const [depth, setDepth] = useState(1)   // 1 for the first dialog open; each one opened over it sits one layer higher
+  useEscapeToClose(onClose, true, setDepth)
 
   useEffect(() => {
     const before = document.activeElement as HTMLElement | null
@@ -55,7 +57,7 @@ export default function Dialog({ label, onClose, size = 'medium', width, cardSty
   }
 
   return (
-    <div style={overlay} onMouseDown={e => { downOnBackdrop.current = e.target === e.currentTarget }} onClick={e => { if (downOnBackdrop.current && e.target === e.currentTarget) onClose() }} onKeyDown={onKeyDown}>
+    <div style={{ ...overlay, zIndex: `calc(var(--ff-z-dialog) + ${depth})` }} onMouseDown={e => { downOnBackdrop.current = e.target === e.currentTarget }} onClick={e => { if (downOnBackdrop.current && e.target === e.currentTarget) onClose() }} onKeyDown={onKeyDown}>
       <div ref={card} data-dialog role="dialog" aria-modal="true" aria-label={label} id={labelId} tabIndex={-1}
         style={{ ...cardBase, width: width ?? WIDTH[size], ...cardStyle }}>
         {children}

@@ -345,7 +345,7 @@ export function DiscoverSelectBar({ count, onDownload, onCancel, onClearSelectio
     <div style={sb.bar}>
       <span style={sb.label}>{count} photos selected</span>
       {count > 0 && (
-        <button style={sb.clearBtn} onClick={onClearSelection}>Clear Selection</button>
+        <button style={sb.clearBtn} onClick={onClearSelection}>Clear selection</button>
       )}
       <div style={{ flex: 1 }} />
       <button
@@ -353,7 +353,7 @@ export function DiscoverSelectBar({ count, onDownload, onCancel, onClearSelectio
         disabled={count === 0 || downloading}
         onClick={onDownload}
       >
-        {downloading ? 'Queueing…' : <><Icon name="arrowDown" /> Download Selected ({count})</>}
+        {downloading ? 'Queueing…' : <><Icon name="arrowDown" /> Download selected ({count})</>}
       </button>
       <button style={sb.cancelBtn} onClick={onCancel}>Cancel</button>
     </div>

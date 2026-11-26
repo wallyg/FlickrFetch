@@ -13,7 +13,7 @@ import LibraryOverview from './LibraryOverview'
 import { LibraryDataChip, ScanNotices, ScanProgressCard } from './TagScanParts'
 import { useTagScan } from '../hooks/useTagScan'
 import { useCleanupRules } from '../hooks/useCleanupRules'
-import { segGroup as segGroupBase, selectedOn, quietBtn, primaryBtn as mainBtn } from '../ui/kit'
+import { segGroup as segGroupBase, segBtn, selectedOn, quietBtn, primaryBtn as mainBtn } from '../ui/kit'
 
 // The Cleanup tab: reports on the quality of your library. Overview is the front page; Tags finds likely tag
 // problems; Photos finds photos with missing titles, descriptions, tags or locations. Each check can be On
@@ -162,7 +162,7 @@ const styles: Record<string, React.CSSProperties> = {
   muted: { color: 'var(--ff-text-secondary)', fontSize: '13px' },
   error: { color: 'var(--ff-error)', fontSize: '13px', maxWidth: '420px' },
   segGroup: { ...segGroupBase },
-  seg: { background: 'var(--ff-surface)', border: 'none', borderRadius: '6px', padding: '4px 14px', fontSize: '13px', cursor: 'pointer', color: 'var(--ff-text-secondary)' },
+  seg: { ...segBtn, padding: '4px 14px' },
   segActive: { ...selectedOn },
   primaryBtn: { ...mainBtn },
 }

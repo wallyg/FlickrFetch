@@ -19,7 +19,7 @@ About 85 hand-built buttons now use the shared looks. Visible shifts: boxed grey
 
 - [x] B1 **Download bar.** Start a download. Pause, Skip, Dismiss all and the expand arrow match; "Open in Finder" style links are outlined blue; nothing looks lopsided.
 - [x] B2 **Photostream, Albums, Discover.** The "Clear filters", "Select", "Clear" and "Download" buttons and the back links match their neighbours. Pink Main buttons are the same pink everywhere (Download in the photo view, the Settings Save button, Retry, Update in Health Check).
-- [x] B2b **No more filled blue buttons.** "Download All Albums" (a collection's page) and Search on Discover > People are pink Main buttons; the update button in Settings (when a new version exists) is a small grey Secondary button.
+- [x] B2b **No more filled blue buttons.** "Download all albums" (a collection's page) and Search on Discover > People are pink Main buttons; the update button in Settings (when a new version exists) is a small grey Secondary button.
 - [x] B3 **Settings and the photo view.** Change, Cancel, Restore defaults, the small "Reset" and "Cancel" lines, Copy, Download and "Show in Finder" look consistent. Anything that looks squeezed or too wide?
 - [x] B4 **One name for Flickr's tool.** Every button that opens Flickr's editor for many photos says "Open in Flickr's organizer" (with a count or "selected" where it had one): On This Day, Timeline, Camera roll, Duplicates, the Photostream and Albums selection bars, Albums, Health Check lists. Right-click a photo: the menu says the same. No button says "Batch editor" or "Fix in Flickr's batch editor".
 - [x] B5 **Your plan.** On the Tags tab open Your plan: each open item has "Open on Flickr", "View photos" and "Open in Flickr's organizer", in that order; the last opens Flickr's editor with the photos that carry that tag.
@@ -94,3 +94,10 @@ The Polaroid cards were rebuilt: the caption is sized to the card so nothing ove
 - [x] I3 **Few and many.** Try one photo (one big card) and a day with 12 or more photos (small cards, text still readable and not touching).
 - [x] I4 **Links off.** Untick "Short Flickr link under each photo": the caption is the year and "N years ago", nicely centred in the strip.
 - [x] I5 **Saved file.** Save a Square image and open it: it looks the same as the preview.
+
+## Fix pass (after your first walk-through)
+
+- [ ] J1 **Confirm download.** Select one photo in On This Day and press Download: the heading says "Confirm download"; under it the batch is named plainly ("On This Day, November 26 (selected)"), with "1 photo" once, not "Download 1 photos" and not repeated; the buttons say "Change settings", "Cancel", "Start download". The "Export as" switch looks like the other switches in the app (Health Check's Summary/Lists, Tags' Any/All).
+- [ ] J2 **Change settings opens on top.** In that box click "Change settings": Settings opens in front of the confirm box, not behind it. Esc closes Settings only; the confirm box is still there and shows any changed size or folder. Esc again closes it.
+- [ ] J3 **Sentence case.** Look across the app for labels in Title Case ("Clear Selection", "Download All", "File Naming", "Photo Resolution", "Download History"): they now read "Clear selection", "Download all", "File naming", "Photo resolution", "Download history". Names stay as they are (On This Day, Health Check, Album Checks, My Flickr, Smart Download). Tell me any you still see.
+- [ ] J4 **Switches.** The Tags "Any / All" switch and Health Check's Summary/Lists switch match the others in height, corner and pink selected look.

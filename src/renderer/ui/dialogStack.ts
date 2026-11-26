@@ -6,6 +6,8 @@ let next = 1
 /** A dialog opening takes the top place; give the number back to popDialog when it closes. */
 export function pushDialog(): number { const id = next++; stack.push(id); return id }
 export function popDialog(id: number): void { const i = stack.indexOf(id); if (i >= 0) stack.splice(i, 1) }
+/** How many dialogs are open up to and including this one (1 for the first). A dialog opened later sits above the ones already open, whichever is written first in the page. */
+export function depthOf(id: number): number { return stack.indexOf(id) + 1 }
 /** Only the dialog on top answers Esc, so a note opened over About closes first and About stays. */
 export function isTopDialog(id: number): boolean { return stack[stack.length - 1] === id }
 

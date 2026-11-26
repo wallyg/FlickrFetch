@@ -297,7 +297,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
   const startDateDownload = (photos: { id: string; title: string }[], title: string, note: string): void => {
     if (photos.length === 0) return
     setPendingDownload({
-      title: `↓ Download ${photos.length.toLocaleString()} photos: ${title}`,
+      title,
       photoCount: photos.length,
       videoCount: 0,
       note,
@@ -319,7 +319,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
     const videoCount = shown.filter(p => p.media === 'video').length
     const photos = shown.map(p => ({ id: p.id, title: p.title }))
     setPendingDownload({
-      title: `↓ Download ${shown.length.toLocaleString()} shown from ${where}`,
+      title: `Shown in ${where}`,
       photoCount,
       videoCount,
       note: 'Only the photos matching your filters are downloaded',
@@ -337,7 +337,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
     const videoCount = selected.filter(p => p.media === 'video').length
     const photos = selected.map(p => ({ id: p.id, title: p.title }))
     setPendingDownload({
-      title: `↓ Download Selected from "${albumTitle}"`,
+      title: `Selected from "${albumTitle}"`,
       photoCount,
       videoCount,
       onConfirm: (track, exportFormat) => {
@@ -354,7 +354,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
     const videoCount = selected.filter(p => p.media === 'video').length
     const photos = selected.map(p => ({ id: p.id, title: p.title }))
     setPendingDownload({
-      title: `↓ Download Selected from Photostream`,
+      title: 'Selected from Photostream',
       photoCount,
       videoCount,
       onConfirm: (track, exportFormat) => {
@@ -643,12 +643,12 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
               </button>
             ) : (
               <SmartDownloadButton
-                label="Download All"
+                label="Download all"
                 onDownload={(mode) => {
                   const smartMode = mode === 'all' ? undefined : mode
                   const photoCount = loadedPhotostreamPhotos.filter(p => p.media !== 'video').length
                   const videoCount = loadedPhotostreamPhotos.filter(p => p.media === 'video').length
-                  const modeTitle = mode === 'updated' ? '↓ Download Updated (Photostream)' : mode === 'never-downloaded' ? '↓ Download Never Downloaded (Photostream)' : '↓ Download Photostream'
+                  const modeTitle = mode === 'updated' ? 'Photostream: updated photos' : mode === 'never-downloaded' ? 'Photostream: never downloaded' : 'Photostream'
                   setPendingDownload({
                     title: modeTitle,
                     photoCount,
@@ -700,14 +700,14 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
                 </button>
               ) : (
                 <SmartDownloadButton
-                  label="Download Album"
+                  label="Download album"
                   onDownload={(mode) => {
                     const mt = albumMediaFilter !== 'all' ? albumMediaFilter : undefined
                     const pf = albumPrivacyFilter !== 'all' ? albumPrivacyFilter : undefined
                     const photoCount = mt === 'video' ? 0 : selectedAlbum.photoCount
                     const videoCount = mt === 'photo' ? 0 : selectedAlbum.videoCount
                     const smartMode = mode === 'all' ? undefined : mode
-                    const modeTitle = mode === 'updated' ? `↓ Download Updated: "${selectedAlbum.title}"` : mode === 'never-downloaded' ? `↓ Download Never Downloaded: "${selectedAlbum.title}"` : `↓ Download Album: "${selectedAlbum.title}"`
+                    const modeTitle = mode === 'updated' ? `Album "${selectedAlbum.title}": updated photos` : mode === 'never-downloaded' ? `Album "${selectedAlbum.title}": never downloaded` : `Album "${selectedAlbum.title}"`
                     setPendingDownload({
                       title: modeTitle,
                       photoCount,
@@ -719,7 +719,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
                           const ok = await window.flickrAPI.confirm(
                             `"${selectedAlbum.title}" is already downloading or queued.`,
                             'Do you want to add it to the queue again?',
-                            'Queue Again'
+                            'Queue again'
                           )
                           if (ok) window.flickrAPI.startBatch(selectedAlbum.id, selectedAlbum.title, selectedAlbum.photoCount, selectedAlbum.videoCount, true, mt, pf, track, smartMode, zipMode)
                         }
@@ -753,9 +753,9 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             </>
           ) : (
             <>
-              <button style={styles.selectButton} onClick={handleSelectAll}>Select All</button>
+              <button style={styles.selectButton} onClick={handleSelectAll}>Select all</button>
               {albumSelectedIds.size > 0 && (
-                <button style={styles.selectButton} onClick={() => setAlbumSelectedIds(new Set())}>Clear Selection</button>
+                <button style={styles.selectButton} onClick={() => setAlbumSelectedIds(new Set())}>Clear selection</button>
               )}
               {albumSelectedIds.size > 0 && <BatchEditButton inline style={styles.selectButton} getIds={async () => [...albumSelectedIds]} />}
               <button
@@ -766,7 +766,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
                 disabled={albumSelectedIds.size === 0}
                 onClick={handleDownloadAlbumSelected}
               >
-                <Icon name="arrowDown" /> Download Selected ({albumSelectedIds.size})
+                <Icon name="arrowDown" /> Download selected ({albumSelectedIds.size})
               </button>
               <button style={styles.doneButton} onClick={exitAlbumSelect}>Cancel</button>
             </>
@@ -778,7 +778,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
         <div style={styles.photostreamToolbar}>
           <span style={styles.selectedCount}>{photostreamSelectedIds.size} photos selected</span>
           {photostreamSelectedIds.size > 0 && (
-            <button style={styles.selectButton} onClick={() => setPhotostreamSelectedIds(new Set())}>Clear Selection</button>
+            <button style={styles.selectButton} onClick={() => setPhotostreamSelectedIds(new Set())}>Clear selection</button>
           )}
           <div style={{ flex: 1 }} />
           {photostreamSelectedIds.size > 0 && <BatchEditButton inline style={styles.selectButton} getIds={async () => [...photostreamSelectedIds]} />}
@@ -787,7 +787,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             disabled={photostreamSelectedIds.size === 0}
             onClick={handleDownloadPhotostreamSelected}
           >
-            <Icon name="arrowDown" /> Download Selected ({photostreamSelectedIds.size})
+            <Icon name="arrowDown" /> Download selected ({photostreamSelectedIds.size})
           </button>
           <button style={styles.doneButton} onClick={exitPhotostreamSelect}>Cancel</button>
         </div>
@@ -804,7 +804,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             style={styles.downloadAllBtn}
             onClick={() => void window.flickrAPI.startCollectionBatch(currentCollection)}
           >
-            <Icon name="arrowDown" /> Download All Albums
+            <Icon name="arrowDown" /> Download all albums
           </button>
         </div>
       )}

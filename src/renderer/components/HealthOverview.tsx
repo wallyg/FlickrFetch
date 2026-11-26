@@ -44,7 +44,7 @@ export default function HealthOverview({ refreshKey, onOpenList }: { refreshKey:
   const ringParts: RingPart[] = [
     mk(fineN, COLORS.fixed, 'fine', 'Fine'),
     mk(data.warnOnly, COLORS.warn, 'warning', 'Only a Warning gap'),
-    mk(data.withGap, COLORS.open, 'issue', 'An Issue gap')
+    mk(data.withGap, COLORS.open, 'issue', 'An issue gap')
   ]
   const legend: { color: string; n: number; label: string; detail: string; tip: string }[] = [
     { color: COLORS.open, n: data.withGap, label: 'Issue', detail: pct(data.withGap, data.photos), tip: data.twoOrMore > 0 ? `${fmt(data.twoOrMore)} of these are missing more than one thing` : 'Photos with a gap from a check set to Issue' },

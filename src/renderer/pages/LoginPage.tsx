@@ -119,7 +119,7 @@ export default function LoginPage({ onAuthSuccess }: LoginPageProps): React.JSX.
                       <span style={styles.dotBlue} />
                       <span style={styles.dotPink} />
                     </span>
-                    {isConnecting ? 'Opening Flickr…' : 'Connect Flickr Account'}
+                    {isConnecting ? 'Opening Flickr…' : 'Connect Flickr account'}
                   </button>
                 </div>
 

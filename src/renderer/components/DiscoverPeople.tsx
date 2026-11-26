@@ -645,7 +645,7 @@ export default function DiscoverPeople({ isActive, findActive = true }: { isActi
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               {!albumSelectMode && (
                 <SmartDownloadButton
-                  label="Download Album"
+                  label="Download album"
                   onDownload={() => {
                     void window.flickrAPI.startDiscoverSelectedBatch(
                       albumPhotos.map(p => ({ id: p.id, title: p.title })),
@@ -881,7 +881,7 @@ export default function DiscoverPeople({ isActive, findActive = true }: { isActi
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 {!userSelectMode && (
                   <SmartDownloadButton
-                    label="Download All"
+                    label="Download all"
                     onDownload={(mode) => {
                       const smartMode = mode === 'all' ? undefined : mode
                       void window.flickrAPI.startDiscoverUserBatch(foundUser.nsid, foundUser.username, `↓ ${foundUser.realname || foundUser.username}`, true, smartMode)

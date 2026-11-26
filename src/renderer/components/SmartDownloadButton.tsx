@@ -4,7 +4,7 @@ import Icon from '../ui/Icon'
 type SmartMode = 'all' | 'updated' | 'never-downloaded'
 
 interface SmartDownloadButtonProps {
-  label: string         // primary button label, e.g. "Download Album" or "Download All"
+  label: string         // primary button label, e.g. "Download album" or "Download all"
   onDownload: (mode: SmartMode) => void
   disabled?: boolean
 }
@@ -48,16 +48,16 @@ export default function SmartDownloadButton({ label, onDownload, disabled }: Sma
       {open && (
         <div style={styles.dropdown}>
           <button style={styles.item} onClick={() => choose('all')}>
-            <span style={styles.itemTitle}>Download All</span>
+            <span style={styles.itemTitle}>Download all</span>
             <span style={styles.itemDesc}>All photos in this source</span>
           </button>
           <div style={styles.divider} />
           <button style={styles.item} onClick={() => choose('updated')}>
-            <span style={styles.itemTitle}>Download Updated</span>
+            <span style={styles.itemTitle}>Download updated</span>
             <span style={styles.itemDesc}>Photos changed since last download</span>
           </button>
           <button style={styles.item} onClick={() => choose('never-downloaded')}>
-            <span style={styles.itemTitle}>Download Never Downloaded</span>
+            <span style={styles.itemTitle}>Download never downloaded</span>
             <span style={styles.itemDesc}>Only photos not yet downloaded</span>
           </button>
         </div>

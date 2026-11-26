@@ -96,8 +96,8 @@ export default function LibraryOverview({ refreshKey, offCount, onGoTags, onGoPh
       </div>
 
       <div style={{ ...dash.card, marginTop: 14 }}>
-        <h3 style={dash.cardTitle}>Biggest Issues to address <span style={dash.hint}>(by photos affected, across tags and photos; click for the list)</span></h3>
-        {starts.length === 0 && <span style={dash.muted}>No Issues right now.</span>}
+        <h3 style={dash.cardTitle}>Biggest issues to address <span style={dash.hint}>(by photos affected, across tags and photos; click for the list)</span></h3>
+        {starts.length === 0 && <span style={dash.muted}>No issues right now.</span>}
         {shown.map(s => (
           <div key={s.key} style={dash.item} {...asButton(s.open)}>
             <span>{s.label}<span style={dash.pill}>{s.pill}</span></span>

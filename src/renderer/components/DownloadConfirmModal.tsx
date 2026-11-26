@@ -4,11 +4,11 @@ import Dialog from '../ui/Dialog'
 import Icon from '../ui/Icon'
 import type { AppSettings, MetadataSettings } from '../../shared/types'
 import { isFreeAccount, limitNotice } from '../../shared/downloadLimits'
-import { primaryBtn, quietBtn, linkBtn } from '../ui/kit'
+import { primaryBtn, quietBtn, linkBtn, segGroup, segBtn, selectedOn } from '../ui/kit'
 
 const SIZE_LABELS: Record<string, string> = {
   original: 'Original',
-  xlarge: 'Extra Large',
+  xlarge: 'Extra large',
   large: 'Large',
   medium: 'Medium',
   small: 'Small',
@@ -20,12 +20,12 @@ const META_FIELDS: { key: keyof MetadataSettings; label: string }[] = [
   { key: 'embedTitle',       label: 'Title' },
   { key: 'embedDescription', label: 'Description' },
   { key: 'embedTags',        label: 'Tags' },
-  { key: 'embedDateTaken',   label: 'Date Taken' },
+  { key: 'embedDateTaken',   label: 'Date taken' },
   { key: 'embedCreator',     label: 'Creator' },
-  { key: 'embedGps',         label: 'GPS Location' },
-  { key: 'embedLicense',     label: 'CC License' },
-  { key: 'embedPhotoUrl',    label: 'Photo Page URL' },
-  { key: 'embedPhotoId',     label: 'Flickr Photo ID' },
+  { key: 'embedGps',         label: 'GPS location' },
+  { key: 'embedLicense',     label: 'CC license' },
+  { key: 'embedPhotoUrl',    label: 'Photo page URL' },
+  { key: 'embedPhotoId',     label: 'Flickr photo ID' },
 ]
 
 export interface PendingDownload {
@@ -69,7 +69,7 @@ export default function DownloadConfirmModal({ pending, settingsKey, isPro, onCa
     <Dialog label="Confirm download" size="medium" onClose={onCancel} cardStyle={{ overflow: 'hidden' }}>
 
         <div style={s.header}>
-          <h2 style={s.title}>Confirm Download</h2>
+          <h2 style={s.title}>Confirm download</h2>
           <CloseButton onClick={onCancel} />
         </div>
 
@@ -133,13 +133,9 @@ export default function DownloadConfirmModal({ pending, settingsKey, isPro, onCa
 
         <div style={s.formatRow}>
           <span style={s.formatLabel}>Export as</span>
-          <div style={s.segGroup}>
-            <button style={{ ...s.segBtn, ...(exportFormat === 'files' ? s.segBtnActive : {}) }} onClick={() => setExportFormat('files')}>
-              Individual files
-            </button>
-            <button style={{ ...s.segBtn, ...s.segBtnLast, ...(exportFormat === 'zip' ? s.segBtnActive : {}) }} onClick={() => setExportFormat('zip')}>
-              ZIP archive
-            </button>
+          <div style={segGroup} role="radiogroup" aria-label="Export as">
+            <button style={{ ...segBtn, ...(exportFormat === 'files' ? selectedOn : {}) }} role="radio" aria-checked={exportFormat === 'files'} onClick={() => setExportFormat('files')}>Individual files</button>
+            <button style={{ ...segBtn, ...(exportFormat === 'zip' ? selectedOn : {}) }} role="radio" aria-checked={exportFormat === 'zip'} onClick={() => setExportFormat('zip')}>ZIP archive</button>
           </div>
         </div>
 
@@ -156,11 +152,11 @@ export default function DownloadConfirmModal({ pending, settingsKey, isPro, onCa
         </div>
 
         <div style={s.footer}>
-          <button style={s.settingsLink} onClick={onOpenSettings}>Change Settings</button>
+          <button style={s.settingsLink} onClick={onOpenSettings}>Change settings</button>
           <div style={s.footerBtns}>
             <button style={s.cancelBtn} onClick={onCancel}>Cancel</button>
             <button style={s.confirmBtn} onClick={handleConfirm}>
-              {exportFormat === 'zip' ? 'Download as ZIP' : 'Start Download'}
+              {exportFormat === 'zip' ? 'Download as ZIP' : 'Start download'}
             </button>
           </div>
         </div>
@@ -235,21 +231,6 @@ const s: Record<string, React.CSSProperties> = {
   formatLabel: {
     fontSize: '13px', color: 'var(--ff-text-secondary)', fontWeight: '400', flexShrink: 0,
   },
-  segGroup: {
-    display: 'flex', borderRadius: '6px', border: '1px solid var(--ff-line-strong)', overflow: 'hidden',
-  },
-  segBtn: {
-    padding: '5px 12px', fontSize: '13px', fontWeight: '400',
-    background: 'var(--ff-surface)', border: 'none', borderRight: '1px solid var(--ff-line-strong)',
-    cursor: 'pointer', color: 'var(--ff-text-secondary)',
-  },
-  segBtnActive: {
-    background: 'var(--ff-tint)', color: 'var(--ff-pink-action)', fontWeight: 700,
-    boxShadow: 'inset 0 0 0 1px var(--ff-pink)',
-  },
-  segBtnLast: {
-    borderRight: 'none',
-  },
   trackRow: {
     padding: '12px 20px 0',
   },
@@ -265,6 +246,6 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex', gap: '8px',
   },
   settingsLink: { ...linkBtn, fontSize: '13px' },
-  cancelBtn: { ...quietBtn, padding: '7px 16px' },
-  confirmBtn: { ...primaryBtn, padding: '7px 20px' },
+  cancelBtn: { ...quietBtn },
+  confirmBtn: { ...primaryBtn },
 }

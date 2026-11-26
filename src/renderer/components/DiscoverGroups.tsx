@@ -334,7 +334,7 @@ export default function DiscoverGroups({ findActive = true }: { findActive?: boo
         <div style={s.stickyHeader}>
           <div style={s.headerRow}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <button style={s.backBtn} onClick={handleBack}><ChevronLeftIcon />My Groups</button>
+              <button style={s.backBtn} onClick={handleBack}><ChevronLeftIcon />My groups</button>
               {activeGroup.iconUrl && (
                 <img src={activeGroup.iconUrl} alt="" style={s.groupIcon} loading="lazy"
                   onError={(e) => { e.currentTarget.style.display = 'none' }} />
@@ -360,7 +360,7 @@ export default function DiscoverGroups({ findActive = true }: { findActive?: boo
               )}
               {!selectMode && !filtersActive && (
                 <SmartDownloadButton
-                  label="Download Group"
+                  label="Download group"
                   onDownload={(mode) => {
                     if (mode === 'all' && activeGroup.photoCount != null && activeGroup.photoCount > 500) {
                       setGroupDownloadWarning({ photoCount: activeGroup.photoCount })
@@ -703,7 +703,7 @@ export default function DiscoverGroups({ findActive = true }: { findActive?: boo
       <WaveHeader>
         <div style={s.headerRow}>
           <div>
-            <h2 style={s.heading}>My Groups</h2>
+            <h2 style={s.heading}>My groups</h2>
             <p style={s.subheading}>Browse photos from groups you belong to</p>
           </div>
         </div>

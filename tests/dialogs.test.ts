@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join, relative, resolve } from 'node:path'
-import { isTopDialog, nextFocusIndex, popDialog, pushDialog } from '../src/renderer/ui/dialogStack'
+import { depthOf, isTopDialog, nextFocusIndex, popDialog, pushDialog } from '../src/renderer/ui/dialogStack'
 
 // One shell for every dialog (#236): src/renderer/ui/Dialog.tsx gives the backdrop, Esc, focus and sizes; ui/CloseButton.tsx the one close mark.
 const root = resolve(process.cwd())
@@ -50,4 +50,23 @@ test('a screen that uses Dialog leaves Esc to it, and uses the shared close butt
     if (/<button[^>]*aria-label="Close"/.test(code)) bad.push(`${relative(root, f)}: its own close button`)
   }
   assert.deepEqual(bad, [])
+})
+
+// "Change settings" in the Confirm download box opens Settings over it, even though Settings is written earlier on the page (the first 3.13 test report)
+test('a dialog opened over another sits above it, whichever one is written first on the page', () => {
+  const confirm = pushDialog()
+  const settings = pushDialog()                      // opened from the confirm box
+  assert.ok(depthOf(settings) > depthOf(confirm))
+  assert.equal(depthOf(confirm), 1)
+  popDialog(confirm)                                 // the one underneath closes first: the other keeps its place above whatever opens next
+  const next = pushDialog()
+  assert.ok(depthOf(next) > 0)
+  popDialog(settings); popDialog(next)
+  assert.equal(depthOf(settings), 0)                 // not open: no place
+})
+
+test('the dialog shell puts each dialog on its own layer from its place in the stack', () => {
+  const shell = readFileSync(join(SRC, 'ui/Dialog.tsx'), 'utf8')
+  assert.match(shell, /zIndex: `calc\(var\(--ff-z-dialog\) \+ \$\{depth\}\)`/)
+  assert.match(shell, /useEscapeToClose\(onClose, true, setDepth\)/)
 })

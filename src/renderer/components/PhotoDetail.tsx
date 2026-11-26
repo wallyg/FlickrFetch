@@ -50,11 +50,11 @@ function CcBadge({ label }: { label: string }): React.JSX.Element {
 
 const DOWNLOAD_SIZE_OPTIONS: { value: DownloadSize; label: string; flickrLabels: string[] }[] = [
   { value: 'original', label: 'Original',    flickrLabels: ['Original'] },
-  { value: 'xlarge',   label: 'Extra Large', flickrLabels: ['Large 2048', 'Large 1600'] },
+  { value: 'xlarge',   label: 'Extra large', flickrLabels: ['Large 2048', 'Large 1600'] },
   { value: 'large',    label: 'Large',       flickrLabels: ['Large'] },
   { value: 'medium',   label: 'Medium',      flickrLabels: ['Medium 800', 'Medium 640', 'Medium'] },
   { value: 'small',    label: 'Small',       flickrLabels: ['Small 320', 'Small'] },
-  { value: 'square',   label: 'Square',      flickrLabels: ['Large Square', 'Square'] },
+  { value: 'square',   label: 'Square',      flickrLabels: ['Large square', 'Square'] },
 ]
 
 function getSizeOptionLabel(opt: typeof DOWNLOAD_SIZE_OPTIONS[number], sizes: PhotoSize[]): string {
@@ -369,9 +369,9 @@ export default function PhotoDetail({
   // since Flickr sometimes tags video sizes with media:'photo'
   const bestVideoSource = useMemo(() => {
     if (photo.media !== 'video') return null
-    const pref = ['1080p', '720p', 'Video Original', '360p']
+    const pref = ['1080p', '720p', 'Video original', '360p']
     const vids = sizes.filter(s =>
-      s.media === 'video' && s.label !== 'Video Player'
+      s.media === 'video' && s.label !== 'Video player'
     ).slice()
     vids.sort((a, b) => {
       const ai = pref.indexOf(a.label), bi = pref.indexOf(b.label)
@@ -493,7 +493,7 @@ export default function PhotoDetail({
 
           {!loadingDetail && originalSize && (
             <div style={{ marginBottom: '4px' }}>
-              <p style={{ ...styles.fieldLabel, marginBottom: '2px' }}>Photo Resolution</p>
+              <p style={{ ...styles.fieldLabel, marginBottom: '2px' }}>Photo resolution</p>
               <p style={styles.metaDim}>{originalSize.width} × {originalSize.height}</p>
             </div>
           )}
@@ -668,7 +668,7 @@ export default function PhotoDetail({
                   <span>Updated on Flickr since your last download</span>
                 </div>
               )}
-              <p style={styles.lastDownloaded}>Last Downloaded</p>
+              <p style={styles.lastDownloaded}>Last downloaded</p>
               <div style={styles.lastDownloadedRow}>
                 <p style={styles.lastDownloadedDate}>{formatDownloadDateTime(lastDownloadedAt)}</p>
                 <button style={styles.resetRecordBtn} onClick={handleResetRecord} title="Clear download record for this photo">

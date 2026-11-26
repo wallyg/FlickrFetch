@@ -60,3 +60,16 @@ test('no new text box or select is typed out by hand', () => {
   }
   assert.deepEqual(found, [], 'Use fieldBox, fieldCompact, selectBox or selectCompact from ui/kit.ts.')
 })
+
+// Segmented switches (the pink-edged "this or that" group): one look in ui/kit.ts (segGroup, segBtn, selectedOn). A screen may adjust the padding, never retype the look.
+test('no segmented switch is typed out by hand', () => {
+  const found: string[] = []
+  for (const f of files(SRC)) {
+    if (/ui\/kit\.ts$/.test(f)) continue
+    readFileSync(f, 'utf8').split('\n').forEach((ln, i) => {
+      const m = /^\s*(seg\w*): \{ (.*) \},?\s*$/.exec(ln)
+      if (m && !m[2].includes('...') && /border: 'none'|borderRadius/.test(m[2]) && /background:/.test(m[2])) found.push(`${relative(root, f)}:${i + 1}: ${m[1]}`)
+    })
+  }
+  assert.deepEqual(found, [], 'spread segGroup / segBtn / selectedOn from ui/kit')
+})

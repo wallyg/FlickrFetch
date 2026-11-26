@@ -307,7 +307,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
               style={{ ...s.tabBtn, ...(activeTab === tab ? s.tabBtnActive : {}) }}
               onClick={() => setActiveTab(tab)}
             >
-              {tab === 'general' ? 'General' : tab === 'downloads' ? 'Downloads' : tab === 'naming' ? 'File Naming' : tab === 'metadata' ? 'Metadata' : tab === 'health' ? 'Health Check' : 'Album Checks'}
+              {tab === 'general' ? 'General' : tab === 'downloads' ? 'Downloads' : tab === 'naming' ? 'File naming' : tab === 'metadata' ? 'Metadata' : tab === 'health' ? 'Health Check' : 'Album Checks'}
             </button>
           ))}
         </div>
@@ -392,7 +392,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
               {/* Download folder */}
               <div style={s.section}>
                 <div style={s.sectionRow}>
-                  <p style={s.sectionTitle}>Download Folder</p>
+                  <p style={s.sectionTitle}>Download folder</p>
                   <InfoTip text={"Where batch downloads are saved.\n\nSingle-photo downloads use your Mac's Save dialog instead."} />
                 </div>
                 <div style={s.folderRow}>
@@ -404,7 +404,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
               {/* Download size */}
               <div style={{ ...s.section, borderTop: '1px solid var(--ff-border)' }}>
                 <div style={s.sectionRow}>
-                  <p style={s.sectionTitle}>Photo Resolution</p>
+                  <p style={s.sectionTitle}>Photo resolution</p>
                   <InfoTip text={"Which image size to download.\n\nOriginal is recommended for archiving. Videos always download at the highest quality, whatever you choose here."} />
                 </div>
                 <div style={s.optionList}>
@@ -448,7 +448,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
               {/* Conflict behavior */}
               <div style={{ ...s.section, borderTop: '1px solid var(--ff-border)' }}>
                 <div style={s.sectionRow}>
-                  <p style={s.sectionTitle}>If File Already Exists</p>
+                  <p style={s.sectionTitle}>If file already exists</p>
                   <InfoTip text="What to do when a downloaded file has the same name as one already in the folder." />
                 </div>
                 <div style={s.optionList}>
@@ -522,7 +522,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
               {/* Part separator */}
               <div style={{ ...s.section, borderTop: '1px solid var(--ff-border)' }}>
                 <div style={s.sectionRow}>
-                  <p style={s.sectionTitle}>Part Separator</p>
+                  <p style={s.sectionTitle}>Part separator</p>
                   <InfoTip text={"Joins all parts together.\n\nExample: 2024-03-15·NYC - Highline.jpg (where · is your chosen separator)."} />
                 </div>
                 <div style={s.sepRow}>
@@ -541,7 +541,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
               {/* Optional parts */}
               <div style={{ ...s.section, borderTop: '1px solid var(--ff-border)' }}>
                 <div style={s.sectionRow}>
-                  <p style={s.sectionTitle}>Optional Parts</p>
+                  <p style={s.sectionTitle}>Optional parts</p>
                   <InfoTip text={"Each part wraps around the core using the separator.\n\nPrefix goes before it, suffix after."} />
                 </div>
 
@@ -599,7 +599,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
               {/* Title transform */}
               <div style={{ ...s.section, borderTop: '1px solid var(--ff-border)' }}>
                 <div style={s.sectionRow}>
-                  <p style={s.sectionTitle}>Title Transform</p>
+                  <p style={s.sectionTitle}>Title transform</p>
                   <InfoTip text="Changes the capital letters of the whole filename." />
                 </div>
 
