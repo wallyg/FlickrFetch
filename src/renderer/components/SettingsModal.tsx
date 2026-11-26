@@ -121,6 +121,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
   const [showFade, setShowFade] = useState(false)
   const hasLoadedRef = useRef(false)
   const [confirmReset, setConfirmReset] = useState(false)
+  const [crash, setCrash] = useState(false)   // development only: fails on purpose to show the error screen
   const [resetDone, setResetDone] = useState(false)
   const contentRef = useRef<HTMLDivElement>(null)
 
@@ -283,6 +284,8 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
     if (folder) { setDownloadFolder(folder) }
   }
 
+  if (crash) throw new Error('Test error from Settings (development only)')
+
   return (
     <Dialog label="Settings" size="wide" onClose={onClose} cardStyle={{ height: 660, maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
 
@@ -442,6 +445,8 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
                     Act as a free account in the download box (to see the size note)
                   </label>
                   <p style={s.radioDesc}>Only in <code>npm run dev</code>. Your account is Pro; this does not change any download.</p>
+                  <button style={{ ...quietBtn, marginTop: 8, alignSelf: 'flex-start' }} onClick={() => setCrash(true)}>Show the error screen</button>
+                  <p style={s.radioDesc}>Makes this screen fail on purpose, so you can see the error screen and its Reload button. Only in <code>npm run dev</code>.</p>
                 </div>
               )}
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
+import ErrorBoundary from '../ui/ErrorBoundary'
 import Dialog from '../ui/Dialog'
 import { tabMark, linkBtn, primaryBtn, quietBtn } from '../ui/kit'
 import Icon from '../ui/Icon'
@@ -813,6 +814,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
       </main>
 
       <main ref={youMainRef} style={{ ...styles.main, ...(appMode === 'discover' ? { display: 'none' } : {}) }}>
+        <ErrorBoundary scope="tab" resetKey={view}>
         <div style={view === 'photostream' ? styles.tabPane : styles.tabPaneHidden}>
           <PhotoGrid
             key={photostreamRefreshKey}
@@ -958,6 +960,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             />
           </div>
         )}
+        </ErrorBoundary>
       </main>
 
       {showResetConfirm && selectedAlbum && (

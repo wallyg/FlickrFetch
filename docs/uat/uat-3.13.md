@@ -40,3 +40,11 @@ Eight dialogs now share one shell: same backdrop, card, shadow, close mark, Esc,
 - [ ] D3 **One look.** All the dialogs have the same rounded corners and shadow; the close mark is the same drawn cross in the top right everywhere (including the collage window, which used a text cross); the What's New backdrop is the same shade as the others.
 - [ ] D4 **Sizes.** The Download confirm box is a little wider than before (480). Settings and The Problem are 640 wide; About 720; the Reset and Sign out questions are 360. Nothing is cut off in a narrow window.
 - [ ] D5 **Focus.** Open Settings with the keyboard (Tab to the cog, Enter): focus is inside; Tab never leaves it; close it with Esc and focus is back on the cog. With the mouse, no blue ring appears around the whole dialog.
+
+## Error screen (#254)
+
+A screen that hits an error now shows a message and a Reload button instead of a blank white window.
+
+- [ ] E1 **See it.** In the dev app: Settings > General, scroll to "Development only" and press "Show the error screen". The window shows "Something went wrong on this screen", a pink Reload button, and a folded "What happened". Open it: the message and the screens involved are there, and "Copy details" copies them. Press Reload: the app comes back and you are still signed in.
+- [ ] E2 **One tab only.** (Developer check, or when a real tab error happens.) An error inside a tab shows the same card inside the tab area with Reload and "Try again"; switching to another tab clears it and the other tabs work.
+- [ ] E3 **A dead page.** (Developer check.) If the window's page itself stops (for example after a crash), a box says "FlickrFetch stopped working" with Reload and Quit, instead of leaving a blank window.

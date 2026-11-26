@@ -205,6 +205,15 @@ function createWindow(): void {
     external(url)
   })
 
+  // If the page itself dies (not just a screen error, which the app handles), say so and offer to start it again instead of leaving a blank window.
+  mainWindow.webContents.on('render-process-gone', (_event, details) => {
+    if (details.reason === 'clean-exit' || !mainWindow) return
+    void dialog.showMessageBox(mainWindow, {
+      type: 'warning', message: 'FlickrFetch stopped working', detail: 'Your photos and settings are safe, and downloads in progress keep going. Reload to start the window again.',
+      buttons: ['Reload', 'Quit'], defaultId: 0, cancelId: 1
+    }).then(r => { if (r.response === 0) mainWindow?.webContents.reload(); else app.quit() }).catch(() => { /* the window is already gone */ })
+  })
+
   mainWindow.on('closed', () => {
     mainWindow = null
   })
