@@ -85,3 +85,12 @@ test('only a 12-hour stamp is flagged for sorting badly', () => {
   assert.equal(usesTwelveHour('yyyy-MM-dd HH-mm'), false)
   assert.equal(usesTwelveHour("'at' yyyy"), false)
 })
+
+test('the editor shows the everyday parts first, and every part is still one click further', async () => {
+  const { DATE_MAIN_TOKENS, DATE_TOKENS } = await import('../src/shared/dateStamp')
+  const all = DATE_TOKENS.map(t => t.token)
+  for (const t of DATE_MAIN_TOKENS) assert.ok(all.includes(t), `${t} is not a part`)
+  assert.ok(DATE_MAIN_TOKENS.length <= 10 && DATE_MAIN_TOKENS.length < all.length)
+  for (const g of ['Year', 'Month', 'Day', 'Weekday', 'Time']) assert.ok(DATE_TOKENS.some(t => t.group === g && (DATE_MAIN_TOKENS as readonly string[]).includes(t.token)), `no everyday part in ${g}`)
+  assert.ok(['hh', 'h', 'a', 'H', 'M', 'd', 'EEE'].every(t => all.includes(t) && !(DATE_MAIN_TOKENS as readonly string[]).includes(t)))
+})

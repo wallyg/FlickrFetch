@@ -22,6 +22,9 @@ export const DATE_TOKENS: DateToken[] = [
   { token: 'HH', group: 'Time', example: '14' }, { token: 'H', group: 'Time', example: '14' }, { token: 'hh', group: 'Time', example: '02' }, { token: 'h', group: 'Time', example: '2' },
   { token: 'mm', group: 'Time', example: '22' }, { token: 'ss', group: 'Time', example: '05' }, { token: 'a', group: 'Time', example: 'PM' }
 ]
+/** The parts most patterns use. The editor shows these first; the rest (single-digit month, day and hour, the short weekday, 12-hour time) are one click further. */
+export const DATE_MAIN_TOKENS = ['yyyy', 'yy', 'MMMM', 'MMM', 'MM', 'dd', 'EEEE', 'HH', 'mm', 'ss'] as const
+
 const TOKENS = new Set(DATE_TOKENS.map(t => t.token))
 const ILLEGAL = /[/:\\\u0000-\u001f]/
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']

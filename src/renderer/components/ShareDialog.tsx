@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import CloseButton from '../ui/CloseButton'
 import { polaroidLayout, captionPlan, type TextKind } from '../ui/polaroid'
+import { canShuffle, shufflePicks, type ShuffleMode } from '../ui/shuffle'
+import Icon from '../ui/Icon'
 import Dialog from '../ui/Dialog'
 import type { DayPhoto } from '../../shared/types'
 import logoImg from '../assets/logo-tray.png'
@@ -226,13 +228,19 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
   const cache = useRef<Map<string, HTMLImageElement>>(new Map())   // bigger pictures already fetched, by photo id
 
   // The photos to choose from: your ticks as they are, or one per year (newest year first); public ones only when asked
-  const basePicks = useMemo(() => {
-    if (userPicked && source === 'ticked') return (publicOnly ? photos.filter(p => p.privacy === 0) : photos).slice(0, 6)
-    const pool = publicOnly ? candidates.filter(p => p.privacy === 0) : candidates
+  const mode: ShuffleMode = userPicked && source === 'ticked' ? 'ticked' : 'years'
+  const poolPhotos = useMemo(() => (publicOnly ? candidates.filter(p => p.privacy === 0) : candidates), [candidates, publicOnly])
+  const tickedPhotos = useMemo(() => (publicOnly ? photos.filter(p => p.privacy === 0) : photos), [photos, publicOnly])
+  const autoPicks = useMemo(() => {
+    if (mode === 'ticked') return tickedPhotos.slice(0, 6)
     const byYear = new Map<string, DayPhoto>()
-    for (const p of pool) { const y = p.dateTaken.slice(0, 4); if (!byYear.has(y)) byYear.set(y, p) }
+    for (const p of poolPhotos) { const y = p.dateTaken.slice(0, 4); if (!byYear.has(y)) byYear.set(y, p) }
     return [...byYear.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1)).map(e => e[1]).slice(0, 6)
-  }, [photos, candidates, userPicked, source, publicOnly])
+  }, [mode, poolPhotos, tickedPhotos])
+  // Shuffle: a fresh set for the same choices above. A change to those choices (source, public only) goes back to the first set.
+  const [shuffled, setShuffled] = useState<{ key: string; list: DayPhoto[] } | null>(null)
+  const pickMode = `${mode}|${publicOnly}`
+  const basePicks = shuffled && shuffled.key === pickMode ? shuffled.list : autoPicks
 
   const maxCount = Math.min(6, basePicks.length)
   const [count, setCount] = useState(Math.min(4, maxCount))
@@ -500,6 +508,7 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
     return compose(1)?.toDataURL('image/png') ?? ''
   }
   const fileName = (): string => `on-this-day-${MONTHS[month - 1].slice(0, 3)}-${day}${shape === 'auto' ? '' : '-' + shape}${resolution === 'large' ? '-large' : ''}.png`
+  const shuffleNow = (): void => setShuffled({ key: pickMode, list: shufflePicks(mode, poolPhotos, tickedPhotos, chosen, shownCount) })
   const save = async (): Promise<void> => {
     if (!(await confirmPrivacy())) return
     const path = await window.flickrAPI.saveShareImage(await dataUrl(), fileName())
@@ -537,6 +546,10 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
                   <b style={{ fontSize: 18, minWidth: 18, textAlign: 'center' }}>{shownCount}</b>
                   <button style={styles.step} disabled={shownCount >= maxCount} onClick={() => setCount(Math.min(maxCount, shownCount + 1))}>+</button>
                   <span style={styles.muted}>up to {maxCount}. One photo makes a single card.</span>
+                </div>
+                <div>
+                  <button style={styles.btn} disabled={!canShuffle(mode, poolPhotos, tickedPhotos, shownCount)} onClick={shuffleNow}
+                    title={canShuffle(mode, poolPhotos, tickedPhotos, shownCount) ? 'Pick a different set of photos for this day' : 'There is nothing else to pick from'}><Icon name="shuffle" /> Shuffle</button>
                 </div>
                 {userPicked ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 3, marginTop: 2 }}>
