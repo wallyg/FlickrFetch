@@ -58,3 +58,13 @@ The Date stamp in File Naming is now a pattern you build, with the four old form
 - [ ] F3 **Problems are explained.** Type `yyyy at HH`: the box turns red and says to put the word in quotes. Type `yyyy/MM`: it says a file name cannot contain / or :. While it is red, the file name example keeps the last good pattern.
 - [ ] F4 **Weekday, month name, 12-hour.** `EEEE, MMMM d` gives `Friday, March 15`; `hh-mm a` gives `02-22 PM`. With Prefix chosen, a 12-hour pattern shows the note that it does not sort in time order.
 - [ ] F5 **A real download.** Download one photo with a date stamp (for example `yyyy-MM-dd EEE`): the file name has the stamp, and nothing in it is `/` or `:`. A photo downloaded before keeps its name.
+
+## Share button (#265)
+
+The collage window has a Share… button that opens the Mac share sheet (Mail, Messages, AirDrop, Notes) with the picture.
+
+- [ ] G1 **Open the sheet.** On This Day > the collage or card button. Next to Save image… and Copy image there is Share…. Click it: the Mac share sheet opens under the button, and the picture is already attached (try Messages or Notes, but do not send to anyone unless you mean to).
+- [ ] G2 **Same picture as Save.** Change the shape or Large size, then Share… to Notes: the picture is the one in the preview, at the size you chose, and named like `on-this-day-Mar-15.png`.
+- [ ] G3 **Not-public photos.** With some not-public photos in the collage, Share… asks the same "are you sure" question as Save and Copy before the sheet opens; Cancel stops it.
+- [ ] G4 **AirDrop to your own device.** Share… > AirDrop to an iPad or iPhone of yours: it arrives as a picture.
+- [ ] G5 **Built app only.** The unsigned build may not show every sharing service (Messages and Mail can be missing until the app is signed). If the sheet is empty or does not open in the dev app, tell me; that is expected to be an unsigned-app limit, not a bug in the button.

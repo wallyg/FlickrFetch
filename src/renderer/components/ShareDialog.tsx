@@ -517,14 +517,22 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
     }
     return compose(1)?.toDataURL('image/png') ?? ''
   }
+  const fileName = (): string => `on-this-day-${MONTHS[month - 1].slice(0, 3)}-${day}${shape === 'auto' ? '' : '-' + shape}${resolution === 'large' ? '-large' : ''}.png`
   const save = async (): Promise<void> => {
     if (!(await confirmPrivacy())) return
-    const path = await window.flickrAPI.saveShareImage(await dataUrl(), `on-this-day-${MONTHS[month - 1].slice(0, 3)}-${day}${shape === 'auto' ? '' : '-' + shape}${resolution === 'large' ? '-large' : ''}.png`)
+    const path = await window.flickrAPI.saveShareImage(await dataUrl(), fileName())
     if (path) setNote(`Saved to ${path.split('/').pop()}`)
   }
   const copy = async (): Promise<void> => {
     if (!(await confirmPrivacy())) return
     setNote((await window.flickrAPI.copyShareImage(await dataUrl())) ? 'Image copied. Paste it into a message or post.' : 'Couldn\'t copy the image.')
+  }
+  // The Mac share sheet opens under the button. The privacy question comes first, as for Save and Copy.
+  const share = async (button: HTMLElement): Promise<void> => {
+    if (!(await confirmPrivacy())) return
+    const box = button.getBoundingClientRect()
+    const ok = await window.flickrAPI.shareImage(await dataUrl(), fileName(), box.left, box.bottom + 4)
+    if (!ok) setNote('Couldn\'t open sharing.')
   }
   const copyLinks = async (): Promise<void> => {
     if (!(await confirmPrivacy())) return
@@ -584,10 +592,11 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
               </Step>
             </div>
             <div style={styles.dock}>
-              {nonPublic > 0 && <div style={styles.warn}>🔒 {nonPublic} of the {chosen.length} photos are not public. You will be asked before saving or copying.</div>}
+              {nonPublic > 0 && <div style={styles.warn}>🔒 {nonPublic} of the {chosen.length} photos are not public. You will be asked before saving, copying or sharing.</div>}
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <button style={styles.primary} disabled={loading || ready.length === 0} onClick={() => void save()}>Save image…</button>
                 <button style={styles.btn} disabled={loading || ready.length === 0} onClick={() => void copy()}>Copy image</button>
+                <button style={styles.btn} disabled={loading || ready.length === 0} onClick={e => void share(e.currentTarget)}>Share…</button>
                 <button style={styles.btn} disabled={ready.length === 0} onClick={() => void copyLinks()}>Copy links</button>
               </div>
               {note && <div style={styles.muted}>{note}</div>}

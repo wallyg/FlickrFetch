@@ -1,7 +1,8 @@
-import { app, ipcMain, dialog, clipboard, nativeImage } from 'electron'
+import { app, ipcMain, dialog, clipboard, nativeImage, ShareMenu } from 'electron'
 import type { BrowserWindow } from 'electron'
-import { writeFileSync } from 'fs'
+import { mkdirSync, readdirSync, statSync, unlinkSync, writeFileSync } from 'fs'
 import { join } from 'path'
+import { safePngName, staleShareFiles } from './shareFile'
 
 // Support for the On This Day collage and card maker: fetching picture bytes for the canvas (Flickr's
 // picture servers do not allow a web page to read them directly), saving the result, and copying it.
@@ -39,7 +40,7 @@ export function registerShareIpc(getWindow: () => BrowserWindow | null): void {
   ipcMain.handle('share:savePng', async (_e, dataUrl: string, defaultName: string): Promise<string | null> => {
     if (typeof dataUrl !== 'string' || !dataUrl.startsWith(PNG_PREFIX)) return null
     const win = getWindow()
-    const safeName = defaultName.replace(/[^\w.\- ]+/g, '_') || 'on-this-day.png'
+    const safeName = safePngName(defaultName)
     const options = { defaultPath: join(app.getPath('downloads'), safeName), filters: [{ name: 'Image', extensions: ['png'] }] }
     const result = win ? await dialog.showSaveDialog(win, options) : await dialog.showSaveDialog(options)
     if (result.canceled || !result.filePath) return null
@@ -59,5 +60,26 @@ export function registerShareIpc(getWindow: () => BrowserWindow | null): void {
     if (img.isEmpty()) return false
     clipboard.writeImage(img)
     return true
+  })
+
+  // The Mac share sheet (Mail, Messages, AirDrop, Notes...). It needs a file, so the picture is written to a folder of its own in the
+  // system's temporary files; `x` and `y` are where the Share button sits in the window, so the sheet opens right under it.
+  ipcMain.handle('share:shareImage', (_e, dataUrl: string, defaultName: string, x: number, y: number): boolean => {
+    if (process.platform !== 'darwin') return false
+    if (typeof dataUrl !== 'string' || !dataUrl.startsWith(PNG_PREFIX)) return false
+    const win = getWindow()
+    if (!win) return false
+    try {
+      const folder = join(app.getPath('temp'), 'FlickrFetch-share')
+      mkdirSync(folder, { recursive: true })
+      const now = Date.now()
+      const waiting = readdirSync(folder).map(name => ({ name, changedMs: statSync(join(folder, name)).mtimeMs }))
+      for (const old of staleShareFiles(waiting, now)) { try { unlinkSync(join(folder, old)) } catch { /* it goes next time */ } }
+      const file = join(folder, safePngName(defaultName))
+      writeFileSync(file, Buffer.from(dataUrl.slice(PNG_PREFIX.length), 'base64'))
+      const menu = new ShareMenu({ filePaths: [file] })
+      menu.popup({ window: win, x: Math.round(Number.isFinite(x) ? x : 0), y: Math.round(Number.isFinite(y) ? y : 0) })
+      return true
+    } catch { return false }
   })
 }

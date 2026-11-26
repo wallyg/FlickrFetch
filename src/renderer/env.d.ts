@@ -84,6 +84,7 @@ declare global {
       fetchShareImage: (url: string) => Promise<string | null>
       saveShareImage: (dataUrl: string, defaultName: string) => Promise<string | null>
       copyShareImage: (dataUrl: string) => Promise<boolean>
+      shareImage: (dataUrl: string, defaultName: string, x: number, y: number) => Promise<boolean>
       getSettings: () => Promise<AppSettings>
       setSettings: (settings: Partial<AppSettings>) => Promise<void>
       resetSettings: () => Promise<AppSettings>
