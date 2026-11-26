@@ -184,7 +184,7 @@ ipcMain.handle('auth:verify', async (_event, verifierCode: string) => {
     if (status === 401) {
       throw new Error('That code is not right. Check it and try again.')
     }
-    throw new Error('Couldn\'t check the code. Connect again.')
+    throw new Error('Couldn\'t check the code. Press Reopen Flickr to start again.')
   }
 })
 

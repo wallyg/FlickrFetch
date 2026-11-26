@@ -72,15 +72,14 @@ export async function startOAuthFlow(): Promise<string> {
 // Step 2: Exchange the verifier code (typed by user) for an access token
 export async function verifyOAuth(verifierCode: string): Promise<FlickrTokenData> {
   if (!pendingRequestToken || !pendingRequestTokenSecret) {
-    throw new Error('The sign-in timed out. Choose Connect to Flickr again.')
+    throw new Error('The sign-in timed out. Press Reopen Flickr to start again.')
   }
 
   const oauthToken = pendingRequestToken
   const tokenSecret = pendingRequestTokenSecret
 
-  // Clear immediately after use
-  pendingRequestToken = null
-  pendingRequestTokenSecret = null
+  // Kept until Flickr accepts the code: a mistyped code can be corrected and sent again without signing in from the start.
+  // Cleared below once the code worked.
 
   // Put oauth_verifier in the URL so it's part of the signature base string
   // AND is physically present in the request Flickr receives — no ambiguity.
@@ -110,6 +109,9 @@ export async function verifyOAuth(verifierCode: string): Promise<FlickrTokenData
     process.stderr.write(`[flickrfetch] sign-in failed: HTTP ${e.response?.status ?? 'no response'}\n`)
     throw err
   }
+
+  pendingRequestToken = null
+  pendingRequestTokenSecret = null
 
   const params = new URLSearchParams(response.data)
   const accessToken = params.get('oauth_token')

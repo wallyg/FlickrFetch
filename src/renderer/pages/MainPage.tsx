@@ -529,7 +529,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
                 src={user.avatarUrl}
                 alt={displayName}
                 style={styles.avatarBtnImg}
-                onError={(e) => { e.currentTarget.src = 'https://www.flickr.com/images/buddyicon.gif' }}
+                onError={(e) => { if (!e.currentTarget.src.endsWith('buddyicon.gif')) e.currentTarget.src = 'https://www.flickr.com/images/buddyicon.gif' }}
               />
               <svg width="9" height="6" viewBox="0 0 9 6" fill="none" style={{ flexShrink: 0 }}>
                 <path d="M1 1l3.5 3.5L8 1" stroke="var(--ff-text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -544,7 +544,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
                       src={user.avatarUrl}
                       alt={displayName}
                       style={styles.avatarPopoverImg}
-                      onError={(e) => { e.currentTarget.src = 'https://www.flickr.com/images/buddyicon.gif' }}
+                      onError={(e) => { if (!e.currentTarget.src.endsWith('buddyicon.gif')) e.currentTarget.src = 'https://www.flickr.com/images/buddyicon.gif' }}
                     />
                     <div>
                       <div style={styles.avatarPopoverName}>

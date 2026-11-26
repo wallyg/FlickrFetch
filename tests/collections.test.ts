@@ -89,3 +89,17 @@ test('a download that finishes for a photo you have moved off does not mark the 
   assert.ok(/shownId\.current = photo\.id/.test(src))
   assert.equal((src.match(/if \(forId !== shownId\.current\) return/g) ?? []).length, 2, 'both the finish and the failure are checked')
 })
+
+test('a mistyped sign-in code can be corrected: the pending sign-in is only cleared once Flickr accepts the code', () => {
+  const src = read('src/main/auth.ts')
+  const verify = src.slice(src.indexOf('export async function verifyOAuth'), src.indexOf('// Kept in memory only'))
+  const clears = [...verify.matchAll(/pendingRequestToken = null/g)].map(m => m.index ?? 0)
+  const post = verify.indexOf('await axios.post(accessTokenUrl')
+  assert.equal(clears.length, 1)
+  assert.ok(clears[0] > post, 'cleared after the request that checks the code, not before it')
+})
+
+test('a missing avatar falls back once, not in a loop when the fallback is missing too (offline)', () => {
+  const src = read('src/renderer/pages/MainPage.tsx')
+  assert.equal((src.match(/if \(!e\.currentTarget\.src\.endsWith\('buddyicon\.gif'\)\)/g) ?? []).length, 2)
+})
