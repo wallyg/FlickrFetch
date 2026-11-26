@@ -64,6 +64,13 @@ export function openDatabase(): void {
   if (!cols.includes('size_limited')) db.exec('ALTER TABLE photo_download_record ADD COLUMN size_limited INTEGER NOT NULL DEFAULT 0')
   const discoverCols = (db.prepare("PRAGMA table_info(discover_download_record)").all() as Array<{ name: string }>).map(r => r.name)
   if (!discoverCols.includes('source')) db.exec("ALTER TABLE discover_download_record ADD COLUMN source TEXT NOT NULL DEFAULT ''")
+  // Failed-photo rows whose log entry is gone (left by earlier versions when the history was cleared)
+  removeOrphanFailures(db)
+}
+
+// The titles of photos that failed belong to a log entry; once that entry is gone they go too
+function removeOrphanFailures(d: Database.Database): void {
+  d.prepare('DELETE FROM batch_log_failures WHERE batch_log_id NOT IN (SELECT id FROM batch_log)').run()
 }
 
 export function closeDatabase(): void {
@@ -212,6 +219,7 @@ export function getBatchLog(limit = 200): BatchLogEntry[] {
   if (!db) return []
   const cutoff = Date.now() - 90 * 24 * 60 * 60 * 1000
   db.prepare('DELETE FROM batch_log WHERE created_at < ?').run(cutoff)
+  removeOrphanFailures(db)
   const rows = db.prepare('SELECT * FROM batch_log ORDER BY created_at DESC LIMIT ?').all(limit) as Record<string, unknown>[]
   const failureRows = db.prepare(
     'SELECT batch_log_id, photo_id, title FROM batch_log_failures WHERE batch_log_id IN (SELECT id FROM batch_log ORDER BY created_at DESC LIMIT ?)'
@@ -238,10 +246,12 @@ export function getBatchLog(limit = 200): BatchLogEntry[] {
 
 export function clearBatchLog(): void {
   db?.prepare('DELETE FROM batch_log').run()
+  db?.prepare('DELETE FROM batch_log_failures').run()
 }
 
 export function clearAllHistory(): void {
   db?.prepare('DELETE FROM batch_log').run()
+  db?.prepare('DELETE FROM batch_log_failures').run()
   db?.prepare('DELETE FROM photo_download_record').run()
   db?.prepare('DELETE FROM discover_download_record').run()
 }

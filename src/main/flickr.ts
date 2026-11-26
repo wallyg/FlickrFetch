@@ -2,6 +2,7 @@ import axios from 'axios'
 import { FLICKR_API_KEY } from './config'
 import { getOAuthHeader } from './auth'
 import { USER_AGENT } from './userAgent'
+import { SignInRevokedError, isSignInRevoked } from './signInCheck'
 import { cleanTag, foldAccents } from '../shared/tags'
 import type { FlickrTokenData, FlickrUser, FlickrPhoto, PhotoPage, PhotoSize, PhotoInfo, FlickrAlbum, AlbumPage, FlickrCollection, FlickrSet, CameraExif, PhotoSearchParams, DiscoverUser, DiscoverContact, DiscoverGroup } from '../shared/types'
 
@@ -34,7 +35,7 @@ function buildAvatarUrl(person: FlickrPersonResponse): string {
 export async function getUserInfo(tokenData: FlickrTokenData): Promise<FlickrUser> {
   let avatarUrl = DEFAULT_AVATAR
   let isPro: boolean | undefined   // stays unknown when the lookup fails, so a failed lookup is never taken for a free account
-  let memberSince = new Date().getFullYear()
+  let memberSince: number | undefined   // stays unknown when the lookup fails (never the current year by default)
 
   try {
     const url =
@@ -50,6 +51,7 @@ export async function getUserInfo(tokenData: FlickrTokenData): Promise<FlickrUse
       headers: { ...authHeader, 'User-Agent': USER_AGENT }
     })
 
+    if (isSignInRevoked(response.status, response.data)) throw new SignInRevokedError()
     if (response.data.stat === 'ok') {
       const person: FlickrPersonResponse = response.data.person
       avatarUrl = buildAvatarUrl(person)
@@ -60,8 +62,10 @@ export async function getUserInfo(tokenData: FlickrTokenData): Promise<FlickrUse
         memberSince = new Date(parseInt(dateTs, 10) * 1000).getFullYear()
       }
     }
-  } catch {
-    // fall through with defaults
+  } catch (err) {
+    // A sign-in that Flickr no longer accepts is reported; anything else (offline, busy) falls through with defaults
+    const failed = err as { response?: { status?: number; data?: unknown } }
+    if (err instanceof SignInRevokedError || isSignInRevoked(failed.response?.status, failed.response?.data)) throw new SignInRevokedError()
   }
 
   return {

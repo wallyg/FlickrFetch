@@ -259,7 +259,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
     if (datePos === 'suffix') suf.push(formatDateStamp(dateFmt, DATE_EXAMPLE_TAKEN))
     if (seqPos === 'prefix') pre.push('001')
     if (seqPos === 'suffix') suf.push('001')
-    const ct = customText.trim() || 'MyText'
+    const ct = (customText.trim() || 'MyText').replace(/[/\\:*?"<>|]/g, '_')   // as in the saved name: characters a file name cannot hold become _
     if (customPos === 'prefix') pre.push(ct)
     if (customPos === 'suffix') suf.push(ct)
     if (sizeTokenPos !== 'off') {

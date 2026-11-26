@@ -15,7 +15,8 @@ const changelog: Release[] = [
       'On This Day collages — a Share… button opens the Mac share sheet with the picture, a Shuffle button picks a fresh set of photos, the Polaroid frame is redrawn so the captions never overlap and the cards fill the picture, and the header has more room',
       'Every dialog behaves the same — Esc closes it, clicking outside closes it, and focus stays inside. "Change settings" in the download confirm box now opens Settings in front of it, and the box names what you are downloading plainly ("1 photo", not "1 photos")',
       'If a screen runs into an error you now see a message with a Reload button instead of a blank window, and only that tab is affected',
-      'A steadier look and plainer words — a clear blue ring when you move with the keyboard, buttons darken a little under the pointer, ticked boxes are pink, no filled blue buttons, Flickr\'s editor is always "Open in Flickr\'s organizer", errors read "Couldn\'t …", and labels are in sentence case'
+      'A steadier look and plainer words — a clear blue ring when you move with the keyboard, buttons darken a little under the pointer, ticked boxes are pink, no filled blue buttons, Flickr\'s editor is always "Open in Flickr\'s organizer", errors read "Couldn\'t …", and labels are in sentence case',
+      'Fixes from a full review — a photostream download keeps the sort order you chose; long Japanese, Chinese or emoji titles no longer stop a photo saving; characters you type in the file-name text can no longer break a save; photos in one download that share a title no longer replace each other; Cancel works for a single photo from Discover, which is also named by your File naming settings; a sign-in that Flickr has taken back sends you to the sign-in screen; Clear history also clears the list of failed photos; and your sign-in and settings now live in the same folder as the rest of your data'
     ]
   },
   {

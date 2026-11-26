@@ -79,9 +79,12 @@ export function sweepStaleParts(folder: string): void {
   } catch { /* the folder may not exist yet or may not be readable: nothing to clean */ }
 }
 
-function resolveConflict(basePath: string, behavior: ConflictBehavior): string | null {
-  if (!existsSync(basePath)) return basePath
-  if (behavior === 'overwrite') return basePath
+// `written` = the names already saved earlier in this same batch (compared without regard to capitals, as the Mac does). Two photos in one batch
+// that come out with the same name must never replace each other, even when "overwrite" is chosen: that setting is for files from earlier runs.
+export function resolveConflict(basePath: string, behavior: ConflictBehavior, written?: Set<string>): string | null {
+  const taken = (p: string): boolean => existsSync(p) || !!written?.has(p.toLowerCase())
+  if (!taken(basePath)) return basePath
+  if (behavior === 'overwrite' && !written?.has(basePath.toLowerCase())) return basePath
   if (behavior === 'skip') return null
 
   // rename: append _2, _3, …
@@ -90,7 +93,7 @@ function resolveConflict(basePath: string, behavior: ConflictBehavior): string |
   const ext = lastDot >= 0 ? basePath.slice(lastDot) : ''
   for (let n = 2; n <= 999; n++) {
     const candidate = `${stem}_${n}${ext}`
-    if (!existsSync(candidate)) return candidate
+    if (!taken(candidate)) return candidate
   }
   return null  // 999 copies already: skip rather than overwrite one
 }
@@ -197,6 +200,7 @@ export async function downloadToFolder(
   conflictBehavior: ConflictBehavior = 'rename',
   downloadSize: DownloadSize = 'original',
   metadataSettings?: MetadataSettings,
+  written?: Set<string>,   // the paths saved so far in this batch
 ): Promise<DownloadOutcome> {
   const chosen = pickSize(sizes, downloadSize)
   if (!chosen) return { status: 'skipped', reason: 'size-unavailable' }
@@ -204,7 +208,7 @@ export async function downloadToFolder(
   const ext = resolveExtension(chosen.source)
   sweepStaleParts(destFolder)
   const rawPath = join(destFolder, `${filename}.${ext}`)
-  const filePath = resolveConflict(rawPath, conflictBehavior)
+  const filePath = resolveConflict(rawPath, conflictBehavior, written)
   if (filePath === null) return { status: 'skipped', reason: 'collision' }
 
   const response = await axios<NodeJS.ReadableStream>({
@@ -222,6 +226,7 @@ export async function downloadToFolder(
   try {
     await pipeline(response.data, createWriteStream(partPath))
     renameSync(partPath, filePath)
+    written?.add(filePath.toLowerCase())
   } catch (err) {
     if (existsSync(partPath)) unlinkSync(partPath)
     throw err

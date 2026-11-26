@@ -1,3 +1,4 @@
+import './dataFolder'   // first on purpose: it chooses the data folder before the sign-in and settings modules look for their files
 import { app, BrowserWindow, ipcMain, shell, dialog, Menu, Notification, clipboard } from 'electron'
 import { autoUpdater } from 'electron-updater'
 import { join, basename } from 'path'
@@ -5,6 +6,7 @@ import { tmpdir } from 'os'
 import { readFileSync, mkdirSync, rmSync, createWriteStream } from 'fs'
 import archiver from 'archiver'
 import { startOAuthFlow, verifyOAuth, loadToken, clearToken } from './auth'
+import { SignInRevokedError } from './signInCheck'
 import { getUserInfo, getPhotos, getPhotoSizes, getPhotoInfo, getPhotoExif, getAlbums, getAlbumPhotos, getPublicAlbumPhotos, getCollectionTree, getDiscoverCollectionTree, resolveVideoUrl, getRecentlyUpdated, findDiscoverUser, getPublicPhotos, getUserPublicAlbums, getContacts, getUserGroups, getGroupPhotos, getInterestingness } from './flickr'
 import { downloadPhoto, downloadToFolder, describeSize } from './downloader'
 import { noteSize, resetSizeTally, smallerSoFar } from './sizeTally'
@@ -23,78 +25,16 @@ import { registerShareIpc } from './share'
 import { registerBatchIpc, batchUrl } from './batchEdit'
 import { registerBackupIpc } from './backupReport'
 import { safeFolderName } from './safeName'
-import { formatDateStamp } from '../shared/dateStamp'
+import { buildFilename } from './fileNaming'
 import { ownerNsid, forgetOwnerNsid } from './owner'
 import { openDatabase, closeDatabase, writeBatchLog, writePhotoRecord, getPhotoRecord, getPhotoRecordsBatch, getBatchLog, clearBatchLog, clearAllHistory, searchPhotoRecords, deletePhotoRecord, deletePhotoRecords, clearPhotoRecords, writeDiscoverRecord, getDiscoverRecordsBatch, searchDiscoverRecords, deleteDiscoverRecord, deleteDiscoverRecords, clearDiscoverRecords } from './database'
-import type { AppSettings, FileNamingConfig, PhotoInfo, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams, MetadataSettings, DiscoverUser, DiscoverContact, DiscoverGroup } from '../shared/types'
+import type { AppSettings, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams, MetadataSettings, DiscoverUser, DiscoverContact, DiscoverGroup } from '../shared/types'
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return Promise.race([
     promise,
     new Promise<T>((_, reject) => setTimeout(() => reject(new Error(`Request timed out after ${ms}ms`)), ms))
   ])
-}
-
-const SIZE_TOKEN_MAP: Record<string, string> = {
-  original: 'o',
-  xlarge: 'xl',
-  large: 'l',
-  medium: 'm',
-  small: 's',
-  square: 'sq'
-}
-
-function buildFilename(
-  config: FileNamingConfig,
-  photoId: string,
-  title: string,
-  info: PhotoInfo,
-  seqNum?: number,
-  downloadSize?: string
-): string {
-  const s = config.separator
-  let titleStr = title || photoId
-  if (config.subStripParens) titleStr = titleStr.replace(/[()]/g, '')
-  if (config.subStripBrackets) titleStr = titleStr.replace(/[\[\]]/g, '')
-  const rawTitle = titleStr.replace(/[/\\:*?"<>|]/g, '_').trim().slice(0, 150)
-  const safeTitle = config.charSubstitution
-    ? rawTitle.replace(/\s+/g, s)
-    : rawTitle
-
-  let core: string
-  switch (config.core) {
-    case 'id':       core = photoId; break
-    case 'id-title': core = `${photoId}${s}${safeTitle}`; break
-    case 'title-id': core = `${safeTitle}${s}${photoId}`; break
-    default:         core = safeTitle
-  }
-
-  const pre: string[] = []
-  const suf: string[] = []
-
-  if (config.date.position !== 'off' && info.dateTaken) {
-    const d = formatDateStamp(config.date.format, info.dateTaken)
-    config.date.position === 'prefix' ? pre.push(d) : suf.push(d)
-  }
-  if (config.sequence.position !== 'off' && seqNum != null) {
-    const seq = String(seqNum).padStart(3, '0')
-    config.sequence.position === 'prefix' ? pre.push(seq) : suf.push(seq)
-  }
-  const ct = config.customText.text.trim()
-  if (config.customText.position !== 'off' && ct) {
-    config.customText.position === 'prefix' ? pre.push(ct) : suf.push(ct)
-  }
-  if (config.sizeToken?.position && config.sizeToken.position !== 'off' && downloadSize) {
-    const token = SIZE_TOKEN_MAP[downloadSize] ?? downloadSize
-    config.sizeToken.position === 'prefix' ? pre.push(token) : suf.push(token)
-  }
-
-  const assembled = [...pre, core, ...suf].join(s)
-  switch (config.caseTransform) {
-    case 'lowercase': return assembled.toLowerCase()
-    case 'uppercase': return assembled.toUpperCase()
-    default: return assembled
-  }
 }
 
 let mainWindow: BrowserWindow | null = null
@@ -253,7 +193,9 @@ ipcMain.handle('auth:getState', async () => {
   try {
     const user = await getUserInfo(tokenData)
     return { user }
-  } catch {
+  } catch (err) {
+    // Only a sign-in that Flickr has taken back signs the user out here; getUserInfo reports nothing else
+    if (!(err instanceof SignInRevokedError)) throw err
     clearToken()
     forgetOwnerNsid()
     return { user: null }
@@ -293,7 +235,8 @@ ipcMain.handle('photos:download', async (_event, photoId: string, photoTitle: st
   const tokenData = loadToken()
   if (!tokenData) throw new Error('Not authenticated')
   if (!mainWindow) throw new Error('No window available')
-  activeDownloadController = new AbortController()
+  const controller = new AbortController()
+  activeDownloadController = controller
   try {
     const [sizes, photoInfo] = await Promise.all([
       getPhotoSizes(photoId, tokenData),
@@ -302,11 +245,11 @@ ipcMain.handle('photos:download', async (_event, photoId: string, photoTitle: st
     const { fileNaming, metadata, downloadSize: globalDownloadSize } = loadSettings()
     const effectiveSize = downloadSize ?? globalDownloadSize
     const filename = buildFilename(fileNaming, photoId, photoTitle, photoInfo, undefined, effectiveSize)
-    const filePath = await downloadPhoto(sizes, filename, mainWindow, activeDownloadController.signal, photoInfo, metadata, effectiveSize)
+    const filePath = await downloadPhoto(sizes, filename, mainWindow, controller.signal, photoInfo, metadata, effectiveSize)
     if (filePath && track) writePhotoRecord(photoId, lastUpdate, photoTitle, thumbnailUrl, describeSize(sizes, effectiveSize))
     return { filePath }
   } finally {
-    activeDownloadController = null
+    if (activeDownloadController === controller) activeDownloadController = null   // (not another download's, started since)
   }
 })
 
@@ -395,6 +338,7 @@ interface BatchJob {
   privacyFilter?: string
   track?: boolean
   smartMode?: 'updated' | 'never-downloaded'
+  sort?: string                // photostream order, so file numbers follow the order that was chosen
   // Discover-specific
   discoverNsid?: string        // user NSID for discover-user batch
   discoverGroupId?: string     // group ID for discover-group batch
@@ -450,7 +394,7 @@ async function runNextBatch(): Promise<void> {
     } else if (job.type === 'discover-group') {
       await runDiscoverGroupBatch(job.discoverGroupId!, job.albumTitle, job.discoverFolder!, job.track ?? true, job.smartMode)
     } else if (job.albumId === '__photostream__') {
-      await runPhotostreamBatch(job.albumTitle, job.track ?? true, job.smartMode, job.privacyFilter, undefined, job.zipMode)
+      await runPhotostreamBatch(job.albumTitle, job.track ?? true, job.smartMode, job.privacyFilter, job.sort, job.zipMode)
     } else {
       await runAlbumBatch(job.albumId!, job.albumTitle, job.mediaType, job.privacyFilter, job.track ?? true, job.smartMode, job.collectionTitle, job.zipMode)
     }
@@ -540,6 +484,7 @@ async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'p
 
   let albumSeqNum = 1
   let lastFilePath: string | null = null
+  const written = new Set<string>()   // names saved so far in this batch: two photos with one name never replace each other
   let skippedCount = 0
   let skippedSizeUnavailableCount = 0
   let failedCount = 0
@@ -566,7 +511,7 @@ async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'p
           withTimeout(getPhotoInfo(photo.id, tokenData), 30000)
         ])
         const filename = buildFilename(fileNaming, photo.id, photo.title, photoInfo, albumSeqNum++, downloadSize)
-        const outcome = await downloadToFolder(sizes, filename, downloadDir, activeBatchController?.signal, photoInfo, conflictBehavior, downloadSize, metadata)
+        const outcome = await downloadToFolder(sizes, filename, downloadDir, activeBatchController?.signal, photoInfo, conflictBehavior, downloadSize, metadata, written)
         if (outcome.status === 'downloaded') {
           downloadedCount++
           if (!zipMode) lastFilePath = outcome.filePath
@@ -664,6 +609,7 @@ async function runSelectedBatch(photos: { id: string; title: string; thumbnailUr
 
   let selSeqNum = 1
   let lastFilePath: string | null = null
+  const written = new Set<string>()   // names saved so far in this batch: two photos with one name never replace each other
   let skippedCount = 0
   let skippedSizeUnavailableCount = 0
   let failedCount = 0
@@ -689,7 +635,7 @@ async function runSelectedBatch(photos: { id: string; title: string; thumbnailUr
           withTimeout(getPhotoInfo(photo.id, tokenData), 30000)
         ])
         const filename = buildFilename(fileNaming, photo.id, photo.title, photoInfo, selSeqNum++, downloadSize)
-        const outcome = await downloadToFolder(sizes, filename, downloadDir, activeBatchController?.signal, photoInfo, conflictBehavior, downloadSize, metadata)
+        const outcome = await downloadToFolder(sizes, filename, downloadDir, activeBatchController?.signal, photoInfo, conflictBehavior, downloadSize, metadata, written)
         if (outcome.status === 'downloaded') {
           downloadedCount++
           if (!zipMode) lastFilePath = outcome.filePath
@@ -775,6 +721,7 @@ async function runDiscoverSelectedBatch(photos: { id: string; title: string; thu
 
   let seqNum = 1
   let lastFilePath: string | null = null
+  const written = new Set<string>()   // names saved so far in this batch: two photos with one name never replace each other
   let skippedCount = 0
   let skippedSizeUnavailableCount = 0
   let failedCount = 0
@@ -796,7 +743,7 @@ async function runDiscoverSelectedBatch(photos: { id: string; title: string; thu
         withTimeout(getPhotoInfo(photo.id, tokenData), 30000)
       ])
       const filename = buildFilename(fileNaming, photo.id, photo.title, photoInfo, seqNum++, downloadSize)
-      const outcome = await downloadToFolder(sizes, filename, targetFolder, activeBatchController?.signal, photoInfo, conflictBehavior, downloadSize, forcedMetadata)
+      const outcome = await downloadToFolder(sizes, filename, targetFolder, activeBatchController?.signal, photoInfo, conflictBehavior, downloadSize, forcedMetadata, written)
       if (outcome.status === 'downloaded') {
         downloadedCount++
         lastFilePath = outcome.filePath
@@ -886,6 +833,7 @@ async function runDiscoverPublicBatch(
 
   let seqNum = 1
   let lastFilePath: string | null = null
+  const written = new Set<string>()   // names saved so far in this batch: two photos with one name never replace each other
   let skippedCount = 0
   let skippedSizeUnavailableCount = 0
   let failedCount = 0
@@ -907,7 +855,7 @@ async function runDiscoverPublicBatch(
         withTimeout(getPhotoInfo(photo.id, tokenData), 30000)
       ])
       const filename = buildFilename(fileNaming, photo.id, photo.title, photoInfo, seqNum++, downloadSize)
-      const outcome = await downloadToFolder(sizes, filename, targetFolder, activeBatchController?.signal, photoInfo, conflictBehavior, downloadSize, forcedMetadata)
+      const outcome = await downloadToFolder(sizes, filename, targetFolder, activeBatchController?.signal, photoInfo, conflictBehavior, downloadSize, forcedMetadata, written)
       if (outcome.status === 'downloaded') {
         downloadedCount++
         lastFilePath = outcome.filePath
@@ -1043,6 +991,7 @@ async function runPhotostreamBatch(albumTitle: string, track = true, smartMode?:
 
   let seqNum = 1
   let lastFilePath: string | null = null
+  const written = new Set<string>()   // names saved so far in this batch: two photos with one name never replace each other
   let skippedCount = 0
   let failedCount = 0
   const failedPhotos: { id: string; title: string }[] = []
@@ -1067,7 +1016,7 @@ async function runPhotostreamBatch(albumTitle: string, track = true, smartMode?:
           withTimeout(getPhotoInfo(photo.id, tokenData), 30000)
         ])
         const filename = buildFilename(fileNaming, photo.id, photo.title, photoInfo, seqNum++, downloadSize)
-        const outcome = await downloadToFolder(sizes, filename, downloadDir, activeBatchController?.signal, photoInfo, conflictBehavior, downloadSize, metadata)
+        const outcome = await downloadToFolder(sizes, filename, downloadDir, activeBatchController?.signal, photoInfo, conflictBehavior, downloadSize, metadata, written)
         if (outcome.status === 'downloaded') {
           downloadedCount++
           if (!zipMode) lastFilePath = outcome.filePath
@@ -1181,15 +1130,24 @@ ipcMain.handle('discover:downloadPhoto', async (_event, photoId: string, photoTi
   const tokenData = loadToken()
   if (!tokenData) throw new Error('Not authenticated')
   if (!mainWindow) throw new Error('No window')
-  const { metadata } = loadSettings()
+  const { fileNaming, metadata, downloadSize: globalDownloadSize } = loadSettings()
   const forcedMetadata = discoverMetadata(metadata)
-  const [sizes, photoInfo] = await Promise.all([
-    getPhotoSizes(photoId, tokenData),
-    getPhotoInfo(photoId, tokenData)
-  ])
-  const filePath = await downloadPhoto(sizes, photoTitle, mainWindow, activeDownloadController?.signal, photoInfo, forcedMetadata, downloadSize)
-  if (filePath && lastUpdate !== undefined) writeDiscoverRecord(photoId, lastUpdate, photoTitle, thumbnailUrl, source)
-  return { filePath }
+  // Cancel works here too, and the file is named from the File naming settings, as for your own photos
+  const controller = new AbortController()
+  activeDownloadController = controller
+  try {
+    const [sizes, photoInfo] = await Promise.all([
+      getPhotoSizes(photoId, tokenData),
+      getPhotoInfo(photoId, tokenData)
+    ])
+    const effectiveSize = downloadSize ?? globalDownloadSize
+    const filename = buildFilename(fileNaming, photoId, photoTitle, photoInfo, undefined, effectiveSize)
+    const filePath = await downloadPhoto(sizes, filename, mainWindow, controller.signal, photoInfo, forcedMetadata, effectiveSize)
+    if (filePath) writeDiscoverRecord(photoId, lastUpdate, photoTitle, thumbnailUrl, source)
+    return { filePath }
+  } finally {
+    if (activeDownloadController === controller) activeDownloadController = null
+  }
 })
 
 ipcMain.handle('batch:startDiscoverUser', (_event, nsid: string, username: string, displayTitle: string, track = true, smartMode?: 'updated' | 'never-downloaded') => {
@@ -1250,7 +1208,7 @@ ipcMain.handle('batch:startSelected', (_event, photos: { id: string; title: stri
 })
 
 ipcMain.handle('batch:startPhotostream', (_event, albumTitle: string, track = true, smartMode?: 'updated' | 'never-downloaded', privacyFilter?: string, sort?: string, zipMode?: boolean) => {
-  enqueueBatch({ type: 'album', albumId: '__photostream__', albumTitle, track, smartMode, privacyFilter, zipMode })
+  enqueueBatch({ type: 'album', albumId: '__photostream__', albumTitle, track, smartMode, privacyFilter, sort, zipMode })
 })
 
 ipcMain.on('batch:cancel', () => {
@@ -1359,9 +1317,6 @@ ipcMain.handle('db:searchDiscoverRecords', (_event, query: { title?: string; pho
 ipcMain.handle('db:deleteDiscoverRecord', (_event, photoId: string) => deleteDiscoverRecord(photoId))
 ipcMain.handle('db:deleteDiscoverRecords', (_event, photoIds: string[]) => deleteDiscoverRecords(photoIds))
 ipcMain.handle('db:clearDiscoverRecords', (_event, beforeMs?: number, afterMs?: number) => clearDiscoverRecords(beforeMs, afterMs))
-
-// Pin userData to the app name used at launch so upgrades don't change the path
-app.setPath('userData', join(app.getPath('appData'), 'flickr-fetch'))
 
 app.whenReady().then(() => {
   try {

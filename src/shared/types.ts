@@ -6,7 +6,7 @@ export interface FlickrUser {
   realname: string
   avatarUrl: string
   isPro?: boolean      // undefined when Flickr could not be asked (offline, throttled): then nothing is assumed about the account
-  memberSince: number  // year extracted from datecreate Unix timestamp
+  memberSince?: number  // year extracted from datecreate Unix timestamp; undefined when Flickr could not be asked
 }
 
 export interface FlickrTokenData {

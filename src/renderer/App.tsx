@@ -19,7 +19,7 @@ export default function App(): React.JSX.Element {
         user,
         error: null
       })
-    })
+    }).catch(() => setAuthState({ status: 'unauthenticated', user: null, error: null }))   // never stay on the loading screen
   }, [])
 
   const handleAuthSuccess = (user: FlickrUser): void => {

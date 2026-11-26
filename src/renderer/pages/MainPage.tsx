@@ -549,7 +549,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
                         {user.isPro && <span style={styles.proBadge}>PRO</span>}
                       </div>
                       <div style={styles.avatarPopoverHandle}>@{user.username}</div>
-                      <div style={styles.avatarPopoverSince}>Flickring since {user.memberSince}</div>
+                      {user.memberSince !== undefined && <div style={styles.avatarPopoverSince}>Flickring since {user.memberSince}</div>}
                     </div>
                   </div>
                   <div style={styles.avatarPopoverDivider} />
