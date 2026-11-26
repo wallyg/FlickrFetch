@@ -7,18 +7,18 @@ Measured before deciding on a scale, as the 3.14 plan says. Every `padding`, `ma
 - **35 different sizes are in use.** The 8 most common cover 76% of everything and the 12 most common cover 89%; the other 23 sizes share the last 11%.
 - **0 is the most common value** (271 times: a reset). After that: 8 (222), 6 (186), 4 (156), 10 (151), 12 (131), 2 (94), 16 (78), 24 (72), 5 (64), 14 (45), 20 (37).
 - **6 and 10 are heavily used** (337 times between them, 20% of all) but sit between the usual 4-pixel steps. They are not mistakes: they are how the screens were actually built.
-- **Odd one-offs:** 1, 3, 5, 7, 9, 11, 13, 18, 22, 26, 28, 30, 36, 40, 48, 56, 60, 70, 72 and a few negative values (used to pull things closer) together account for under 10% of the sizes.
+- **Odd one-offs:** 1, 3, 7, 9, 11, 13, 18, 22, 26, 28, 30, 36, 40, 48, 56, 60, 70, 72 and a few negative values (used to pull things closer) together account for about 11% of the sizes.
 - **The busiest screens use the most sizes:** photo detail and Settings (19 each), Audit, History, On This Day and the main page (17 each).
 
 ## Options for a scale
 
 | Option | Steps | Share of today's sizes already on it | What changes |
 |---|---|---|---|
-| A. Keep what is common | 0, 2, 4, 6, 8, 12, 16, 24, 32 | about 76% (0, 2, 4, 6, 8, 12, 16, 24) | 10 moves to 8 or 12, 5 to 4 or 6, 14 to 12 or 16, 20 to 16 or 24; the one-offs move to the nearest step |
-| B. Strict 4-pixel grid | 0, 4, 8, 12, 16, 24, 32 | about 60% | 6 and 10 (20% of everything) and 2 also move, so many small gaps shift by 2 px |
-| C. Strict 8-pixel grid | 0, 8, 16, 24, 32 | about 45% | most small gaps double or halve; a real redesign of density |
+| A. Keep what is common | 0, 2, 4, 6, 8, 12, 16, 24, 32 | about 71% | 10 moves to 8 or 12, 5 to 4 or 6, 14 to 12 or 16, 20 to 16 or 24; the one-offs move to the nearest step |
+| B. Strict 4-pixel grid | 0, 4, 8, 12, 16, 24, 32 | about 55% | 6 and 10 (20% of everything) and 2 also move, so many small gaps shift by 2 px |
+| C. Strict 8-pixel grid | 0, 8, 16, 24, 32 | about 38% | most small gaps double or halve; a real redesign of density |
 
-Recommendation: **A**. It keeps three quarters of the app exactly as it looks today, so the sweep changes little and is easy to check, and it still removes the 23 stray sizes. B or C would change the look of nearly every screen and need the owner to look at each.
+Recommendation: **A**. It keeps about 70% of the app's spacing exactly as it is today, so the sweep changes little and is easy to check (nearly three quarters of today's sizes already sit on it), and it still removes the 23 stray sizes. B or C would change the look of nearly every screen and need the owner to look at each.
 
 ## The numbers
 
