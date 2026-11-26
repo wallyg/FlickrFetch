@@ -73,3 +73,9 @@ test('the On This Day peek is drawn by the one card, not by its own box', () => 
   assert.match(code, /<HoverCard /)
   assert.ok(!/position: 'absolute'[^}]*boxShadow/.test(code.slice(code.indexOf('peek:'), code.indexOf('peek:') + 400)))
 })
+
+test('a tip never changes the pointer: the (i) marks keep the plain arrow, like every other control with a hover tip', () => {
+  const found: string[] = []
+  for (const f of files(SRC)) if (/cursor:\s*['"]?help/.test(readFileSync(f, 'utf8')) || /cursor:\s*help/.test(readFileSync(f, 'utf8'))) found.push(relative(SRC, f))
+  assert.deepEqual(found, [])
+})

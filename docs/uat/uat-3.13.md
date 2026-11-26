@@ -74,7 +74,7 @@ The collage window has a Share… button that opens the Mac share sheet (Mail, M
 Every tip in the app is now one white card with a soft shadow: the old browser tips (grey, slow), the (i) notes, the Map and photo-filter "?" tips, and the On This Day "Details" panel. It is drawn above everything, so nothing can cut it off.
 
 - [ ] H1 **Short tips.** Point at an icon button or any button with a hint (for example the clock in the top bar, or Settings > the arrows beside a field). After a short pause a white card with one line appears under it. Move to the next button: its card appears straight away. Move away, click, scroll or press a key: it goes.
-- [ ] H2 **Explanations.** In Settings, point at an (i): the white card has headings and bullets, sits under the (i), and is not bold. The (i) looks the same everywhere (including the Map filters, Photostream and Album photo filters, which used a grey ?).
+- [ ] H2 **Explanations.** In Settings, point at an (i): the white card has headings and bullets, sits under the (i), and is not bold; the pointer stays the plain arrow (no question mark). The (i) looks the same everywhere (including the Map filters, Photostream and Album photo filters, which used a grey ?).
 - [ ] H3 **The Map Tags tip.** Map > filters > Tags (i): the card is fully visible, not cut off behind the tab bar.
 - [ ] H4 **Edges.** Scroll Settings so an (i) is at the very top, then at the very bottom of the window, then make the window narrow and point at one near the right edge: the card always stays fully inside the window (it flips above or below, and slides sideways).
 - [ ] H5 **Above dialogs.** Open Settings and point at an (i) or a button: the card is above the dialog, never behind it.

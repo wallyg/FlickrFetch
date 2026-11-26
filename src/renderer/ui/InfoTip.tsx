@@ -6,7 +6,7 @@ import Icon from './Icon'
 
 export default function InfoTip({ text }: { text: string }): React.JSX.Element {
   return (
-    <span data-tip={text} data-tip-anchor="" tabIndex={0} role="button" aria-label="How this works" style={{ display: 'inline-flex', alignItems: 'center', color: 'var(--ff-text-secondary)', cursor: 'help', userSelect: 'none' }}>
+    <span data-tip={text} data-tip-anchor="" tabIndex={0} role="button" aria-label="How this works" style={{ display: 'inline-flex', alignItems: 'center', color: 'var(--ff-text-secondary)', cursor: 'default', userSelect: 'none' }}>
       <Icon name="info" size={15} />
     </span>
   )

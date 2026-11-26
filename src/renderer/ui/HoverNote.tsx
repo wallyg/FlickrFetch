@@ -10,7 +10,7 @@ export default function HoverNote({ text, children, block, mark = true }: { text
   return (
     <span data-tip={text} style={{ display: block ? 'block' : 'inline-block' }}>
       {children}
-      {mark && <span data-tip-anchor="" tabIndex={0} role="button" aria-label="How this works" style={{ display: 'inline-block', marginLeft: 4, color: 'var(--ff-text-secondary)', cursor: 'help' }}><Icon name="info" /></span>}
+      {mark && <span data-tip-anchor="" tabIndex={0} role="button" aria-label="How this works" style={{ display: 'inline-block', marginLeft: 4, color: 'var(--ff-text-secondary)', cursor: 'default' }}><Icon name="info" /></span>}
     </span>
   )
 }
