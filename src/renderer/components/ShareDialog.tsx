@@ -334,7 +334,7 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
     const links = ready.map(p => shortLink(p.id))
     const linkLines = showLinks && frame !== 'polaroid' ? Math.ceil(links.length / 3) : 0
     const footerH = linkLines > 0 ? 54 + (linkLines - 1) * 30 : 14
-    const headerH = 266, bottom = 40
+    const headerH = 282, bottom = 40
 
     // Work out the sizes: a fixed shape gives the photos exactly the room between the header and the footer
     const bodyAvail = fixed ? Math.max(120, sh.h - pad - headerH - footerH - bottom) : undefined
@@ -360,11 +360,7 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
     ctx.fillStyle = brand.white; ctx.font = `700 22px ${SANS}`; setSpacing('3.5px'); ctx.fillText(MONTHS[month - 1].slice(0, 3).toUpperCase(), tx + tileW / 2 + 1.75, ty + 27)
     setSpacing('0px'); ctx.fillStyle = brand.navy; ctx.font = `800 68px ${SANS}`; ctx.fillText(String(day), tx + tileW / 2, ty + 106)
     ctx.textAlign = 'left'
-    // The "Created with FlickrFetch" block sits at the right; the lines under the title stop 40 px short of its left edge (the logo), not at the page edge
-    ctx.font = `700 44px Lato, ${SANS}`
-    const markW = ctx.measureText('Flickr').width + ctx.measureText('Fetch').width
-    const brandLeft = OW - padX - markW - (logoRef.current ? 62 + 14 : 0)
-    const hx = tx + tileW + 36, hMax = Math.min(OW - padX - hx, brandLeft - 40 - hx)
+    const hx = tx + tileW + 36, hMax = OW - padX - hx
     ctx.fillStyle = theme.fg; ctx.font = `800 68px ${SANS}`; setSpacing('-1.5px'); ctx.fillText('On This Day', hx, ty + 66); setSpacing('0px')
     const nowYear = new Date().getFullYear()
     const years = ready.map(p => Number(p.dateTaken.slice(0, 4)))
@@ -376,7 +372,7 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
     let l1Size = 31
     ctx.font = `700 ${l1Size}px ${SANS}`
     while (l1Size > 22 && ctx.measureText(line1).width > hMax) { l1Size -= 1; ctx.font = `700 ${l1Size}px ${SANS}` }
-    ctx.globalAlpha = 0.95; ctx.fillText(line1, hx, ty + 108)
+    ctx.globalAlpha = 0.95; ctx.fillText(line1, hx, ty + 118)   // room under the "Created with FlickrFetch" block at the right
     if (n > 1 && facts && facts.tags.length > 0) {
       // One row: up to five ordinary-length tags, spaced out; fewer only if the row would run out of room
       const iconW = 36
@@ -387,11 +383,11 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
       while (tags.length > 1 && iconW + ctx.measureText(tags.join(sep)).width > hMax) tags = tags.slice(0, -1)
       let line = tags.join(sep)
       while (line.length > 3 && iconW + ctx.measureText(line).width > hMax) line = line.slice(0, -2) + '…'
-      drawTagIcon(ctx, hx, ty + 126, 24, theme.fg)
-      ctx.fillText(line, hx + iconW, ty + 146)
+      drawTagIcon(ctx, hx, ty + 142, 24, theme.fg)
+      ctx.fillText(line, hx + iconW, ty + 162)
     }
     ctx.globalAlpha = 1
-    const ruleY = pad + tileH + 46
+    const ruleY = pad + tileH + 62
     const grad = ctx.createLinearGradient(padX, 0, padX + cw, 0); grad.addColorStop(0, theme.rule); grad.addColorStop(1, brand.pink)
     ctx.fillStyle = grad; ctx.fillRect(padX, ruleY, cw, 4)
 

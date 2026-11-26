@@ -6,10 +6,10 @@ import { polaroidLayout, captionPlan, POL_GX, POL_GY, type TextKind } from '../s
 
 // The body room of each saved shape (width, height), as the dialog works it out: Square 1:1, Portrait 4:5, Story 9:16, Wide 16:9, and Auto (no height limit)
 const BODIES: { name: string; cw: number; ch?: number }[] = [
-  { name: 'square', cw: 968, ch: 1080 - 56 - 266 - 14 - 40 },
-  { name: 'portrait', cw: 968, ch: 1350 - 56 - 266 - 14 - 40 },
-  { name: 'story', cw: 968, ch: 1920 - 56 - 266 - 14 - 40 },
-  { name: 'wide', cw: 1808, ch: 1080 - 56 - 266 - 14 - 40 },
+  { name: 'square', cw: 968, ch: 1080 - 56 - 282 - 14 - 40 },
+  { name: 'portrait', cw: 968, ch: 1350 - 56 - 282 - 14 - 40 },
+  { name: 'story', cw: 968, ch: 1920 - 56 - 282 - 14 - 40 },
+  { name: 'wide', cw: 1808, ch: 1080 - 56 - 282 - 14 - 40 },
   { name: 'auto', cw: 968 }
 ]
 
@@ -83,9 +83,11 @@ test('the caption never overlaps itself or leaves its card, at every card size a
   assert.ok(tried > 1000)
 })
 
-test('the collage header lines stop short of the "Created with FlickrFetch" block instead of running to the page edge', async () => {
+test('the collage header has room: the subtitle and tag lines sit well below the "Created with FlickrFetch" block, and the body starts under the rule', async () => {
   const { readFileSync } = await import('node:fs')
   const code = readFileSync('src/renderer/components/ShareDialog.tsx', 'utf8')
-  assert.match(code, /const brandLeft = OW - padX - markW/)
-  assert.match(code, /hMax = Math\.min\(OW - padX - hx, brandLeft - 40 - hx\)/)
+  assert.match(code, /const headerH = 282/)
+  assert.match(code, /ctx\.fillText\(line1, hx, ty \+ 118\)/)
+  assert.match(code, /const ruleY = pad \+ tileH \+ 62/)
+  assert.ok(!/brandLeft/.test(code))
 })
