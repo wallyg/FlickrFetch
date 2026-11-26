@@ -3,6 +3,7 @@ import BatchEditButton from './BatchEditButton'
 import { openTitle, rangeOpts, type RangeOpts } from './DateFilterBar'
 import type { CameraRollDay, DayPhoto, PrivacyScope, DateExtra } from '../../shared/types'
 import { PhotoTile } from './DateViewParts'
+import LoadFailed from './LoadFailed'
 import { itemsLabel } from '../../shared/counts'
 import { quietBtn, primaryBtn, linkBtn, segGroup, selectedOn, segBtn as segBtnBase } from '../ui/kit'
 
@@ -38,17 +39,24 @@ export default function CameraRoll({ from, to, title, scope, extra, extraText, o
   const [totalPhotos, setTotalPhotos] = useState(0)
   const [totalVideos, setTotalVideos] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [failed, setFailed] = useState(false)
   const [selected, setSelected] = useState<Map<string, DayPhoto>>(new Map())
   const reqRef = useRef(0)
 
   const load = useCallback(async (offset: number): Promise<void> => {
     const req = ++reqRef.current
     if (offset === 0) setLoading(true)
-    const v = await window.flickrAPI.getCameraRoll({ from, to, scope, order, offset, limit: PAGE_DAYS, ...extraOf() })
-    if (req !== reqRef.current) return
-    setDays(prev => (offset === 0 ? v.days : [...prev, ...v.days]))
-    setTotalDays(v.totalDays); setTotalPhotos(v.totalPhotos); setTotalVideos(v.totalVideos)
-    setLoading(false)
+    setFailed(false)
+    try {
+      const v = await window.flickrAPI.getCameraRoll({ from, to, scope, order, offset, limit: PAGE_DAYS, ...extraOf() })
+      if (req !== reqRef.current) return
+      setDays(prev => (offset === 0 ? v.days : [...prev, ...v.days]))
+      setTotalDays(v.totalDays); setTotalPhotos(v.totalPhotos); setTotalVideos(v.totalVideos)
+      setLoading(false)
+    } catch {
+      if (req !== reqRef.current) return
+      setFailed(true); setLoading(false)
+    }
   }, [from, to, scope, order, xk]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { setSelected(new Map()); void load(0) }, [load])
@@ -90,7 +98,8 @@ export default function CameraRoll({ from, to, title, scope, extra, extraText, o
         </div>
       )}
 
-      {loading && days.length === 0 ? <div style={styles.muted}>Loading your photos…</div>
+      {failed && days.length === 0 ? <LoadFailed what="your photos" onRetry={() => void load(0)} />
+        : loading && days.length === 0 ? <div style={styles.muted}>Loading your photos…</div>
         : days.length === 0 ? <div style={styles.muted}>No photos here{scopeNote}.</div>
         : days.map(d => (
           <div key={d.date} style={{ margin: '14px 0 4px' }}>
@@ -107,6 +116,7 @@ export default function CameraRoll({ from, to, title, scope, extra, extraText, o
           </div>
         ))}
 
+      {failed && days.length > 0 && <LoadFailed what="more days" onRetry={() => void load(days.length)} />}
       {days.length < totalDays && (
         <button style={styles.more} onClick={() => void load(days.length)}>Show more days ({(totalDays - days.length).toLocaleString()} left)</button>
       )}

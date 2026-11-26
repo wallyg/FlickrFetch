@@ -17,6 +17,7 @@ import PhotoStrip from './PhotoStrip'
 import HoverNote from '../ui/HoverNote'
 import { askFineReason } from '../ui/fineReason'
 import BackToTop from '../ui/BackToTop'
+import LoadFailed from './LoadFailed'
 
 // The Audit view of the Tags tab: likely tag problems by type, each with an editable fix.
 // Nothing here changes Flickr or your files. "Add to plan" builds a checklist to work through;
@@ -155,6 +156,7 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
   const [rows, setRows] = useState<AuditFinding[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [failed, setFailed] = useState(false)
   const [drafts, setDrafts] = useState<Record<string, string>>({})
   const [plan, setPlan] = useState<AuditPlanRow[] | null>(null)   // null = plan box closed
   const [copied, setCopied] = useState(false)
@@ -181,7 +183,7 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
         const first = s.rows.find(r => ALL_CATEGORIES.includes(r.category) && stateOf(`tags:${r.category}`) === 'on' && r.open > 0)
         if (first) setCategory(first.category)
       }
-    })
+    }).catch(() => { /* the counts stay empty; the list below says if it could not load */ })
   }, [loadSummary, refreshKey])
 
   // If the chosen check gets switched off, move to one that is still on
@@ -201,12 +203,18 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
   const loadRows = useCallback(async (offset: number): Promise<void> => {
     const req = ++requestRef.current
     if (offset === 0) setLoading(true)
-    const page = await window.flickrAPI.listAuditFindings({ category, status, search: typed, sort, reason: category === 'junk' && reason ? reason : undefined, offset, limit: PAGE })
-    if (req !== requestRef.current) return
-    setRows(prev => (offset === 0 ? page.rows : [...prev, ...page.rows]))
-    setTotal(page.total)
-    setReasons(page.reasons)
-    setLoading(false)
+    setFailed(false)
+    try {
+      const page = await window.flickrAPI.listAuditFindings({ category, status, search: typed, sort, reason: category === 'junk' && reason ? reason : undefined, offset, limit: PAGE })
+      if (req !== requestRef.current) return
+      setRows(prev => (offset === 0 ? page.rows : [...prev, ...page.rows]))
+      setTotal(page.total)
+      setReasons(page.reasons)
+      setLoading(false)
+    } catch {
+      if (req !== requestRef.current) return
+      setFailed(true); setLoading(false)
+    }
   }, [category, status, sort, typed, reason])
   useEffect(() => { setReason('') }, [category, status])
 
@@ -348,7 +356,8 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
           </ListHead>
 
           <div style={styles.list}>
-            {loading && rows.length === 0 ? <div style={styles.muted}>Checking your tags…</div>
+            {failed && rows.length === 0 ? <LoadFailed what="this list" onRetry={() => void loadRows(0)} />
+              : loading && rows.length === 0 ? <div style={styles.muted}>Checking your tags…</div>
               : rows.length === 0 ? <div style={styles.muted}>{status === 'open' ? 'Nothing left to review here.' : 'Nothing here.'}</div>
               : rows.map(f => {
                 const key = keyOf(f)
@@ -392,6 +401,7 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
                   </div>
                 )
               })}
+            {failed && rows.length > 0 && <LoadFailed what="more" onRetry={() => void loadRows(rows.length)} />}
             {rows.length < total && <button style={styles.moreBtn} onClick={() => void loadRows(rows.length)}>Show more ({(total - rows.length).toLocaleString()} left)</button>}
             <BackToTop />
           </div>

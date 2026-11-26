@@ -15,6 +15,7 @@ import { quietBtn, primaryBtn, filterInput, doThisBtn, selectBox, linkBtn } from
 import { asButton } from '../ui/a11y'
 import BatchEditButton from './BatchEditButton'
 import BackToTop from '../ui/BackToTop'
+import LoadFailed from './LoadFailed'
 import { useFindShortcut } from '../hooks/useFindShortcut'
 import { DEBOUNCE, useDebouncedValue } from '../ui/useDebounce'
 
@@ -56,12 +57,13 @@ export default function AlbumsPanel({ refreshKey, onFullRescan, toolbarLeft, sta
   const photoIdOf = (item: AlbumItem): string => item.id.split('|')[0]
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [failed, setFailed] = useState(false)
   const [saved, setSaved] = useState<string | null>(null)
   const requestRef = useRef(0)
   const filterRef = useRef<HTMLInputElement | null>(null)
   useFindShortcut(!!toolbarLeft && section === 'lists', filterRef)
 
-  const loadSummary = useCallback(async () => { setSummary(await window.flickrAPI.getAlbumSummary()) }, [])
+  const loadSummary = useCallback(async () => { try { setSummary(await window.flickrAPI.getAlbumSummary()) } catch { /* the counts stay as they were */ } }, [])
   useEffect(() => { void loadSummary() }, [loadSummary, refreshKey])
 
   // If the chosen check gets switched off, move to one that is still on
@@ -74,12 +76,18 @@ export default function AlbumsPanel({ refreshKey, onFullRescan, toolbarLeft, sta
   const loadRows = useCallback(async (offset: number): Promise<void> => {
     const req = ++requestRef.current
     if (offset === 0) setLoading(true)
-    const page = await window.flickrAPI.listAlbumItems({ condition, status, search: typed, sort, reason: condition === 'misfit' && reason ? reason : undefined, offset, limit: PAGE })
-    if (req !== requestRef.current) return
-    setRows(prev => (offset === 0 ? page.rows : [...prev, ...page.rows]))
-    setTotal(page.total)
-    if (page.reasons) setReasons(page.reasons)
-    setLoading(false)
+    setFailed(false)
+    try {
+      const page = await window.flickrAPI.listAlbumItems({ condition, status, search: typed, sort, reason: condition === 'misfit' && reason ? reason : undefined, offset, limit: PAGE })
+      if (req !== requestRef.current) return
+      setRows(prev => (offset === 0 ? page.rows : [...prev, ...page.rows]))
+      setTotal(page.total)
+      if (page.reasons) setReasons(page.reasons)
+      setLoading(false)
+    } catch {
+      if (req !== requestRef.current) return
+      setFailed(true); setLoading(false)
+    }
   }, [condition, status, typed, sort, reason])
 
   useEffect(() => {
@@ -229,7 +237,8 @@ export default function AlbumsPanel({ refreshKey, onFullRescan, toolbarLeft, sta
             <SelectBar count={selected.size} shown={rows.filter(r => r.isPhoto).length} ids={() => [...new Set([...selected].map(k => k.split('|')[0]))]} onClear={() => setSelected(new Set())} onSelectAll={() => setSelected(new Set(rows.filter(r => r.isPhoto).map(r => r.id)))} />
 
             <div style={styles.list}>
-              {loading && rows.length === 0 ? <div style={styles.muted}>Checking your albums…</div>
+              {failed && rows.length === 0 ? <LoadFailed what="this list" onRetry={() => void loadRows(0)} />
+                : loading && rows.length === 0 ? <div style={styles.muted}>Checking your albums…</div>
                 : rows.length === 0 ? <div style={styles.muted}>{status === 'open' ? 'Nothing left to fix here.' : 'Nothing here.'}</div>
                 : rows.map(item => condition === 'missing' ? (
                   <MissingRow key={item.id} item={item} onFine={next => void mark(item, next)} onKind={kind => void changeKind(item.albumId, kind)} />
@@ -254,6 +263,7 @@ export default function AlbumsPanel({ refreshKey, onFullRescan, toolbarLeft, sta
                     </div>
                   </div>
                 ))}
+              {failed && rows.length > 0 && <LoadFailed what="more" onRetry={() => void loadRows(rows.length)} />}
               {rows.length < total && <button style={styles.moreBtn} onClick={() => void loadRows(rows.length)}>Show more ({(total - rows.length).toLocaleString()} left)</button>}
             </div>
             <BackToTop />

@@ -147,19 +147,26 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
   const [albumExtraFilters, setAlbumExtraFilters] = useState(false)
   const [photostreamFiltersActive, setPhotostreamFiltersActive] = useState(false)
   const [albumPrivacyFilter, setAlbumPrivacyFilter] = useState<PrivacyFilter>('all')
+  const [resetError, setResetError] = useState<string | null>(null)
   const handleResetRecords = useCallback(async () => {
     if (!selectedAlbum) return
-    setShowResetConfirm(false)
-    const allIds: string[] = []
-    let page = 1
-    let hasMore = true
-    while (hasMore) {
-      const result = await window.flickrAPI.getAlbumPhotos(selectedAlbum.id, page)
-      allIds.push(...result.photos.map((p: { id: string }) => p.id))
-      hasMore = page < result.pages
-      page++
+    setResetError(null)
+    try {
+      const allIds: string[] = []
+      let page = 1
+      let hasMore = true
+      while (hasMore) {
+        const result = await window.flickrAPI.getAlbumPhotos(selectedAlbum.id, page)
+        allIds.push(...result.photos.map((p: { id: string }) => p.id))
+        hasMore = page < result.pages
+        page++
+      }
+      if (allIds.length > 0) await window.flickrAPI.deletePhotoRecords(allIds)
+      setShowResetConfirm(false)
+    } catch {
+      // The box stays open and says so, so nothing looks done when it was not
+      setResetError('Couldn\u2019t reset the records. Check your connection and try again.')
     }
-    if (allIds.length > 0) await window.flickrAPI.deletePhotoRecords(allIds)
   }, [selectedAlbum])
 
   const handleBatchDismiss = useCallback(() => setBatchProgress(null), [])
@@ -747,7 +754,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
                     <div style={styles.overflowMenu}>
                       <button
                         style={styles.overflowMenuItemDestructive}
-                        onClick={() => { setShowAlbumOverflow(false); setShowResetConfirm(true) }}
+                        onClick={() => { setShowAlbumOverflow(false); setResetError(null); setShowResetConfirm(true) }}
                       >
                         Reset download records
                       </button>
@@ -977,6 +984,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             <p style={styles.confirmBody}>
               This removes the download record for all {((selectedAlbum.photoCount ?? 0) + (selectedAlbum.videoCount ?? 0)).toLocaleString()} items in &ldquo;{selectedAlbum.title}&rdquo;.<br /><br />Smart Download will then treat them as never downloaded.<br /><br />Your downloaded files are not touched.
             </p>
+            {resetError && <p role="alert" style={{ ...styles.confirmBody, color: 'var(--ff-error)', marginTop: -8 }}>{resetError}</p>}
             <div style={styles.confirmActions}>
               <button style={styles.confirmCancel} onClick={() => setShowResetConfirm(false)}>Cancel</button>
               <button style={styles.confirmDestructive} onClick={handleResetRecords}>Reset records</button>

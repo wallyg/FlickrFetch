@@ -10,6 +10,7 @@ import { forgetOverview } from './LibraryOverview'
 import { quietBtn, primaryBtn, selectedOn, filterInput, doThisBtn, linkBtn } from '../ui/kit'
 import BatchEditButton from './BatchEditButton'
 import BackToTop from '../ui/BackToTop'
+import LoadFailed from './LoadFailed'
 import { ruleById, logicOf } from '../../shared/cleanupRules'
 import SelectBar from './SelectBar'
 import DuplicatesList from './DuplicatesList'
@@ -64,12 +65,13 @@ export default function HealthPanel({ refreshKey, onFullRescan, toolbarLeft, sta
   useEffect(() => { setSelected(new Set()) }, [condition, status, search, sort, dupSort, year])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [failed, setFailed] = useState(false)
   const [saved, setSaved] = useState<string | null>(null)
   const requestRef = useRef(0)
   const filterRef = useRef<HTMLInputElement | null>(null)
   useFindShortcut(!!toolbarLeft && section === 'lists', filterRef)   // Cmd+F while this list is showing goes to the Filter box
 
-  const loadSummary = useCallback(async () => { setSummary(await window.flickrAPI.getHealthSummary()) }, [])
+  const loadSummary = useCallback(async () => { try { setSummary(await window.flickrAPI.getHealthSummary()) } catch { /* the counts stay as they were */ } }, [])
   useEffect(() => { void loadSummary() }, [loadSummary, refreshKey])
 
   // If the chosen check gets switched off, move to one that is still on
@@ -89,12 +91,18 @@ export default function HealthPanel({ refreshKey, onFullRescan, toolbarLeft, sta
     if (condition === 'duplicates') { setRows([]); setTotal(0); setLoading(false); return }   // groups are read by DuplicatesList
     const req = ++requestRef.current
     if (offset === 0) setLoading(true)
-    const page = await window.flickrAPI.listHealthPhotos({ condition, status, search: typed, sort, year: year || undefined, reason: condition === 'title' && reason ? reason : undefined, offset, limit: PAGE })
-    if (req !== requestRef.current) return
-    setRows(prev => (offset === 0 ? page.rows : [...prev, ...page.rows]))
-    setTotal(page.total)
-    setReasons(page.reasons)
-    setLoading(false)
+    setFailed(false)
+    try {
+      const page = await window.flickrAPI.listHealthPhotos({ condition, status, search: typed, sort, year: year || undefined, reason: condition === 'title' && reason ? reason : undefined, offset, limit: PAGE })
+      if (req !== requestRef.current) return
+      setRows(prev => (offset === 0 ? page.rows : [...prev, ...page.rows]))
+      setTotal(page.total)
+      setReasons(page.reasons)
+      setLoading(false)
+    } catch {
+      if (req !== requestRef.current) return
+      setFailed(true); setLoading(false)
+    }
   }, [condition, status, year, typed, sort, reason])
   useEffect(() => { setReason('') }, [condition, status])
 
@@ -188,7 +196,8 @@ export default function HealthPanel({ refreshKey, onFullRescan, toolbarLeft, sta
           {condition === 'duplicates' && <DuplicatesList status={status} search={search} sort={dupSort} selected={selected} setSelected={setSelected} refreshKey={refreshKey} onChanged={() => void loadSummary()} />}
           {condition !== 'duplicates' && <SelectBar count={selected.size} shown={rows.length} ids={() => [...selected]} onClear={() => setSelected(new Set())} onSelectAll={() => setSelected(new Set(rows.map(r => r.photoId)))} />}
           {condition !== 'duplicates' && <div style={styles.list}>
-            {loading && rows.length === 0 ? <div style={styles.muted}>Checking your photos…</div>
+            {failed && rows.length === 0 ? <LoadFailed what="this list" onRetry={() => void loadRows(0)} />
+              : loading && rows.length === 0 ? <div style={styles.muted}>Checking your photos…</div>
               : rows.length === 0 ? <div style={styles.muted}>{needsRebuild && ruleById(`photos:${condition}`)?.needsRebuild ? 'This check needs a Rebuild before it can find anything. Press Rebuild in the notice at the top.' : status === 'open' ? 'Nothing left to fix here.' : 'Nothing here.'}</div>
               : rows.map(p => (
                 <div key={p.photoId} style={{ ...styles.card, ...(p.status === 'fine' ? { opacity: 0.6 } : {}) }}>
@@ -215,6 +224,7 @@ export default function HealthPanel({ refreshKey, onFullRescan, toolbarLeft, sta
                   </div>
                 </div>
               ))}
+            {failed && rows.length > 0 && <LoadFailed what="more" onRetry={() => void loadRows(rows.length)} />}
             {rows.length < total && <button style={styles.moreBtn} onClick={() => void loadRows(rows.length)}>Show more ({(total - rows.length).toLocaleString()} left)</button>}
           </div>}
           <BackToTop />

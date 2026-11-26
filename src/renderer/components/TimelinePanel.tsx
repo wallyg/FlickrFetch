@@ -3,6 +3,7 @@ import BatchEditButton from './BatchEditButton'
 import type { PrivacyScope, TimelineDays, TimelineMonths } from '../../shared/types'
 import { MONTHS, pad2 } from './DateViewParts'
 import CameraRoll from './CameraRoll'
+import LoadFailed from './LoadFailed'
 import DateFilterBar, { dateExtra, extraNote, openTitle, rangeOpts, type MediaChoice, type RangeOpts } from './DateFilterBar'
 import type { PrivacyFilter } from './PhotoGridShared'
 import type { PickedAlbum } from './AlbumBox'
@@ -48,6 +49,9 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
   const [data, setData] = useState<TimelineMonths | null>(null)
   const [drill, setDrill] = useState<{ year: number; month: number } | null>(null)   // a month is open as a day-by-day calendar
   const [days, setDays] = useState<TimelineDays | null>(null)
+  const [failed, setFailed] = useState(false)       // the months could not be read
+  const [daysFailed, setDaysFailed] = useState(false)   // the days of the open month could not be read
+  const [daysTry, setDaysTry] = useState(0)
   const [roll, setRoll] = useState<Period | null>(null)   // the camera roll is open on a day (or the whole month)
   const [lastOpened, setLastOpened] = useState<{ year: number; month: number } | null>(null)   // outlined when you come back to the grid
   const [hover, setHover] = useState<Hover>(null)
@@ -57,17 +61,23 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
 
   const load = useCallback(async () => {
     const req = ++reqRef.current
-    const m = await window.flickrAPI.getTimelineMonths(scope, extra)
-    if (req === reqRef.current) setData(m)
+    setFailed(false)
+    try {
+      const m = await window.flickrAPI.getTimelineMonths(scope, extra)
+      if (req === reqRef.current) setData(m)
+    } catch {
+      if (req === reqRef.current) setFailed(true)
+    }
   }, [scope, extra])
   useEffect(() => { void load() }, [load, refreshKey])
 
   useEffect(() => {
-    if (!drill) { setDays(null); return }
+    if (!drill) { setDays(null); setDaysFailed(false); return }
     let cancelled = false
-    void window.flickrAPI.getTimelineDays(drill.year, drill.month, scope, extra).then(d => { if (!cancelled) setDays(d) })
+    setDaysFailed(false)
+    void window.flickrAPI.getTimelineDays(drill.year, drill.month, scope, extra).then(d => { if (!cancelled) setDays(d) }).catch(() => { if (!cancelled) setDaysFailed(true) })
     return () => { cancelled = true }
-  }, [drill, scope, extra, refreshKey])
+  }, [drill, scope, extra, refreshKey, daysTry])
 
   useEffect(() => {
     if (!gridEl) return
@@ -106,7 +116,7 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
     return { map, vmap, max, years: [...years].sort((a, b) => b - a), withPhotos }   // newest year first, so the busy recent years are on screen
   }, [data])
 
-  if (!data) return <div style={styles.pad}><span style={styles.muted}>Loading your photos…</span></div>
+  if (!data) return <div style={styles.pad}>{failed ? <LoadFailed what="your photos" onRetry={() => void load()} /> : <span style={styles.muted}>Loading your photos…</span>}</div>
   if (!data.hasData) return <div style={styles.pad}><span style={styles.muted}>Build your tag list first (Tags tab). It also keeps the dates the Timeline needs.</span></div>
 
   const strength = (n: number, max: number): number => (n === 0 ? 0 : 0.14 + 0.86 * Math.sqrt(n / max))
@@ -264,6 +274,7 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
             <BatchEditButton inline style={styles.pill} getIds={async () => { const r = rangeOf(drill); return (await window.flickrAPI.getDatePhotoIds({ kind: 'range', from: r.from, to: r.to, scope, ...extra })).map(p => p.id) }} />
             <button style={{ ...styles.pill, ...styles.primary }} onClick={() => void download(drill)}><DownloadIcon />Download these {monthCount(drill.year, drill.month).toLocaleString()}</button>
           </div>
+          {daysFailed && <LoadFailed what="this month" onRetry={() => setDaysTry(n => n + 1)} />}
           <div style={styles.card}>
             <div style={styles.cal}>
               {'SMTWTFS'.split('').map((w, i) => <div key={i} style={styles.hc}>{w}</div>)}

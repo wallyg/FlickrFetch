@@ -4,6 +4,7 @@ import BatchEditButton from './BatchEditButton'
 import type { DayPhoto, DayView, PrivacyScope } from '../../shared/types'
 import { MONTHS, pad2, hourLabel, PhotoTile } from './DateViewParts'
 import ShareDialog from './ShareDialog'
+import LoadFailed from './LoadFailed'
 import DateFilterBar, { dateExtra, extraNote, openTitle, rangeOpts, type MediaChoice, type RangeOpts } from './DateFilterBar'
 import type { PrivacyFilter } from './PhotoGridShared'
 import type { PickedAlbum } from './AlbumBox'
@@ -41,6 +42,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
   const [albums, setAlbums] = useState<PickedAlbum[]>([])   // only photos in any of these albums
   const extra = useMemo(() => dateExtra(media, albums, privacy), [media, albums, privacy])
   const [data, setData] = useState<DayView | null>(null)
+  const [failed, setFailed] = useState(false)
   const [expanded, setExpanded] = useState<Record<string, DayPhoto[]>>({})
   const [selected, setSelected] = useState<Map<string, DayPhoto>>(new Map())
   const [share, setShare] = useState<{ photos: DayPhoto[]; userPicked: boolean } | null>(null)
@@ -52,9 +54,14 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
 
   const load = useCallback(async () => {
     const req = ++reqRef.current
-    const v = await window.flickrAPI.getDayView({ month, day, scope, perYear: 12, tag: tag?.key, ...extra })
-    if (req !== reqRef.current) return
-    setData(v)
+    setFailed(false)
+    try {
+      const v = await window.flickrAPI.getDayView({ month, day, scope, perYear: 12, tag: tag?.key, ...extra })
+      if (req !== reqRef.current) return
+      setData(v)
+    } catch {
+      if (req === reqRef.current) setFailed(true)
+    }
   }, [month, day, scope, tag, extra])
 
   useEffect(() => { void load() }, [load, refreshKey])
@@ -111,7 +118,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
   // One list that only changes when the photos do, so the collage maker is not restarted by every redraw of the page
   const candidates = useMemo(() => (data ? data.years.flatMap(y => expanded[y.year] ?? y.photos).filter(p => p.media !== 'video') : []), [data, expanded])
 
-  if (!data) return <div style={styles.pad}><span style={styles.muted}>Loading your photos…</span></div>
+  if (!data) return <div style={styles.pad}>{failed ? <LoadFailed what="your photos" onRetry={() => void load()} /> : <span style={styles.muted}>Loading your photos…</span>}</div>
   if (!data.hasData) return <div style={styles.pad}><span style={styles.muted}>Build your tag list first (Tags tab). It also keeps the dates On This Day needs.</span></div>
 
   const ins = data.insights
