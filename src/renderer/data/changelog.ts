@@ -7,6 +7,18 @@ export interface Release {
 
 const changelog: Release[] = [
   {
+    version: '3.13',
+    date: 'November 2026',
+    highlights: [
+      'One hover card for every tip — pointing at a button, an (i) mark or a greyed-out button shows the same white card, straight away, drawn above everything so it is never cut off (the Map\'s Tags tip used to hide behind the tab bar). It also appears when you Tab to a control',
+      'Date stamp in file names is now a pattern you build — type something like yyyy.MM.dd \'at\' HH-mm and see the result as you type, pick one of four quick patterns, or open "Build from parts" and click the pieces. Problems are explained in words, and your old choice carries over unchanged',
+      'On This Day collages — a Share… button opens the Mac share sheet with the picture, a Shuffle button picks a fresh set of photos, the Polaroid frame is redrawn so the captions never overlap and the cards fill the picture, and the header has more room',
+      'Every dialog behaves the same — Esc closes it, clicking outside closes it, and focus stays inside. "Change settings" in the download confirm box now opens Settings in front of it, and the box names what you are downloading plainly ("1 photo", not "1 photos")',
+      'If a screen runs into an error you now see a message with a Reload button instead of a blank window, and only that tab is affected',
+      'A steadier look and plainer words — a clear blue ring when you move with the keyboard, buttons darken a little under the pointer, ticked boxes are pink, no filled blue buttons, Flickr\'s editor is always "Open in Flickr\'s organizer", errors read "Couldn\'t …", and labels are in sentence case'
+    ]
+  },
+  {
     version: '3.12',
     date: 'November 2026',
     highlights: [
