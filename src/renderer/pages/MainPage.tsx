@@ -1219,17 +1219,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '13px',
     color: 'var(--ff-text-secondary)'
   },
-  downloadAllBtn: {
-    fontSize: '12px',
-    fontWeight: '700',
-    color: 'var(--ff-white)',
-    background: 'var(--ff-blue)',
-    border: 'none',
-    borderRadius: '6px',
-    padding: '6px 12px',
-    cursor: 'pointer',
-    flexShrink: 0
-  },
+  downloadAllBtn: { ...primaryBtn, flexShrink: 0 },
   headerActions: {
     display: 'flex',
     alignItems: 'center',

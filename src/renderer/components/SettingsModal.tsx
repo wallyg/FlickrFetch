@@ -852,7 +852,7 @@ const s: Record<string, React.CSSProperties> = {
   closeBtn: { background: 'none', border: 'none', fontSize: '16px', color: 'var(--ff-text-secondary)', cursor: 'pointer', padding: '4px' },
   updateBanner: { display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 24px', backgroundColor: 'var(--ff-info-bg)', borderBottom: '1px solid var(--ff-info-line)', flexShrink: 0 },
   updateText: { flex: 1, fontSize: '13px', color: 'var(--ff-blue)', fontWeight: '400' },
-  updateBtn: { background: 'var(--ff-blue)', color: 'var(--ff-white)', border: 'none', borderRadius: '6px', padding: '5px 12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer', flexShrink: 0 },
+  updateBtn: { ...smallBtn, flexShrink: 0 },
   tabBar: { display: 'flex', padding: '0 24px', marginTop: '16px', borderBottom: '1px solid var(--ff-border)', flexShrink: 0 },
   tabBtn: { ...tabMark, background: 'none', border: 'none', borderBottom: '2px solid transparent', padding: '8px 12px', fontSize: '13px', fontWeight: '400', color: 'var(--ff-text-secondary)', cursor: 'pointer', marginBottom: '-1px', transition: 'color 0.15s' },
   tabBtnActive: { color: 'var(--ff-pink)', borderBottom: '2px solid var(--ff-pink)' },

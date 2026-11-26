@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo } from 'react'
-import { tabMark, linkBtn, quietBtn } from '../ui/kit'
+import { tabMark, linkBtn, quietBtn, primaryBtn } from '../ui/kit'
 import Icon from '../ui/Icon'
 import { useFindShortcut } from '../hooks/useFindShortcut'
 import { DEBOUNCE, useDebouncedEffect } from '../ui/useDebounce'
@@ -1595,11 +1595,7 @@ const s: Record<string, React.CSSProperties> = {
     flex: 1, height: '36px', borderRadius: '8px', border: '1px solid var(--ff-line-strong)',
     padding: '0 12px', fontSize: '14px', outline: 'none',
   },
-  searchBtn: {
-    height: '36px', padding: '0 20px', borderRadius: '8px',
-    background: 'var(--ff-blue)', color: 'var(--ff-white)', border: 'none', cursor: 'pointer',
-    fontSize: '14px', fontWeight: 400, flexShrink: 0,
-  },
+  searchBtn: { ...primaryBtn, height: '36px', padding: '0 20px', borderRadius: '8px', fontSize: '14px', flexShrink: 0 },
   searchError: { color: 'var(--ff-error)', fontSize: '13px' },
   contactsSection: { display: 'flex', flexDirection: 'column', gap: '12px' },
   contactsLabel: { fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--ff-text-secondary)' },
