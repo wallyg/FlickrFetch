@@ -59,6 +59,9 @@ export const fieldCompact: CSSProperties = { ...fieldBox, padding: '3px 6px' }
 export const selectBox: CSSProperties = { ...fieldBox, cursor: 'pointer' }
 export const selectCompact: CSSProperties = { ...fieldCompact, cursor: 'pointer' }
 
+// Marks a tab button, so its keyboard focus ring sits inside the tab instead of against the bar around it (index.html). Spread it into a tab's style.
+export const tabMark = { '--ff-tab': '1' } as CSSProperties
+
 export const chip: CSSProperties = {
   ...BOXED,
   border: '1px solid var(--ff-border)', borderRadius: 12, padding: '3px 11px', fontSize: 13,

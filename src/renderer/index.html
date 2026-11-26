@@ -66,6 +66,8 @@
       /* States, set once for the whole app (#232). Components keep their own looks for the resting state; these add what they cannot write inline. */
       /* Keyboard focus: one ring on everything. !important because some controls turn their outline off inline. Mouse clicks do not show it. */
       :focus-visible { outline: 2px solid var(--ff-blue) !important; outline-offset: 2px !important; }
+      /* A tab button (marked --ff-tab in ui/kit.ts) keeps its ring inside itself, with soft corners, so it does not butt against the bar around it. */
+      button[style*="--ff-tab"]:focus-visible { outline-offset: -3px !important; border-radius: 6px; }
       /* Hover and pressed: a bordered button or a select takes a grey tint (a wash over its own colour, so a pink button stays pink). Buttons from ui/kit.ts carry the --ff-box marker; other bordered buttons are matched by their written-out border. */
       button[style*="--ff-box"]:not(:disabled):hover, button[style*="border: 1px"]:not(:disabled):hover, select:not(:disabled):hover { background-image: linear-gradient(var(--ff-wash-hover), var(--ff-wash-hover)); }
       button[style*="--ff-box"]:not(:disabled):active, button[style*="border: 1px"]:not(:disabled):active { background-image: linear-gradient(var(--ff-wash-press), var(--ff-wash-press)); }

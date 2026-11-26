@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { tabMark } from '../ui/kit'
 import DiscoverPeople from '../components/DiscoverPeople'
 import DiscoverGroups from '../components/DiscoverGroups'
 import DiscoverExplore from '../components/DiscoverExplore'
@@ -67,6 +68,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   tabGroup: { display: 'flex', gap: '0' },
   tab: {
+    ...tabMark,
     background: 'none', border: 'none', borderBottom: '2px solid transparent',
     padding: '10px 16px', cursor: 'pointer', fontSize: '14px', fontWeight: 400,
     color: 'var(--ff-text-secondary)', marginBottom: '-1px', outline: 'none',

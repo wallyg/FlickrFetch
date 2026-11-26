@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { fieldBox } from '../ui/kit'
+import { fieldBox, tabMark } from '../ui/kit'
 import Icon from '../ui/Icon'
 import HealthCheckSettings from './HealthCheckSettings'
 import AlbumCheckSettings from './AlbumCheckSettings'
@@ -854,7 +854,7 @@ const s: Record<string, React.CSSProperties> = {
   updateText: { flex: 1, fontSize: '13px', color: 'var(--ff-blue)', fontWeight: '400' },
   updateBtn: { background: 'var(--ff-blue)', color: 'var(--ff-white)', border: 'none', borderRadius: '6px', padding: '5px 12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer', flexShrink: 0 },
   tabBar: { display: 'flex', padding: '0 24px', marginTop: '16px', borderBottom: '1px solid var(--ff-border)', flexShrink: 0 },
-  tabBtn: { background: 'none', border: 'none', borderBottom: '2px solid transparent', padding: '8px 12px', fontSize: '13px', fontWeight: '400', color: 'var(--ff-text-secondary)', cursor: 'pointer', marginBottom: '-1px', transition: 'color 0.15s' },
+  tabBtn: { ...tabMark, background: 'none', border: 'none', borderBottom: '2px solid transparent', padding: '8px 12px', fontSize: '13px', fontWeight: '400', color: 'var(--ff-text-secondary)', cursor: 'pointer', marginBottom: '-1px', transition: 'color 0.15s' },
   tabBtnActive: { color: 'var(--ff-pink)', borderBottom: '2px solid var(--ff-pink)' },
   content: { overflowY: 'auto', flex: 1 },
   section: { padding: '18px 24px' },

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo } from 'react'
+import { tabMark } from '../ui/kit'
 import Icon from '../ui/Icon'
 import { useFindShortcut } from '../hooks/useFindShortcut'
 import { DEBOUNCE, useDebouncedEffect } from '../ui/useDebounce'
@@ -1618,6 +1619,7 @@ const s: Record<string, React.CSSProperties> = {
   contactHandle: { fontSize: '11px', color: 'var(--ff-text-secondary)', textAlign: 'center', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' },
   userTabBar: { display: 'flex', gap: '0', borderBottom: '1px solid var(--ff-border)', marginBottom: '0' },
   userTabBtn: {
+    ...tabMark,
     background: 'none', border: 'none', borderBottom: '2px solid transparent',
     padding: '8px 16px', cursor: 'pointer', fontSize: '14px', fontWeight: 400,
     color: 'var(--ff-text-secondary)', marginBottom: '-1px', outline: 'none',

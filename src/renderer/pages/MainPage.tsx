@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
+import { tabMark } from '../ui/kit'
 import Icon from '../ui/Icon'
 import { useRememberScroll } from '../hooks/useRememberScroll'
 import MapPanel from '../components/MapPanel'
@@ -1183,6 +1184,7 @@ const styles: Record<string, React.CSSProperties> = {
     flexShrink: 0
   },
   tab: {
+    ...tabMark,
     background: 'none',
     border: 'none',
     borderBottom: '2px solid transparent',

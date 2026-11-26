@@ -40,5 +40,5 @@ export default function InfoTip({ text, direction }: { text: string; direction?:
 const styles: Record<string, React.CSSProperties> = {
   wrap: { position: 'relative', display: 'inline-flex', alignItems: 'center' },
   icon: { display: 'inline-flex', color: 'var(--ff-text-secondary)', cursor: 'default', userSelect: 'none' },
-  bubble: { position: 'absolute', top: 'calc(100% + 7px)', left: '0', background: 'var(--ff-text)', color: 'var(--ff-cream)', fontSize: '12px', lineHeight: '1.45', padding: '7px 10px', borderRadius: '6px', pointerEvents: 'none', zIndex: 'var(--ff-z-hover)', width: '300px', textAlign: 'left', boxShadow: '0 2px 8px var(--ff-shadow-mid)' }
+  bubble: { position: 'absolute', top: 'calc(100% + 7px)', left: '0', background: 'var(--ff-text)', color: 'var(--ff-cream)', fontSize: '12px', fontWeight: 400, textTransform: 'none', letterSpacing: 'normal', lineHeight: '1.45', padding: '7px 10px', borderRadius: '6px', pointerEvents: 'none', zIndex: 'var(--ff-z-hover)', width: '300px', textAlign: 'left', boxShadow: '0 2px 8px var(--ff-shadow-mid)' }
 }

@@ -30,6 +30,22 @@ test('reduce motion switches animations and transitions off, except a spinner ma
   assert.match(spinner, /data-motion="keep"[^>]*animation: `?'?ff-spin|data-motion="keep"[\s\S]{0,300}ff-spin/)
 })
 
+test('tab buttons carry the mark that moves their focus ring inside them', () => {
+  assert.match(html, /button\[style\*="--ff-tab"\]:focus-visible\s*\{[^}]*outline-offset:\s*-3px\s*!important/)
+  for (const f of ['pages/MainPage.tsx', 'pages/DiscoverPage.tsx', 'components/SettingsModal.tsx', 'components/DiscoverPeople.tsx']) {
+    assert.match(readFileSync(join(SRC, f), 'utf8'), /\.\.\.tabMark/, `${f}: its tab buttons need ...tabMark`)
+  }
+})
+
+test('a hover note is plain text under any heading: weight, case and spacing are set on the note itself', () => {
+  for (const f of ['ui/InfoTip.tsx', 'ui/HoverNote.tsx']) {
+    const code = readFileSync(join(SRC, f), 'utf8')
+    assert.match(code, /fontWeight: 400/, f)
+    assert.match(code, /textTransform: 'none'/, f)
+    assert.match(code, /letterSpacing: 'normal'/, f)
+  }
+})
+
 // A text box or select typed out in full (edge, 6 px corner, white fill) instead of spread from fieldBox / fieldCompact / selectBox / selectCompact.
 // Buttons are #262, so keys ending in Btn or Button are left out, and so is anything laid out as a row (a card).
 test('no new text box or select is typed out by hand', () => {
