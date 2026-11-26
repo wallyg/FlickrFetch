@@ -598,7 +598,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
                 <div style={{ ...s.optRow, marginTop: '6px' }}>
                   <div style={s.optLabelGroup}>
                     <span style={s.optName}>Size indicator</span>
-                    <InfoTip text="Adds the download size to the filename: orig, xl, lg, med, sm, sq. Useful when downloading different sizes of the same photo." />
+                    <InfoTip text="Adds a short size code to the file name: o (original), xl, l, m, s or sq (square). Useful when downloading different sizes of the same photo." />
                   </div>
                   <PosToggle value={sizeTokenPos} onChange={v => { setSizeTokenPos(v) }} />
                 </div>

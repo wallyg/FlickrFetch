@@ -12,7 +12,7 @@ export default function AlbumCheckSettings({ onOpenHealth }: { onOpenHealth: () 
         <div style={styles.head}>Health Check · Albums</div>
         <div style={styles.desc}>
           These choices belong to Health Check. They decide how the album checks (May not fit its album, May be missing from an album) judge each of your albums.
-          The numbers and the On, Warning and Off choices for those checks are in <button style={linkBtn} onClick={onOpenHealth}>Health Check settings</button>.
+          The numbers and the Issue, Warning and Off choices for those checks are in <button style={linkBtn} onClick={onOpenHealth}>Health Check settings</button>.
         </div>
       </div>
       <AlbumKindList />

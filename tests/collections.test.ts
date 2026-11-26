@@ -115,3 +115,14 @@ test('Discover finds a person from a name, an id, or any link to their page or o
   assert.deepEqual(parseDiscoverQuery('https://www.flickr.com/photos/a%20b/'), { kind: 'name', name: 'a b' })
   assert.deepEqual(parseDiscoverQuery('%E0%A4%A'), { kind: 'name', name: '%E0%A4%A' }, 'text that is not valid percent-coding is kept as typed')
 })
+
+test('the words in Settings match what the app does (size codes in file names, the names of the three check choices)', () => {
+  const naming = read('src/main/fileNaming.ts')
+  const map = naming.slice(naming.indexOf('const SIZE_TOKEN_MAP'), naming.indexOf('}', naming.indexOf('const SIZE_TOKEN_MAP')))
+  const codes = [...map.matchAll(/:\s*'([a-z]+)'/g)].map(m => m[1])
+  assert.deepEqual(codes, ['o', 'xl', 'l', 'm', 's', 'sq'])
+  const note = read('src/renderer/components/SettingsModal.tsx')
+  for (const c of codes) assert.ok(new RegExp(`\\b${c}\\b`).test(note.slice(note.indexOf('Adds a short size code'), note.indexOf('Useful when downloading different sizes'))), `the note names ${c}`)
+  assert.ok(/Issue, Warning and Off/.test(read('src/renderer/components/AlbumCheckSettings.tsx')))
+  assert.ok(/label: 'Issue'/.test(read('src/renderer/components/TuneChecks.tsx')) && /label: 'Warning'/.test(read('src/renderer/components/TuneChecks.tsx')))
+})
