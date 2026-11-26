@@ -163,7 +163,7 @@ contextBridge.exposeInMainWorld('flickrAPI', {
   getBatchLog: (): Promise<BatchLogEntry[]> => ipcRenderer.invoke('db:getBatchLog'),
   getPhotoRecord: (photoId: string): Promise<PhotoDownloadRecord | null> => ipcRenderer.invoke('db:getPhotoRecord', photoId),
   getPhotoRecordsBatch: (photoIds: string[]): Promise<Record<string, PhotoDownloadRecord>> => ipcRenderer.invoke('db:getPhotoRecordsBatch', photoIds),
-  clearHistory: (): Promise<void> => ipcRenderer.invoke('db:clearHistory'),
+  clearBatchHistory: (): Promise<void> => ipcRenderer.invoke('db:clearBatchLog'),
   searchPhotoRecords: (query: PhotoRecordQuery): Promise<PhotoDownloadRecord[]> => ipcRenderer.invoke('db:searchPhotoRecords', query),
   deletePhotoRecord: (photoId: string): Promise<void> => ipcRenderer.invoke('db:deletePhotoRecord', photoId),
   deletePhotoRecords: (photoIds: string[]): Promise<void> => ipcRenderer.invoke('db:deletePhotoRecords', photoIds),

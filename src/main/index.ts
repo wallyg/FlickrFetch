@@ -26,8 +26,9 @@ import { registerBatchIpc, batchUrl } from './batchEdit'
 import { registerBackupIpc } from './backupReport'
 import { safeFolderName } from './safeName'
 import { buildFilename } from './fileNaming'
+import { privacyLevelOf } from '../shared/privacy'
 import { ownerNsid, forgetOwnerNsid } from './owner'
-import { openDatabase, closeDatabase, writeBatchLog, writePhotoRecord, getPhotoRecord, getPhotoRecordsBatch, getBatchLog, clearBatchLog, clearAllHistory, searchPhotoRecords, deletePhotoRecord, deletePhotoRecords, clearPhotoRecords, writeDiscoverRecord, getDiscoverRecordsBatch, searchDiscoverRecords, deleteDiscoverRecord, deleteDiscoverRecords, clearDiscoverRecords } from './database'
+import { openDatabase, closeDatabase, writeBatchLog, writePhotoRecord, getPhotoRecord, getPhotoRecordsBatch, getBatchLog, clearBatchLog, searchPhotoRecords, deletePhotoRecord, deletePhotoRecords, clearPhotoRecords, writeDiscoverRecord, getDiscoverRecordsBatch, searchDiscoverRecords, deleteDiscoverRecord, deleteDiscoverRecords, clearDiscoverRecords } from './database'
 import type { AppSettings, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams, MetadataSettings, DiscoverUser, DiscoverContact, DiscoverGroup } from '../shared/types'
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
@@ -452,16 +453,9 @@ async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'p
     page++
   } while (page <= pages)
 
-  const getPrivacyLevel = (p: { ispublic?: number; isfriend?: number; isfamily?: number }): string => {
-    if (p.ispublic === 1) return 'public'
-    if (p.isfriend === 1) return 'friends'
-    if (p.isfamily === 1) return 'family'
-    return 'private'
-  }
-
   let privacyFiltered = (!privacyFilter || privacyFilter === 'all')
     ? allPhotos
-    : allPhotos.filter(p => getPrivacyLevel(p) === privacyFilter)
+    : allPhotos.filter(p => privacyLevelOf(p) === privacyFilter)
 
   const preSmartTotal = privacyFiltered.length
 
@@ -621,7 +615,7 @@ async function runSelectedBatch(photos: { id: string; title: string; thumbnailUr
     for (let i = 0; i < photos.length; i++) {
       if (activeBatchController?.signal.aborted) {
         sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled', skippedCount, skippedSizeUnavailableCount, failedCount })
-        if (track) writeBatchLog({ createdAt: Date.now(), source: baseTitle, sourceType: 'selected', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
+        if (track) writeBatchLog({ createdAt: Date.now(), source: baseTitle, sourceType: 'selected', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled', failedPhotos })
         return
       }
       await waitIfPaused()
@@ -652,7 +646,7 @@ async function runSelectedBatch(photos: { id: string; title: string; thumbnailUr
       } catch (err) {
         if ((err as { name?: string }).name === 'AbortError' || activeBatchController?.signal.aborted) {
           sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled', skippedCount, skippedSizeUnavailableCount, failedCount })
-          if (track) writeBatchLog({ createdAt: Date.now(), source: baseTitle, sourceType: 'selected', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
+          if (track) writeBatchLog({ createdAt: Date.now(), source: baseTitle, sourceType: 'selected', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled', failedPhotos })
           return
         }
         failedCount++
@@ -680,7 +674,7 @@ async function runSelectedBatch(photos: { id: string; title: string; thumbnailUr
 
   const finalStatus = failedCount > 0 || skippedCount > 0 || skippedSizeUnavailableCount > 0 ? 'partial' : 'complete'
   sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: zipMode ? lastFilePath : null, status: 'done', skippedCount, skippedSizeUnavailableCount, failedCount, failedPhotos })
-  if (track) writeBatchLog({ createdAt: Date.now(), source: baseTitle, sourceType: 'selected', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: finalStatus })
+  if (track) writeBatchLog({ createdAt: Date.now(), source: baseTitle, sourceType: 'selected', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: finalStatus, failedPhotos })
   if (notifyOnComplete && Notification.isSupported()) {
     const body = zipMode
       ? `Saved ${downloadedCount} photos from "${baseTitle}" as a ZIP archive`
@@ -731,7 +725,7 @@ async function runDiscoverSelectedBatch(photos: { id: string; title: string; thu
   for (let i = 0; i < photos.length; i++) {
     if (activeBatchController?.signal.aborted) {
       sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled', skippedCount, skippedSizeUnavailableCount, failedCount })
-      if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'discover', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
+      if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'discover', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled', failedPhotos })
       return
     }
     await waitIfPaused()
@@ -759,7 +753,7 @@ async function runDiscoverSelectedBatch(photos: { id: string; title: string; thu
     } catch (err) {
       if ((err as { name?: string }).name === 'AbortError' || activeBatchController?.signal.aborted) {
         sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled', skippedCount, skippedSizeUnavailableCount, failedCount })
-        if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'discover', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
+        if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'discover', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled', failedPhotos })
         return
       }
       failedCount++
@@ -770,7 +764,7 @@ async function runDiscoverSelectedBatch(photos: { id: string; title: string; thu
 
   sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'done', skippedCount, skippedSizeUnavailableCount, failedCount, failedPhotos, discoverFolder: targetFolder })
   const finalStatus = failedCount > 0 || skippedCount > 0 || skippedSizeUnavailableCount > 0 ? 'partial' : 'complete'
-  if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'discover', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: finalStatus })
+  if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: 'discover', total, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: finalStatus, failedPhotos })
   if (notifyOnComplete && Notification.isSupported()) {
     const body = (skippedCount + skippedSizeUnavailableCount + failedCount) > 0
       ? `Saved ${downloadedCount}, skipped ${skippedCount + skippedSizeUnavailableCount + failedCount} from "${albumTitle}"`
@@ -843,7 +837,7 @@ async function runDiscoverPublicBatch(
   for (let i = 0; i < filteredPhotos.length; i++) {
     if (activeBatchController?.signal.aborted) {
       sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled', skippedCount, skippedSizeUnavailableCount, failedCount })
-      if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: batchSourceType, total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
+      if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: batchSourceType, total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled', failedPhotos })
       return
     }
     await waitIfPaused()
@@ -871,7 +865,7 @@ async function runDiscoverPublicBatch(
     } catch (err) {
       if ((err as { name?: string }).name === 'AbortError' || activeBatchController?.signal.aborted) {
         sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled', skippedCount, skippedSizeUnavailableCount, failedCount })
-        if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: batchSourceType, total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
+        if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: batchSourceType, total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled', failedPhotos })
         return
       }
       failedCount++
@@ -883,7 +877,7 @@ async function runDiscoverPublicBatch(
 
   const finalStatus = failedCount > 0 || skippedCount > 0 || skippedSizeUnavailableCount > 0 ? 'partial' : 'complete'
   sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'done', skippedCount, skippedSizeUnavailableCount, failedCount, failedPhotos, smartFilteredCount: preSmartTotal - total })
-  if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: batchSourceType, total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: finalStatus })
+  if (track) writeBatchLog({ createdAt: Date.now(), source: albumTitle, sourceType: batchSourceType, total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: finalStatus, failedPhotos })
   if (notifyOnComplete && Notification.isSupported()) {
     const body = (skippedCount + skippedSizeUnavailableCount + failedCount) > 0
       ? `Saved ${downloadedCount}, skipped ${skippedCount + skippedSizeUnavailableCount + failedCount} from "${albumTitle}"`
@@ -993,6 +987,7 @@ async function runPhotostreamBatch(albumTitle: string, track = true, smartMode?:
   let lastFilePath: string | null = null
   const written = new Set<string>()   // names saved so far in this batch: two photos with one name never replace each other
   let skippedCount = 0
+  let skippedSizeUnavailableCount = 0
   let failedCount = 0
   const failedPhotos: { id: string; title: string }[] = []
   let downloadedCount = 0
@@ -1001,14 +996,14 @@ async function runPhotostreamBatch(albumTitle: string, track = true, smartMode?:
   try {
     for (let i = 0; i < filteredPhotos.length; i++) {
       if (activeBatchController?.signal.aborted) {
-        sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled', skippedCount, failedCount })
-        if (track) writeBatchLog({ createdAt: Date.now(), source: 'Photostream', sourceType: 'photostream', total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
+        sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled', skippedCount, skippedSizeUnavailableCount, failedCount })
+        if (track) writeBatchLog({ createdAt: Date.now(), source: 'Photostream', sourceType: 'photostream', total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled', failedPhotos })
         return
       }
       await waitIfPaused()
 
       const photo = filteredPhotos[i]
-      sendProgress({ current: i, total, albumTitle, activeTitle: photo.title, latestTitle: '', latestFilePath: null, status: 'running', skippedCount, failedCount })
+      sendProgress({ current: i, total, albumTitle, activeTitle: photo.title, latestTitle: '', latestFilePath: null, status: 'running', skippedCount, skippedSizeUnavailableCount, failedCount })
 
       try {
         const [sizes, photoInfo] = await Promise.all([
@@ -1022,21 +1017,24 @@ async function runPhotostreamBatch(albumTitle: string, track = true, smartMode?:
           if (!zipMode) lastFilePath = outcome.filePath
           { const size = noteSize(describeSize(sizes, downloadSize)); if (track) writePhotoRecord(photo.id, photo.lastUpdate ?? 0, photo.title, photo.thumbnailUrl, size) }
           if (zipMode) manifestPhotos.push({ id: photo.id, title: photo.title, filename: basename(outcome.filePath) })
-          sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: outcome.filePath, status: 'running', skippedCount, failedCount })
+          sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: outcome.filePath, status: 'running', skippedCount, skippedSizeUnavailableCount, failedCount })
+        } else if (outcome.reason === 'size-unavailable') {
+          skippedSizeUnavailableCount++
+          sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'running', skippedCount, skippedSizeUnavailableCount, failedCount })
         } else {
           skippedCount++
-          sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'running', skippedCount, failedCount })
+          sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'running', skippedCount, skippedSizeUnavailableCount, failedCount })
         }
       } catch (err) {
         if ((err as { name?: string }).name === 'AbortError' || activeBatchController?.signal.aborted) {
-          sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled', skippedCount, failedCount })
-          if (track) writeBatchLog({ createdAt: Date.now(), source: 'Photostream', sourceType: 'photostream', total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled' })
+          sendProgress({ current: i, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: null, status: 'cancelled', skippedCount, skippedSizeUnavailableCount, failedCount })
+          if (track) writeBatchLog({ createdAt: Date.now(), source: 'Photostream', sourceType: 'photostream', total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: 'cancelled', failedPhotos })
           return
         }
         failedCount++
         failedPhotos.push({ id: photo.id, title: photo.title })
         process.stderr.write(`[flickrfetch] batch skip ${photo.id}: ${err}\n`)
-        sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: null, status: 'running', skippedCount, failedCount })
+        sendProgress({ current: i + 1, total, albumTitle, activeTitle: '', latestTitle: photo.title, latestFilePath: null, status: 'running', skippedCount, skippedSizeUnavailableCount, failedCount })
       }
     }
 
@@ -1055,14 +1053,14 @@ async function runPhotostreamBatch(albumTitle: string, track = true, smartMode?:
     if (tempDir) { try { rmSync(tempDir, { recursive: true, force: true }) } catch { /* ignore */ } }
   }
 
-  const finalStatus = failedCount > 0 || skippedCount > 0 ? 'partial' : 'complete'
-  sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: zipMode ? lastFilePath : null, status: 'done', skippedCount, failedCount, failedPhotos, smartFilteredCount: preSmartTotal - total })
-  if (track) writeBatchLog({ createdAt: Date.now(), source: 'Photostream', sourceType: 'photostream', total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: finalStatus })
+  const finalStatus = failedCount > 0 || skippedCount > 0 || skippedSizeUnavailableCount > 0 ? 'partial' : 'complete'
+  sendProgress({ current: total, total, albumTitle, activeTitle: '', latestTitle: '', latestFilePath: zipMode ? lastFilePath : null, status: 'done', skippedCount, skippedSizeUnavailableCount, failedCount, failedPhotos, smartFilteredCount: preSmartTotal - total })
+  if (track) writeBatchLog({ createdAt: Date.now(), source: 'Photostream', sourceType: 'photostream', total: preSmartTotal, downloaded: downloadedCount, skippedCollision: skippedCount, failed: failedCount, status: finalStatus, failedPhotos })
   if (notifyOnComplete && Notification.isSupported()) {
     const body = zipMode
       ? `Saved ${downloadedCount} photos from Photostream as a ZIP archive`
-      : (skippedCount + failedCount) > 0
-        ? `Saved ${downloadedCount}, skipped ${skippedCount + failedCount} from Photostream`
+      : (skippedCount + skippedSizeUnavailableCount + failedCount) > 0
+        ? `Saved ${downloadedCount}, skipped ${skippedCount + skippedSizeUnavailableCount + failedCount} from Photostream`
         : `Saved ${total} photos from Photostream`
     new Notification({ title: 'FlickrFetch', body }).show()
   }
@@ -1304,7 +1302,8 @@ ipcMain.handle('db:getPhotoRecordsBatch', (_event, photoIds: string[]) => {
   const map = getPhotoRecordsBatch(photoIds)
   return Object.fromEntries(map)
 })
-ipcMain.handle('db:clearHistory', () => clearAllHistory())
+// Clears the list of batches only. The record of which photos were downloaded is a separate thing (Photos tab in History) and stays.
+ipcMain.handle('db:clearBatchLog', () => clearBatchLog())
 ipcMain.handle('db:searchPhotoRecords', (_event, query: { title?: string; photoId?: string; dateMin?: number; dateMax?: number }) => searchPhotoRecords(query))
 ipcMain.handle('db:deletePhotoRecord', (_event, photoId: string) => deletePhotoRecord(photoId))
 ipcMain.handle('db:deletePhotoRecords', (_event, photoIds: string[]) => deletePhotoRecords(photoIds))

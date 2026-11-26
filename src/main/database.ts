@@ -249,6 +249,7 @@ export function clearBatchLog(): void {
   db?.prepare('DELETE FROM batch_log_failures').run()
 }
 
+// Everything: the batch list and the record of every downloaded photo (not behind any button now; the Photos tab clears records by date)
 export function clearAllHistory(): void {
   db?.prepare('DELETE FROM batch_log').run()
   db?.prepare('DELETE FROM batch_log_failures').run()

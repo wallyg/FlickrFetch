@@ -28,7 +28,11 @@ export function migrateDataFolder(oldDir: string, newDir: string): string[] {
     const from = join(oldDir, name), to = join(newDir, name)
     if (!existsSync(from)) continue
     if (existsSync(to)) {
-      if (mtime(from) <= mtime(to)) continue
+      if (mtime(from) <= mtime(to)) {
+        // The new folder's copy is the live one; the older sign-in file in the old folder is just a leftover and goes
+        if (name === SIGN_IN) { try { unlinkSync(from); did.push(`${name}: the older copy in the old folder was removed`) } catch { /* left where it was */ } }
+        continue
+      }
       if (name === SETTINGS) { copyFileSync(to, `${to}.bak-pre-merge`); did.push(`${name}: the replaced copy was kept as ${name}.bak-pre-merge`) }
     }
     copyFileSync(from, to)

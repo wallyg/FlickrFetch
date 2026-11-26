@@ -108,7 +108,7 @@ declare global {
       getBatchLog: () => Promise<BatchLogEntry[]>
       getPhotoRecord: (photoId: string) => Promise<PhotoDownloadRecord | null>
       getPhotoRecordsBatch: (photoIds: string[]) => Promise<Record<string, PhotoDownloadRecord>>
-      clearHistory: () => Promise<void>
+      clearBatchHistory: () => Promise<void>
       searchPhotoRecords: (query: PhotoRecordQuery) => Promise<PhotoDownloadRecord[]>
       deletePhotoRecord: (photoId: string) => Promise<void>
       deletePhotoRecords: (photoIds: string[]) => Promise<void>

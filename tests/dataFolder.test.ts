@@ -37,6 +37,8 @@ test('an older copy in the old folder never replaces the one in the new folder',
   assert.equal(text(newDir, 'token.enc'), 'new-token')
   assert.equal(text(newDir, 'settings.json'), 'new-settings')
   assert.ok(!existsSync(join(newDir, 'settings.json.bak-pre-merge')))
+  assert.ok(!existsSync(join(oldDir, 'token.enc')), 'the older sign-in file is not left behind either')
+  assert.ok(existsSync(join(oldDir, 'settings.json')), 'old settings are left alone')
 })
 
 test('with nothing in the new folder yet, the database (with its working files) and the On This Day file come across', () => {

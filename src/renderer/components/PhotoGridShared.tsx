@@ -2,7 +2,8 @@ import React, { useState } from 'react'
 import Icon from '../ui/Icon'
 import { segGroup as kitSegGroup, segBtn as kitSegBtn, selectedOn as kitSelectedOn, fieldCompact, selectBox, linkBtn, quietBtn, smallBtn } from '../ui/kit'
 import type { FlickrPhoto, LicenseFilter, PhotoSearchParams } from '../../shared/types'
-export type { LicenseFilter }
+import { privacyLevelOf, type PrivacyLevel } from '../../shared/privacy'
+export type { LicenseFilter, PrivacyLevel }
 
 // ── Shared types ──────────────────────────────────────────────────────────────
 export type MediaFilter = 'all' | 'photo' | 'video'
@@ -11,7 +12,6 @@ export type AlbumViewMode = GridSize | 'list'
 export type PhotoViewMode = 'list' | 'grid' | 'justified'
 export type DownloadFilter = 'all' | 'not-downloaded' | 'downloaded'
 export type PrivacyFilter = 'all' | 'public' | 'friends' | 'family' | 'friendsFamily' | 'private'
-export type PrivacyLevel = 'public' | 'friends' | 'family' | 'friendsFamily' | 'private'
 
 // ── Shared constants ──────────────────────────────────────────────────────────
 export const PRIVACY_OPTIONS: PrivacyFilter[] = ['all', 'public', 'friends', 'family', 'friendsFamily', 'private']
@@ -24,11 +24,7 @@ export const GRID_COLUMNS: Record<GridSize, string> = {
 
 // ── Shared utilities ──────────────────────────────────────────────────────────
 export function getPrivacyLevel(photo: FlickrPhoto): PrivacyLevel {
-  if (photo.ispublic === undefined || photo.ispublic === 1) return 'public'
-  if (photo.isfriend === 1 && photo.isfamily === 1) return 'friendsFamily'
-  if (photo.isfriend === 1) return 'friends'
-  if (photo.isfamily === 1) return 'family'
-  return 'private'
+  return privacyLevelOf(photo)   // the same rule the album download uses (src/shared/privacy.ts)
 }
 
 // ── Album view mode persistence ───────────────────────────────────────────────

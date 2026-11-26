@@ -118,7 +118,7 @@ function BatchesTab({ onClear }: { onClear: () => void }) {
 
   async function handleClear() {
     if (!confirming) { setConfirming(true); return }
-    await window.flickrAPI.clearHistory()
+    await window.flickrAPI.clearBatchHistory()
     setConfirming(false)
     setEntries([])
     onClear()
@@ -247,6 +247,8 @@ function PhotosTab() {
   const [selectedAlbum, setSelectedAlbum]       = useState<FlickrAlbum | null>(null)
   const [albumPhotoIds, setAlbumPhotoIds]       = useState<Set<string> | null>(null)
   const [albumFilterLoading, setAlbumFilterLoading] = useState(false)
+  const [albumError, setAlbumError] = useState<string | null>(null)
+  const albumRequest = useRef(0)   // which album choice is the latest, so a slow answer for an earlier one is dropped
 
   // Delete confirmation
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
@@ -307,16 +309,34 @@ function PhotosTab() {
   async function handleLoadAlbums() {
     if (albumsLoaded) return
     setAlbumsLoading(true)
-    const page = await window.flickrAPI.getAlbums(1)
-    setAlbums(page.albums)
-    setAlbumsLoaded(true)
-    setAlbumsLoading(false)
+    setAlbumError(null)
+    try {
+      // Every page of albums (Flickr gives 500 at a time), one after another
+      const all: FlickrAlbum[] = []
+      let page = 1
+      let pages = 1
+      do {
+        const result = await window.flickrAPI.getAlbums(page)
+        all.push(...result.albums)
+        pages = result.pages
+        page++
+      } while (page <= pages)
+      setAlbums(all)
+      setAlbumsLoaded(true)
+    } catch {
+      setAlbumError('Couldn\'t load your albums. Try again.')
+    } finally {
+      setAlbumsLoading(false)
+    }
   }
 
   async function handleAlbumSelect(albumId: string) {
+    const mine = ++albumRequest.current
+    setAlbumError(null)
     if (!albumId) {
       setSelectedAlbum(null)
       setAlbumPhotoIds(null)
+      setAlbumFilterLoading(false)
       return
     }
     const album = albums.find(a => a.id === albumId) ?? null
@@ -325,19 +345,26 @@ function PhotosTab() {
 
     setAlbumFilterLoading(true)
     setAlbumPhotoIds(null)
-
-    const photoIds = new Set<string>()
-    const page1 = await window.flickrAPI.getAlbumPhotos(album.id, 1)
-    page1.photos.forEach(p => photoIds.add(p.id))
-
-    if (page1.pages > 1) {
-      const pageNums = Array.from({ length: page1.pages - 1 }, (_, i) => i + 2)
-      const pages = await Promise.all(pageNums.map(p => window.flickrAPI.getAlbumPhotos(album.id, p)))
-      pages.forEach(pg => pg.photos.forEach(p => photoIds.add(p.id)))
+    try {
+      // One page after another (a big album would otherwise send dozens of requests at once)
+      const photoIds = new Set<string>()
+      let page = 1
+      let pages = 1
+      do {
+        const result = await window.flickrAPI.getAlbumPhotos(album.id, page)
+        result.photos.forEach(p => photoIds.add(p.id))
+        pages = result.pages
+        page++
+        if (mine !== albumRequest.current) return
+      } while (page <= pages)
+      setAlbumPhotoIds(photoIds)
+    } catch {
+      if (mine !== albumRequest.current) return
+      setSelectedAlbum(null)
+      setAlbumError('Couldn\'t load that album\'s photos. Try again.')
+    } finally {
+      if (mine === albumRequest.current) setAlbumFilterLoading(false)
     }
-
-    setAlbumPhotoIds(photoIds)
-    setAlbumFilterLoading(false)
   }
 
   // ── Delete record ──
@@ -496,9 +523,12 @@ function PhotosTab() {
         <div style={styles.filterRow}>
           <span style={styles.filterLabel}>Album</span>
           {!albumsLoaded ? (
-            <button style={styles.loadAlbumsBtn} onClick={handleLoadAlbums} disabled={albumsLoading}>
-              {albumsLoading ? 'Loading…' : 'Load albums'}
-            </button>
+            <>
+              <button style={styles.loadAlbumsBtn} onClick={handleLoadAlbums} disabled={albumsLoading}>
+                {albumsLoading ? 'Loading…' : 'Load albums'}
+              </button>
+              {albumError && <span style={{ ...styles.filterLabel, color: 'var(--ff-error-ink)' }} role="alert">{albumError}</span>}
+            </>
           ) : (
             <>
               <select
@@ -510,6 +540,7 @@ function PhotosTab() {
                 {albums.map(a => <option key={a.id} value={a.id}>{a.title}</option>)}
               </select>
               {albumFilterLoading && <span style={styles.filterLabel}>Loading…</span>}
+              {albumError && <span style={{ ...styles.filterLabel, color: 'var(--ff-error-ink)' }} role="alert">{albumError}</span>}
               {selectedAlbum && !albumFilterLoading && (
                 <button style={styles.clearFilterX} onClick={() => handleAlbumSelect('')} title="Clear album filter"><Icon name="close" /></button>
               )}
