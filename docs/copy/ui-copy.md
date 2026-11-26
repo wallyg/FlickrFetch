@@ -63,8 +63,13 @@ Today there are three patterns: "Failed to load X", "X could not be loaded" and 
 | Health Check never changes anything unless you choose to. For now you fix things on Flickr, then press Update to refresh the snapshot. | Health Check never changes anything unless you choose to. For now you fix things on Flickr, then press Update to refresh the list. |
 | Albums: uses the album list the snapshot keeps. A Rebuild reads every album. | Albums: uses the album list FlickrFetch keeps. A Rebuild reads every album. |
 
+## Cancel, Close and Done audit (26 Nov 2026): no changes needed
+- **Cancel (21):** every use abandons something: a confirm step in History, Settings and the main window (reset, sign out, clear), an edit in Album fit, a running download, a running scan, a map-cache clear, and leaving Select mode in the Photostream, Albums and Discover. None only dismisses a window.
+- **Done (1):** Settings, which finishes the task of changing settings.
+- **Close:** no text button; windows close with the drawn cross.
+- **Not now (2), Skip, Back:** used for putting something off or stepping back, which is what the rules say.
+
 ## Still to look at (not changed)
-- Cancel is used 21 times: check each is really "abandon" and not "dismiss" (then it should say Close).
 - Empty lines (20 found, for example "No albums found for your Flickr account.", "Nothing here.", "Nothing to show."): same voice, plus say what to do next where there is something to do.
 - Hover notes, Settings descriptions, the README and the changelog: not yet read line by line.
 
