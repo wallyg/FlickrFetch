@@ -154,8 +154,10 @@ contextBridge.exposeInMainWorld('flickrAPI', {
     ipcRenderer.invoke('batch:startAlbum', albumId, albumTitle, photoCount, videoCount, force, mediaType, privacyFilter, track, smartMode, zipMode),
   confirm: (message: string, detail?: string, confirmLabel?: string): Promise<boolean> =>
     ipcRenderer.invoke('shell:confirm', message, detail, confirmLabel),
-  startSelectedBatch: (photos: { id: string; title: string }[], displayTitle: string, track?: boolean, zipMode?: boolean): Promise<void> =>
-    ipcRenderer.invoke('batch:startSelected', photos, displayTitle, track, zipMode),
+  startSelectedBatch: (photos: { id: string; title: string }[], displayTitle: string, track?: boolean, zipMode?: boolean, folderName?: string): Promise<void> =>
+    ipcRenderer.invoke('batch:startSelected', photos, displayTitle, track, zipMode, folderName),
+  retrySelectedBatch: (photos: { id: string; title: string }[], displayTitle: string, targetFolder: string): Promise<void> =>
+    ipcRenderer.invoke('batch:retrySelected', photos, displayTitle, targetFolder),
   startPhotostreamBatch: (albumTitle: string, track?: boolean, smartMode?: 'updated' | 'never-downloaded', privacyFilter?: string, sort?: string, zipMode?: boolean): Promise<void> =>
     ipcRenderer.invoke('batch:startPhotostream', albumTitle, track, smartMode, privacyFilter, sort, zipMode),
 

@@ -340,6 +340,9 @@ function auditDb(): Database.Database {
   return db
 }
 
+// Checks whose answer depends on a rule or a list you can edit (or on other tags), so a plan item for one is fixed only when the tag itself is gone
+export const RULE_DEPENDENT: ReadonlySet<AuditCategory> = new Set<AuditCategory>(['glued', 'runon', 'plural', 'possessive', 'generic'])
+
 let cache: { builtFor: number; words: string; computedAt: number; findings: Finding[]; ids: Map<string, number>; missingIds: Map<string, string[]>; missingSuggestions: number } | null = null
 
 function loadTagRecords(db: Database.Database): TagRecord[] {
@@ -394,7 +397,7 @@ function currentFindings(db: Database.Database): Finding[] | null {
   const names = new Set(records.map(r => r.name))
   for (const s of states.values()) {
     if (s.status !== 'plan' || live.has(`${s.tag_name}|${s.category}`)) continue
-    if ((s.category === 'glued' || s.category === 'runon' || s.category === 'plural' || s.category === 'possessive') && names.has(s.tag_name)) continue
+    if (RULE_DEPENDENT.has(s.category) && names.has(s.tag_name)) continue
     markFixed.run(Date.now(), s.tag_name, s.category)
   }
   cache = { builtFor: stamp, words: fullKey, computedAt: Date.now(), findings, ids: new Map(records.map(r => [r.name, r.id])), missingIds: missing.photoIds, missingSuggestions: missing.suggestions }

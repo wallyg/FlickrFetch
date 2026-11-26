@@ -3,6 +3,7 @@ import { doThisSmallBtn, linkBtn, smallBtn } from '../ui/kit'
 import Icon from '../ui/Icon'
 import type { BatchProgress } from '../../shared/types'
 import { smallerPart } from '../../shared/downloadLimits'
+import { batchErrorText } from '../../shared/batchError'
 
 interface DownloadQueueBarProps {
   progress: BatchProgress | null
@@ -15,6 +16,18 @@ interface DownloadQueueBarProps {
 
 const TOAST_MS = 2500
 const CANCEL_DISMISS_MS = 10000
+
+// Try the photos that failed again, into the folder the first try used (a ZIP goes back into a ZIP; the name on the bar is only a label)
+function retryFailed(b: BatchProgress): void {
+  const photos = b.failedPhotos ?? []
+  const title = `Try again: ${b.albumTitle}`
+  if (b.discoverFolder) void window.flickrAPI.retryDiscoverSelectedBatch(photos, title, b.discoverFolder)
+  else if (b.saveFolder) void window.flickrAPI.retrySelectedBatch(photos, title, b.saveFolder)
+  else {
+    const name = b.albumTitle.replace(/ \(\d+ (?:selected|shown)\)$/, '')
+    void window.flickrAPI.startSelectedBatch(photos, title, true, b.zipMode, name === 'Photostream' ? '' : name)
+  }
+}
 
 export default function DownloadQueueBar({ progress, completedBatches = [], onDismiss, onStackedDismiss, onDismissAll, onShowSmaller }: DownloadQueueBarProps): React.JSX.Element {
   const [expanded, setExpanded] = useState(false)
@@ -97,6 +110,7 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
   const isRunning = status === 'running'
   const isDone = status === 'done'
   const isCancelled = status === 'cancelled'
+  const isError = status === 'error'   // the download could not start (for example Flickr did not answer while the album was being read)
   const isPaused = progress?.paused ?? false
   const doneWithIssues = isDone && (skipped > 0 || sizeUnavailable > 0 || failed > 0)
 
@@ -106,6 +120,7 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
     : doneWithIssues ? 'var(--ff-warning)'
     : isDone ? 'var(--ff-success)'
     : isCancelled ? 'var(--ff-warning)'
+    : isError ? 'var(--ff-error)'
     : completedBatches.length > 0 ? (((completedBatches[0].skippedCount ?? 0) + (completedBatches[0].skippedSizeUnavailableCount ?? 0) + (completedBatches[0].failedCount ?? 0)) > 0 ? 'var(--ff-warning)' : 'var(--ff-success)')
     : 'transparent'
 
@@ -182,10 +197,7 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
                           )}
                           <button
                             style={styles.retryBtn}
-                            onClick={() => b.discoverFolder
-                              ? window.flickrAPI.retryDiscoverSelectedBatch(b.failedPhotos!, `Try again: ${b.albumTitle}`, b.discoverFolder)
-                              : window.flickrAPI.startSelectedBatch(b.failedPhotos!, `Try again: ${b.albumTitle}`)
-                            }
+                            onClick={() => retryFailed(b)}
                           >
                             Try {b.failedPhotos!.length} failed again
                           </button>
@@ -229,8 +241,8 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
           {/* Active batch (bottom — closest to status bar) */}
           {progress !== null && (
             <div style={styles.batchRow}>
-              <span style={isRunning ? styles.dotActive : (isDone && doneWithIssues && downloaded === 0) ? styles.dotFailed : (isDone && doneWithIssues) ? styles.dotSkipped : isDone ? styles.dotDone : styles.dotCancelled}>
-                {(isDone && doneWithIssues) ? <Icon name="warning" /> : isDone ? <Icon name="check" /> : isCancelled ? <Icon name="close" /> : <Icon name="arrowRight" />}
+              <span style={isRunning ? styles.dotActive : (isDone && doneWithIssues && downloaded === 0) ? styles.dotFailed : (isDone && doneWithIssues) ? styles.dotSkipped : isDone ? styles.dotDone : isError ? styles.dotFailed : styles.dotCancelled}>
+                {(isDone && doneWithIssues) ? <Icon name="warning" /> : isDone ? <Icon name="check" /> : isCancelled ? <Icon name="close" /> : isError ? <Icon name="warning" /> : <Icon name="arrowRight" />}
               </span>
               <div style={styles.batchInfo}>
 
@@ -256,6 +268,7 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
                     return parts.join(' · ')
                   })()}
                   {isCancelled && `${current.toLocaleString()} of ${total.toLocaleString()} before cancel`}
+                  {isError && batchErrorText(progress?.error)}
                 </span>
                 {/* Live filename ticker */}
                 {isRunning && activeTitle && (
@@ -276,17 +289,14 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
                     )}
                     <button
                       style={styles.retryBtn}
-                      onClick={() => progress!.discoverFolder
-                        ? window.flickrAPI.retryDiscoverSelectedBatch(progress!.failedPhotos!, `Try again: ${albumTitle}`, progress!.discoverFolder)
-                        : window.flickrAPI.startSelectedBatch(progress!.failedPhotos!, `Try again: ${albumTitle}`)
-                      }
+                      onClick={() => retryFailed(progress!)}
                     >
                       Try {progress!.failedPhotos!.length} failed again
                     </button>
                   </>
                 )}
               </div>
-              {(isDone || isCancelled) && !cancelling && (
+              {(isDone || isCancelled || isError) && !cancelling && (
                 <button style={styles.removeQueueBtn} title="Dismiss" onClick={handleDismiss}><Icon name="close" /></button>
               )}
             </div>
@@ -320,6 +330,7 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
                 return parts.join(' · ')
               })()}
               {!cancelling && isCancelled && `Cancelled · ${current.toLocaleString()} of ${total.toLocaleString()}`}
+              {!cancelling && isError && 'Couldn\'t start this download'}
               {!progress && completedBatches.length > 0 && (() => {
                 const newest = completedBatches[0]
                 const ns = newest.skippedCount ?? 0
@@ -338,7 +349,7 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
               })()}
             </span>
             {!cancelling && (() => {
-              const name = (isRunning || isDone || isCancelled) ? albumTitle
+              const name = (isRunning || isDone || isCancelled || isError) ? albumTitle
                 : (!progress && completedBatches.length > 0) ? completedBatches[0].albumTitle
                 : null
               return name ? <span style={styles.labelSecondary}>{name}</span> : null
@@ -361,6 +372,9 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
             <button style={styles.cancelBtn} onClick={handleCancel} disabled={cancelling}>
               {cancelling ? 'Cancelling…' : (progress?.queuedCount ?? 0) > 0 ? 'Cancel all' : 'Cancel'}
             </button>
+          )}
+          {isError && (
+            <button style={styles.finderLinkBar} onClick={handleDismiss}>Dismiss</button>
           )}
           {(isDone || isCancelled) && !cancelling && folderPath && (
             <button style={styles.finderLinkBar} onClick={() => window.flickrAPI.showInFinder(folderPath)}>

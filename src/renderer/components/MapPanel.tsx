@@ -332,21 +332,25 @@ export default function MapPanel({ active, onDownload, onFullRescan, refreshKey,
   // The photos behind the chosen dot or circle
   useEffect(() => {
     setPhotos([]); setTotal(0)
+    moreReq.current++   // answers for the circle picked before this one are thrown away
     if (!pick) return
     void more(0)
   }, [pick?.cluster.cx, pick?.cluster.cy, pick?.zoom, fkey]) // eslint-disable-line react-hooks/exhaustive-deps
+  const moreReq = useRef(0)
   const more = async (offset: number): Promise<number> => {   // how many photos it added (0 when it could not load any)
     if (!pick) return 0
+    const req = moreReq.current
     setLoadingPhotos(true)
     try {
       const page = await window.flickrAPI.getMapCell({ zoom: pick.zoom, cx: pick.cluster.cx, cy: pick.cluster.cy, offset, limit: PAGE, ...f })
       const cards = await window.flickrAPI.getPhotoCards(page.ids)
+      if (req !== moreReq.current) return 0
       setTotal(page.total)
       setPhotos(prev => (offset === 0 ? cards : [...prev, ...cards]))
       setLoadingPhotos(false)
       return cards.length
     } catch { /* the panel just stays as it was */ }
-    setLoadingPhotos(false)
+    if (req === moreReq.current) setLoadingPhotos(false)
     return 0
   }
   const downloadAll = async (): Promise<void> => {

@@ -26,6 +26,7 @@ import { registerBatchIpc, batchUrl } from './batchEdit'
 import { registerBackupIpc } from './backupReport'
 import { safeFolderName } from './safeName'
 import { buildFilename } from './fileNaming'
+import { selectedPlace } from './batchFolder'
 import { privacyLevelOf } from '../shared/privacy'
 import { ownerNsid, forgetOwnerNsid } from './owner'
 import { openDatabase, closeDatabase, writeBatchLog, writePhotoRecord, getPhotoRecord, getPhotoRecordsBatch, getBatchLog, clearBatchLog, searchPhotoRecords, deletePhotoRecord, deletePhotoRecords, clearPhotoRecords, writeDiscoverRecord, getDiscoverRecordsBatch, searchDiscoverRecords, deleteDiscoverRecord, deleteDiscoverRecords, clearDiscoverRecords } from './database'
@@ -339,6 +340,8 @@ interface BatchJob {
   privacyFilter?: string
   track?: boolean
   smartMode?: 'updated' | 'never-downloaded'
+  folderName?: string          // 'selected' downloads: the folder inside the download folder ('' = the download folder itself)
+  targetFolder?: string        // 'selected' downloads started by Try again: the exact folder the first try used
   sort?: string                // photostream order, so file numbers follow the order that was chosen
   // Discover-specific
   discoverNsid?: string        // user NSID for discover-user batch
@@ -387,7 +390,7 @@ async function runNextBatch(): Promise<void> {
   resetSizeTally()   // the count of photos that came down smaller starts again for each batch (#126)
   try {
     if (job.type === 'selected') {
-      await runSelectedBatch(job.photos!, job.albumTitle, job.track ?? true, job.zipMode)
+      await runSelectedBatch(job.photos!, job.albumTitle, job.track ?? true, job.zipMode, job.folderName, job.targetFolder)
     } else if (job.type === 'discover-selected') {
       await runDiscoverSelectedBatch(job.photos!, job.albumTitle, job.discoverFolder!, job.track ?? true)
     } else if (job.type === 'discover-user') {
@@ -430,7 +433,7 @@ async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'p
   else ensureDownloadFolder(zipParentDir)
 
   const sendProgress = (p: Omit<BatchProgress, 'queuedCount' | 'queuedAlbums'>): void => {
-    const full = { ...p, smallerCount: smallerSoFar(), paused: isPaused, queuedCount: batchQueue.length, queuedAlbums: batchQueue.map(j => ({ id: j.id, title: j.albumTitle, photoCount: j.photoCount, videoCount: j.videoCount })) }
+    const full = { ...p, saveFolder: tempDir ? undefined : albumFolder, zipMode: !!tempDir, smallerCount: smallerSoFar(), paused: isPaused, queuedCount: batchQueue.length, queuedAlbums: batchQueue.map(j => ({ id: j.id, title: j.albumTitle, photoCount: j.photoCount, videoCount: j.videoCount })) }
     lastBatchProgress = full
     mainWindow?.webContents.send('batch:progress', full)
     if (showDockProgress) {
@@ -564,17 +567,13 @@ async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'p
   }
 }
 
-async function runSelectedBatch(photos: { id: string; title: string; thumbnailUrl?: string }[], albumTitle: string, track = true, zipMode = false): Promise<void> {
+async function runSelectedBatch(photos: { id: string; title: string; thumbnailUrl?: string }[], albumTitle: string, track = true, zipMode = false, folderName?: string, retryFolder?: string): Promise<void> {
   if (!mainWindow) return
   const tokenData = loadToken()
   if (!tokenData) return
 
   const { fileNaming, downloadFolder, showDockProgress, notifyOnComplete, conflictBehavior, downloadSize, openFinderOnComplete, metadata } = loadSettings()
-  const baseTitle = albumTitle.replace(/ \(\d+ selected\)$/, '')
-  const safeBaseTitle = safeFolderName(baseTitle)
-  const targetFolder = baseTitle === 'Photostream'
-    ? downloadFolder
-    : join(downloadFolder, safeBaseTitle)
+  const { baseTitle, folder: targetFolder, zipName, photostream } = selectedPlace({ downloadFolder, albumTitle, folderName, targetFolder: retryFolder })
 
   const tempDir = zipMode ? join(tmpdir(), `ff-zip-${Date.now()}`) : null
   if (tempDir) mkdirSync(tempDir, { recursive: true })
@@ -583,7 +582,7 @@ async function runSelectedBatch(photos: { id: string; title: string; thumbnailUr
   else ensureDownloadFolder(downloadFolder)
 
   const sendProgress = (p: Omit<BatchProgress, 'queuedCount' | 'queuedAlbums'>): void => {
-    const full = { ...p, smallerCount: smallerSoFar(), paused: isPaused, queuedCount: batchQueue.length, queuedAlbums: batchQueue.map(j => ({ id: j.id, title: j.albumTitle, photoCount: j.photoCount, videoCount: j.videoCount })) }
+    const full = { ...p, saveFolder: tempDir ? undefined : targetFolder, zipMode: !!tempDir, smallerCount: smallerSoFar(), paused: isPaused, queuedCount: batchQueue.length, queuedAlbums: batchQueue.map(j => ({ id: j.id, title: j.albumTitle, photoCount: j.photoCount, videoCount: j.videoCount })) }
     lastBatchProgress = full
     mainWindow?.webContents.send('batch:progress', full)
     if (showDockProgress) {
@@ -658,7 +657,7 @@ async function runSelectedBatch(photos: { id: string; title: string; thumbnailUr
 
     if (tempDir && downloadedCount > 0) {
       const dateStr = new Date().toISOString().slice(0, 10)
-      const defaultZipName = baseTitle === 'Photostream' ? `Photostream — ${dateStr}.zip` : safeBaseTitle + '.zip'
+      const defaultZipName = photostream ? `Photostream — ${dateStr}.zip` : zipName + '.zip'
       const { filePath: chosenPath, canceled } = await dialog.showSaveDialog(mainWindow!, {
         defaultPath: join(downloadFolder, defaultZipName),
         filters: [{ name: 'ZIP Archives', extensions: ['zip'] }]
@@ -920,7 +919,7 @@ async function runPhotostreamBatch(albumTitle: string, track = true, smartMode?:
   ensureDownloadFolder(downloadFolder)
 
   const sendProgress = (p: Omit<BatchProgress, 'queuedCount' | 'queuedAlbums'>): void => {
-    const full = { ...p, smallerCount: smallerSoFar(), paused: isPaused, queuedCount: batchQueue.length, queuedAlbums: batchQueue.map(j => ({ id: j.id, title: j.albumTitle, photoCount: j.photoCount, videoCount: j.videoCount })) }
+    const full = { ...p, saveFolder: tempDir ? undefined : downloadFolder, zipMode: !!tempDir, smallerCount: smallerSoFar(), paused: isPaused, queuedCount: batchQueue.length, queuedAlbums: batchQueue.map(j => ({ id: j.id, title: j.albumTitle, photoCount: j.photoCount, videoCount: j.videoCount })) }
     lastBatchProgress = full
     mainWindow?.webContents.send('batch:progress', full)
     if (showDockProgress) {
@@ -1201,8 +1200,14 @@ ipcMain.handle('batch:startAlbum', (_event, albumId: string, albumTitle: string,
   return { alreadyQueued: false }
 })
 
-ipcMain.handle('batch:startSelected', (_event, photos: { id: string; title: string }[], albumTitle: string, track = true, zipMode?: boolean) => {
-  enqueueBatch({ type: 'selected', photos, albumTitle, track, zipMode })
+ipcMain.handle('batch:startSelected', (_event, photos: { id: string; title: string }[], albumTitle: string, track = true, zipMode?: boolean, folderName?: string) => {
+  enqueueBatch({ type: 'selected', photos, albumTitle, track, zipMode, folderName: typeof folderName === 'string' ? folderName : undefined })
+})
+
+// Try again for photos that failed: into the folder the first try used
+ipcMain.handle('batch:retrySelected', (_event, photos: { id: string; title: string }[], albumTitle: string, targetFolder: string) => {
+  if (typeof targetFolder !== 'string' || targetFolder === '') return
+  enqueueBatch({ type: 'selected', photos, albumTitle, track: true, targetFolder })
 })
 
 ipcMain.handle('batch:startPhotostream', (_event, albumTitle: string, track = true, smartMode?: 'updated' | 'never-downloaded', privacyFilter?: string, sort?: string, zipMode?: boolean) => {

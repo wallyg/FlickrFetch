@@ -302,7 +302,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
       videoCount: 0,
       note,
       onConfirm: (track, exportFormat) => {
-        window.flickrAPI.startSelectedBatch(photos, `${title} (${photos.length})`, track, exportFormat === 'zip')
+        window.flickrAPI.startSelectedBatch(photos, `${title} (${photos.length})`, track, exportFormat === 'zip', title)
       },
     })
   }
@@ -324,7 +324,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
       videoCount,
       note: 'Only the photos matching your filters are downloaded',
       onConfirm: (track, exportFormat) => {
-        window.flickrAPI.startSelectedBatch(photos, `${displayTitle} (${photos.length} shown)`, track, exportFormat === 'zip')
+        window.flickrAPI.startSelectedBatch(photos, `${displayTitle} (${photos.length} shown)`, track, exportFormat === 'zip', displayTitle === 'Photostream' ? '' : displayTitle)
       },
     })
   }
@@ -341,7 +341,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
       photoCount,
       videoCount,
       onConfirm: (track, exportFormat) => {
-        window.flickrAPI.startSelectedBatch(photos, `${albumTitle} (${photos.length} selected)`, track, exportFormat === 'zip')
+        window.flickrAPI.startSelectedBatch(photos, `${albumTitle} (${photos.length} selected)`, track, exportFormat === 'zip', albumTitle)
         exitAlbumSelect()
       },
     })
@@ -358,7 +358,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
       photoCount,
       videoCount,
       onConfirm: (track, exportFormat) => {
-        window.flickrAPI.startSelectedBatch(photos, `Photostream (${photos.length} selected)`, track, exportFormat === 'zip')
+        window.flickrAPI.startSelectedBatch(photos, `Photostream (${photos.length} selected)`, track, exportFormat === 'zip', '')
         exitPhotostreamSelect()
       },
     })

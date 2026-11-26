@@ -91,7 +91,8 @@ declare global {
       resolveVideoUrl: (sourceUrl: string) => Promise<string>
       pickFolder: () => Promise<string | null>
       startBatch: (albumId: string, albumTitle: string, photoCount?: number, videoCount?: number, force?: boolean, mediaType?: 'photo' | 'video', privacyFilter?: string, track?: boolean, smartMode?: 'updated' | 'never-downloaded', zipMode?: boolean) => Promise<{ alreadyQueued: boolean }>
-      startSelectedBatch: (photos: { id: string; title: string }[], displayTitle: string, track?: boolean, zipMode?: boolean) => Promise<void>
+      startSelectedBatch: (photos: { id: string; title: string }[], displayTitle: string, track?: boolean, zipMode?: boolean, folderName?: string) => Promise<void>
+      retrySelectedBatch: (photos: { id: string; title: string }[], displayTitle: string, targetFolder: string) => Promise<void>
       startPhotostreamBatch: (albumTitle: string, track?: boolean, smartMode?: 'updated' | 'never-downloaded', privacyFilter?: string, sort?: string, zipMode?: boolean) => Promise<void>
       cancelBatch: () => void
       skipBatch: () => void

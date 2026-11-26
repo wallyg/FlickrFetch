@@ -102,6 +102,8 @@ export interface BatchProgress {
   failedCount?: number                    // photos that errored and were skipped
   failedPhotos?: { id: string; title: string }[]
   discoverFolder?: string    // set on done events from Discover batch runners, used for retry routing
+  saveFolder?: string        // the folder this batch saved into (not set for a ZIP), so Try again goes to the same place
+  zipMode?: boolean          // the batch was saved as a ZIP archive
   smartFilteredCount?: number // photos excluded by smart filter (Never Downloaded / Download Updated)
   paused?: boolean
   completedAt?: number  // ms epoch, set when stacked into completedBatches

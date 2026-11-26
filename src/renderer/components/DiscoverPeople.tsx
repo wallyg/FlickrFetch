@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo } from 'react'
 import { tabMark, linkBtn, quietBtn, primaryBtn } from '../ui/kit'
 import Icon from '../ui/Icon'
+import { allPages } from '../../shared/pages'
 import { useFindShortcut } from '../hooks/useFindShortcut'
 import { DEBOUNCE, useDebouncedEffect } from '../ui/useDebounce'
 import type { FlickrPhoto, FlickrAlbum, FlickrCollection, DiscoverUser, DiscoverContact, PhotoSearchParams, SearchOperator, DateRangeField, TagMode } from '../../shared/types'
@@ -273,8 +274,9 @@ export default function DiscoverPeople({ isActive, findActive = true }: { isActi
     setAlbumsLoading(true)
     setAlbumsError(null)
     try {
-      const result = await window.flickrAPI.discoverGetUserAlbums(foundUser.nsid, 1)
-      setUserAlbums(result.albums)
+      // Every page of albums (Flickr gives 50 at a time), not only the first
+      const albums = await allPages(async page => { const r = await window.flickrAPI.discoverGetUserAlbums(foundUser.nsid, page); return { items: r.albums, pages: r.pages } })
+      setUserAlbums(albums)
     } catch (e) {
       setAlbumsError(e instanceof Error ? e.message : 'Couldn\'t load albums.')
     } finally {
@@ -297,7 +299,9 @@ export default function DiscoverPeople({ isActive, findActive = true }: { isActi
     }
   }, [foundUser, collectionsLoading, collectionsLoaded])
 
+  const albumReqRef = useRef(0)
   const openAlbum = useCallback(async (album: FlickrAlbum): Promise<void> => {
+    const req = ++albumReqRef.current   // an answer for an album you have since left is thrown away
     setActiveAlbum(album)
     setView('album-photos')
     setAlbumPhotos([])
@@ -324,21 +328,25 @@ export default function DiscoverPeople({ isActive, findActive = true }: { isActi
     setAlbumPhotosLoading(true)
     try {
       const albumResult = await window.flickrAPI.discoverGetAlbumPhotos(foundUser!.nsid, album.id, 1)
+      if (req !== albumReqRef.current) return
       setAlbumPhotos(albumResult.photos)
       setAlbumPhotosPage(albumResult.page)
       setAlbumPhotosPages(albumResult.pages)
     } catch (e) {
+      if (req !== albumReqRef.current) return
       setAlbumPhotosError(e instanceof Error ? e.message : 'Couldn\'t load the album.')
     } finally {
-      setAlbumPhotosLoading(false)
+      if (req === albumReqRef.current) setAlbumPhotosLoading(false)
     }
   }, [foundUser])
 
   const loadMoreAlbumPhotos = useCallback(async (): Promise<void> => {
     if (!activeAlbum || albumPhotosLoadingMore || albumPhotosPage >= albumPhotosPages) return
     setAlbumPhotosLoadingMore(true)
+    const req = albumReqRef.current
     try {
       const result = await window.flickrAPI.discoverGetAlbumPhotos(foundUser!.nsid, activeAlbum.id, albumPhotosPage + 1)
+      if (req !== albumReqRef.current) return
       setAlbumPhotos(prev => [...prev, ...result.photos])
       setAlbumPhotosPage(result.page)
     } catch { /* ignore */ }
