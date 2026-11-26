@@ -12,7 +12,7 @@ export default function ProblemModal({ onClose }: ProblemModalProps): React.JSX.
   return (
     <Dialog label="The problem FlickrFetch solves" size="wide" onClose={onClose} cardStyle={{ position: 'relative', padding: '36px 40px 32px', overflowY: 'auto', maxHeight: '85vh' }}>
         <CloseButton onClick={onClose} style={{ position: 'absolute', top: 14, right: 14 }} />
-        <h2 style={s.heading}>The Problem FlickrFetch Solves</h2>
+        <h2 style={s.heading}>The problem FlickrFetch solves</h2>
         <div style={s.body}>
           <p style={s.para}>
             Flickr is one of the longest-running photo communities on the internet, and for many

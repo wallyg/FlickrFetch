@@ -1385,7 +1385,7 @@ export default function DiscoverPeople({ isActive, findActive = true }: { isActi
               const hasSubColls = col.collections.length > 0
               const hasSets = col.sets.length > 0
               if (!hasSubColls && !hasSets) {
-                return <EmptyState title="This collection is empty" />
+                return <EmptyState title="This collection is empty" body="Albums added to it on Flickr will show up here." />
               }
               return (
                 <>

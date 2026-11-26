@@ -41,7 +41,7 @@ Metadata that lives only on a website disappears when the website does, or when 
 - With filters on, **Download N shown** saves exactly what you're looking at
 - A queue you can pause, resume and retry; failed photos are listed by name
 - Export as individual files or a ZIP with a `manifest.json`
-- **Smart Sync** skips photos you already have, or fetches only what changed since your last download
+- **Smart Download** skips photos you already have, or fetches only what changed since your last download
 - Download history for every batch, with per-photo results
 - Flexible file naming, conflict handling, Dock progress and notifications
 
@@ -86,10 +86,10 @@ Metadata that lives only on a website disappears when the website does, or when 
 
 FlickrFetch is a personal project that has grown up. Here's what it doesn't do yet:
 
-- **Free Flickr accounts get smaller photos.** Since May 2025, Flickr restricts original and large downloads on free accounts (Creative Commons photos are exempt). FlickrFetch has only been tested with a Pro account, so on a free account you may get smaller sizes than you asked for, without a warning.
+- **Free Flickr accounts get smaller photos.** Since May 2025, Flickr restricts original and large downloads on free accounts (Creative Commons photos are exempt). FlickrFetch has only been tested with a Pro account, so on a free account you may get smaller sizes than you asked for. FlickrFetch tells you when that happens: a note in the download box, a count after each download, and a list under Health Check > Backup.
 - **Mac only, Apple Silicon only.** No Intel Mac or Windows build.
 - **Not notarized by Apple**, hence the install step above.
-- **Smart Sync trusts its own history.** It doesn't yet re-check that files are still on disk, so if you move or delete downloads, it may think they're still there.
+- **Smart Download trusts its own history.** It doesn't yet re-check that files are still on disk, so if you move or delete downloads, it may think they're still there.
 - **No automatic or background syncing.** Downloads run when you start them.
 - **The street map relies on OpenStreetMap's free map service.** That is fine for one person browsing their own photos. If FlickrFetch were ever used by many people, it would need a paid or self-hosted map source.
 - **Health Check suggests, you decide.** Its checks are rules of thumb and some will be wrong for your library. Mark those "This one is fine", or switch a check off. Nothing on Flickr changes until you change it there.

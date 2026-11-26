@@ -332,7 +332,7 @@ export default function TagsPanel({ active, onViewPhotos, onOpenCleanup }: TagsP
 
       <div ref={scrollRef} style={styles.list} onScroll={e => setScrollTop(e.currentTarget.scrollTop)}>
         {total === 0 ? (
-          <div style={styles.emptyList}>No tags match.</div>
+          <div style={styles.emptyList}>No tags match. Try fewer letters, or clear the search.</div>
         ) : (
           <div style={{ position: 'relative', height: total * ROW_HEIGHT }}>{rows}</div>
         )}

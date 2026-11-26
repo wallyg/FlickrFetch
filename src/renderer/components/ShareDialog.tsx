@@ -499,7 +499,7 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
   // The saved picture: at the chosen size and shape (the preview is always standard size)
   const dataUrl = async (): Promise<string> => {
     if (resolution === 'large') {
-      setNote('Getting sharper pictures from Flickr…')
+      setNote('Loading sharper pictures…')
       try {
         const src = await sharpPictures()
         return compose(2, src)?.toDataURL('image/png') ?? ''
@@ -598,9 +598,9 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
             </div>
           </div>
           <div style={styles.preview}>
-            {loading ? <span style={styles.muted}>Getting bigger pictures from Flickr…{progress.total > 0 ? ` ${Math.min(progress.done, progress.total)} of ${progress.total}` : ''}</span>
+            {loading ? <span style={styles.muted}>Loading bigger pictures…{progress.total > 0 ? ` ${Math.min(progress.done, progress.total)} of ${progress.total}` : ''}</span>
               : basePicks.length === 0 ? <span style={styles.muted}>{publicOnly ? 'None of this day\'s photos are public. Untick "Use public photos only" to include them.' : 'No photos to use.'}</span>
-              : ready.length === 0 ? <span style={{ ...styles.muted, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>Couldn't get these pictures from Flickr. Check your connection, then try again.<button style={styles.btn} onClick={() => { setLoading(true); setAttempt(a => a + 1) }}>Try again</button></span>
+              : ready.length === 0 ? <span style={{ ...styles.muted, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>Couldn't load these pictures. Check your connection and try again.<button style={styles.btn} onClick={() => { setLoading(true); setAttempt(a => a + 1) }}>Try again</button></span>
               : <canvas ref={canvasRef} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', boxShadow: '0 2px 12px var(--ff-shadow-mid)' }} />}
           </div>
         </div>

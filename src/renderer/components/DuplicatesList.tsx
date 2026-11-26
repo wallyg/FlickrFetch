@@ -100,7 +100,7 @@ export default function DuplicatesList({ status, search, sort, selected, setSele
 
   if (loading && groups.length === 0) return <div style={styles.muted}>Checking for duplicates…</div>
   if (failed) return <div style={styles.muted}>Couldn't load this. <button style={styles.link} onClick={() => setAttempt(n => n + 1)}>Try again</button></div>
-  if (groups.length === 0) return <div style={styles.muted}>{status === 'open' ? 'No possible duplicates left to review.' : 'Nothing here.'}</div>
+  if (groups.length === 0) return <div style={styles.muted}>{status === 'open' ? 'No possible duplicates left to review.' : 'Nothing marked fine yet.'}</div>
 
   return (
     <>

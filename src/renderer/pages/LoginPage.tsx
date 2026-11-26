@@ -75,7 +75,7 @@ export default function LoginPage({ onAuthSuccess }: LoginPageProps): React.JSX.
             draggable={false}
           />
           <button style={styles.problemLink} onClick={() => setShowProblem(true)}>
-            The Problem FlickrFetch Solves
+            The problem FlickrFetch solves
           </button>
           {/* Subtle wave at the bottom */}
           <div style={styles.waveContainer} aria-hidden="true">
@@ -126,7 +126,7 @@ export default function LoginPage({ onAuthSuccess }: LoginPageProps): React.JSX.
                 {error && <p style={styles.errorText} role="alert"><Icon name="warning" />️ {error}</p>}
 
                 <p style={styles.trustText}>
-                  Authorization takes place on Flickr in your browser. We never see your password.
+                  You approve access on Flickr, in your browser. We never see your password.
                 </p>
               </>
             ) : (
@@ -138,9 +138,9 @@ export default function LoginPage({ onAuthSuccess }: LoginPageProps): React.JSX.
                 </p>
 
                 <div style={styles.stepsArea}>
-                  <p style={styles.stepLabel}>1. Authorize in your browser</p>
+                  <p style={styles.stepLabel}>1. Approve access in your browser</p>
                   <p style={styles.stepBody}>
-                    Approve FlickrFetch's access on Flickr. You'll receive an authorization code.
+                    Approve FlickrFetch's access on Flickr. Flickr will then give you a code.
                   </p>
                   {step === 'waiting' && (
                     <p style={styles.statusText}>
@@ -155,7 +155,7 @@ export default function LoginPage({ onAuthSuccess }: LoginPageProps): React.JSX.
                     Reopen Flickr
                   </button>
 
-                  <p style={{ ...styles.stepLabel, marginTop: '20px' }}>2. Enter your authorization code</p>
+                  <p style={{ ...styles.stepLabel, marginTop: '20px' }}>2. Enter the code from Flickr</p>
                   <input
                     id="verifier-input"
                     style={styles.input}
@@ -166,7 +166,7 @@ export default function LoginPage({ onAuthSuccess }: LoginPageProps): React.JSX.
                     onKeyDown={(e) => { if (e.key === 'Enter' && !connectDisabled) handleVerify() }}
                     disabled={isConnecting}
                     autoComplete="off"
-                    aria-label="Authorization code"
+                    aria-label="Code from Flickr"
                   />
                   {error && (
                     <p style={styles.errorText} role="alert"><Icon name="warning" />️ {error}</p>
@@ -185,7 +185,7 @@ export default function LoginPage({ onAuthSuccess }: LoginPageProps): React.JSX.
                 </div>
 
                 <p style={styles.trustText}>
-                  Authorization takes place on Flickr in your browser.
+                  You approve access on Flickr, in your browser.
                 </p>
               </>
             )}

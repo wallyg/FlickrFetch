@@ -148,7 +148,7 @@ export default function BackupPanel({ refreshKey, toolbarLeft, onDownload, openR
               { value: 'taken', label: 'Newest taken first' }, { value: 'title', label: 'Title A to Z' }, { value: 'titleDesc', label: 'Title Z to A' }]} />}>{blurb[list]}</ListHead>
             <div style={styles.list}>
               {loading && rows.length === 0 ? <div style={dash.muted}>Checking your library…</div>
-                : rows.length === 0 ? <div style={dash.muted}>Nothing here.</div>
+                : rows.length === 0 ? <div style={dash.muted}>Nothing in this list.</div>
                 : rows.map(p => (
                   <div key={p.photoId} style={styles.card}>
                     {p.thumbUrl ? <img src={p.thumbUrl} alt="" loading="lazy" style={styles.thumb} /> : <div style={styles.thumb} />}

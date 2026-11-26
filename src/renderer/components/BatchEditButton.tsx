@@ -65,7 +65,7 @@ export default function BatchEditButton({ getIds, label = "Open in Flickr's orga
       {failed && <div role="alert" style={noteStyle}>Couldn&rsquo;t open the organizer. Try again.</div>}
       {ids && note !== 'hidden' && !failed && (
         <div role="status" style={{ ...noteStyle, opacity: note === 'fading' ? 0 : 1 }}>
-          {n === 0 ? 'Nothing to open here.' : parts > 1
+          {n === 0 ? 'There are no photos to open.' : parts > 1
             ? <>Opened part {part + 1} of {parts} ({Math.min(500, n - part * 500).toLocaleString()} of {n.toLocaleString()} photos). </>
             : <>Opened {n.toLocaleString()} photo{n === 1 ? '' : 's'} in Flickr’s organizer. </>}
           {n > 0 && hint && <>If it did not load, close the earlier editor tab, wait a few seconds and press again. </>}

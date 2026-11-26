@@ -112,7 +112,7 @@ export default function AlbumList({ onAlbumSelect, active = true }: AlbumListPro
   }
 
   if (albums.length === 0) {
-    return <div style={styles.center}><p style={styles.message}>No albums found for your Flickr account.</p></div>
+    return <div style={styles.center}><p style={styles.message}>You have no albums on Flickr yet.</p></div>
   }
 
   const gridSize = viewMode === 'list' ? 'medium' : viewMode

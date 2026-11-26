@@ -38,7 +38,7 @@ export default function AlbumKindList(): React.JSX.Element {
 
   if (failed) return <div style={styles.muted}>Couldn't load this. <button style={styles.link} onClick={load}>Try again</button></div>
   if (!rows) return <div style={styles.muted}>Loading your albums…</div>
-  if (rows.length === 0) return <div style={styles.muted}>No albums yet. A Rebuild reads them.</div>
+  if (rows.length === 0) return <div style={styles.muted}>No albums yet. Rebuild your library list to read them.</div>
 
   return (
     <div style={styles.box}>
@@ -47,7 +47,7 @@ export default function AlbumKindList(): React.JSX.Element {
         <input style={{ ...filterInput, maxWidth: 260 }} placeholder="Find an album…" value={search} onChange={e => setSearch(e.target.value)} aria-label="Find an album" />
         <label style={styles.check}><input type="checkbox" checked={changedOnly} onChange={e => setChangedOnly(e.target.checked)} /> Only the ones I chose</label>
       </div>
-      {list.length === 0 ? <div style={styles.muted}>No album matches.</div> : (
+      {list.length === 0 ? <div style={styles.muted}>No album matches your search.</div> : (
         <div>
           {list.slice(0, shown).map(r => (
             <div key={r.albumId} style={styles.row}>

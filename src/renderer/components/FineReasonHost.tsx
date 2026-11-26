@@ -28,7 +28,7 @@ export default function FineReasonHost(): React.JSX.Element | null {
   }
   return (
     <div role="status" style={styles.bar} onMouseEnter={() => { hold.current = true }} onMouseLeave={() => { hold.current = false }}>
-      {done ? <span>Noted. Thank you.</span> : (
+      {done ? <span>Saved.</span> : (
         <>
           <span style={styles.lead}>Marked fine{rule ? ` (${rule.name})` : ''}. Why?</span>
           {other === null ? (

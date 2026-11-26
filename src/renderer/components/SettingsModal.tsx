@@ -321,7 +321,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
             <>
               <div style={s.section}>
                 <div style={s.sectionRow}>
-                  <p style={s.sectionTitle}>Notifications &amp; Dock</p>
+                  <p style={s.sectionTitle}>Notifications and Dock</p>
                 </div>
                 <div style={s.toggleList}>
                   <Toggle
@@ -754,7 +754,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
               </div>
 
               <div style={s.section}>
-                <div style={s.sectionLabel}>Rights &amp; provenance</div>
+                <div style={s.sectionLabel}>Rights and provenance</div>
                 {([
                   ['embedLicense',  'CC license',     'Embeds the Flickr license as XMP Usage Terms (for example "CC BY 2.0").\n\nAlso embeds a link to the license page.'],
                   ['embedPhotoUrl', 'Photo page URL', 'Embeds the Flickr photo page URL (flickr.com/photos/…) as XMP Source.'],

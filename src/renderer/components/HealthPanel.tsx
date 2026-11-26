@@ -198,7 +198,7 @@ export default function HealthPanel({ refreshKey, onFullRescan, toolbarLeft, sta
           {condition !== 'duplicates' && <div style={styles.list}>
             {failed && rows.length === 0 ? <LoadFailed what="this list" onRetry={() => void loadRows(0)} />
               : loading && rows.length === 0 ? <div style={styles.muted}>Checking your photos…</div>
-              : rows.length === 0 ? <div style={styles.muted}>{needsRebuild && ruleById(`photos:${condition}`)?.needsRebuild ? 'This check needs a Rebuild before it can find anything. Press Rebuild in the notice at the top.' : status === 'open' ? 'Nothing left to fix here.' : 'Nothing here.'}</div>
+              : rows.length === 0 ? <div style={styles.muted}>{needsRebuild && ruleById(`photos:${condition}`)?.needsRebuild ? 'This check needs a Rebuild before it can find anything. Press Rebuild in the notice at the top.' : status === 'open' ? 'Nothing left to fix.' : 'Nothing marked fine yet.'}</div>
               : rows.map(p => (
                 <div key={p.photoId} style={{ ...styles.card, ...(p.status === 'fine' ? { opacity: 0.6 } : {}) }}>
                   <input type="checkbox" style={styles.tick} checked={selected.has(p.photoId)} aria-label="Select this photo"

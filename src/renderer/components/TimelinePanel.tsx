@@ -226,7 +226,7 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
                 {[0, 0.05, 0.2, 0.45, 1].map(f => <i key={f} style={{ width: 24, height: 11, borderRadius: 4, display: 'block', background: f === 0 ? 'var(--ff-warm)' : shade(f * grid.max) }} />)}
               </span>
               <span>More</span>
-              <span style={{ marginLeft: 6 }}>Grey means none.</span>
+              <span style={{ marginLeft: 6 }}>Gray means none.</span>
             </div>
           </div>
           <div style={styles.card} ref={setGridEl}>

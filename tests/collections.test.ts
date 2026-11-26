@@ -126,3 +126,18 @@ test('the words in Settings match what the app does (size codes in file names, t
   assert.ok(/Issue, Warning and Off/.test(read('src/renderer/components/AlbumCheckSettings.tsx')))
   assert.ok(/label: 'Issue'/.test(read('src/renderer/components/TuneChecks.tsx')) && /label: 'Warning'/.test(read('src/renderer/components/TuneChecks.tsx')))
 })
+
+test('the copy edit (#268): one spelling, plain headings, loading words, empty lines that say what to do', () => {
+  const fit = read('src/renderer/components/AlbumFitSettings.tsx') + read('src/renderer/components/LocationHintSettings.tsx')
+  assert.ok(!/neighbour|Neighbourhood|metres/i.test(fit), 'American spelling in Tune checks')
+  assert.ok(!/Grey means/.test(read('src/renderer/components/TimelinePanel.tsx')))
+  const settings = read('src/renderer/components/SettingsModal.tsx')
+  assert.ok(!/Notifications &amp; Dock|Rights &amp; provenance/.test(settings))
+  const about = read('src/renderer/components/AboutModal.tsx') + read('src/renderer/components/ProblemModal.tsx') + read('src/renderer/pages/LoginPage.tsx')
+  assert.ok(!/The Problem FlickrFetch Solves|Questions & Feedback|Releases & Issues/.test(about), 'one way of writing the names')
+  assert.ok(!/Getting (sharper|bigger) pictures|Couldn't get these pictures/.test(read('src/renderer/components/ShareDialog.tsx')), 'Loading, not Getting')
+  assert.ok(!/authorization code/i.test(read('src/renderer/pages/LoginPage.tsx')), 'the code is "the code from Flickr"')
+  for (const f of ['AuditPanel', 'AlbumsPanel', 'HealthPanel', 'DuplicatesList', 'BackupPanel']) assert.ok(!/'Nothing here\.'|>Nothing here\.</.test(read(`src/renderer/components/${f}.tsx`)), `${f}: no bare "Nothing here."`)
+  assert.ok(!/Smart Sync/.test(readFileSync(join(process.cwd(), 'README.md'), 'utf8')))
+  assert.ok(changelog[0].highlights.every(h => h.length < 700), 'no bullet in the newest changelog entry is a wall of text')
+})

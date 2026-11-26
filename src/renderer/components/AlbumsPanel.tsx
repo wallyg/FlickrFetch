@@ -239,7 +239,7 @@ export default function AlbumsPanel({ refreshKey, onFullRescan, toolbarLeft, sta
             <div style={styles.list}>
               {failed && rows.length === 0 ? <LoadFailed what="this list" onRetry={() => void loadRows(0)} />
                 : loading && rows.length === 0 ? <div style={styles.muted}>Checking your albums…</div>
-                : rows.length === 0 ? <div style={styles.muted}>{status === 'open' ? 'Nothing left to fix here.' : 'Nothing here.'}</div>
+                : rows.length === 0 ? <div style={styles.muted}>{status === 'open' ? 'Nothing left to fix.' : 'Nothing marked fine yet.'}</div>
                 : rows.map(item => condition === 'missing' ? (
                   <MissingRow key={item.id} item={item} onFine={next => void mark(item, next)} onKind={kind => void changeKind(item.albumId, kind)} />
                 ) : (

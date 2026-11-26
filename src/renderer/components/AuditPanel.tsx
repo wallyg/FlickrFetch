@@ -265,7 +265,7 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
   const planPanel = plan && (
     <div style={styles.planPop} role="dialog" aria-label="Your plan">
           <div style={styles.planTitle}>Your plan{planCount > 0 ? ` · ${planCount} to do on Flickr` : ''}</div>
-          {plan.length === 0 ? <div style={styles.muted}>Nothing added yet.</div> : (
+          {plan.length === 0 ? <div style={styles.muted}>Your plan is empty. Press Add to plan on a row to start it.</div> : (
             <>
               <div style={{ ...styles.muted, marginBottom: 6 }}>
                 Do these on Flickr (your Flickr page, Tags section, or the Organizr). After an Update, fixed ones tick themselves off.
@@ -358,7 +358,7 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
           <div style={styles.list}>
             {failed && rows.length === 0 ? <LoadFailed what="this list" onRetry={() => void loadRows(0)} />
               : loading && rows.length === 0 ? <div style={styles.muted}>Checking your tags…</div>
-              : rows.length === 0 ? <div style={styles.muted}>{status === 'open' ? 'Nothing left to review here.' : 'Nothing here.'}</div>
+              : rows.length === 0 ? <div style={styles.muted}>{status === 'open' ? 'Nothing left to review.' : 'Nothing marked fine yet.'}</div>
               : rows.map(f => {
                 const key = keyOf(f)
                 if (category === 'missing') return <MissingRow key={key} f={f} onChange={(x, st) => void change(x, st)} />

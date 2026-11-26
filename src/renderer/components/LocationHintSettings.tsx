@@ -8,7 +8,7 @@ import type { LocationHintSettings as Settings, LocationHintStats } from '../../
 const DEFAULTS: Settings = { minutes: 10, meters: 300 }
 const FIELDS: { key: keyof Settings; label: string; hint: string; min: number; max: number; step: number }[] = [
   { key: 'minutes', label: 'Photos beside it: taken within this many minutes', hint: 'A photo with no location is given a suggested spot from photos taken within this many minutes of it. Longer finds more, and is less sure.', min: 1, max: 120, step: 1 },
-  { key: 'meters', label: '...and within this many metres of each other', hint: 'A spot is suggested only when those photos agree this closely. Smaller is stricter.', min: 20, max: 2000, step: 10 }
+  { key: 'meters', label: '...and within this many meters of each other', hint: 'A spot is suggested only when those photos agree this closely. Smaller is stricter.', min: 20, max: 2000, step: 10 }
 ]
 const asText = (s: Settings): Record<keyof Settings, string> => ({ minutes: String(s.minutes), meters: String(s.meters) })
 
