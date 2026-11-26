@@ -15,7 +15,7 @@ import { addPhotos, tagTables } from './helpers'
 const file = (): string => join(app.getPath('userData'), 'settings.json')
 const scope = (s: object | null): void => writeFileSync(file(), JSON.stringify(s === null ? {} : { healthScope: s }))
 before(() => {
-  openDatabase()
+  openDatabase('test@N00')
   const db = getDb()!
   tagTables(db)
   healthSummary()

@@ -3,7 +3,7 @@ import type { BrowserWindow } from 'electron'
 import { join } from 'path'
 import { existsSync, readFileSync, writeFileSync } from 'fs'
 import type Database from 'better-sqlite3'
-import { getDb } from './database'
+import { getDb, dbGeneration } from './database'
 import { loadSettings } from './settings'
 import { addPhotoMetaColumns } from './tagIndex'
 import { itemsLabel } from '../shared/counts'
@@ -260,7 +260,7 @@ export function todaySummary(): TodaySummary {
   const t = today()
   const db = getDb()
   const scanned = db ? (db.prepare("SELECT value FROM tag_index_meta WHERE key = 'last_scan_at'").get() as { value: string } | undefined)?.value ?? '' : ''
-  const key = `${t.key}|${scanned}`
+  const key = `${t.key}|${scanned}|${dbGeneration()}`
   if (!summaryCache || summaryCache.key !== key) {
     const v = dayView({ month: t.month, day: t.day, scope: 'all', perYear: 1 })
     const top = [...v.years].sort((a, b) => b.count - a.count)[0]

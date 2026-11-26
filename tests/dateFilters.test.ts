@@ -12,7 +12,7 @@ import { addAlbum, addPhotos, tagTables } from './helpers'
 //   p5 2019-07-01 photo, public, albums A and B
 //   v14 2015-06-14 video (the day before)   n16 2015-06-16 photo (the day after)
 before(() => {
-  openDatabase()
+  openDatabase('test@N00')
   const db = getDb()!
   tagTables(db)
   albumsDb()

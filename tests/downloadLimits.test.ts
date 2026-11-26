@@ -7,7 +7,7 @@ import { isFreeAccount, limitNotice, sizeTag, smallerPart } from '../src/shared/
 import type { PhotoSize } from '../src/shared/types'
 
 // Flickr's size limit on free accounts (#126, Phase 1): what the Confirm Download box says, the count after a download, and the tag in Download History.
-before(() => { openDatabase() })
+before(() => { openDatabase('test@N00') })
 
 test('only an account Flickr said is not Pro counts as free: an unknown answer assumes nothing', () => {
   assert.equal(isFreeAccount(false), true)

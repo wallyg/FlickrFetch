@@ -1,18 +1,49 @@
-import axios from 'axios'
+import axios, { type AxiosRequestConfig } from 'axios'
 import { FLICKR_API_KEY } from './config'
-import { getOAuthHeader } from './auth'
+import { getOAuthHeader, loadToken } from './auth'
 import { USER_AGENT } from './userAgent'
 import { SignInRevokedError, isSignInRevoked } from './signInCheck'
 import { cleanTag, foldAccents } from '../shared/tags'
+import { RequestLog, MAX_SLOW_DOWN_RETRIES, slowDownWaitMs, isSlowDown } from './requestLog'
 import type { FlickrTokenData, FlickrUser, FlickrPhoto, PhotoPage, PhotoSize, PhotoInfo, FlickrAlbum, AlbumPage, FlickrCollection, FlickrSet, CameraExif, PhotoSearchParams, DiscoverUser, DiscoverContact, DiscoverGroup } from '../shared/types'
 
 // Every Flickr call goes through this client: a request that gets no answer for 30 seconds fails instead of hanging
 const http = axios.create({ timeout: 30000 })
 
+// What this computer has asked Flickr for (shown in Settings), and what to do when Flickr says slow down: wait, then try the same request again
+export const flickrHttp = http   // (for the tests)
+export const requestLog = new RequestLog()
+http.interceptors.request.use(config => {
+  if (typeof config.url === 'string' && config.url.startsWith(FLICKR_API_BASE_URL)) requestLog.record(config.url)
+  return config
+})
+type Retryable = AxiosRequestConfig & { __slowDownTries?: number }
+http.interceptors.response.use(undefined, async (err: unknown) => {
+  const e = err as { config?: Retryable; response?: { status?: number; headers?: Record<string, string> } }
+  if (!e.config || !isSlowDown(e.response?.status)) throw err
+  requestLog.recordSlowDown()
+  const attempt = e.config.__slowDownTries ?? 0
+  if (attempt >= MAX_SLOW_DOWN_RETRIES) {
+    const stopped = new Error('Flickr is asking us to slow down. Wait a minute, then try again.') as Error & { response?: unknown }
+    stopped.response = e.response   // the status stays readable for code that looks at it
+    throw stopped
+  }
+  await new Promise(r => setTimeout(r, slowDownWaitMs(attempt, e.response?.headers?.['retry-after'])))
+  // A signed request carries a one-time number, so the same request is signed again rather than sent as it was
+  const retry: Retryable = { ...e.config, __slowDownTries: attempt + 1 }
+  const token = loadToken()
+  if (e.config.headers && 'Authorization' in e.config.headers) {
+    if (!token || typeof e.config.url !== 'string') throw err   // signed out while waiting
+    retry.headers = { ...e.config.headers, ...getOAuthHeader(e.config.url, (e.config.method ?? 'get').toUpperCase(), token) } as typeof e.config.headers
+  }
+  return http(retry)
+})
+
 // A title search that needs the title itself (starts with, ends with, exact) reads up to this many pages of 100 results
 const OPERATOR_SEARCH_PAGES = 10
 
 const FLICKR_API_BASE = 'https://www.flickr.com/services/rest/'
+const FLICKR_API_BASE_URL = FLICKR_API_BASE
 const DEFAULT_AVATAR = 'https://www.flickr.com/images/buddyicon.gif'
 
 interface FlickrPersonResponse {

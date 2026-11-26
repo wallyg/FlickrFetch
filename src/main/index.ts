@@ -7,13 +7,13 @@ import { readFileSync, mkdirSync, rmSync, createWriteStream } from 'fs'
 import archiver from 'archiver'
 import { startOAuthFlow, verifyOAuth, loadToken, clearToken } from './auth'
 import { SignInRevokedError } from './signInCheck'
-import { getUserInfo, getPhotos, getPhotoSizes, getPhotoInfo, getPhotoExif, getAlbums, getAlbumPhotos, getPublicAlbumPhotos, getCollectionTree, getDiscoverCollectionTree, resolveVideoUrl, getRecentlyUpdated, findDiscoverUser, getPublicPhotos, getUserPublicAlbums, getContacts, getUserGroups, getGroupPhotos, getInterestingness } from './flickr'
+import { getUserInfo, getPhotos, getPhotoSizes, getPhotoInfo, getPhotoExif, getAlbums, getAlbumPhotos, getPublicAlbumPhotos, getCollectionTree, getDiscoverCollectionTree, resolveVideoUrl, getRecentlyUpdated, findDiscoverUser, getPublicPhotos, getUserPublicAlbums, getContacts, getUserGroups, getGroupPhotos, getInterestingness, requestLog } from './flickr'
 import { downloadPhoto, downloadToFolder, describeSize } from './downloader'
 import { noteSize, resetSizeTally, smallerSoFar } from './sizeTally'
 import { changedSinceSaved } from './smartFilter'
 import { endExifTool } from './exiftool'
 import { loadSettings, saveSettings, resetSettings, ensureDownloadFolder } from './settings'
-import { registerTagIpc } from './tagIndex'
+import { registerTagIpc, stopTagScan } from './tagIndex'
 import { registerAuditIpc } from './tagAudit'
 import { registerHealthIpc } from './photoHealth'
 import { registerFineIpc } from './fineReasons'
@@ -153,6 +153,29 @@ function createWindow(): void {
 
 // IPC Handlers
 
+// The library list and the download records belong to the signed-in account (one database file each, see accountDb.ts)
+function openAccountDatabase(nsid: string): void {
+  try {
+    openDatabase(nsid)
+  } catch (err) {
+    process.stderr.write(`[flickrfetch] DB open failed, continuing without history: ${err}\n`)
+  }
+}
+
+// Signing out (or a sign-in Flickr took back): stop what is running for this account, then close its database, so nothing carries over to the next account
+async function endAccountSession(): Promise<void> {
+  batchQueue = []
+  isPaused = false
+  resumeResolve?.()
+  resumeResolve = null
+  const running = activeBatchController
+  running?.abort()
+  for (let i = 0; i < 100 && activeBatchController === running && running !== null; i++) await new Promise(r => setTimeout(r, 100))
+  lastBatchProgress = null
+  await stopTagScan()
+  closeDatabase()
+}
+
 // Step 1: Get a request token and open the Flickr authorize page in the browser
 ipcMain.handle('auth:start', async () => {
   try {
@@ -176,6 +199,7 @@ ipcMain.handle('auth:verify', async (_event, verifierCode: string) => {
   try {
     const tokenData = await verifyOAuth(verifierCode.trim())
     const user = await getUserInfo(tokenData)
+    openAccountDatabase(tokenData.nsid)   // this account's own library list and download records
     process.stderr.write(`[flickrfetch] auth:verify SUCCESS: ${user.username}\n`)
     return { user }
   } catch (err: unknown) {
@@ -199,6 +223,7 @@ ipcMain.handle('auth:getState', async () => {
   } catch (err) {
     // Only a sign-in that Flickr has taken back signs the user out here; getUserInfo reports nothing else
     if (!(err instanceof SignInRevokedError)) throw err
+    await endAccountSession()
     clearToken()
     forgetOwnerNsid()
     return { user: null }
@@ -286,6 +311,7 @@ ipcMain.handle('settings:get', () => loadSettings())
 // Merged with what is saved, so a panel that only knows some settings (the Settings window) cannot erase the others
 ipcMain.handle('settings:set', (_event, settings: Partial<AppSettings>) => saveSettings({ ...loadSettings(), ...settings }))
 ipcMain.handle('settings:reset', () => resetSettings())
+ipcMain.handle('flickr:requestStats', () => requestLog.stats())
 ipcMain.handle('video:resolveUrl', (_event, sourceUrl: string) => resolveVideoUrl(sourceUrl))
 
 // Tags tab: local tag index (scan, browse, count)
@@ -1293,7 +1319,8 @@ ipcMain.handle('shell:confirm', async (_event, message: string, detail?: string,
 })
 
 // Sign out: clear the stored token
-ipcMain.handle('auth:signout', () => {
+ipcMain.handle('auth:signout', async () => {
+  await endAccountSession()
   clearToken()
   forgetOwnerNsid()
 })
@@ -1321,11 +1348,8 @@ ipcMain.handle('db:deleteDiscoverRecords', (_event, photoIds: string[]) => delet
 ipcMain.handle('db:clearDiscoverRecords', (_event, beforeMs?: number, afterMs?: number) => clearDiscoverRecords(beforeMs, afterMs))
 
 app.whenReady().then(() => {
-  try {
-    openDatabase()
-  } catch (err) {
-    process.stderr.write(`[flickrfetch] DB open failed, continuing without history: ${err}\n`)
-  }
+  const signedIn = loadToken()
+  if (signedIn) openAccountDatabase(signedIn.nsid)   // nobody signed in: no database until someone does
   // Build the macOS app menu with a proper About item
   const appName = app.getName()
   const template: Electron.MenuItemConstructorOptions[] = [

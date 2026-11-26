@@ -3,10 +3,11 @@ import { tabMark } from '../ui/kit'
 import DiscoverPeople from '../components/DiscoverPeople'
 import DiscoverGroups from '../components/DiscoverGroups'
 import DiscoverExplore from '../components/DiscoverExplore'
+import FreeAccountBanner from '../components/FreeAccountBanner'
 
 type DiscoverTab = 'people' | 'groups' | 'explore'
 
-export default function DiscoverPage({ isActive }: { isActive: boolean }): React.JSX.Element {
+export default function DiscoverPage({ isActive, isPro }: { isActive: boolean; isPro: boolean | undefined }): React.JSX.Element {
   const [tab, setTab] = useState<DiscoverTab>('people')
   const [peopleVisited, setPeopleVisited] = useState(false)
   const [groupsVisited, setGroupsVisited] = useState(false)
@@ -21,6 +22,7 @@ export default function DiscoverPage({ isActive }: { isActive: boolean }): React
 
   return (
     <div style={s.wrapper}>
+      <FreeAccountBanner kind="discover" isPro={isPro} />
       <div style={s.tabBar}>
         <div style={s.tabGroup}>
           {(['people', 'groups', 'explore'] as DiscoverTab[]).map(t => (

@@ -10,7 +10,7 @@ import { addPhotos, tagTables } from './helpers'
 // The app's own database code, opened in an empty temporary folder (see tests/stubs/electron.ts)
 const HOUR = 3600
 before(() => {
-  openDatabase()
+  openDatabase('test@N00')
   const db = getDb()!
   // The tables the check reads: the tag tables are made when the app first scans your tags, the others the first time a health list is opened
   tagTables(db)

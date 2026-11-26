@@ -449,6 +449,13 @@ async function runRefresh(db: Database.Database, tokenData: FlickrTokenData, sen
 let quiet = false
 let runningMode: 'full' | 'refresh' = 'refresh'   // what the running scan is, so a different request is not mistaken for it
 
+// Stops a running scan and waits for it to finish (up to 10 seconds), so the database can be closed without it still writing
+export async function stopTagScan(): Promise<void> {
+  if (!scanning) return
+  cancelRequested = true
+  for (let i = 0; i < 100 && scanning; i++) await new Promise(r => setTimeout(r, 100))
+}
+
 export function startTagScan(mode: 'full' | 'refresh', getWindow: () => BrowserWindow | null, silent = false): { started: boolean } {
   if (scanning) {
     // The user pressed Update or Rebuild while the quiet one was running: let them see it from here on

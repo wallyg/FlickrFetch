@@ -1,3 +1,4 @@
+import { forgetOverview } from './components/LibraryOverview'
 import FineReasonHost from './components/FineReasonHost'
 import React, { useEffect, useState } from 'react'
 import type { AuthState, FlickrUser } from '../shared/types'
@@ -28,6 +29,7 @@ export default function App(): React.JSX.Element {
 
   const handleSignOut = (): void => {
     window.flickrAPI.signOut().then(() => {
+      forgetOverview()   // the Health Check front page remembers its last answer; the next account must not see it
       setAuthState({ status: 'unauthenticated', user: null, error: null })
     })
   }

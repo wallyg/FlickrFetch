@@ -8,7 +8,7 @@ import { addAlbum, addPhotos, addTag, farDate, tagTables, type PhotoRow } from '
 // The album settings list (Settings > Albums) gives each album the app's pick and the reason. For a subject album the reason names the tag;
 // it used to read "a clear subject tag: ." because the tag names had not been read yet.
 before(() => {
-  openDatabase()
+  openDatabase('test@N00')
   const db = getDb()!
   tagTables(db)
   albumsDb()

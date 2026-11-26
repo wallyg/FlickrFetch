@@ -13,7 +13,7 @@ import { addAlbum, addPhotos, farDate, tagTables, type PhotoRow } from './helper
 const PARIS = { lat: 48.8566, lon: 2.3522 }
 const jitter = (i: number): { lat: number; lon: number } => ({ lat: PARIS.lat + (i % 10) * 0.0001, lon: PARIS.lon + Math.floor(i / 10) * 0.0001 })
 before(() => {
-  openDatabase()
+  openDatabase('test@N00')
   const db = getDb()!
   tagTables(db)
   albumsDb()   // makes the album tables

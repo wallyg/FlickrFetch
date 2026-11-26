@@ -1,6 +1,6 @@
 import Database from 'better-sqlite3'
 import { app } from 'electron'
-import { join } from 'path'
+import { accountDbFile } from './accountDb'
 import type { BatchLogEntry, PhotoDownloadRecord, DiscoverDownloadRecord, DownloadedSize } from '../shared/types'
 
 let db: Database.Database | null = null
@@ -10,8 +10,15 @@ export function getDb(): Database.Database | null {
   return db
 }
 
-export function openDatabase(): void {
-  const dbPath = join(app.getPath('userData'), 'flickrfetch.db')
+// Goes up each time a database is opened, so a cached answer worked out from another account's data is never reused
+let generation = 0
+export const dbGeneration = (): number => generation
+
+// Opens the database that belongs to this Flickr account (see accountDb.ts); a database that was open (another account) is closed first
+export function openDatabase(nsid: string): void {
+  closeDatabase()
+  const dbPath = accountDbFile(app.getPath('userData'), nsid)
+  generation++
   db = new Database(dbPath)
   db.pragma('journal_mode = WAL')
 

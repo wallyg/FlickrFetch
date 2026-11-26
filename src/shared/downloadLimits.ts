@@ -29,3 +29,9 @@ export function sizeTag(r: { sizeLabel?: string; sizeLimited?: boolean }): 'Smal
   if (r.sizeLimited) return 'Smaller size'
   return r.sizeLabel === 'Original' ? 'Original' : null
 }
+
+/** The early notice for a free account (#255): shown once on My Flickr and once on Discover until it is dismissed. Plain and calm; Pro accounts never see it. */
+export const FREE_BANNER_TEXT: Record<'mine' | 'discover', string> = {
+  mine: 'Flickr limits downloads from free accounts to 1024 px, except Creative Commons photos, so some originals will come down smaller. Titles, tags and the other details are still saved in every file.',
+  discover: 'On a free account, Flickr can also give you a smaller size than the original for photos downloaded here, except Creative Commons photos. Titles, tags and the other details are still saved.'
+}

@@ -683,3 +683,11 @@ export interface TodaySummary {
 export interface CameraRollQuery extends DateExtra { from: string; to: string; scope: PrivacyScope; order: 'asc' | 'desc'; offset: number; limit: number }   // from and to: YYYY-MM-DD, inclusive; offset and limit count days
 export interface CameraRollDay { date: string; count: number; videos: number; photos: DayPhoto[] }   // photos: up to 600 per day
 export interface CameraRollView { hasData: boolean; hasCatalog: boolean; scope: PrivacyScope; totalDays: number; totalPhotos: number; totalVideos: number; days: CameraRollDay[] }
+
+// What this computer has asked Flickr for since FlickrFetch opened (Settings > General)
+export interface RequestStats {
+  lastHour: number
+  sinceOpen: number
+  slowDowns: number                                  // times Flickr said slow down (and the request was tried again)
+  top: { method: string; count: number }[]           // the Flickr methods asked for most, since FlickrFetch opened
+}

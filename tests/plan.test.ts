@@ -10,7 +10,7 @@ let stamp = 0
 const rescan = (): void => { getDb()!.prepare("INSERT OR REPLACE INTO tag_index_meta (key, value) VALUES ('last_scan_at', ?)").run(String(++stamp)) }
 
 before(() => {
-  openDatabase()
+  openDatabase('test@N00')
   const db = getDb()!
   libraryTables(db)
   const common = ids('c', 100), rare = ids('r', 3)

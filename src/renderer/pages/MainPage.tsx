@@ -25,6 +25,7 @@ import TimelinePanel from '../components/TimelinePanel'
 import OnThisDayCard from '../components/OnThisDayCard'
 import DownloadQueueBar from '../components/DownloadQueueBar'
 import AboutModal from '../components/AboutModal'
+import FreeAccountBanner from '../components/FreeAccountBanner'
 import DownloadConfirmModal, { type PendingDownload } from '../components/DownloadConfirmModal'
 import HistoryPanel from '../components/HistoryPanel'
 import SmartDownloadButton from '../components/SmartDownloadButton'
@@ -567,6 +568,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
         </div>
       </header>
 
+      {appMode === 'you' && <FreeAccountBanner kind="mine" isPro={user.isPro} />}
       {appMode === 'you' && <div style={styles.tabBar}>
         <div style={styles.tabGroup}>
           <button
@@ -816,7 +818,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
       )}
 
       <main ref={discoverMainRef} style={{ ...styles.main, display: appMode === 'discover' ? 'flex' : 'none', flexDirection: 'column' }}>
-        <DiscoverPage isActive={appMode === 'discover'} />
+        <DiscoverPage isActive={appMode === 'discover'} isPro={user.isPro} />
       </main>
 
       <main ref={youMainRef} style={{ ...styles.main, ...(appMode === 'discover' ? { display: 'none' } : {}) }}>

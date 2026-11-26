@@ -7,7 +7,7 @@ import { addPhotos, tagTables } from './helpers'
 
 // "Vague location" (Health Check > Photos > Locations): photos with a location whose Flickr precision is 10 or less (1 is the whole world, 16 a street).
 before(() => {
-  openDatabase()
+  openDatabase('test@N00')
   const db = getDb()!
   tagTables(db)
   healthSummary()    // the first look makes the photo list table (the app does the same when a health list is first opened)

@@ -9,6 +9,7 @@ import HealthCheckSettings from './HealthCheckSettings'
 import AlbumCheckSettings from './AlbumCheckSettings'
 import InfoTip from '../ui/InfoTip'
 import MapCacheControls from './MapCacheControls'
+import RequestStatsNote from './RequestStatsNote'
 import { cacheLimitMb } from '../../shared/mapGeo'
 import type {
   FileNamingConfig, FileNamingCore, FileNamingSep, DateFormat, PartPosition,
@@ -372,6 +373,13 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
                   />
                 </div>
                 <MapCacheControls limitMb={mapCacheMb} onLimit={setMapCacheMb} reloadKey={resetCount} />
+              </div>
+
+              <div style={{ ...s.section, borderTop: '1px solid var(--ff-border)' }}>
+                <div style={s.sectionRow}>
+                  <p style={s.sectionTitle}>Flickr requests</p>
+                </div>
+                <RequestStatsNote />
               </div>
             </>
           )}
