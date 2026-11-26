@@ -177,7 +177,7 @@ export default function AlbumList({ onAlbumSelect, active = true }: AlbumListPro
         <div style={{ padding: '48px 24px', textAlign: 'center' }}>
           <p style={{ color: 'var(--ff-text-secondary)', fontSize: '14px', margin: '0 0 12px' }}>No albums match "{searchQuery}".</p>
           <button style={{ background: 'none', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '6px 16px', fontSize: '13px', color: 'var(--ff-text-secondary)', cursor: 'pointer' }} onClick={() => setSearchQuery('')}>
-            Clear Search
+            Clear search
           </button>
         </div>
       )}

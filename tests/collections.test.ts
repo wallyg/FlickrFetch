@@ -73,3 +73,13 @@ test('Discover Groups uses that same tag filter', () => {
   assert.ok(/parseTagInput\(poolAppliedTagInput\)/.test(src) && /hasTags\(p\.tags, tags, poolAppliedTagMode\)/.test(src))
   assert.ok(!/split\(\/\\s\+\/\)/.test(src), 'no longer splits the tag box on spaces')
 })
+
+test('a location of exactly 0, 0 is read as "no location", not saved into files', () => {
+  const src = read('src/main/flickr.ts')
+  assert.ok(/!\(lat === 0 && lon === 0\)/.test(src))
+})
+
+test('On This Day ignores a slow "Show all" for a day you have moved off', () => {
+  const src = read('src/renderer/components/OnThisDayPanel.tsx')
+  assert.ok(/viewRef\.current\+\+/.test(src) && /if \(view !== viewRef\.current\) return/.test(src))
+})

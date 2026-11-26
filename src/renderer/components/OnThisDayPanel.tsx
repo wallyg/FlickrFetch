@@ -45,6 +45,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
   const [selected, setSelected] = useState<Map<string, DayPhoto>>(new Map())
   const [share, setShare] = useState<{ photos: DayPhoto[]; userPicked: boolean } | null>(null)
   const reqRef = useRef(0)
+  const viewRef = useRef(0)   // changes whenever the day or a filter does, so a slow "Show all" for the day you left is ignored
   const dateRef = useRef<HTMLInputElement>(null)
   const handledJump = useRef(0)
   const [pendingYear, setPendingYear] = useState<number | null>(null)
@@ -57,7 +58,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
   }, [month, day, scope, tag, extra])
 
   useEffect(() => { void load() }, [load, refreshKey])
-  useEffect(() => { setExpanded({}); setSelected(new Map()) }, [month, day, scope, tag, extra])
+  useEffect(() => { viewRef.current++; setExpanded({}); setSelected(new Map()) }, [month, day, scope, tag, extra])
 
   // See in On This Day (from a Timeline day) lands here on that date
   useEffect(() => {
@@ -78,7 +79,9 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
   const goToday = (): void => { const d = new Date(); changeDay(d.getMonth() + 1, d.getDate()) }
 
   const showAll = async (year: string): Promise<void> => {
+    const view = viewRef.current
     const all = await window.flickrAPI.getDayPhotos({ month, day, year, scope, offset: 0, limit: 1000, tag: tag?.key, ...extra })
+    if (view !== viewRef.current) return
     setExpanded(e => ({ ...e, [year]: all }))
   }
   const toggle = (p: DayPhoto): void => setSelected(prev => { const n = new Map(prev); if (n.has(p.id)) n.delete(p.id); else n.set(p.id, p); return n })

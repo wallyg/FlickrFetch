@@ -18,7 +18,7 @@ await build({
   entryPoints: files.map(f => join(root, 'tests', f)),
   outdir: out, outExtension: { '.js': '.cjs' },
   bundle: true, platform: 'node', format: 'cjs', target: 'node22', logLevel: 'warning',
-  external: ['better-sqlite3'],
+  external: ['better-sqlite3', 'typescript'],   // typescript is read by the hooks-order test, not bundled
   alias: { electron: join(root, 'tests/stubs/electron.ts') }
 })
 

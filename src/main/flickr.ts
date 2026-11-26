@@ -116,7 +116,8 @@ export async function getPhotoInfo(photoId: string, tokenData: FlickrTokenData):
   if (photo.location?.latitude != null && photo.location?.longitude != null) {
     const lat = parseFloat(photo.location.latitude)
     const lon = parseFloat(photo.location.longitude)
-    if (!isNaN(lat) && !isNaN(lon)) {
+    // Flickr uses exactly 0, 0 for "no location" (and for a failed lookup), so it is never written into a file or sidecar as a real place
+    if (!isNaN(lat) && !isNaN(lon) && !(lat === 0 && lon === 0)) {
       latitude = lat
       longitude = lon
     }

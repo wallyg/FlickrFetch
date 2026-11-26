@@ -29,16 +29,19 @@ export default function DiscoverExplore({ onDownload }: Props): React.JSX.Elemen
   const loadedRef = useRef(false)
   const gridContainerRef = useRef<HTMLDivElement>(null)
 
-  const loadPage = useCallback(async (p: number): Promise<void> => {
-    if (p === 1) { setLoading(true); setError(null) }
+  const loadPage = useCallback(async (p: number): Promise<boolean> => {
+    setError(null)
+    if (p === 1) setLoading(true)
     else setLoadingMore(true)
     try {
       const result: PhotoPage = await window.flickrAPI.discoverGetInterestingness(p)
       setPhotos(prev => p === 1 ? result.photos : [...prev, ...result.photos])
       setPage(result.page)
       setPages(result.pages)
+      return true
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Couldn\'t load Explore.')
+      return false
     } finally {
       setLoading(false)
       setLoadingMore(false)
@@ -60,10 +63,56 @@ export default function DiscoverExplore({ onDownload }: Props): React.JSX.Elemen
     if (detailIndex < photos.length - 1) {
       setDetailIndex(detailIndex + 1)
     } else if (page < pages) {
-      loadPage(page + 1).then(() => setDetailIndex(detailIndex + 1))
+      loadPage(page + 1).then(ok => { if (ok) setDetailIndex(detailIndex + 1) })
     }
   }, [detailIndex, photos.length, page, pages, loadPage])
 
+  const toggleSelect = (id: string): void => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  useLayoutEffect(() => {
+    if (loading) return
+    if (gridContainerRef.current) {
+      setContainerWidth(Math.round(gridContainerRef.current.getBoundingClientRect().width))
+    }
+  }, [loading, exploreViewMode, detailIndex === null])
+
+  useEffect(() => {
+    if (loading) return
+    const el = gridContainerRef.current
+    if (!el) return
+    const obs = new ResizeObserver(([entry]) => {
+      setContainerWidth(Math.round(entry.contentRect.width))
+    })
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [loading, exploreViewMode, detailIndex === null])   // the grid is a new element each time you come back from a photo
+
+  const exploreJustifiedRows = useMemo(() => {
+    if (exploreViewMode !== 'justified' || containerWidth === 0) return null
+    return computeJustifiedRows(photos, containerWidth, rowHeight)
+  }, [photos, exploreViewMode, containerWidth, rowHeight])
+
+  const handleDownloadSelected = async (): Promise<void> => {
+    const selected = photos.filter(p => selectedIds.has(p.id)).map(p => ({ id: p.id, title: p.title }))
+    if (!selected.length) return
+    setDownloading(true)
+    try {
+      await window.flickrAPI.startDiscoverSelectedBatch(selected, 'Explore', ['Explore'])
+    } finally {
+      setDownloading(false)
+      setSelectMode(false)
+      setSelectedIds(new Set())
+    }
+  }
+
+  // (after every hook above: a screen that returns early must still call the same hooks each time)
   if (detailIndex !== null && photos[detailIndex]) {
     const detailPhoto = photos[detailIndex]
     return (
@@ -83,51 +132,6 @@ export default function DiscoverExplore({ onDownload }: Props): React.JSX.Elemen
         />
       </div>
     )
-  }
-
-  const toggleSelect = (id: string): void => {
-    setSelectedIds(prev => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
-
-  useLayoutEffect(() => {
-    if (loading) return
-    if (gridContainerRef.current) {
-      setContainerWidth(Math.round(gridContainerRef.current.getBoundingClientRect().width))
-    }
-  }, [loading, exploreViewMode])
-
-  useEffect(() => {
-    if (loading) return
-    const el = gridContainerRef.current
-    if (!el) return
-    const obs = new ResizeObserver(([entry]) => {
-      setContainerWidth(Math.round(entry.contentRect.width))
-    })
-    obs.observe(el)
-    return () => obs.disconnect()
-  }, [loading, exploreViewMode])
-
-  const exploreJustifiedRows = useMemo(() => {
-    if (exploreViewMode !== 'justified' || containerWidth === 0) return null
-    return computeJustifiedRows(photos, containerWidth, rowHeight)
-  }, [photos, exploreViewMode, containerWidth, rowHeight])
-
-  const handleDownloadSelected = async (): Promise<void> => {
-    const selected = photos.filter(p => selectedIds.has(p.id)).map(p => ({ id: p.id, title: p.title }))
-    if (!selected.length) return
-    setDownloading(true)
-    try {
-      await window.flickrAPI.startDiscoverSelectedBatch(selected, 'Explore', ['Explore'])
-    } finally {
-      setDownloading(false)
-      setSelectMode(false)
-      setSelectedIds(new Set())
-    }
   }
 
   return (
