@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { fieldCompact } from '../ui/kit'
+import { fieldCompact, putAsideBtn } from '../ui/kit'
 import type { LocationHintSettings as Settings, LocationHintStats } from '../../shared/types'
 
 // The numbers behind the hints in the Photos checks (a location for a photo with none, how a title could start). Each is saved when
@@ -63,6 +63,6 @@ const styles: Record<string, React.CSSProperties> = {
   muted: { fontSize: 12, color: 'var(--ff-text-muted)' },
   row: { display: 'flex', alignItems: 'center', gap: 10, fontSize: 12, color: 'var(--ff-text)' },
   input: { ...fieldCompact, width: 72 },
-  link: { alignSelf: 'flex-start', border: 'none', background: 'none', padding: 0, fontSize: 12, color: 'var(--ff-text-secondary)', textDecoration: 'underline', cursor: 'pointer' },
+  link: { ...putAsideBtn, alignSelf: 'flex-start' },
   stats: { fontSize: 12, color: 'var(--ff-text)', background: 'var(--ff-warm)', borderRadius: 6, padding: '6px 10px', display: 'flex', flexDirection: 'column', gap: 2 }
 }

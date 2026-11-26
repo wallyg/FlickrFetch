@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { linkBtn } from '../ui/kit'
 import Icon from '../ui/Icon'
 import logoTrayImg from '../assets/logo-tray.png'
 import ChangelogModal from './ChangelogModal'
@@ -244,13 +245,7 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: 'pointer',
     textDecoration: 'none'
   } as React.CSSProperties,
-  deepLink: {
-    fontSize: '12px',
-    fontWeight: '700',
-    color: 'var(--ff-blue)',
-    cursor: 'pointer',
-    textDecoration: 'none'
-  } as React.CSSProperties,
+  deepLink: { ...linkBtn } as React.CSSProperties,
   linkRow: {
     display: 'flex',
     alignItems: 'stretch',

@@ -1318,7 +1318,7 @@ ipcMain.on('photo:contextMenu', (_event, photoId: string) => {
     { label: 'Open on Flickr', click: () => { void shell.openExternal(url) } },
     { label: 'Copy Flickr link', click: () => clipboard.writeText(url) },
     { type: 'separator' },
-    { label: "Fix in Flickr's batch editor", click: () => { void shell.openExternal(batchUrl([photoId])) } }
+    { label: "Open in Flickr's organizer", click: () => { void shell.openExternal(batchUrl([photoId])) } }
   ]).popup({ window: mainWindow })
 })
 

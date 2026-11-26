@@ -106,7 +106,7 @@ function locationHint(idx: Index, ts: number): Hint | null {
   if (near.length < MIN_NEIGHBOURS) return null
   const lat = median(near.map(p => p.lat)), lon = median(near.map(p => p.lon))
   if (Math.max(...near.map(p => km(lat, lon, p.lat, p.lon))) > s.meters / 1000) return null   // the photos around it do not agree with each other
-  return { text: `${near.length} photos taken within ${s.minutes} minutes of it were taken here, within ${s.meters} m of each other. Add this location in Flickr's batch editor.`, mapUrl: osm(lat, lon), geo: { lat, lon } }
+  return { text: `${near.length} photos taken within ${s.minutes} minutes of it were taken here, within ${s.meters} m of each other. Add this location in Flickr's organizer.`, mapUrl: osm(lat, lon), geo: { lat, lon } }
 }
 
 // #187: how a photo's title could start, when the photos taken beside it all start theirs the same way

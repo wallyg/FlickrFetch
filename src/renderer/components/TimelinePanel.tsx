@@ -9,7 +9,7 @@ import type { PickedAlbum } from './AlbumBox'
 import TimelineNav, { type Step } from './TimelineNav'
 import BackToTop from '../ui/BackToTop'
 import { OpenIcon, DownloadIcon, CameraRollIcon } from '../ui/icons'
-import { quietBtn, primaryBtn, pillBtn } from '../ui/kit'
+import { quietBtn, primaryBtn, pillBtn, linkBtn } from '../ui/kit'
 import { asButton } from '../ui/a11y'
 import { itemsLabel } from '../../shared/counts'
 
@@ -261,7 +261,7 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
             <div style={{ flex: 1 }} />
             <button style={styles.pill} title={openTitle(extra, 'that month')} onClick={() => onOpenRange(rangeOf(drill).from, rangeOf(drill).to, rangeOpts(extra))}><span style={styles.icon}><OpenIcon /></span>Open in Photostream</button>
             <button style={styles.pill} onClick={() => setRoll({ year: drill.year, month: drill.month })} title="The month's photos in date order, grouped by day"><span style={styles.icon}><CameraRollIcon /></span>Camera roll</button>
-            <BatchEditButton inline style={styles.pill} label="Batch editor" getIds={async () => { const r = rangeOf(drill); return (await window.flickrAPI.getDatePhotoIds({ kind: 'range', from: r.from, to: r.to, scope, ...extra })).map(p => p.id) }} />
+            <BatchEditButton inline style={styles.pill} getIds={async () => { const r = rangeOf(drill); return (await window.flickrAPI.getDatePhotoIds({ kind: 'range', from: r.from, to: r.to, scope, ...extra })).map(p => p.id) }} />
             <button style={{ ...styles.pill, ...styles.primary }} onClick={() => void download(drill)}><DownloadIcon />Download these {monthCount(drill.year, drill.month).toLocaleString()}</button>
           </div>
           <div style={styles.card}>
@@ -298,7 +298,7 @@ const styles: Record<string, React.CSSProperties> = {
   pad: { padding: '40px 24px' },
   muted: { fontSize: 12, color: 'var(--ff-text-secondary)' },
   row: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
-  link: { background: 'none', border: 'none', color: 'var(--ff-blue)', fontSize: 13, cursor: 'pointer', padding: 0 },
+  link: { ...linkBtn, fontSize: 13 },
   card: { background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 12, padding: `14px ${CARD_PAD}px` },
   hm: { display: 'grid', gridTemplateColumns: `${LABEL_W}px repeat(12, 1fr)`, gap: GAP, marginBottom: GAP, alignItems: 'center' },
   hl: { fontSize: 11, color: 'var(--ff-text-secondary)' },

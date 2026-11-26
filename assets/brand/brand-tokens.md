@@ -63,6 +63,10 @@ A status has a **mark** (dots, bars, rings), an **ink** (words) and a **pale bac
 - One label per action across the app.
 - Selection (chip, segment, list row, photo) is the soft pink look (`selectedOn`). Switches (on/off) have a pink track.
 
+**Sizes and the sweep (3.13, #262).** `quietBtn` is the standard Secondary button; `smallBtn` is the same a size smaller (3 px 10 px, 12 px text) for a button in a row of text or a narrow bar; `doThisSmallBtn` is the outlined-blue action at that size. A subdued boxed grey button now uses the standard dark text, not grey text. About 85 hand-built buttons moved onto these looks; `tests/buttonGuard.test.ts` counts the boxed or pink buttons still typed out (chips, tabs, cards, tiles and selects among them, plus a few one-offs) and only lets that number go down. Left on purpose: the filled blue buttons (Download all, Update, Search, the smart Download button), the filled red confirm buttons, the dashed "show more" buttons, icon-only square buttons, and the sign-in page.
+
+**Flickr's tools.** Opening one Flickr page is "Open on Flickr" with the external-link icon. Opening many photos in Flickr's own editor is "Open in Flickr's organizer" with the same icon (with a count where it helps: "(5)", "selected"). Never "Fix ..." and never "batch editor" (`tests/buttonGuard.test.ts` keeps it that way).
+
 ## Hover text
 
 Every hover text uses our own card, the same look as the info notes: white surface, `--ff-border` edge, 8 px corners, soft shadow, 12.5 px text. A short name (an icon-only control) is one plain line in that card; an explanation uses the `RichNote` format (a heading, then bullets). Native `title=` tooltips are replaced during the Design System Pass.

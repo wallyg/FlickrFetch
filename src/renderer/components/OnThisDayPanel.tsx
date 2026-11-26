@@ -158,7 +158,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
             <span style={styles.stack} aria-hidden="true"><s style={{ ...styles.stackCard, left: 0, top: 3, transform: 'rotate(-12deg)' }} /><s style={{ ...styles.stackCard, left: 6, top: 0, transform: 'rotate(3deg)' }} /><s style={{ ...styles.stackCard, left: 12, top: 3, transform: 'rotate(15deg)' }} /></span>
             Make a shareable collage
           </button>
-          <BatchEditButton inline style={quietBtn} label="Batch editor" getIds={async () => (await window.flickrAPI.getDatePhotoIds({ kind: 'day', month, day, scope, tag: tag?.key, ...extra })).map(p => p.id)} />
+          <BatchEditButton inline style={quietBtn} getIds={async () => (await window.flickrAPI.getDatePhotoIds({ kind: 'day', month, day, scope, tag: tag?.key, ...extra })).map(p => p.id)} />
           <button style={quietBtn} disabled={data.total === 0} onClick={() => void download()}>Download all {data.total.toLocaleString()}</button>
         </div>
       </div>
@@ -187,7 +187,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
         <div style={{ ...styles.row, justifyContent: 'flex-end' }}>
           <span style={styles.muted}>{selected.size} selected</span>
           <button style={quietBtn} onClick={startShare} disabled={pickedStills.length < 2} title={pickedStills.length < selected.size ? 'Videos are left out of collages' : undefined}>Collage from selected</button>
-          <BatchEditButton inline style={quietBtn} label="Batch editor" getIds={async () => [...selected.values()].map(p => p.id)} />
+          <BatchEditButton inline style={quietBtn} getIds={async () => [...selected.values()].map(p => p.id)} />
           <button style={quietBtn} onClick={downloadSelected}>Download selected</button>
           <button style={linkBtn} onClick={() => setSelected(new Map())}>Clear</button>
         </div>

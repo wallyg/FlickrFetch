@@ -4,7 +4,7 @@ import SelectBar from './SelectBar'
 import BatchEditButton from './BatchEditButton'
 import { forgetOverview } from './LibraryOverview'
 import { askFineReason } from '../ui/fineReason'
-import { quietBtn } from '../ui/kit'
+import { quietBtn, linkBtn } from '../ui/kit'
 import { DEBOUNCE, useDebouncedValue } from '../ui/useDebounce'
 import type { DuplicateGroup, DuplicatePhoto, DuplicateSort } from '../../shared/types'
 
@@ -118,7 +118,7 @@ export default function DuplicatesList({ status, search, sort, selected, setSele
                   {status === 'open'
                     ? <button style={styles.btn} onClick={() => void mark(g, 'fine')}>Not duplicates</button>
                     : <button style={styles.btn} onClick={() => void mark(g, 'open')}>Undo</button>}
-                  <BatchEditButton inline key={g.taken} style={styles.btn} label={`Batch editor (${g.photos.length})`} getIds={async () => g.photos.map(p => p.photoId)} />
+                  <BatchEditButton inline key={g.taken} style={styles.btn} label={`Open in Flickr's organizer (${g.photos.length})`} getIds={async () => g.photos.map(p => p.photoId)} />
                 </span>
               </div>
               <div style={styles.tiles}>
@@ -167,7 +167,7 @@ const styles: Record<string, React.CSSProperties> = {
   foot: { display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, flexWrap: 'wrap' },
   badge: { fontSize: 11, borderRadius: 8, padding: '1px 8px', background: 'var(--ff-border)', color: 'var(--ff-text-secondary)' },
   badgeFirst: { background: 'var(--ff-success-bg)', color: 'var(--ff-success)' },
-  open: { marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--ff-blue)', fontSize: 12, cursor: 'pointer', padding: 0 },
+  open: { ...linkBtn, marginLeft: 'auto' },
   link: { background: 'none', border: 'none', color: 'var(--ff-blue)', cursor: 'pointer', fontSize: 'inherit', textDecoration: 'underline', padding: 0 },
   more: { width: '100%', padding: 8, background: 'none', border: '1px dashed var(--ff-line-strong)', borderRadius: 8, color: 'var(--ff-text-secondary)', fontSize: 13, cursor: 'pointer', marginBottom: 12 }
 }

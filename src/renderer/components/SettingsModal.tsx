@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { fieldBox, tabMark } from '../ui/kit'
+import { fieldBox, tabMark, primaryBtn, putAsideBtn, quietBtn, smallBtn } from '../ui/kit'
 import Icon from '../ui/Icon'
 import HealthCheckSettings from './HealthCheckSettings'
 import AlbumCheckSettings from './AlbumCheckSettings'
@@ -866,7 +866,7 @@ const s: Record<string, React.CSSProperties> = {
   // Download folder
   folderRow: { display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--ff-border)', backgroundColor: 'var(--ff-cream)' },
   folderPath: { flex: 1, fontSize: '12px', color: 'var(--ff-text-secondary)', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const },
-  changeBtn: { background: 'var(--ff-surface)', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '4px 12px', fontSize: '12px', color: 'var(--ff-text)', cursor: 'pointer', flexShrink: 0 },
+  changeBtn: { ...smallBtn, flexShrink: 0 },
 
   // Radio option list
   optionList: { display: 'flex', flexDirection: 'column' as const, gap: '6px' },
@@ -928,13 +928,13 @@ const s: Record<string, React.CSSProperties> = {
   footer: { padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', flexShrink: 0, borderTop: '1px solid var(--ff-border)' },
   footerLeft: { display: 'flex', alignItems: 'center' },
   footerRight: { display: 'flex', alignItems: 'center', gap: '10px' },
-  restoreDefaultsBtn: { background: 'none', border: 'none', padding: '4px 0', fontSize: '13px', color: 'var(--ff-text-secondary)', cursor: 'pointer', textDecoration: 'underline' },
+  restoreDefaultsBtn: { ...putAsideBtn },
   resetConfirm: { display: 'flex', alignItems: 'center', gap: '8px' },
   resetConfirmText: { fontSize: '12px', color: 'var(--ff-text-secondary)' },
-  resetCancelBtn: { background: 'var(--ff-surface)', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '4px 10px', fontSize: '12px', color: 'var(--ff-text)', cursor: 'pointer' },
+  resetCancelBtn: { ...smallBtn },
   resetConfirmBtn: { background: 'var(--ff-error)', border: 'none', borderRadius: '6px', padding: '4px 10px', fontSize: '12px', fontWeight: '700', color: 'var(--ff-white)', cursor: 'pointer' },
   resetDoneText: { fontSize: '12px', color: 'var(--ff-text-secondary)' },
-  cancelBtn: { background: 'var(--ff-surface)', border: '1px solid var(--ff-line-strong)', borderRadius: '8px', padding: '10px 20px', fontSize: '14px', color: 'var(--ff-text)', cursor: 'pointer' },
-  saveBtn: { backgroundColor: 'var(--ff-pink-action)', color: 'var(--ff-white)', border: 'none', borderRadius: '8px', padding: '10px 28px', fontSize: '14px', fontWeight: '700', cursor: 'pointer' },
+  cancelBtn: { ...quietBtn },
+  saveBtn: { ...primaryBtn },
   saveBtnDisabled: { opacity: 0.6, cursor: 'not-allowed' },
 }

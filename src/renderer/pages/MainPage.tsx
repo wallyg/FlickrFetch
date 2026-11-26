@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { tabMark } from '../ui/kit'
+import { tabMark, linkBtn, primaryBtn, quietBtn } from '../ui/kit'
 import Icon from '../ui/Icon'
 import { useRememberScroll } from '../hooks/useRememberScroll'
 import MapPanel from '../components/MapPanel'
@@ -755,7 +755,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
               {albumSelectedIds.size > 0 && (
                 <button style={styles.selectButton} onClick={() => setAlbumSelectedIds(new Set())}>Clear Selection</button>
               )}
-              {albumSelectedIds.size > 0 && <BatchEditButton inline style={styles.selectButton} label="Batch editor" getIds={async () => [...albumSelectedIds]} />}
+              {albumSelectedIds.size > 0 && <BatchEditButton inline style={styles.selectButton} getIds={async () => [...albumSelectedIds]} />}
               <button
                 style={{
                   ...styles.downloadAllButton,
@@ -779,7 +779,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             <button style={styles.selectButton} onClick={() => setPhotostreamSelectedIds(new Set())}>Clear Selection</button>
           )}
           <div style={{ flex: 1 }} />
-          {photostreamSelectedIds.size > 0 && <BatchEditButton inline style={styles.selectButton} label="Batch editor" getIds={async () => [...photostreamSelectedIds]} />}
+          {photostreamSelectedIds.size > 0 && <BatchEditButton inline style={styles.selectButton} getIds={async () => [...photostreamSelectedIds]} />}
           <button
             style={{ ...styles.downloadAllButton, ...(photostreamSelectedIds.size === 0 ? styles.downloadAllButtonDisabled : {}) }}
             disabled={photostreamSelectedIds.size === 0}
@@ -1209,15 +1209,7 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundColor: 'var(--ff-surface)',
     borderBottom: '1px solid var(--ff-border)'
   },
-  backButton: {
-    background: 'none',
-    border: 'none',
-    fontSize: '13px',
-    color: 'var(--ff-blue)',
-    cursor: 'pointer',
-    padding: '0',
-    flexShrink: 0
-  },
+  backButton: { ...linkBtn, fontSize: '13px', flexShrink: 0 },
   albumTitle: {
     fontSize: '14px',
     fontWeight: '700',
@@ -1287,17 +1279,7 @@ const styles: Record<string, React.CSSProperties> = {
     pointerEvents: 'none' as const,
     zIndex: 'var(--ff-z-hover)',
   },
-  downloadAllButton: {
-    backgroundColor: 'var(--ff-pink-action)',
-    color: 'var(--ff-white)',
-    border: 'none',
-    borderRadius: '6px',
-    padding: '6px 14px',
-    fontSize: '13px',
-    fontWeight: '700',
-    cursor: 'pointer',
-    flexShrink: 0
-  },
+  downloadAllButton: { ...primaryBtn, flexShrink: 0 },
   downloadAllButtonDisabled: {
     opacity: 0.5,
     cursor: 'not-allowed'
@@ -1314,19 +1296,7 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'center',
     flexShrink: 0
   },
-  selectButton: {
-    background: 'none',
-    border: '1px solid var(--ff-line-strong)',
-    borderRadius: '6px',
-    padding: '5px 12px',
-    fontSize: '13px',
-    color: 'var(--ff-text-secondary)',
-    cursor: 'pointer',
-    flexShrink: 0,
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px'
-  },
+  selectButton: { ...quietBtn, flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px' },
   doneButton: {
     background: 'none',
     border: 'none',
@@ -1391,10 +1361,7 @@ const styles: Record<string, React.CSSProperties> = {
   confirmTitle: { fontSize: '16px', fontWeight: '700' as const, color: 'var(--ff-text)', margin: '0 0 8px' },
   confirmBody: { fontSize: '13px', color: 'var(--ff-text-secondary)', lineHeight: '1.5', margin: '0 0 20px' },
   confirmActions: { display: 'flex', gap: '10px', justifyContent: 'flex-end' as const },
-  confirmCancel: {
-    background: 'none', border: '1px solid var(--ff-line-strong)', borderRadius: '8px',
-    padding: '8px 18px', fontSize: '14px', color: 'var(--ff-text-secondary)', cursor: 'pointer',
-  },
+  confirmCancel: { ...quietBtn },
   confirmDestructive: {
     background: 'var(--ff-error)', border: 'none', borderRadius: '8px',
     padding: '8px 18px', fontSize: '14px', fontWeight: '700' as const, color: 'var(--ff-white)', cursor: 'pointer',

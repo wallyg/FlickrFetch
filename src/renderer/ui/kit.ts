@@ -31,8 +31,13 @@ export const pillBtn: CSSProperties = {
   ...quietBtn, display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 10px', fontSize: 12, whiteSpace: 'nowrap'
 }
 
+// The same, a size smaller, for a button that sits in a row of text or a narrow bar (the download bar, History, Settings lines)
+export const smallBtn: CSSProperties = { ...quietBtn, padding: '3px 10px', fontSize: 12 }
+
 // The action on a row or card: outlined blue (Health Check rows, Backup, Album fit, the On This Day card)
 export const doThisBtn: CSSProperties = { ...quietBtn, borderColor: 'var(--ff-blue)', color: 'var(--ff-blue)', fontWeight: 700 }
+
+export const doThisSmallBtn: CSSProperties = { ...doThisBtn, padding: '3px 10px', fontSize: 12 }
 
 // Dismiss or defer ("This one is fine", "Not now", "Undo")
 export const putAsideBtn: CSSProperties = { background: 'none', border: 'none', padding: 0, fontSize: 12, color: 'var(--ff-text-secondary)', textDecoration: 'underline', cursor: 'pointer' }

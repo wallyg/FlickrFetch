@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import Icon from '../ui/Icon'
 import { useFindShortcut } from '../hooks/useFindShortcut'
-import { quietBtn } from '../ui/kit'
+import { quietBtn, primaryBtn } from '../ui/kit'
 import { DEBOUNCE, useDebouncedEffect } from '../ui/useDebounce'
 import type { FlickrPhoto, PhotoSearchParams, SearchOperator, DateRangeField, TagMode, LicenseFilter } from '../../shared/types'
 import { MediaFilter, PhotoViewMode, DownloadFilter, PrivacyFilter, PrivacyLevel, PRIVACY_OPTIONS, PRIVACY_LABELS, GRID_COLUMNS, JustifiedIcon, GridIcon, ListIcon, PrivacyIcon, Tooltip, Chip, PhotoListRow, DownloadFilterSelect, LicenseFilterSelect, matchesLicenseFilter, LICENSE_FILTER_LABEL, sameSearchParams, getPrivacyLevel, sharedStyles, DateMode, getPresetDates, formatDateChip, loadPhotoViewMode, savePhotoViewMode, loadRowHeight, saveRowHeight, computeJustifiedRows, DOWNLOAD_FILTER_LABEL } from './PhotoGridShared'
@@ -897,7 +897,7 @@ const styles: Record<string, React.CSSProperties> = {
   overlayTitle: { flex: 1, color: 'var(--ff-white)', fontSize: '12px', lineHeight: '1.3', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as React.CSSProperties,
   downloadBadge: { position: 'absolute', bottom: '6px', right: '6px', width: '16px', height: '16px', borderRadius: '50%', backgroundColor: 'color-mix(in srgb, var(--ff-success) 90%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2, boxShadow: '0 0 0 1.5px var(--ff-glass), 0 1px 4px var(--ff-shadow-soft)' },
   errorText: { color: 'var(--ff-error-ink)', fontSize: '14px', margin: 0 },
-  retryButton: { backgroundColor: 'var(--ff-pink-action)', color: 'var(--ff-white)', border: 'none', borderRadius: '6px', padding: '10px 20px', fontSize: '14px', cursor: 'pointer' },
+  retryButton: { ...primaryBtn },
   loadMoreRow: { display: 'flex', justifyContent: 'center', padding: '24px 16px' },
   loadMoreButton: { backgroundColor: 'var(--ff-surface)', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '10px 28px', fontSize: '14px', color: 'var(--ff-text)', cursor: 'pointer' },
   disabled: { opacity: 0.6, cursor: 'not-allowed' },

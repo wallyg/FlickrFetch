@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo } from 'react'
+import { primaryBtn, quietBtn } from '../ui/kit'
 import Icon from '../ui/Icon'
 import type { FlickrPhoto, PhotoPage } from '../../shared/types'
 import PhotoDetail from './PhotoDetail'
@@ -366,15 +367,8 @@ const sb: Record<string, React.CSSProperties> = {
     borderBottom: '1px solid var(--ff-border)', marginBottom: '4px',
   },
   label: { fontSize: '13px', color: 'var(--ff-text-secondary)' },
-  clearBtn: {
-    background: 'none', border: '1px solid var(--ff-line-strong)', borderRadius: '6px',
-    padding: '5px 12px', fontSize: '13px', color: 'var(--ff-text-secondary)', cursor: 'pointer', flexShrink: 0,
-  },
-  downloadBtn: {
-    backgroundColor: 'var(--ff-pink-action)', color: 'var(--ff-white)', border: 'none',
-    borderRadius: '6px', padding: '6px 14px', fontSize: '13px', fontWeight: 700,
-    cursor: 'pointer', flexShrink: 0,
-  },
+  clearBtn: { ...quietBtn, flexShrink: 0 },
+  downloadBtn: { ...primaryBtn, flexShrink: 0 },
   downloadBtnDisabled: { opacity: 0.5, cursor: 'not-allowed' },
   cancelBtn: {
     background: 'none', border: 'none', padding: '5px 8px',
@@ -427,5 +421,5 @@ const s: Record<string, React.CSSProperties> = {
   },
   loadingState: { textAlign: 'center', color: 'var(--ff-text-secondary)', fontSize: '14px', paddingTop: '48px' },
   errorState: { textAlign: 'center', color: 'var(--ff-error)', fontSize: '14px', paddingTop: '48px' },
-  selectToggleBtn: { padding: '6px 14px', borderRadius: '8px', border: '1px solid var(--ff-line-strong)', background: 'var(--ff-surface)', cursor: 'pointer', fontSize: '13px', color: 'var(--ff-text)', flexShrink: 0 },
+  selectToggleBtn: { ...quietBtn, flexShrink: 0 },
 }

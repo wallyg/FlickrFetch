@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { fieldCompact } from '../ui/kit'
+import { fieldCompact, putAsideBtn } from '../ui/kit'
 import type { AlbumFitSettings as Settings, AlbumFitStats } from '../../shared/types'
 
 // The numbers behind the Album fit lists (Tune checks). Each is saved when you finish typing, and the counts underneath are worked out
@@ -127,7 +127,7 @@ const styles: Record<string, React.CSSProperties> = {
   grid: { display: 'flex', flexDirection: 'column', gap: 4 },
   row: { display: 'flex', alignItems: 'center', gap: 10, fontSize: 12, color: 'var(--ff-text)' },
   input: { ...fieldCompact, width: 72 },
-  link: { alignSelf: 'flex-start', border: 'none', background: 'none', padding: 0, fontSize: 12, color: 'var(--ff-text-secondary)', textDecoration: 'underline', cursor: 'pointer' },
+  link: { ...putAsideBtn, alignSelf: 'flex-start' },
   stats: { fontSize: 12, color: 'var(--ff-text)', background: 'var(--ff-warm)', borderRadius: 6, padding: '6px 10px', display: 'flex', flexDirection: 'column', gap: 3 },
   statRow: { display: 'grid', gridTemplateColumns: '110px 1fr', gap: 8, alignItems: 'baseline' },
   statLabel: { color: 'var(--ff-text-secondary)' },

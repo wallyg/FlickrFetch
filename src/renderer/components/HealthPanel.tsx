@@ -7,7 +7,7 @@ import HealthOverview from './HealthOverview'
 import { dash, SectionSwitch } from './DashboardParts'
 import RuleRail, { RailHead, RailRow, ListHead, SortBox } from './RuleRail'
 import { forgetOverview } from './LibraryOverview'
-import { quietBtn, primaryBtn, selectedOn, filterInput, doThisBtn } from '../ui/kit'
+import { quietBtn, primaryBtn, selectedOn, filterInput, doThisBtn, linkBtn } from '../ui/kit'
 import BatchEditButton from './BatchEditButton'
 import BackToTop from '../ui/BackToTop'
 import { ruleById, logicOf } from '../../shared/cleanupRules'
@@ -207,7 +207,7 @@ export default function HealthPanel({ refreshKey, onFullRescan, toolbarLeft, sta
                       {p.hintGeo && onShowOnMap
                         ? <button style={styles.secondaryBtn} title="Opens the Map tab on this place, with a mark" onClick={() => onShowOnMap((p.hintGeo as { lat: number; lon: number }).lat, (p.hintGeo as { lat: number; lon: number }).lon)}>Show on the map</button>
                         : p.hintMapUrl && <button style={styles.secondaryBtn} onClick={() => window.flickrAPI.openExternal(p.hintMapUrl as string)}>Show on a map <Icon name="external" /></button>}
-                      {p.status === 'open' && <BatchEditButton inline key={p.photoId} style={styles.secondaryBtn} label="Batch editor" getIds={async () => [p.photoId]} />}
+                      {p.status === 'open' && <BatchEditButton inline key={p.photoId} style={styles.secondaryBtn} getIds={async () => [p.photoId]} />}
                       {p.status === 'open'
                         ? <button style={styles.secondaryBtn} onClick={() => void mark(p, 'fine')}>This one is fine</button>
                         : <button style={styles.secondaryBtn} onClick={() => void mark(p, 'open')}>Undo</button>}
@@ -251,6 +251,6 @@ const styles: Record<string, React.CSSProperties> = {
   secondaryBtn: { ...quietBtn },
   // Fixing a photo happens on Flickr, so this is the card's main action: the blue outline used for "See them" on the notice
   mainActionBtn: { ...doThisBtn },
-  linkBtn: { background: 'none', border: 'none', color: 'var(--ff-blue)', fontSize: 12, cursor: 'pointer' },
+  linkBtn: { ...linkBtn },
   moreBtn: { width: '100%', padding: 8, background: 'none', border: '1px dashed var(--ff-line-strong)', borderRadius: 8, color: 'var(--ff-text-secondary)', fontSize: 13, cursor: 'pointer', marginBottom: 12 }
 }

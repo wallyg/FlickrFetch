@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import Icon from '../ui/Icon'
-import { segGroup as kitSegGroup, segBtn as kitSegBtn, selectedOn as kitSelectedOn, fieldCompact, selectBox } from '../ui/kit'
+import { segGroup as kitSegGroup, segBtn as kitSegBtn, selectedOn as kitSelectedOn, fieldCompact, selectBox, linkBtn, quietBtn, smallBtn } from '../ui/kit'
 import type { FlickrPhoto, LicenseFilter, PhotoSearchParams } from '../../shared/types'
 export type { LicenseFilter }
 
@@ -442,7 +442,7 @@ export const sharedStyles: Record<string, React.CSSProperties> = {
   searchClearBtn: { background: 'none', border: 'none', padding: '0 6px', fontSize: '11px', color: 'var(--ff-text-secondary)', cursor: 'pointer' },
   idStatus: { fontSize: '11px', color: 'var(--ff-text-muted)', padding: '0 6px', flexShrink: 0 },
   idStatusErr: { fontSize: '11px', color: 'var(--ff-error-ink)', padding: '0 6px', flexShrink: 0 },
-  idOpenDetailBtn: { background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: 'var(--ff-blue)', padding: '0 6px', flexShrink: 0 } as React.CSSProperties,
+  idOpenDetailBtn: { ...linkBtn, fontSize: '11px', flexShrink: 0 } as React.CSSProperties,
   segGroup: { ...kitSegGroup },
   seg: { ...kitSegBtn, padding: '5px 10px', fontSize: '12px', lineHeight: 1 },
   segActive: { ...kitSelectedOn },
@@ -472,12 +472,12 @@ export const sharedStyles: Record<string, React.CSSProperties> = {
   dateInput: { ...fieldCompact, fontSize: '12px' },
   dateToLabel: { fontSize: '12px', color: 'var(--ff-text-secondary)' },
   comingSoon: { fontSize: '12px', color: 'var(--ff-text-secondary)' },
-  downloadFilterBtn: { background: 'var(--ff-surface)', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '5px 10px', fontSize: '12px', color: 'var(--ff-text)', cursor: 'pointer', whiteSpace: 'nowrap' as const },
+  downloadFilterBtn: { ...smallBtn, whiteSpace: 'nowrap' as const },
   downloadFilterBtnActive: { ...kitSelectedOn },
   listContainer: { display: 'flex', flexDirection: 'column' as const },
   tagHint: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '16px', height: '16px', borderRadius: '50%', backgroundColor: 'var(--ff-line-strong)', fontSize: '11px', color: 'var(--ff-text-secondary)', cursor: 'default', fontWeight: '700', flexShrink: 0 } as React.CSSProperties,
   // Empty / error states
   centered: { display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', height: '100%', gap: '12px' },
   mutedText: { color: 'var(--ff-text-secondary)', fontSize: '14px', margin: 0 },
-  clearFiltersBtn: { background: 'var(--ff-surface)', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '6px 16px', fontSize: '13px', color: 'var(--ff-text)', cursor: 'pointer' },
+  clearFiltersBtn: { ...quietBtn },
 }

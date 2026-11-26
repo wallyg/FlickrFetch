@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { doThisSmallBtn, linkBtn, smallBtn } from '../ui/kit'
 import Icon from '../ui/Icon'
 import type { BatchProgress } from '../../shared/types'
 import { smallerPart } from '../../shared/downloadLimits'
@@ -459,15 +460,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '8px',
     flexShrink: 0
   },
-  pauseBtn: {
-    background: 'none',
-    border: '1px solid var(--ff-line-strong)',
-    borderRadius: '6px',
-    fontSize: '12px',
-    color: 'var(--ff-text-secondary)',
-    cursor: 'pointer',
-    padding: '4px 12px'
-  },
+  pauseBtn: { ...smallBtn },
   resumeBtn: {
     background: 'none',
     border: '1px solid var(--ff-warning)',
@@ -478,15 +471,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '4px 12px',
     fontWeight: '400'
   },
-  skipBtn: {
-    background: 'none',
-    border: '1px solid var(--ff-line-strong)',
-    borderRadius: '6px',
-    fontSize: '12px',
-    color: 'var(--ff-text-secondary)',
-    cursor: 'pointer',
-    padding: '4px 10px'
-  },
+  skipBtn: { ...smallBtn },
   cancelBtn: {
     background: 'none',
     border: '1px solid var(--ff-error)',
@@ -596,27 +581,8 @@ const styles: Record<string, React.CSSProperties> = {
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap'
   },
-  finderLink: {
-    background: 'none',
-    border: 'none',
-    fontSize: '11px',
-    color: 'var(--ff-blue)',
-    cursor: 'pointer',
-    padding: '0',
-    flexShrink: 0,
-    whiteSpace: 'nowrap'
-  },
-  finderLinkBar: {
-    background: 'none',
-    border: '1px solid var(--ff-line-strong)',
-    borderRadius: '6px',
-    fontSize: '12px',
-    color: 'var(--ff-blue)',
-    cursor: 'pointer',
-    padding: '4px 10px',
-    flexShrink: 0,
-    whiteSpace: 'nowrap'
-  },
+  finderLink: { ...linkBtn, fontSize: '11px', flexShrink: 0, whiteSpace: 'nowrap' },
+  finderLinkBar: { ...doThisSmallBtn, flexShrink: 0, whiteSpace: 'nowrap' },
   removeQueueBtn: {
     background: 'none',
     border: 'none',
@@ -629,15 +595,7 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: '4px',
     minWidth: '28px'
   },
-  dismissAllBtn: {
-    background: 'none',
-    border: '1px solid var(--ff-line-strong)',
-    borderRadius: '6px',
-    fontSize: '12px',
-    color: 'var(--ff-text-secondary)',
-    cursor: 'pointer',
-    padding: '4px 10px'
-  },
+  dismissAllBtn: { ...smallBtn },
   divider: {
     height: '1px',
     backgroundColor: 'var(--ff-grey-100)',

@@ -3,7 +3,7 @@ import type { DayPhoto } from '../../shared/types'
 import logoImg from '../assets/logo-tray.png'
 import { itemsLabel } from '../../shared/counts'
 import { MONTHS } from './DateViewParts'
-import { quietBtn, selectedOn } from '../ui/kit'
+import { quietBtn, selectedOn, primaryBtn } from '../ui/kit'
 import { mapColours } from '../ui/mapColours'
 
 // Collage and card maker for On This Day: pick how many photos, a layout and a frame, then save or copy the
@@ -636,6 +636,6 @@ const styles: Record<string, React.CSSProperties> = {
   step: { ...quietBtn, width: 28, height: 28, padding: 0, fontSize: 16 },
   check: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--ff-text)' },
   warn: { background: '#fff7e6', border: '1px solid #f5d28b', borderRadius: 8, padding: '8px 10px', fontSize: 12 },
-  primary: { background: 'var(--ff-pink-action)', color: 'var(--ff-white)', border: 'none', borderRadius: 6, padding: '6px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer' },
+  primary: { ...primaryBtn },
   btn: { ...quietBtn, padding: '6px 12px' }
 }

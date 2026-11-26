@@ -12,3 +12,13 @@ One focus ring, one hover and pressed look, one disabled look and one look for t
 - [ ] A4 **Checkboxes.** Every tick box and radio button in the app is pink when ticked (Settings, filters, the album box), not blue.
 - [ ] A5 **Text boxes and selects match.** In Settings (Health Check numbers, the Tune checks number boxes, the text box for words), Album Checks, Tags, Map and the Audit lists: the boxes share one edge colour (a light grey, a little darker than before on those that used the lighter one), the same corner and the same height inside a row. The box for the Tune checks word list is a standard box too. Anything that looks misaligned?
 - [ ] A6 **Reduce motion.** In macOS System Settings > Accessibility > Display, switch on Reduce motion, then open a photo grid while it loads and tick a photo: the shimmer and the pop do not animate. The small spinner in the photo view while a photo is working still turns.
+
+## Button sweep and Flickr wording (#262, #261)
+
+About 85 hand-built buttons now use the shared looks. Visible shifts: boxed grey buttons that had grey text now have dark text like every Secondary button; small buttons in the download bar, History and Settings share one small size; links and "put aside" buttons share one look.
+
+- [ ] B1 **Download bar.** Start a download. Pause, Skip, Dismiss all and the expand arrow match; "Open in Finder" style links are outlined blue; nothing looks lopsided.
+- [ ] B2 **Photostream, Albums, Discover.** The "Clear filters", "Select", "Clear" and "Download" buttons and the back links match their neighbours. Pink Main buttons are the same pink everywhere (Download in the photo view, the Settings Save button, Retry, Update in Health Check).
+- [ ] B3 **Settings and the photo view.** Change, Cancel, Restore defaults, the small "Reset" and "Cancel" lines, Copy, Download and "Show in Finder" look consistent. Anything that looks squeezed or too wide?
+- [ ] B4 **One name for Flickr's tool.** Every button that opens Flickr's editor for many photos says "Open in Flickr's organizer" (with a count or "selected" where it had one): On This Day, Timeline, Camera roll, Duplicates, the Photostream and Albums selection bars, Albums, Health Check lists. Right-click a photo: the menu says the same. No button says "Batch editor" or "Fix in Flickr's batch editor".
+- [ ] B5 **Your plan.** On the Tags tab open Your plan: each open item has "Open on Flickr", "View photos" and "Open in Flickr's organizer", in that order; the last opens Flickr's editor with the photos that carry that tag.

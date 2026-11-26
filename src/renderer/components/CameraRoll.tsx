@@ -77,7 +77,7 @@ export default function CameraRoll({ from, to, title, scope, extra, extraText, o
         </div>
         {onSeeOnThisDay && <button style={styles.btn} onClick={onSeeOnThisDay} title="This date in every year">See in On This Day</button>}
         <button style={styles.btn} title={extra?.albumIds?.length ? openTitle(extra, 'that period') : undefined} onClick={() => onOpenRange(from, to, rangeOpts(extra))}>Open in Photostream</button>
-        <BatchEditButton inline style={styles.btn} label="Batch editor" getIds={async () => (await window.flickrAPI.getDatePhotoIds({ kind: 'range', from, to, scope, ...extraOf() })).map(p => p.id)} />
+        <BatchEditButton inline style={styles.btn} getIds={async () => (await window.flickrAPI.getDatePhotoIds({ kind: 'range', from, to, scope, ...extraOf() })).map(p => p.id)} />
         <button style={{ ...styles.btn, ...styles.primary }} disabled={totalPhotos === 0} onClick={() => void downloadAll()}>Download all {totalPhotos.toLocaleString()}</button>
       </div>
 
@@ -85,7 +85,7 @@ export default function CameraRoll({ from, to, title, scope, extra, extraText, o
         <div style={{ ...styles.bar, background: 'var(--ff-tint)', border: '1px solid #ffc2de', borderRadius: 8, padding: '6px 10px' }}>
           <span style={styles.muted}>{selected.size} selected</span>
           <button style={styles.btn} onClick={() => onDownload([...selected.values()].map(p => ({ id: p.id, title: p.title })), `Camera roll, ${title} (selected)`, 'Only the photos you selected')}>Download selected</button>
-          <BatchEditButton inline style={styles.btn} label="Batch editor" getIds={async () => [...selected.values()].map(p => p.id)} />
+          <BatchEditButton inline style={styles.btn} getIds={async () => [...selected.values()].map(p => p.id)} />
           <button style={styles.link} onClick={() => setSelected(new Map())}>Clear</button>
         </div>
       )}

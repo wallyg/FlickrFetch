@@ -11,7 +11,7 @@ import { GLUE_BOUNDARY_SOURCE } from '../../shared/tags'
 import { logicOf, ruleById } from '../../shared/cleanupRules'
 import type { CleanupRuleState } from '../../shared/cleanupRules'
 import type { AlbumFitPhoto, AuditCategory, AuditClue, AuditFinding, AuditPlanRow, AuditSort, AuditStatus, AuditSummary, TagMode } from '../../shared/types'
-import { quietBtn, primaryBtn, selectedOn, filterInput, fieldBox, selectBox } from '../ui/kit'
+import { quietBtn, primaryBtn, selectedOn, filterInput, fieldBox, selectBox, linkBtn } from '../ui/kit'
 import BatchEditButton from './BatchEditButton'
 import PhotoStrip from './PhotoStrip'
 import HoverNote from '../ui/HoverNote'
@@ -129,8 +129,8 @@ function MissingRow({ f, onChange }: { f: AuditFinding; onChange: (f: AuditFindi
           <>
             <button style={styles.secondaryBtn} aria-expanded={open} onClick={() => setOpen(o => !o)}>{open ? 'Hide the photos' : `Show the ${f.count.toLocaleString()} photo${f.count === 1 ? '' : 's'}`}</button>
             {picking && ticked.size === 0
-              ? <span style={styles.muted}>{photos && photos.length === 0 ? 'The photos could not be loaded' : 'Tick a photo to add the tag in the batch editor'}</span>
-              : <BatchEditButton key={`${f.tag}|${picking ? ticked.size : 'all'}`} label={picking ? `Add "${f.display}" to ${ticked.size.toLocaleString()} in the batch editor` : `Add "${f.display}" in the batch editor`} style={styles.secondaryBtn}
+              ? <span style={styles.muted}>{photos && photos.length === 0 ? 'The photos could not be loaded' : 'Tick a photo to add the tag in Flickr\'s organizer'}</span>
+              : <BatchEditButton key={`${f.tag}|${picking ? ticked.size : 'all'}`} label={picking ? `Add "${f.display}" to ${ticked.size.toLocaleString()} in Flickr's organizer` : `Add "${f.display}" in Flickr's organizer`} style={styles.secondaryBtn}
                   getIds={() => (picking ? Promise.resolve([...ticked]) : window.flickrAPI.getAuditPhotoIds(f.tag, 'missing'))} />}
             <button style={styles.secondaryBtn} onClick={() => onChange(f, 'fine')}>This one is fine</button>
           </>
@@ -269,6 +269,7 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
                   <span style={styles.planType} title="The kind of problem this came from">{CATEGORY_INFO[p.category].name}</span>
                   {p.flickrUrl && <button style={styles.viewBtn} onClick={() => { setPlan(null); window.flickrAPI.openExternal(p.flickrUrl) }}>Open on Flickr <Icon name="external" /></button>}
                   <button style={{ ...styles.viewBtn, marginLeft: 0 }} onClick={() => { setPlan(null); onViewPhotos([p.display], 'any') }}>View photos</button>
+                  {p.status === 'plan' && <BatchEditButton inline key={`${p.category}|${p.tag}`} style={{ ...styles.viewBtn, marginLeft: 0 }} getIds={() => window.flickrAPI.getAuditPhotoIds(p.tag, p.category)} />}
                   {p.status === 'plan'
                     ? <button style={styles.planRemove} title="Remove from plan" aria-label="Remove from plan" onClick={() => void removeFromPlan(p)}><Icon name="close" /></button>
                     : <span style={{ width: 18 }} />}
@@ -385,7 +386,7 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
                         <button style={styles.secondaryBtn} onClick={() => void change(f, 'open')}>{f.status === 'plan' ? 'Remove from plan' : 'Undo'}</button>
                       )}
                       <button style={styles.secondaryBtn} onClick={() => onViewPhotos([f.display], 'any')}>View photos</button>
-                      <BatchEditButton key={`${f.tag}|${f.category}`} label="Batch editor" style={styles.secondaryBtn} getIds={() => window.flickrAPI.getAuditPhotoIds(f.tag, f.category)} />
+                      <BatchEditButton key={`${f.tag}|${f.category}`} style={styles.secondaryBtn} getIds={() => window.flickrAPI.getAuditPhotoIds(f.tag, f.category)} />
                       {f.flickrUrl && <button style={styles.secondaryBtn} title="Open this tag's page on your Flickr account, to fix it there" onClick={() => window.flickrAPI.openExternal(f.flickrUrl)}>Open on Flickr <Icon name="external" /></button>}
                     </div>
                   </div>
@@ -434,7 +435,7 @@ const styles: Record<string, React.CSSProperties> = {
   primaryBtn: { ...primaryBtn },
   secondaryBtn: { ...quietBtn },
   planBtn: { ...quietBtn, padding: '5px 12px' },
-  viewBtn: { whiteSpace: 'nowrap', marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--ff-blue)', fontSize: 12, cursor: 'pointer' },
+  viewBtn: { ...linkBtn, whiteSpace: 'nowrap', marginLeft: 'auto' },
   moreBtn: { width: '100%', padding: 8, background: 'none', border: '1px dashed var(--ff-line-strong)', borderRadius: 8, color: 'var(--ff-text-secondary)', fontSize: 13, cursor: 'pointer', marginBottom: 12 },
   planPop: { position: 'absolute', top: 'calc(100% + 6px)', right: 0, width: 600, maxWidth: 'calc(100vw - 48px)', maxHeight: '62vh', overflowY: 'auto', background: 'var(--ff-surface)', border: '1px solid var(--ff-line-strong)', borderRadius: 12, boxShadow: '0 10px 30px var(--ff-shadow-mid)', padding: '14px 16px', zIndex: 'var(--ff-z-menu)' },
   planBadge: { background: 'var(--ff-pink-action)', color: 'var(--ff-white)', borderRadius: 8, padding: '0 7px', fontSize: 12, fontWeight: 700 },

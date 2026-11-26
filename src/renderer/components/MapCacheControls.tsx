@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { fieldBox } from '../ui/kit'
+import { fieldBox, smallBtn } from '../ui/kit'
 import { MAP_CACHE_MAX_MB, MAP_CACHE_MIN_MB } from '../../shared/mapGeo'
 import type { MapCacheInfo } from '../../shared/types'
 
@@ -64,5 +64,5 @@ const styles: Record<string, React.CSSProperties> = {
   unit: { fontSize: 13, color: 'var(--ff-text-secondary)' },
   help: { fontSize: 12, color: 'var(--ff-text-secondary)' },
   value: { fontSize: 13, color: 'var(--ff-text)', fontWeight: 700 },
-  btn: { background: 'none', border: '1px solid var(--ff-line-strong)', borderRadius: 6, padding: '4px 12px', fontSize: 12, color: 'var(--ff-text-secondary)', cursor: 'pointer' }
+  btn: { ...smallBtn }
 }

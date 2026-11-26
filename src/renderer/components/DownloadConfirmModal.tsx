@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import Icon from '../ui/Icon'
 import type { AppSettings, MetadataSettings } from '../../shared/types'
 import { isFreeAccount, limitNotice } from '../../shared/downloadLimits'
-import { primaryBtn, quietBtn } from '../ui/kit'
+import { primaryBtn, quietBtn, linkBtn } from '../ui/kit'
 
 const SIZE_LABELS: Record<string, string> = {
   original: 'Original',
@@ -277,10 +277,7 @@ const s: Record<string, React.CSSProperties> = {
   footerBtns: {
     display: 'flex', gap: '8px',
   },
-  settingsLink: {
-    background: 'none', border: 'none', fontSize: '13px', color: 'var(--ff-blue)',
-    cursor: 'pointer', padding: 0,
-  },
+  settingsLink: { ...linkBtn, fontSize: '13px' },
   cancelBtn: { ...quietBtn, padding: '7px 16px' },
   confirmBtn: { ...primaryBtn, padding: '7px 20px' },
 }

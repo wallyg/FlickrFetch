@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { fieldCompact } from '../ui/kit'
+import { fieldCompact, putAsideBtn } from '../ui/kit'
 import type { MissingTagSettings as Settings, MissingTagStats } from '../../shared/types'
 
 // The numbers behind "Photos missing a tag" (Tune checks). Each is saved when you finish typing, and the counts underneath are worked out
@@ -65,6 +65,6 @@ const styles: Record<string, React.CSSProperties> = {
   muted: { fontSize: 12, color: 'var(--ff-text-muted)' },
   row: { display: 'flex', alignItems: 'center', gap: 10, fontSize: 12, color: 'var(--ff-text)' },
   input: { ...fieldCompact, width: 72 },
-  link: { alignSelf: 'flex-start', border: 'none', background: 'none', padding: 0, fontSize: 12, color: 'var(--ff-text-secondary)', textDecoration: 'underline', cursor: 'pointer' },
+  link: { ...putAsideBtn, alignSelf: 'flex-start' },
   stats: { fontSize: 12, color: 'var(--ff-text)', background: 'var(--ff-warm)', borderRadius: 6, padding: '6px 10px', display: 'flex', flexDirection: 'column', gap: 2 }
 }

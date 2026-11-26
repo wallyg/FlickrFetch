@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo } from 'react'
+import { linkBtn, quietBtn } from '../ui/kit'
 import Icon from '../ui/Icon'
 import { useFindShortcut } from '../hooks/useFindShortcut'
 import { DEBOUNCE, useDebouncedEffect } from '../ui/useDebounce'
@@ -761,8 +762,8 @@ const s: Record<string, React.CSSProperties> = {
   headerRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '20px' },
   heading: { margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--ff-text)' },
   subheading: { margin: '4px 0 0', fontSize: '13px', color: 'var(--ff-text-secondary)' },
-  backBtn: { background: 'none', border: 'none', color: 'var(--ff-blue)', cursor: 'pointer', fontSize: '14px', padding: '4px 0', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '4px' },
-  selectBtn: { padding: '6px 14px', borderRadius: '8px', border: '1px solid var(--ff-line-strong)', background: 'var(--ff-surface)', cursor: 'pointer', fontSize: '13px', color: 'var(--ff-text)', flexShrink: 0 },
+  backBtn: { ...linkBtn, fontSize: '14px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '4px' },
+  selectBtn: { ...quietBtn, flexShrink: 0 },
   filterInput: {
     height: '36px', borderRadius: '8px', border: '1px solid var(--ff-line-strong)',
     padding: '0 12px', fontSize: '14px', outline: 'none', width: '100%', boxSizing: 'border-box',

@@ -3,7 +3,7 @@ import Icon from '../ui/Icon'
 import { quietBtn, linkBtn } from '../ui/kit'
 import HoverNote from '../ui/HoverNote'
 
-// "Fix in Flickr's batch editor": opens Flickr's own editor with these photos already in its tray. FlickrFetch changes nothing
+// "Open in Flickr's organizer": opens Flickr's own editor with these photos already in its tray. FlickrFetch changes nothing
 // on Flickr. A long list goes in parts of 500 (the most the editor takes at once), one part per click. The note under the
 // button confirms what was opened and fades away by itself; while parts are still waiting it stays, because "Open part N" is a button.
 
@@ -22,7 +22,7 @@ const FADE_MS = 600
 // photo ids to the browser, so from the second press in a session the note says what to try.
 let openedBefore = false
 
-export default function BatchEditButton({ getIds, label = "Fix in Flickr's batch editor", style, inline }: Props): React.JSX.Element {
+export default function BatchEditButton({ getIds, label = "Open in Flickr's organizer", style, inline }: Props): React.JSX.Element {
   const [ids, setIds] = useState<string[] | null>(null)
   const [part, setPart] = useState(0)          // the part opened last
   const [parts, setParts] = useState(0)
@@ -53,7 +53,7 @@ export default function BatchEditButton({ getIds, label = "Fix in Flickr's batch
   const n = ids?.length ?? 0
   return (
     <div style={{ display: 'flex', flexDirection: inline ? 'row' : 'column', flexWrap: 'wrap', gap: inline ? 10 : 6, alignItems: inline ? 'center' : 'flex-start' }}>
-      <HoverNote mark={false} block={style?.width === '100%'} text={"Opens Flickr's batch editor with these photos loaded, so you can change them there. FlickrFetch does not edit anything.\nIt takes 500 photos at a time."}>
+      <HoverNote mark={false} block={style?.width === '100%'} text={"Opens Flickr's organizer with these photos loaded, so you can change them there. FlickrFetch does not edit anything.\nIt takes 500 photos at a time."}>
         <button style={style ?? quietBtn} disabled={busy} onClick={() => void open(0)}>
           {busy ? 'Opening…' : label} <span aria-hidden><Icon name="external" /></span>
         </button>
@@ -62,7 +62,7 @@ export default function BatchEditButton({ getIds, label = "Fix in Flickr's batch
         <div role="status" style={{ ...noteStyle, opacity: note === 'fading' ? 0 : 1 }}>
           {n === 0 ? 'Nothing to open here.' : parts > 1
             ? <>Opened part {part + 1} of {parts} ({Math.min(500, n - part * 500).toLocaleString()} of {n.toLocaleString()} photos). </>
-            : <>Opened {n.toLocaleString()} photo{n === 1 ? '' : 's'} in Flickr’s batch editor. </>}
+            : <>Opened {n.toLocaleString()} photo{n === 1 ? '' : 's'} in Flickr’s organizer. </>}
           {n > 0 && hint && <>If it did not load, close the earlier editor tab, wait a few seconds and press again. </>}
           {n > 0 && part + 1 < parts && <button style={linkBtn} onClick={() => void open(part + 1, ids)}>Open part {part + 2}</button>}
         </div>

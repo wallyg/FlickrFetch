@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import Icon from '../ui/Icon'
 import type { AlbumFitPhoto, AlbumItem, AlbumKind } from '../../shared/types'
 import BatchEditButton from './BatchEditButton'
-import { quietBtn, selectCompact } from '../ui/kit'
+import { quietBtn, selectCompact, linkBtn, putAsideBtn } from '../ui/kit'
 import PhotoStrip from './PhotoStrip'
 
 // The rows of the album fit lists. A May be missing row is quiet until you open it: the album, how many photos may belong,
@@ -10,9 +10,9 @@ import PhotoStrip from './PhotoStrip'
 // ticked or opened on Flickr) and the full reason. Nothing here changes Flickr.
 
 export const actionStyles: Record<string, React.CSSProperties> = {
-  link: { background: 'none', border: 'none', color: 'var(--ff-blue)', fontSize: 13, fontWeight: 700, cursor: 'pointer', padding: '5px 6px' },    // looks at something on Flickr
+  link: { ...linkBtn, fontSize: 13 },    // looks at something on Flickr
   fix: { ...quietBtn, borderColor: 'var(--ff-blue)', color: 'var(--ff-blue)', fontWeight: 700 },                                                  // the one real action: open the editor
-  quiet: { background: 'none', border: 'none', color: 'var(--ff-text-secondary)', fontSize: 13, textDecoration: 'underline', cursor: 'pointer', padding: '5px 6px' }   // puts the row aside
+  quiet: { ...putAsideBtn }   // puts the row aside
 }
 
 const KIND_LABEL: Record<AlbumKind, string> = { date: 'date', place: 'place', tag: 'subject (tag)', anything: 'left alone' }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { primaryBtn, putAsideBtn, smallBtn } from '../ui/kit'
 import Icon from '../ui/Icon'
 import type { FlickrPhoto, PhotoSize, PhotoInfo, DownloadSize, CameraExif } from '../../shared/types'
 import { descriptionToPlainText } from '../../shared/description'
@@ -930,15 +931,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '6px',
     margin: '8px 0 12px',
   },
-  actionBtn: {
-    background: 'var(--ff-surface)',
-    border: '1px solid var(--ff-line-strong)',
-    borderRadius: '6px',
-    padding: '4px 9px',
-    fontSize: '12px',
-    color: 'var(--ff-text-secondary)',
-    cursor: 'pointer',
-  },
+  actionBtn: { ...smallBtn },
   copyBtn: {
     background: 'none',
     border: '1px solid var(--ff-line-strong)',
@@ -969,17 +962,7 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundColor: 'var(--ff-surface)',
     color: 'var(--ff-text)',
   },
-  downloadBtn: {
-    width: '100%',
-    padding: '9px',
-    backgroundColor: 'var(--ff-pink-action)',
-    color: 'var(--ff-white)',
-    border: 'none',
-    borderRadius: '6px',
-    fontSize: '14px',
-    fontWeight: '700',
-    cursor: 'pointer',
-  },
+  downloadBtn: { ...primaryBtn, width: '100%' },
   progressTrack: {
     height: '6px',
     backgroundColor: 'var(--ff-border)',
@@ -1002,15 +985,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '12px',
     color: 'var(--ff-text-secondary)',
   },
-  cancelBtn: {
-    background: 'none',
-    border: 'none',
-    fontSize: '12px',
-    color: 'var(--ff-text-secondary)',
-    cursor: 'pointer',
-    textDecoration: 'underline',
-    padding: 0,
-  },
+  cancelBtn: { ...putAsideBtn },
   successText: {
     fontSize: '13px',
     color: 'var(--ff-success-ink)',
@@ -1021,27 +996,8 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     gap: '6px',
   },
-  finderBtn: {
-    flex: 1,
-    padding: '8px',
-    backgroundColor: 'var(--ff-pink-action)',
-    color: 'var(--ff-white)',
-    border: 'none',
-    borderRadius: '6px',
-    fontSize: '12px',
-    fontWeight: '700',
-    cursor: 'pointer',
-  },
-  againBtn: {
-    flex: 1,
-    padding: '8px',
-    backgroundColor: 'transparent',
-    color: 'var(--ff-text-secondary)',
-    border: '1px solid var(--ff-line-strong)',
-    borderRadius: '6px',
-    fontSize: '12px',
-    cursor: 'pointer',
-  },
+  finderBtn: { ...primaryBtn, flex: 1 },
+  againBtn: { ...smallBtn, flex: 1 },
   errorText: {
     fontSize: '12px',
     color: 'var(--ff-error-ink)',

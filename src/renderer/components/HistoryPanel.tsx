@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react'
 import Icon from '../ui/Icon'
 import { useFindShortcut } from '../hooks/useFindShortcut'
-import { quietBtn, dangerBtn, putAsideBtn } from '../ui/kit'
+import { quietBtn, dangerBtn, putAsideBtn, smallBtn } from '../ui/kit'
 import type { BatchLogEntry, PhotoDownloadRecord, DiscoverDownloadRecord, FlickrAlbum } from '../../shared/types'
 import EmptyState from './EmptyState'
 import { sizeTag } from '../../shared/downloadLimits'
@@ -795,10 +795,7 @@ const styles: Record<string, React.CSSProperties> = {
   empty: {
     padding: '24px 20px', color: 'var(--ff-text-muted)', fontSize: 13, lineHeight: 1.5, margin: 0,
   },
-  clearFiltersBtn: {
-    background: 'none', border: '1px solid var(--ff-line-strong)', borderRadius: '6px',
-    padding: '6px 16px', fontSize: 13, color: 'var(--ff-text-secondary)', cursor: 'pointer',
-  },
+  clearFiltersBtn: { ...quietBtn },
   // Batch tab rows
   row: {
     padding: '10px 20px',
@@ -965,10 +962,7 @@ const styles: Record<string, React.CSSProperties> = {
     background: 'none', border: '1px solid var(--ff-error)', borderRadius: 4,
     padding: '2px 6px', fontSize: 11, color: 'var(--ff-error)', cursor: 'pointer',
   },
-  deleteConfirmNo: {
-    background: 'none', border: '1px solid var(--ff-line-strong)', borderRadius: 4,
-    padding: '2px 6px', fontSize: 11, color: 'var(--ff-text-secondary)', cursor: 'pointer',
-  },
+  deleteConfirmNo: { ...smallBtn },
   // Footer
   footer: {
     padding: '12px 20px', borderTop: '1px solid var(--ff-border)',

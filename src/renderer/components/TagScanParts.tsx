@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import Icon from '../ui/Icon'
 import type { TagIndexStatus, TagScanProgress } from '../../shared/types'
 import { Tooltip } from './PhotoGridShared'
-import { quietBtn } from '../ui/kit'
+import { quietBtn, linkBtn, primaryBtn } from '../ui/kit'
 import RichNote from '../ui/RichNote'
 
 // Pieces of the library scan shown in both the Tags tab and the Cleanup tab.
@@ -146,11 +146,11 @@ const styles: Record<string, React.CSSProperties> = {
   muted: { color: 'var(--ff-text-secondary)', fontSize: '13px' },
   notice: { margin: '0 24px 6px', padding: '8px 12px', background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: '8px', fontSize: '13px', color: 'var(--ff-text-secondary)' },
   secondaryBtn: { ...quietBtn, padding: '5px 12px' },
-  linkBtn: { background: 'none', border: 'none', color: 'var(--ff-blue)', fontSize: '13px', cursor: 'pointer', padding: '4px 6px' },
+  linkBtn: { ...linkBtn, fontSize: '13px' },
   progressCard: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', width: '360px', padding: '28px', background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: '12px' },
   cardTitle: { fontSize: '14px', fontWeight: 700, color: 'var(--ff-navy)' },
   barTrack: { width: '100%', height: '8px', background: 'var(--ff-border)', borderRadius: '4px', overflow: 'hidden' },
   barFill: { height: '100%', background: 'var(--ff-pink)', transition: 'width 0.3s' },
-  updateBtn: { background: 'var(--ff-pink-action)', color: 'var(--ff-white)', border: '1px solid var(--ff-pink-action)', borderRadius: '6px', padding: '6px 14px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' },
+  updateBtn: { ...primaryBtn, whiteSpace: 'nowrap' },
   dataPanel: { position: 'absolute', top: 'calc(100% + 6px)', right: 0, width: 370, background: 'var(--ff-surface)', border: '1px solid var(--ff-line-strong)', borderRadius: 12, boxShadow: '0 10px 30px var(--ff-shadow-mid)', padding: '14px 16px', zIndex: 'var(--ff-z-menu)' }
 }
