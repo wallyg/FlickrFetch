@@ -613,7 +613,7 @@ function PhotosTab() {
         {clearMode === 'confirm-preset' && (
           <div style={styles.clearChoiceRow}>
             <span style={styles.clearWarning}>Clear download records from the {clearPresetLabel}?<span style={styles.clearNote}>Your files are not deleted. Smart Download will treat these photos as never downloaded.</span></span>
-            <button style={styles.confirmBtn} onClick={handleConfirmPresetClear}>Confirm</button>
+            <button style={styles.confirmBtn} onClick={handleConfirmPresetClear}>Clear records</button>
             <button style={styles.cancelConfirm} onClick={() => setClearMode('idle')}>Cancel</button>
           </div>
         )}
@@ -622,7 +622,7 @@ function PhotosTab() {
           <div style={{ ...styles.clearChoiceRow, flexWrap: 'wrap' as const, gap: 6 }}>
             <span style={styles.clearWarning}>Clear download records before this date:<span style={styles.clearNote}>Your files are not deleted. Smart Download will treat these photos as never downloaded.</span></span>
             <input type="date" style={styles.dateInput} value={clearDate} onChange={e => setClearDate(e.target.value)} />
-            <button style={styles.confirmBtn} onClick={handleConfirmClearBefore} disabled={!clearDate}>Confirm</button>
+            <button style={styles.confirmBtn} onClick={handleConfirmClearBefore} disabled={!clearDate}>Clear records</button>
             <button style={styles.cancelConfirm} onClick={() => setClearMode('idle')}>Cancel</button>
           </div>
         )}
@@ -631,7 +631,7 @@ function PhotosTab() {
           <div style={{ ...styles.clearChoiceRow, flexWrap: 'wrap' as const, gap: 6 }}>
             <span style={styles.clearWarning}>Clear download records after this date:<span style={styles.clearNote}>Your files are not deleted. Smart Download will treat these photos as never downloaded.</span></span>
             <input type="date" style={styles.dateInput} value={clearDate} onChange={e => setClearDate(e.target.value)} />
-            <button style={styles.confirmBtn} onClick={handleConfirmClearAfter} disabled={!clearDate}>Confirm</button>
+            <button style={styles.confirmBtn} onClick={handleConfirmClearAfter} disabled={!clearDate}>Clear records</button>
             <button style={styles.cancelConfirm} onClick={() => setClearMode('idle')}>Cancel</button>
           </div>
         )}
@@ -639,7 +639,7 @@ function PhotosTab() {
         {clearMode === 'confirm-all' && (
           <div style={styles.clearChoiceRow}>
             <span style={styles.clearWarning}>Clear all photo download records?<span style={styles.clearNote}>Your files are not deleted. Smart Download will treat these photos as never downloaded.</span></span>
-            <button style={styles.confirmBtn} onClick={handleConfirmClearAll}>Confirm</button>
+            <button style={styles.confirmBtn} onClick={handleConfirmClearAll}>Clear all records</button>
             <button style={styles.cancelConfirm} onClick={() => setClearMode('idle')}>Cancel</button>
           </div>
         )}

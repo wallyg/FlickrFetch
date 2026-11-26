@@ -183,11 +183,11 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
                           <button
                             style={styles.retryBtn}
                             onClick={() => b.discoverFolder
-                              ? window.flickrAPI.retryDiscoverSelectedBatch(b.failedPhotos!, `Retry: ${b.albumTitle}`, b.discoverFolder)
-                              : window.flickrAPI.startSelectedBatch(b.failedPhotos!, `Retry: ${b.albumTitle}`)
+                              ? window.flickrAPI.retryDiscoverSelectedBatch(b.failedPhotos!, `Try again: ${b.albumTitle}`, b.discoverFolder)
+                              : window.flickrAPI.startSelectedBatch(b.failedPhotos!, `Try again: ${b.albumTitle}`)
                             }
                           >
-                            Retry {b.failedPhotos!.length} failed
+                            Try {b.failedPhotos!.length} failed again
                           </button>
                         </>
                       )}
@@ -277,11 +277,11 @@ export default function DownloadQueueBar({ progress, completedBatches = [], onDi
                     <button
                       style={styles.retryBtn}
                       onClick={() => progress!.discoverFolder
-                        ? window.flickrAPI.retryDiscoverSelectedBatch(progress!.failedPhotos!, `Retry: ${albumTitle}`, progress!.discoverFolder)
-                        : window.flickrAPI.startSelectedBatch(progress!.failedPhotos!, `Retry: ${albumTitle}`)
+                        ? window.flickrAPI.retryDiscoverSelectedBatch(progress!.failedPhotos!, `Try again: ${albumTitle}`, progress!.discoverFolder)
+                        : window.flickrAPI.startSelectedBatch(progress!.failedPhotos!, `Try again: ${albumTitle}`)
                       }
                     >
-                      Retry {progress!.failedPhotos!.length} failed
+                      Try {progress!.failedPhotos!.length} failed again
                     </button>
                   </>
                 )}

@@ -68,3 +68,13 @@ test('Flickr\'s organizer is called that everywhere the user reads it', () => {
   }
   assert.deepEqual(bad, [], 'Say "Open in Flickr\'s organizer" (see assets/brand/brand-tokens.md, Wording).')
 })
+
+// Wording (#243): "Try again" after a failure (never "Retry"), and a button says what it does (never a bare "OK" or "Confirm").
+test('no button says Retry, OK or Confirm on its own', () => {
+  const bad: string[] = []
+  for (const f of files(SRC)) {
+    const code = readFileSync(f, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1')
+    for (const m of code.matchAll(/>\s*(?:Retry\b[^<{]*|OK|Ok|Confirm)\s*</g)) bad.push(`${relative(root, f)}: ${m[0].trim()}`)
+  }
+  assert.deepEqual(bad, [], 'Say "Try again", or name what the button does ("Clear records"). See assets/brand/brand-tokens.md, Wording.')
+})
