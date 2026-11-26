@@ -1,4 +1,6 @@
 import React from 'react'
+import CloseButton from '../ui/CloseButton'
+import Dialog from '../ui/Dialog'
 import Icon from '../ui/Icon'
 
 interface ProblemModalProps {
@@ -6,19 +8,10 @@ interface ProblemModalProps {
 }
 
 export default function ProblemModal({ onClose }: ProblemModalProps): React.JSX.Element {
-  const handleKey = React.useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape') onClose()
-  }, [onClose])
-
-  React.useEffect(() => {
-    document.addEventListener('keydown', handleKey)
-    return () => document.removeEventListener('keydown', handleKey)
-  }, [handleKey])
 
   return (
-    <div style={s.overlay} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div style={s.card}>
-        <button style={s.closeBtn} onClick={onClose} aria-label="Close"><Icon name="close" /></button>
+    <Dialog label="The problem FlickrFetch solves" size="wide" onClose={onClose} cardStyle={{ position: 'relative', padding: '36px 40px 32px', overflowY: 'auto', maxHeight: '85vh' }}>
+        <CloseButton onClick={onClose} style={{ position: 'absolute', top: 14, right: 14 }} />
         <h2 style={s.heading}>The Problem FlickrFetch Solves</h2>
         <div style={s.body}>
           <p style={s.para}>
@@ -53,43 +46,11 @@ export default function ProblemModal({ onClose }: ProblemModalProps): React.JSX.
             between a backup and an archive.
           </p>
         </div>
-      </div>
-    </div>
+</Dialog>
   )
 }
 
 const s: Record<string, React.CSSProperties> = {
-  overlay: {
-    position: 'fixed',
-    inset: 0,
-    backgroundColor: 'var(--ff-scrim)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 'var(--ff-z-dialog)',
-  },
-  card: {
-    backgroundColor: 'var(--ff-surface)',
-    borderRadius: '12px',
-    width: '640px',
-    maxWidth: '92vw',
-    maxHeight: '85vh',
-    overflowY: 'auto',
-    boxShadow: '0 12px 48px var(--ff-shadow-strong)',
-    position: 'relative',
-    padding: '36px 40px 32px',
-  },
-  closeBtn: {
-    position: 'absolute',
-    top: '14px',
-    right: '14px',
-    background: 'none',
-    border: 'none',
-    fontSize: '14px',
-    color: 'var(--ff-text-secondary)',
-    cursor: 'pointer',
-    padding: '4px',
-  },
   heading: {
     fontSize: '18px',
     fontWeight: '700',

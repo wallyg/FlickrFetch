@@ -1,4 +1,6 @@
 import React, { useState } from 'react'
+import CloseButton from '../ui/CloseButton'
+import Dialog from '../ui/Dialog'
 import { linkBtn } from '../ui/kit'
 import Icon from '../ui/Icon'
 import logoTrayImg from '../assets/logo-tray.png'
@@ -15,20 +17,11 @@ export default function AboutModal({ version, onClose }: AboutModalProps): React
   const [showChangelog, setShowChangelog] = useState(false)
   const [showProblem, setShowProblem] = useState(false)
 
-  const handleKey = React.useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape') onClose()
-  }, [onClose])
-
-  React.useEffect(() => {
-    document.addEventListener('keydown', handleKey)
-    return () => document.removeEventListener('keydown', handleKey)
-  }, [handleKey])
 
   return (
     <>
-      <div style={styles.overlay}>
-        <div style={styles.card}>
-          <button style={styles.closeBtn} onClick={onClose}><Icon name="close" /></button>
+      <Dialog label="About FlickrFetch" size="large" onClose={onClose} cardStyle={{ background: 'var(--ff-warning-bg)', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <CloseButton onClick={onClose} style={{ position: 'absolute', top: 14, right: 14, zIndex: 1 }} />
 
           <div style={styles.body}>
             {/* Left column — identity */}
@@ -113,8 +106,7 @@ export default function AboutModal({ version, onClose }: AboutModalProps): React
           <div style={styles.footer}>
             <p style={styles.copyright}>© 2026 Wally Gobetz. All rights reserved.</p>
           </div>
-        </div>
-      </div>
+</Dialog>
 
       {showChangelog && <ChangelogModal onClose={() => setShowChangelog(false)} />}
       {showProblem && <ProblemModal onClose={() => setShowProblem(false)} />}
@@ -123,38 +115,6 @@ export default function AboutModal({ version, onClose }: AboutModalProps): React
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  overlay: {
-    position: 'fixed',
-    inset: 0,
-    backgroundColor: 'var(--ff-scrim)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 'var(--ff-z-dialog)'
-  },
-  card: {
-    backgroundColor: 'var(--ff-warning-bg)',
-    borderRadius: '12px',
-    width: '720px',
-    maxWidth: '92vw',
-    boxShadow: '0 12px 48px var(--ff-shadow-strong)',
-    position: 'relative',
-    overflow: 'hidden',
-    display: 'flex',
-    flexDirection: 'column'
-  },
-  closeBtn: {
-    position: 'absolute',
-    top: '14px',
-    right: '14px',
-    background: 'none',
-    border: 'none',
-    fontSize: '14px',
-    color: 'var(--ff-text-secondary)',
-    cursor: 'pointer',
-    padding: '4px',
-    zIndex: 1
-  },
   body: {
     display: 'flex',
     flexDirection: 'row',

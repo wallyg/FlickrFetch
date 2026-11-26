@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import CloseButton from '../ui/CloseButton'
+import Dialog from '../ui/Dialog'
 import { fieldBox, tabMark, primaryBtn, putAsideBtn, quietBtn, smallBtn } from '../ui/kit'
 import Icon from '../ui/Icon'
 import HealthCheckSettings from './HealthCheckSettings'
@@ -130,14 +132,6 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
 
   useEffect(() => { requestAnimationFrame(checkFade) }, [activeTab, checkFade])
 
-  const handleKey = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape') onClose()
-  }, [onClose])
-
-  useEffect(() => {
-    document.addEventListener('keydown', handleKey)
-    return () => document.removeEventListener('keydown', handleKey)
-  }, [handleKey])
 
   const applySettings = useCallback((settings: AppSettings) => {
     setShowDockProgress(settings.showDockProgress ?? true)
@@ -290,13 +284,12 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
   }
 
   return (
-    <div style={s.overlay}>
-      <div style={s.card} onClick={e => e.stopPropagation()}>
+    <Dialog label="Settings" size="wide" onClose={onClose} cardStyle={{ height: 660, maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
 
         {/* Header */}
         <div style={s.header}>
           <h2 style={s.title}>Settings</h2>
-          <button style={s.closeBtn} onClick={onClose}><Icon name="close" /></button>
+          <CloseButton onClick={onClose} />
         </div>
 
         {updateVersion && (
@@ -839,17 +832,13 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
             <button style={s.cancelBtn} onClick={onClose}>Done</button>
           </div>
         </div>
-      </div>
-    </div>
+</Dialog>
   )
 }
 
 const s: Record<string, React.CSSProperties> = {
-  overlay: { position: 'fixed', inset: 0, backgroundColor: 'var(--ff-scrim)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 'var(--ff-z-dialog)' },
-  card: { backgroundColor: 'var(--ff-surface)', borderRadius: '12px', width: '640px', maxWidth: '90vw', height: '660px', maxHeight: '90vh', boxShadow: '0 8px 40px var(--ff-shadow-strong)', display: 'flex', flexDirection: 'column' },
   header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px 0', flexShrink: 0 },
   title: { fontSize: '18px', fontWeight: '700', color: 'var(--ff-text)', margin: 0 },
-  closeBtn: { background: 'none', border: 'none', fontSize: '16px', color: 'var(--ff-text-secondary)', cursor: 'pointer', padding: '4px' },
   updateBanner: { display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 24px', backgroundColor: 'var(--ff-info-bg)', borderBottom: '1px solid var(--ff-info-line)', flexShrink: 0 },
   updateText: { flex: 1, fontSize: '13px', color: 'var(--ff-blue)', fontWeight: '400' },
   updateBtn: { ...smallBtn, flexShrink: 0 },

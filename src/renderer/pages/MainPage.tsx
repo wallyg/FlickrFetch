@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
+import Dialog from '../ui/Dialog'
 import { tabMark, linkBtn, primaryBtn, quietBtn } from '../ui/kit'
 import Icon from '../ui/Icon'
 import { useRememberScroll } from '../hooks/useRememberScroll'
@@ -960,8 +961,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
       </main>
 
       {showResetConfirm && selectedAlbum && (
-        <div style={styles.confirmOverlay}>
-          <div style={styles.confirmCard}>
+        <Dialog label="Reset download records" size="small" onClose={() => setShowResetConfirm(false)} cardStyle={{ padding: 24 }}>
             <p style={styles.confirmTitle}>Reset download records?</p>
             <p style={styles.confirmBody}>
               This removes the download record for all {((selectedAlbum.photoCount ?? 0) + (selectedAlbum.videoCount ?? 0)).toLocaleString()} items in &ldquo;{selectedAlbum.title}&rdquo;.<br /><br />Smart Download will then treat them as never downloaded.<br /><br />Your downloaded files are not touched.
@@ -970,20 +970,17 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
               <button style={styles.confirmCancel} onClick={() => setShowResetConfirm(false)}>Cancel</button>
               <button style={styles.confirmDestructive} onClick={handleResetRecords}>Reset records</button>
             </div>
-          </div>
-        </div>
+</Dialog>
       )}
       {showSignOutConfirm && (
-        <div style={styles.confirmOverlay}>
-          <div style={styles.confirmCard}>
+        <Dialog label="Sign out of Flickr" size="small" onClose={() => setShowSignOutConfirm(false)} cardStyle={{ padding: 24 }}>
             <p style={styles.confirmTitle}>Sign out of Flickr?</p>
             <p style={styles.confirmBody}>You&rsquo;ll need to reconnect your Flickr account to use FlickrFetch.<br /><br />Your downloaded photos and your download history stay on this computer.</p>
             <div style={styles.confirmActions}>
               <button style={styles.confirmCancel} onClick={() => setShowSignOutConfirm(false)}>Cancel</button>
               <button style={styles.confirmDestructive} onClick={() => { setShowSignOutConfirm(false); onSignOut() }}>Sign out</button>
             </div>
-          </div>
-        </div>
+</Dialog>
       )}
       {showSettings && <SettingsModal initialTab={settingsTab} onClose={() => { setShowSettings(false); setSettingsKey(k => k + 1) }} updateVersion={updateVersion ?? undefined} />}
       {showHistory && <HistoryPanel onClose={() => setShowHistory(false)} />}
@@ -1339,14 +1336,6 @@ const styles: Record<string, React.CSSProperties> = {
   overflowMenuItemDestructive: {
     display: 'block', width: '100%', textAlign: 'left' as const, background: 'none', border: 'none',
     padding: '8px 12px', fontSize: '13px', color: 'var(--ff-error)', cursor: 'pointer', borderRadius: '6px',
-  },
-  confirmOverlay: {
-    position: 'fixed' as const, inset: 0, backgroundColor: 'var(--ff-scrim)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 'var(--ff-z-dialog)',
-  },
-  confirmCard: {
-    backgroundColor: 'var(--ff-surface)', borderRadius: '12px', padding: '24px',
-    width: '360px', maxWidth: '90vw', boxShadow: '0 8px 32px var(--ff-shadow-mid)',
   },
   confirmTitle: { fontSize: '16px', fontWeight: '700' as const, color: 'var(--ff-text)', margin: '0 0 8px' },
   confirmBody: { fontSize: '13px', color: 'var(--ff-text-secondary)', lineHeight: '1.5', margin: '0 0 20px' },

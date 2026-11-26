@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react'
+import CloseButton from '../ui/CloseButton'
+import Dialog from '../ui/Dialog'
 import Icon from '../ui/Icon'
 import type { AppSettings, MetadataSettings } from '../../shared/types'
 import { isFreeAccount, limitNotice } from '../../shared/downloadLimits'
@@ -64,12 +66,11 @@ export default function DownloadConfirmModal({ pending, settingsKey, isPro, onCa
   const totalCount = pending.photoCount + pending.videoCount
 
   return (
-    <div style={s.overlay} onClick={onCancel}>
-      <div style={s.modal} onClick={e => e.stopPropagation()}>
+    <Dialog label="Confirm download" size="medium" onClose={onCancel} cardStyle={{ overflow: 'hidden' }}>
 
         <div style={s.header}>
           <h2 style={s.title}>Confirm Download</h2>
-          <button style={s.closeBtn} onClick={onCancel}><Icon name="close" /></button>
+          <CloseButton onClick={onCancel} />
         </div>
 
         <div style={s.body}>
@@ -163,31 +164,17 @@ export default function DownloadConfirmModal({ pending, settingsKey, isPro, onCa
             </button>
           </div>
         </div>
-
-      </div>
-    </div>
+</Dialog>
   )
 }
 
 const s: Record<string, React.CSSProperties> = {
-  overlay: {
-    position: 'fixed', inset: 0, backgroundColor: 'var(--ff-scrim)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 'var(--ff-z-dialog)',
-  },
-  modal: {
-    backgroundColor: 'var(--ff-surface)', borderRadius: '12px', width: '420px', maxWidth: '90vw',
-    boxShadow: '0 20px 60px var(--ff-shadow-mid)', overflow: 'hidden',
-  },
   header: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     padding: '20px 20px 0',
   },
   title: {
     margin: 0, fontSize: '16px', fontWeight: '700', color: 'var(--ff-navy)',
-  },
-  closeBtn: {
-    background: 'none', border: 'none', fontSize: '14px', color: 'var(--ff-text-secondary)',
-    cursor: 'pointer', padding: '0 4px', lineHeight: 1,
   },
   body: {
     padding: '16px 20px 0',

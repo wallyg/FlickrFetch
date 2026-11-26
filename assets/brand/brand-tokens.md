@@ -77,6 +77,12 @@ How this is kept honest: the placement is one plain function (card size, the con
 
 One info icon look everywhere; the Health Check one is the pulse (heartbeat) icon (placement to be decided on screen).
 
+## Dialogs (3.13, #236)
+
+Every dialog is built with `ui/Dialog.tsx` and its close mark is `ui/CloseButton.tsx`. Found before: eight dialogs with five widths (360, 420, 480, 640, 720), five shadows, two backdrop colours (the What's New window used a darker one), three different close marks (one a text cross), Esc working in four of them, clicking the backdrop closing three, and no rule for focus.
+
+The rule: a dimmed backdrop (`--ff-scrim`) on the dialog layer; one card (`--ff-surface`, 12 px corners, `0 12px 40px` strong shadow); four widths (small 360 for a question, medium 480, wide 640 for Settings and long text, large 720, or a width of its own for the collage window); a drawn cross in the top right named "Close"; **Esc closes the dialog on top and only that one** (a note opened over About closes first); **clicking the backdrop closes it**; focus moves into the dialog when it opens, Tab stays inside, and focus returns to where it was when it closes. The History panel is a side panel, not a dialog: it keeps its own shape and gets Esc. `tests/dialogs.test.ts` keeps new dialogs on the shell.
+
 ## Sizes
 
 - **Text:** 11 (labels, the floor), 12, 13 (body), 14 (card titles), 16, 18, 22, 24 (headings).

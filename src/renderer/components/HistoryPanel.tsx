@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react'
+import { useEscapeToClose } from '../ui/Dialog'
 import Icon from '../ui/Icon'
 import { useFindShortcut } from '../hooks/useFindShortcut'
 import { quietBtn, dangerBtn, putAsideBtn, smallBtn } from '../ui/kit'
@@ -716,6 +717,7 @@ function DiscoverTab() {
 
 export default function HistoryPanel({ onClose }: HistoryPanelProps) {
   const [tab, setTab] = useState<Tab>('batches')
+  useEscapeToClose(onClose)   // Esc closes the panel, like a dialog
 
   return (
     <div style={styles.overlay} onClick={onClose}>

@@ -1,4 +1,6 @@
 import React from 'react'
+import CloseButton from '../ui/CloseButton'
+import Dialog from '../ui/Dialog'
 import Icon from '../ui/Icon'
 import changelog from '../data/changelog'
 
@@ -7,21 +9,12 @@ interface ChangelogModalProps {
 }
 
 export default function ChangelogModal({ onClose }: ChangelogModalProps): React.JSX.Element {
-  const handleKey = React.useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape') onClose()
-  }, [onClose])
-
-  React.useEffect(() => {
-    document.addEventListener('keydown', handleKey)
-    return () => document.removeEventListener('keydown', handleKey)
-  }, [handleKey])
 
   return (
-    <div style={styles.overlay}>
-      <div style={styles.card}>
+    <Dialog label="What's new" size="medium" onClose={onClose} cardStyle={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', maxHeight: '70vh' }}>
         <div style={styles.header}>
           <h2 style={styles.title}>What's New</h2>
-          <button style={styles.closeBtn} onClick={onClose}><Icon name="close" /></button>
+          <CloseButton onClick={onClose} />
         </div>
         <div style={styles.content}>
           {changelog.map((release, i) => {
@@ -56,32 +49,11 @@ export default function ChangelogModal({ onClose }: ChangelogModalProps): React.
             )
           })}
         </div>
-      </div>
-    </div>
+</Dialog>
   )
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  overlay: {
-    position: 'fixed',
-    inset: 0,
-    backgroundColor: 'var(--ff-badge-bg)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 'var(--ff-z-dialog)'
-  },
-  card: {
-    backgroundColor: 'var(--ff-surface)',
-    borderRadius: '12px',
-    width: '480px',
-    maxWidth: '90vw',
-    maxHeight: '70vh',
-    boxShadow: '0 16px 56px var(--ff-shadow-strong)',
-    display: 'flex',
-    flexDirection: 'column',
-    overflow: 'hidden'
-  },
   header: {
     display: 'flex',
     alignItems: 'center',
@@ -95,14 +67,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: '700',
     color: 'var(--ff-text)',
     margin: 0
-  },
-  closeBtn: {
-    background: 'none',
-    border: 'none',
-    fontSize: '14px',
-    color: 'var(--ff-text-secondary)',
-    cursor: 'pointer',
-    padding: '4px'
   },
   content: {
     overflowY: 'auto' as const,

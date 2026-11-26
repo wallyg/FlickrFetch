@@ -30,3 +30,13 @@ About 85 hand-built buttons now use the shared looks. Visible shifts: boxed grey
 - [ ] C2 **Clear records.** History > Clear: the confirm button says "Clear records" for a preset, a date before and a date after, and "Clear all records" for clear all (not "Confirm").
 - [ ] C3 **Loading lines.** While tabs load you see "Loading your photos…" (Camera roll, On This Day, Timeline), "Loading photos…", "Loading the group's photos…", "Checking for duplicates…". None says "Looking through", "Reading" or "Getting".
 - [ ] C4 **Error lines.** With Wi-Fi off, open a tab that needs Flickr (Albums, Collections, Discover): the message says "Couldn't load albums." and the like, not "Failed to load ...". On the sign-in page, a wrong code says "That code is not right. Check it and try again." and an empty box says "Enter the code Flickr gave you." No message says "please".
+
+## Dialogs (#236)
+
+Eight dialogs now share one shell: same backdrop, card, shadow, close mark, Esc, backdrop click and focus.
+
+- [ ] D1 **Esc.** Open each and press Esc: Settings, About (the avatar menu), What's New and The Problem (both from About), the Download confirm box, the collage window (On This Day), Reset records and Sign out (avatar menu, album menu). Each closes. Open What's New from About and press Esc once: only What's New closes and About stays; press Esc again: About closes. In History (the clock) Esc closes the panel too.
+- [ ] D2 **Backdrop click.** Click the dimmed area outside each dialog: it closes. Drag to select text inside Settings and let go outside the card: it does not close.
+- [ ] D3 **One look.** All the dialogs have the same rounded corners and shadow; the close mark is the same drawn cross in the top right everywhere (including the collage window, which used a text cross); the What's New backdrop is the same shade as the others.
+- [ ] D4 **Sizes.** The Download confirm box is a little wider than before (480). Settings and The Problem are 640 wide; About 720; the Reset and Sign out questions are 360. Nothing is cut off in a narrow window.
+- [ ] D5 **Focus.** Open Settings with the keyboard (Tab to the cog, Enter): focus is inside; Tab never leaves it; close it with Esc and focus is back on the cog. With the mouse, no blue ring appears around the whole dialog.

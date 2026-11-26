@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
+import CloseButton from '../ui/CloseButton'
+import Dialog from '../ui/Dialog'
 import type { DayPhoto } from '../../shared/types'
 import logoImg from '../assets/logo-tray.png'
 import { itemsLabel } from '../../shared/counts'
@@ -531,11 +533,10 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
   }
 
   return (
-    <div style={styles.overlay} onClick={onClose}>
-      <div style={styles.modal} onClick={e => e.stopPropagation()}>
+    <Dialog label="Collage or card" width="min(1100px, 94vw)" onClose={onClose} cardStyle={{ background: 'var(--ff-cream)', height: 'min(760px, 92vh)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div style={styles.head}>
           <b style={{ fontSize: 16, color: 'var(--ff-navy)' }}>Collage or card · {dateLabel}</b>
-          <button style={styles.x} onClick={onClose} aria-label="Close">✕</button>
+          <CloseButton onClick={onClose} />
         </div>
         <div style={styles.body}>
           <div style={styles.controls}>
@@ -599,8 +600,7 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
               : <canvas ref={canvasRef} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', boxShadow: '0 2px 12px var(--ff-shadow-mid)' }} />}
           </div>
         </div>
-      </div>
-    </div>
+</Dialog>
   )
 }
 
@@ -617,8 +617,6 @@ function Step({ n, label, children }: { n: number; label: string; children: Reac
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  overlay: { position: 'fixed', inset: 0, background: 'var(--ff-scrim)', zIndex: 'var(--ff-z-dialog)', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  modal: { background: 'var(--ff-cream, #fcfaf6)', borderRadius: 12, width: 'min(1100px, 94vw)', height: 'min(760px, 92vh)', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 12px 40px var(--ff-shadow-strong)' },
   head: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 18px', borderBottom: '1px solid var(--ff-border)' },
   x: { background: 'none', border: 'none', fontSize: 16, cursor: 'pointer', color: 'var(--ff-text-secondary)' },
   body: { flex: 1, minHeight: 0, display: 'flex', gap: 18, padding: 16 },
