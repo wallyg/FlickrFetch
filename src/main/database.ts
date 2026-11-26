@@ -14,11 +14,17 @@ export function getDb(): Database.Database | null {
 let generation = 0
 export const dbGeneration = (): number => generation
 
+// Modules that keep an answer worked out from the database register here, so none of it is reused once a different account's database is open
+const onChange: (() => void)[] = []
+export function onDatabaseChange(forget: () => void): void { onChange.push(forget) }
+const forgetAll = (): void => { for (const f of onChange) f() }
+
 // Opens the database that belongs to this Flickr account (see accountDb.ts); a database that was open (another account) is closed first
 export function openDatabase(nsid: string): void {
   closeDatabase()
   const dbPath = accountDbFile(app.getPath('userData'), nsid)
   generation++
+  forgetAll()
   db = new Database(dbPath)
   db.pragma('journal_mode = WAL')
 
@@ -83,6 +89,7 @@ function removeOrphanFailures(d: Database.Database): void {
 export function closeDatabase(): void {
   db?.close()
   db = null
+  forgetAll()
 }
 
 export function writeBatchLog(entry: Omit<BatchLogEntry, 'id'>): number {

@@ -4,6 +4,7 @@ import { getOAuthHeader, loadToken } from './auth'
 import { USER_AGENT } from './userAgent'
 import { SignInRevokedError, isSignInRevoked } from './signInCheck'
 import { cleanTag, foldAccents } from '../shared/tags'
+import { parseDiscoverQuery } from '../shared/discoverQuery'
 import { RequestLog, MAX_SLOW_DOWN_RETRIES, slowDownWaitMs, isSlowDown } from './requestLog'
 import type { FlickrTokenData, FlickrUser, FlickrPhoto, PhotoPage, PhotoSize, PhotoInfo, FlickrAlbum, AlbumPage, FlickrCollection, FlickrSet, CameraExif, PhotoSearchParams, DiscoverUser, DiscoverContact, DiscoverGroup } from '../shared/types'
 
@@ -726,25 +727,27 @@ function mapPublicPhotos(photos: Record<string, string>[]): FlickrPhoto[] {
 }
 
 export async function findDiscoverUser(query: string, tokenData: FlickrTokenData): Promise<DiscoverUser> {
-  let nsid: string | null = null
+  const wanted = parseDiscoverQuery(query)
+  let nsid: string | null = wanted.kind === 'nsid' ? wanted.nsid : null
 
-  // Try flickr.urls.lookupUser (handles path aliases and URL input)
-  try {
-    const cleanQuery = query.trim().replace(/^https?:\/\/www\.flickr\.com\/photos\//i, '').replace(/\/$/, '')
-    const lookupUrl = `${FLICKR_API_BASE}?method=flickr.urls.lookupUser` +
-      `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
-      `&url=${encodeURIComponent('https://www.flickr.com/photos/' + encodeURIComponent(cleanQuery) + '/')}` +
-      `&format=json&nojsoncallback=1`
-    const authHeader = getOAuthHeader(lookupUrl, 'GET', tokenData)
-    const r = await http.get(lookupUrl, { headers: { ...authHeader, 'User-Agent': USER_AGENT } })
-    if (r.data.stat === 'ok') nsid = r.data.user.id
-  } catch { /* fall through */ }
+  // Try flickr.urls.lookupUser (handles path aliases and links to their page or one of their photos)
+  if (!nsid && wanted.kind === 'name') {
+    try {
+      const lookupUrl = `${FLICKR_API_BASE}?method=flickr.urls.lookupUser` +
+        `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
+        `&url=${encodeURIComponent('https://www.flickr.com/photos/' + encodeURIComponent(wanted.name) + '/')}` +
+        `&format=json&nojsoncallback=1`
+      const authHeader = getOAuthHeader(lookupUrl, 'GET', tokenData)
+      const r = await http.get(lookupUrl, { headers: { ...authHeader, 'User-Agent': USER_AGENT } })
+      if (r.data.stat === 'ok') nsid = r.data.user.id
+    } catch { /* fall through */ }
+  }
 
   // Fall back to flickr.people.findByUsername
   if (!nsid) {
     const findUrl = `${FLICKR_API_BASE}?method=flickr.people.findByUsername` +
       `&api_key=${encodeURIComponent(FLICKR_API_KEY)}` +
-      `&username=${encodeURIComponent(query.trim())}` +
+      `&username=${encodeURIComponent(wanted.kind === 'name' ? wanted.name : query.trim())}` +
       `&format=json&nojsoncallback=1`
     const authHeader = getOAuthHeader(findUrl, 'GET', tokenData)
     const r = await http.get(findUrl, { headers: { ...authHeader, 'User-Agent': USER_AGENT } })

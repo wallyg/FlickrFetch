@@ -1,5 +1,6 @@
 import type Database from 'better-sqlite3'
 import { loadSettings } from './settings'
+import { onDatabaseChange } from './database'
 import { normalizeScope, scopeSql } from '../shared/healthScope'
 import { titlePlace, cityText, placeText } from '../shared/titlePlace'
 import { isCameraTitle } from '../shared/cameraNames'
@@ -50,6 +51,7 @@ interface Index {
 }
 
 let cached: Index | null = null
+onDatabaseChange(() => { cached = null })
 function index(db: Database.Database): Index {
   const meta = (k: string): string => (db.prepare('SELECT value FROM tag_index_meta WHERE key = ?').get(k) as { value: string } | undefined)?.value ?? ''
   const albumFit = loadSettings().albumFit ?? {}

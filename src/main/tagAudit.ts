@@ -2,7 +2,7 @@ import { ipcMain, clipboard } from 'electron'
 import type { BrowserWindow } from 'electron'
 import { readFileSync } from 'fs'
 import type Database from 'better-sqlite3'
-import { getDb } from './database'
+import { getDb, onDatabaseChange } from './database'
 import { ownerNsid } from './owner'
 import enableWords from './data/enable1.txt?raw'
 import { csvCell, saveCsvFile } from './csv'
@@ -366,6 +366,7 @@ function indexStamp(db: Database.Database): number | null {
 // their own numbers. They are kept apart so changing one number does not rerun every check.
 let baseCache: { stamp: number; words: string; drafts: Draft[]; records: TagRecord[] } | null = null
 let missingCache: { stamp: number; key: string; result: ReturnType<typeof detectMissingTags> } | null = null
+onDatabaseChange(() => { cache = null; baseCache = null; missingCache = null })   // another account's data is never answered from these
 
 function currentFindings(db: Database.Database): Finding[] | null {
   const stamp = indexStamp(db)

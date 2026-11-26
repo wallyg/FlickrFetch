@@ -1,6 +1,7 @@
 import { ipcMain } from 'electron'
 import type Database from 'better-sqlite3'
 import { albumsDb } from './albumDb'
+import { dbGeneration, onDatabaseChange } from './database'
 import { worldPixel, wrapLon } from '../shared/mapGeo'
 import { cleanTag } from '../shared/tags'
 import type { MapAccuracy, MapAlbumHit, MapCellPage, MapCellQuery, MapCluster, MapFilter, MapView, MapViewQuery } from '../shared/types'
@@ -116,9 +117,10 @@ export function cellPhotos(points: MapPoint[], q: MapCellQuery, allow?: Set<stri
 
 // ── In the app: the points are read once per library update and kept ──
 let cache: { stamp: string; points: MapPoint[]; photos: number } | null = null
+onDatabaseChange(() => { cache = null })
 function current(): { points: MapPoint[]; photos: number; stamp: string } {
   const db = albumsDb()   // makes sure the photo list table exists
-  const stamp = (db.prepare("SELECT value FROM tag_index_meta WHERE key = 'last_scan_at'").get() as { value: string } | undefined)?.value ?? ''
+  const stamp = `${dbGeneration()}|${(db.prepare("SELECT value FROM tag_index_meta WHERE key = 'last_scan_at'").get() as { value: string } | undefined)?.value ?? ''}`   // (the database's number too: another account can share a scan time)
   if (!cache || cache.stamp !== stamp) cache = { stamp, ...loadPoints(db) }
   return cache
 }

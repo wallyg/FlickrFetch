@@ -103,3 +103,15 @@ test('a missing avatar falls back once, not in a loop when the fallback is missi
   const src = read('src/renderer/pages/MainPage.tsx')
   assert.equal((src.match(/if \(!e\.currentTarget\.src\.endsWith\('buddyicon\.gif'\)\)/g) ?? []).length, 2)
 })
+
+import { parseDiscoverQuery } from '../src/shared/discoverQuery'
+test('Discover finds a person from a name, an id, or any link to their page or one of their photos', () => {
+  assert.deepEqual(parseDiscoverQuery('  someone '), { kind: 'name', name: 'someone' })
+  assert.deepEqual(parseDiscoverQuery('12345678@N00'), { kind: 'nsid', nsid: '12345678@N00' })
+  for (const link of ['https://www.flickr.com/photos/someone/', 'https://www.flickr.com/photos/someone/53012345678/', 'http://flickr.com/photos/someone/albums/72177', 'www.flickr.com/people/someone/?x=1', 'flickr.com/photos/someone#top']) {
+    assert.deepEqual(parseDiscoverQuery(link), { kind: 'name', name: 'someone' }, link)
+  }
+  assert.deepEqual(parseDiscoverQuery('https://www.flickr.com/photos/12345678@N00/5301/'), { kind: 'nsid', nsid: '12345678@N00' })
+  assert.deepEqual(parseDiscoverQuery('https://www.flickr.com/photos/a%20b/'), { kind: 'name', name: 'a b' })
+  assert.deepEqual(parseDiscoverQuery('%E0%A4%A'), { kind: 'name', name: '%E0%A4%A' }, 'text that is not valid percent-coding is kept as typed')
+})

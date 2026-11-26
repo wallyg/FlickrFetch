@@ -1,5 +1,6 @@
 import type Database from 'better-sqlite3'
 import { albumsDb } from './albumDb'
+import { onDatabaseChange } from './database'
 import { clearFineReason } from './fineReasons'
 import { ownerNsid } from './owner'
 import { foldAccents } from '../shared/tags'
@@ -69,6 +70,7 @@ export interface Missing { albumId: string; photoIds: string[]; why: string; bot
 export interface Fit { titledPercent: number; titlesOn: boolean; profiles: Map<string, Profile>; infos: Map<string, Info>; tagNames: Map<number, string>; nameOf: (ids: number[]) => string[]; misfits: Misfit[]; missing: Missing[] }
 
 let cache: { key: string; fit: Fit } | null = null
+onDatabaseChange(() => { cache = null })
 let kindVersion = 0
 
 const km = (aLat: number, aLon: number, bLat: number, bLon: number): number => {

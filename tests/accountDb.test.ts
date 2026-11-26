@@ -61,3 +61,29 @@ test('the app opens an account\'s database after sign-in, and stops its work and
 test('signing out also forgets the Health Check front page the screen was holding', () => {
   assert.ok(/forgetOverview\(\)/.test(read('src/renderer/App.tsx')))
 })
+
+test('every answer kept from one account\'s database is forgotten when another account\'s opens', () => {
+  const db = read('src/main/database.ts')
+  assert.ok(/export function onDatabaseChange/.test(db) && /generation\+\+\s*\n\s*forgetAll\(\)/.test(db) && /db = null\s*\n\s*forgetAll\(\)/.test(db), 'forgotten when a database opens and when it closes')
+  for (const [file, name] of [['albumFit', 'cache = null'], ['locationHints', 'cached = null'], ['mapPoints', 'cache = null'], ['tagAudit', 'baseCache = null']] as const) {
+    assert.ok(new RegExp(`onDatabaseChange\\(\\(\\) => \\{[^}]*${name}`).test(read(`src/main/${file}.ts`)), `${file} registers its cache`)
+  }
+  assert.ok(/\$\{dbGeneration\(\)\}\|/.test(read('src/main/mapPoints.ts')), 'the map\'s answers are keyed by the database too')
+})
+
+import { openDatabase, closeDatabase, writePhotoRecord, getPhotoRecord, getDb, dbGeneration } from '../src/main/database'
+test('two accounts on one computer: each sees only its own download records, and signing back in finds them again', () => {
+  openDatabase('first@N00')
+  writePhotoRecord('photo-1', 5, 'Mine')
+  assert.ok(getPhotoRecord('photo-1'))
+  const g1 = dbGeneration()
+  openDatabase('second@N00')                      // a different account signs in
+  assert.ok(dbGeneration() > g1)
+  assert.equal(getPhotoRecord('photo-1'), null, 'the first account\'s records are not shown to the second')
+  writePhotoRecord('photo-2', 6, 'Theirs')
+  openDatabase('first@N00')                       // the first account signs back in
+  assert.ok(getPhotoRecord('photo-1'), 'its own record is back')
+  assert.equal(getPhotoRecord('photo-2'), null, 'and the second account\'s is not there')
+  closeDatabase()
+  assert.equal(getDb(), null, 'signed out: no database is open')
+})
