@@ -449,7 +449,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
               <div style={{ ...s.section, borderTop: '1px solid var(--ff-border)' }}>
                 <div style={s.sectionRow}>
                   <p style={s.sectionTitle}>If File Already Exists</p>
-                  <InfoTip direction="up" text="What to do when a downloaded file has the same name as one already in the folder." />
+                  <InfoTip text="What to do when a downloaded file has the same name as one already in the folder." />
                 </div>
                 <div style={s.optionList}>
                   {([
@@ -590,7 +590,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
                 <div style={{ ...s.optRow, marginTop: '6px' }}>
                   <div style={s.optLabelGroup}>
                     <span style={s.optName}>Size indicator</span>
-                    <InfoTip direction="up" text="Adds the download size to the filename: orig, xl, lg, med, sm, sq. Useful when downloading different sizes of the same photo." />
+                    <InfoTip text="Adds the download size to the filename: orig, xl, lg, med, sm, sq. Useful when downloading different sizes of the same photo." />
                   </div>
                   <PosToggle value={sizeTokenPos} onChange={v => { setSizeTokenPos(v) }} />
                 </div>
@@ -600,7 +600,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
               <div style={{ ...s.section, borderTop: '1px solid var(--ff-border)' }}>
                 <div style={s.sectionRow}>
                   <p style={s.sectionTitle}>Title Transform</p>
-                  <InfoTip direction="up" text="Changes the capital letters of the whole filename." />
+                  <InfoTip text="Changes the capital letters of the whole filename." />
                 </div>
 
                 {/* Case */}
@@ -629,7 +629,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
                 <div style={{ ...s.optRow, marginTop: '6px' }}>
                   <div style={s.optLabelGroup}>
                     <span style={s.optName}>Replace spaces</span>
-                    <InfoTip direction="up" text={'Replaces each space in the title with your separator. With a dot, "NYC - Highline" becomes "NYC.-.Highline".'} />
+                    <InfoTip text={'Replaces each space in the title with your separator. With a dot, "NYC - Highline" becomes "NYC.-.Highline".'} />
                   </div>
                   <div style={s.posGroup}>
                     <button
@@ -647,7 +647,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
                 <div style={{ ...s.optRow, marginTop: '6px', flexDirection: 'column', alignItems: 'stretch', gap: '6px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                     <span style={s.optName}>Character substitutions</span>
-                    <InfoTip direction="up" text="Brackets are kept in filenames by default. Turn these on to remove them." />
+                    <InfoTip text="Brackets are kept in filenames by default. Turn these on to remove them." />
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '5px' }}>
                     {([
@@ -778,7 +778,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
                 <div style={s.optRow}>
                   <div style={s.optLabelGroup}>
                     <span style={s.optName}>Sidecar JSON</span>
-                    <InfoTip direction="up" text="Saves a .json file next to each photo or video with its Flickr details (title, tags, date, GPS, license and more)." />
+                    <InfoTip text="Saves a .json file next to each photo or video with its Flickr details (title, tags, date, GPS, license and more)." />
                   </div>
                   <div style={s.posGroup}>
                     <button style={{ ...s.posBtn, ...(!writeSidecarJson ? s.posBtnActive : {}) }} onClick={() => { setWriteSidecarJson(false) }}>Off</button>

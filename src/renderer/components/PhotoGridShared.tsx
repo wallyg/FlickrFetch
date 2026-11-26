@@ -292,27 +292,6 @@ export function PrivacyIcon({ level }: { level: PrivacyLevel }): React.JSX.Eleme
   )
 }
 
-export function Tooltip({ text, children, align = 'center', side = 'above' }: { text: string; children: React.ReactNode; align?: 'center' | 'right' | 'left'; side?: 'above' | 'below' }): React.JSX.Element {
-  const [visible, setVisible] = useState(false)
-  return (
-    <span style={{ position: 'relative', display: 'inline-flex' }} onMouseEnter={() => setVisible(true)} onMouseLeave={() => setVisible(false)}>
-      {children}
-      {visible && (
-        <span style={{
-          position: 'absolute', ...(side === 'below' ? { top: 'calc(100% + 6px)' } : { bottom: 'calc(100% + 6px)' }),
-          ...(align === 'right' ? { right: 0 } : align === 'left' ? { left: 0 } : { left: '50%', transform: 'translateX(-50%)' }),
-          backgroundColor: 'var(--ff-text)', color: 'var(--ff-white)', fontSize: '11px', lineHeight: '1.5',
-          padding: '5px 9px', borderRadius: '6px', maxWidth: '220px', width: 'max-content', whiteSpace: 'pre-line',
-          zIndex: 'var(--ff-z-menu)', pointerEvents: 'none', boxShadow: '0 2px 8px var(--ff-shadow-mid)',
-          textAlign: 'left' as const
-        }}>
-          {text}
-        </span>
-      )}
-    </span>
-  )
-}
-
 export const chipStyle: React.CSSProperties = {
   display: 'inline-flex', alignItems: 'center', gap: '4px',
   backgroundColor: 'var(--ff-border)', borderRadius: '12px',
@@ -475,7 +454,6 @@ export const sharedStyles: Record<string, React.CSSProperties> = {
   downloadFilterBtn: { ...smallBtn, whiteSpace: 'nowrap' as const },
   downloadFilterBtnActive: { ...kitSelectedOn },
   listContainer: { display: 'flex', flexDirection: 'column' as const },
-  tagHint: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '16px', height: '16px', borderRadius: '50%', backgroundColor: 'var(--ff-line-strong)', fontSize: '11px', color: 'var(--ff-text-secondary)', cursor: 'default', fontWeight: '700', flexShrink: 0 } as React.CSSProperties,
   // Empty / error states
   centered: { display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', height: '100%', gap: '12px' },
   mutedText: { color: 'var(--ff-text-secondary)', fontSize: '14px', margin: 0 },

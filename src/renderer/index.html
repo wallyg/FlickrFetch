@@ -75,6 +75,10 @@
       button[style*="--ff-box"]:not(:disabled):active, button[style*="border: 1px"]:not(:disabled):active { background-image: linear-gradient(var(--ff-wash-press), var(--ff-wash-press)); }
       /* Disabled: half strength and a not-allowed pointer; a disabled field is filled grey. A component that dims itself keeps its own opacity. */
       :disabled { cursor: not-allowed !important; }
+      /* A disabled control that has a tip lets the pointer through (a browser sends it no pointer events), so the hover card can find it by position;
+         the host sets data-over-disabled on the page while the pointer is over one, to keep the not-allowed pointer. */
+      [disabled][title], [disabled][data-tip] { pointer-events: none; }
+      html[data-over-disabled], html[data-over-disabled] * { cursor: not-allowed !important; }
       button:disabled, select:disabled, input:disabled, textarea:disabled { opacity: 0.5; }
       input:disabled:not([type="checkbox"]):not([type="radio"]), select:disabled, textarea:disabled { background-color: var(--ff-grey-100) !important; }
       /* Checkboxes and radio buttons follow the pink selection rule. */

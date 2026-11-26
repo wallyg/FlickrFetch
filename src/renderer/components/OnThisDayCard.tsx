@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import Icon from '../ui/Icon'
+import HoverCard from '../ui/HoverCard'
 import type { TodaySummary } from '../../shared/types'
 import { MONTHS } from './DateViewParts'
 import { quietBtn, doThisBtn } from '../ui/kit'
@@ -18,6 +19,7 @@ export default function OnThisDayCard({ refreshKey, onOpen }: { refreshKey: numb
   const [pinned, setPinned] = useState(false)               // clicked open: stays until you click elsewhere or press Esc
   const peekTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const wrapRef = useRef<HTMLDivElement | null>(null)
+  const cueRef = useRef<HTMLButtonElement | null>(null)
 
   const load = useCallback(() => { void window.flickrAPI.getTodaySummary().then(v => { setS(v); setHidden(v.cardHidden) }) }, [])
   useEffect(() => { load() }, [load, refreshKey])
@@ -30,7 +32,7 @@ export default function OnThisDayCard({ refreshKey, onOpen }: { refreshKey: numb
   // A pinned card closes on a click elsewhere or Esc
   useEffect(() => {
     if (!pinned) return
-    const away = (e: MouseEvent): void => { if (!wrapRef.current?.contains(e.target as Node)) { setPinned(false); setPeek(false) } }
+    const away = (e: MouseEvent): void => { if (!wrapRef.current?.contains(e.target as Node) && !(e.target as Element).closest?.('[data-hover-card]')) { setPinned(false); setPeek(false) } }
     const esc = (e: KeyboardEvent): void => { if (e.key === 'Escape') { setPinned(false); setPeek(false) } }
     document.addEventListener('mousedown', away); window.addEventListener('keydown', esc)
     return () => { document.removeEventListener('mousedown', away); window.removeEventListener('keydown', esc) }
@@ -69,14 +71,14 @@ export default function OnThisDayCard({ refreshKey, onOpen }: { refreshKey: numb
       <div ref={wrapRef} style={{ flex: 1, minWidth: 0, position: 'relative' }}>
         <span style={styles.title}>On this day: {itemsLabel(s.total, s.videos)}</span>
         <button
+          ref={cueRef}
           style={{ ...styles.cue, color: peek ? 'var(--ff-blue)' : 'var(--ff-text-secondary)' }}
           onMouseEnter={openPeek} onMouseLeave={closePeek} onFocus={openPeek} onBlur={closePeek}
           onClick={togglePin}
           aria-label="Show the years, tags and photos for this day" aria-expanded={peek} aria-describedby="otd-peek"
-          title={peek ? undefined : 'Details'}
         ><BarsIcon /></button>
-        {peek && (
-          <div id="otd-peek" style={styles.peek} role="tooltip" onMouseEnter={() => { if (peekTimer.current) clearTimeout(peekTimer.current) }} onMouseLeave={closePeek}>
+        {peek && cueRef.current && (
+          <HoverCard anchorEl={cueRef.current} id="otd-peek" label="This day across the years" interactive style={styles.peek} onMouseEnter={() => { if (peekTimer.current) clearTimeout(peekTimer.current) }} onMouseLeave={closePeek}>
             <div style={styles.peekHead}>{date}, across the years</div>
             <div style={styles.peekLine}>
               {manyYears ? `${itemsLabel(s.total, s.videos)} from ${s.yearCount} years, ${range}.` : `${itemsLabel(s.total, s.videos)} from ${range}.`}
@@ -105,7 +107,7 @@ export default function OnThisDayCard({ refreshKey, onOpen }: { refreshKey: numb
               </div>
             )}
             <div style={styles.peekFoot}>{pinned ? 'Click anywhere else, or press Esc, to close this.' : 'Click the icon to keep this open. Click See them to open the whole day.'}</div>
-          </div>
+          </HoverCard>
         )}
       </div>
 
@@ -130,7 +132,7 @@ const styles: Record<string, React.CSSProperties> = {
   hideBtn: { ...quietBtn, color: 'var(--ff-text)', borderColor: 'var(--ff-line-strong)', whiteSpace: 'nowrap' },
   bell: { background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, padding: 2, lineHeight: 1, opacity: 0.7 },
   confirmed: { fontSize: 12, color: 'var(--ff-success)', whiteSpace: 'nowrap' },
-  peek: { position: 'absolute', left: 0, top: 'calc(100% + 10px)', width: 470, maxWidth: '80vw', background: 'var(--ff-surface)', border: '1px solid var(--ff-line-strong)', borderRadius: 12, boxShadow: '0 10px 30px var(--ff-shadow-mid)', padding: '12px 14px', zIndex: 'var(--ff-z-menu)', cursor: 'default' },
+  peek: { width: 470, maxWidth: 'min(470px, calc(100vw - 16px))', borderRadius: 12, padding: '12px 14px', cursor: 'default' },
   peekHead: { fontSize: 13, fontWeight: 700, color: 'var(--ff-navy)' },
   peekLine: { fontSize: 12, color: 'var(--ff-text-secondary)', marginTop: 2 },
   bars: { display: 'flex', alignItems: 'flex-end', gap: 4, height: 40 },

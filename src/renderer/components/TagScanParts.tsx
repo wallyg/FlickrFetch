@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import Icon from '../ui/Icon'
 import type { TagIndexStatus, TagScanProgress } from '../../shared/types'
-import { Tooltip } from './PhotoGridShared'
 import { quietBtn, linkBtn, primaryBtn } from '../ui/kit'
 import RichNote from '../ui/RichNote'
 

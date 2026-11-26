@@ -3,7 +3,8 @@ import Icon from '../ui/Icon'
 import { useFindShortcut } from '../hooks/useFindShortcut'
 import { DEBOUNCE, useDebouncedEffect } from '../ui/useDebounce'
 import type { FlickrPhoto, PhotoPage, SearchOperator, DateRangeField, TagMode, LicenseFilter } from '../../shared/types'
-import { MediaFilter, DownloadFilter, PrivacyFilter, PrivacyLevel, PRIVACY_OPTIONS, PRIVACY_LABELS, JustifiedIcon, GridIcon, ListIcon, PrivacyIcon, Chip, Tooltip, PhotoListRow, DownloadFilterSelect, LicenseFilterSelect, matchesLicenseFilter, LICENSE_FILTER_LABEL, getPrivacyLevel, sharedStyles, DateMode, getPresetDates, formatDateChip, loadRowHeight, saveRowHeight, computeJustifiedRows, DOWNLOAD_FILTER_LABEL } from './PhotoGridShared'
+import { MediaFilter, DownloadFilter, PrivacyFilter, PrivacyLevel, PRIVACY_OPTIONS, PRIVACY_LABELS, JustifiedIcon, GridIcon, ListIcon, PrivacyIcon, Chip, PhotoListRow, DownloadFilterSelect, LicenseFilterSelect, matchesLicenseFilter, LICENSE_FILTER_LABEL, getPrivacyLevel, sharedStyles, DateMode, getPresetDates, formatDateChip, loadRowHeight, saveRowHeight, computeJustifiedRows, DOWNLOAD_FILTER_LABEL } from './PhotoGridShared'
+import InfoTip from '../ui/InfoTip'
 import { cleanTag } from '../../shared/tags'
 import EmptyState from './EmptyState'
 import BackToTop from '../ui/BackToTop'
@@ -441,9 +442,7 @@ export default function AlbumPhotoGrid({ albumId, findActive, onPhotoSelect, sel
                     </button>
                   ))}
                 </div>
-                <Tooltip text={"Separate multiple tags with commas.\n\nAny: photos with at least one of the tags.\nAll: photos with every tag."}>
-                  <span style={styles.tagHint}>?</span>
-                </Tooltip>
+                <InfoTip text={"Separate multiple tags with commas.\n\nAny: photos with at least one of the tags.\nAll: photos with every tag."} />
               </div>
 
               <div style={styles.drawerRow}>

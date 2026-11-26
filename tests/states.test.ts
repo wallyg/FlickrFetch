@@ -38,7 +38,7 @@ test('tab buttons carry the mark that moves their focus ring inside them', () =>
 })
 
 test('a hover note is plain text under any heading: weight, case and spacing are set on the note itself', () => {
-  for (const f of ['ui/InfoTip.tsx', 'ui/HoverNote.tsx']) {
+  for (const f of ['ui/HoverCard.tsx']) {
     const code = readFileSync(join(SRC, f), 'utf8')
     assert.match(code, /fontWeight: 400/, f)
     assert.match(code, /textTransform: 'none'/, f)

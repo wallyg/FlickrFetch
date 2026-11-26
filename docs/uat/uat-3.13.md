@@ -68,3 +68,17 @@ The collage window has a Share… button that opens the Mac share sheet (Mail, M
 - [ ] G3 **Not-public photos.** With some not-public photos in the collage, Share… asks the same "are you sure" question as Save and Copy before the sheet opens; Cancel stops it.
 - [ ] G4 **AirDrop to your own device.** Share… > AirDrop to an iPad or iPhone of yours: it arrives as a picture.
 - [ ] G5 **Built app only.** The unsigned build may not show every sharing service (Messages and Mail can be missing until the app is signed). If the sheet is empty or does not open in the dev app, tell me; that is expected to be an unsigned-app limit, not a bug in the button.
+
+## The hover card (#228)
+
+Every tip in the app is now one white card with a soft shadow: the old browser tips (grey, slow), the (i) notes, the Map and photo-filter "?" tips, and the On This Day "Details" panel. It is drawn above everything, so nothing can cut it off.
+
+- [ ] H1 **Short tips.** Point at an icon button or any button with a hint (for example the clock in the top bar, or Settings > the arrows beside a field). After a short pause a white card with one line appears under it. Move to the next button: its card appears straight away. Move away, click, scroll or press a key: it goes.
+- [ ] H2 **Explanations.** In Settings, point at an (i): the white card has headings and bullets, sits under the (i), and is not bold. The (i) looks the same everywhere (including the Map filters, Photostream and Album photo filters, which used a grey ?).
+- [ ] H3 **The Map Tags tip.** Map > filters > Tags (i): the card is fully visible, not cut off behind the tab bar.
+- [ ] H4 **Edges.** Scroll Settings so an (i) is at the very top, then at the very bottom of the window, then make the window narrow and point at one near the right edge: the card always stays fully inside the window (it flips above or below, and slides sideways).
+- [ ] H5 **Above dialogs.** Open Settings and point at an (i) or a button: the card is above the dialog, never behind it.
+- [ ] H6 **Disabled buttons.** Point at a greyed-out button that has a reason (for example a Download button with nothing selected): the card appears, and the pointer shows the not-allowed sign.
+- [ ] H7 **Keyboard.** Press Tab to move through Settings: an (i) or an icon button shows its card while it has focus, and Esc or Tab hides it. Clicking a button with the mouse does not leave a card behind.
+- [ ] H8 **Health Check "How it works".** Still opens on a click, stays open, closes on a click elsewhere, Esc (focus returns to the button) or Tab. Select some of its text with the mouse: it stays open.
+- [ ] H9 **On This Day Details.** On the On This Day card, point at the little bars icon: the Details panel opens as before (years, tags, pictures), now as the same white card. Move the pointer onto the panel: it stays. Click the icon: it stays open until you click elsewhere or press Esc.

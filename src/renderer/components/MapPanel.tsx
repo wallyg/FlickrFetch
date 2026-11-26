@@ -8,7 +8,8 @@ import { quietBtn, primaryBtn, selectBox } from '../ui/kit'
 import { dash } from './DashboardParts'
 import AlbumBox from './AlbumBox'
 import PhotoPeek from './PhotoPeek'
-import { Chip, DateMode, PRIVACY_LABELS, PRIVACY_OPTIONS, PrivacyFilter, Tooltip, formatDateChip, getPresetDates, sharedStyles } from './PhotoGridShared'
+import { Chip, DateMode, PRIVACY_LABELS, PRIVACY_OPTIONS, PrivacyFilter, formatDateChip, getPresetDates, sharedStyles } from './PhotoGridShared'
+import InfoTip from '../ui/InfoTip'
 
 // The Map tab: your photos with a location as dots and numbered circles on a built-in outline of the countries. Drag to move, scroll or the
 // + and - buttons to zoom. Click a dot or circle to see its photos, open one on Flickr, or download them. Everything comes from the local
@@ -436,9 +437,7 @@ export default function MapPanel({ active, onDownload, onFullRescan, refreshKey,
                 <button key={v} style={{ ...sharedStyles.seg, ...(tagMode === v ? sharedStyles.segActive : {}) }} onClick={() => setTagMode(v)} aria-pressed={tagMode === v}>{v}</button>
               ))}
             </div>
-            <Tooltip text={"Type tags, separated by commas, then press Enter.\n\nAny: photos with at least one of the tags.\nAll: photos with every tag."}>
-              <span style={sharedStyles.tagHint}>?</span>
-            </Tooltip>
+            <InfoTip text={"Type tags, separated by commas, then press Enter.\n\nAny: photos with at least one of the tags.\nAll: photos with every tag."} />
           </div>
 
           <div style={{ ...sharedStyles.drawerRow, padding: '7px 24px' }}>
@@ -482,9 +481,7 @@ export default function MapPanel({ active, onDownload, onFullRescan, refreshKey,
                 <button key={v} style={{ ...sharedStyles.seg, ...(accuracy === v ? sharedStyles.segActive : {}) }} onClick={() => setAccuracy(v)} aria-pressed={accuracy === v}>{ACCURACY_LABEL[v]}</button>
               ))}
             </div>
-            <Tooltip text={"How precisely Flickr placed each photo, on its scale of 1 (the whole world) to 16 (a street).\n\nStreet: 15 or 16.\nTown or better: 11 or more.\nVague only: 10 or less, such as a photo placed just \"Italy\".\n\nPhotos with no precision recorded show only under Any."}>
-              <span style={sharedStyles.tagHint}>?</span>
-            </Tooltip>
+            <InfoTip text={"How precisely Flickr placed each photo, on its scale of 1 (the whole world) to 16 (a street).\n\nStreet: 15 or 16.\nTown or better: 11 or more.\nVague only: 10 or less, such as a photo placed just \"Italy\".\n\nPhotos with no precision recorded show only under Any."} />
           </div>
         </div>
       )}
