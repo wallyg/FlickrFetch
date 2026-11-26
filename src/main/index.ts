@@ -23,6 +23,7 @@ import { registerShareIpc } from './share'
 import { registerBatchIpc, batchUrl } from './batchEdit'
 import { registerBackupIpc } from './backupReport'
 import { safeFolderName } from './safeName'
+import { formatDateStamp } from '../shared/dateStamp'
 import { ownerNsid, forgetOwnerNsid } from './owner'
 import { openDatabase, closeDatabase, writeBatchLog, writePhotoRecord, getPhotoRecord, getPhotoRecordsBatch, getBatchLog, clearBatchLog, clearAllHistory, searchPhotoRecords, deletePhotoRecord, deletePhotoRecords, clearPhotoRecords, writeDiscoverRecord, getDiscoverRecordsBatch, searchDiscoverRecords, deleteDiscoverRecord, deleteDiscoverRecords, clearDiscoverRecords } from './database'
 import type { AppSettings, FileNamingConfig, PhotoInfo, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams, MetadataSettings, DiscoverUser, DiscoverContact, DiscoverGroup } from '../shared/types'
@@ -32,18 +33,6 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
     promise,
     new Promise<T>((_, reject) => setTimeout(() => reject(new Error(`Request timed out after ${ms}ms`)), ms))
   ])
-}
-
-function formatDate(dateTaken: string, format: string): string {
-  const [datePart, timePart = '00:00:00'] = dateTaken.split(' ')
-  const [year, month, day] = datePart.split('-')
-  const [h, m, s] = (timePart.split(':') as [string, string, string])
-  switch (format) {
-    case 'YYYY-MM-DD HH-MM-SS': return `${year}-${month}-${day} ${h}-${m}-${s}`
-    case 'YYYY.MM.DD':          return `${year}.${month}.${day}`
-    case 'YYYY.MM.DD HH.MM.SS': return `${year}.${month}.${day} ${h}.${m}.${s}`
-    default:                    return `${year}-${month}-${day}`
-  }
 }
 
 const SIZE_TOKEN_MAP: Record<string, string> = {
@@ -84,7 +73,7 @@ function buildFilename(
   const suf: string[] = []
 
   if (config.date.position !== 'off' && info.dateTaken) {
-    const d = formatDate(info.dateTaken, config.date.format)
+    const d = formatDateStamp(config.date.format, info.dateTaken)
     config.date.position === 'prefix' ? pre.push(d) : suf.push(d)
   }
   if (config.sequence.position !== 'off' && seqNum != null) {

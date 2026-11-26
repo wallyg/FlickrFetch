@@ -2,13 +2,14 @@ import { app } from 'electron'
 import { join } from 'path'
 import { existsSync, readFileSync, writeFileSync, mkdirSync, statSync } from 'fs'
 import type { AppSettings, FileNamingConfig, MetadataSettings } from '../shared/types'
+import { DEFAULT_DATE_PATTERN, migrateDatePattern } from '../shared/dateStamp'
 
 const SETTINGS_FILE = join(app.getPath('userData'), 'settings.json')
 
 const DEFAULT_FILE_NAMING: FileNamingConfig = {
   core: 'title',
   separator: '.',
-  date: { position: 'off', format: 'YYYY-MM-DD' },
+  date: { position: 'off', format: DEFAULT_DATE_PATTERN },
   sequence: { position: 'off' },
   customText: { position: 'off', text: '' },
   caseTransform: 'none',
@@ -63,8 +64,8 @@ export function loadSettings(): AppSettings {
         ...DEFAULT_FILE_NAMING,
         core: old === 'id' ? 'id' : old === 'id-title' ? 'id-title' : 'title',
         date: old === 'date-title'
-          ? { position: 'prefix', format: 'YYYY-MM-DD' }
-          : { position: 'off', format: 'YYYY-MM-DD' }
+          ? { position: 'prefix', format: DEFAULT_DATE_PATTERN }
+          : { position: 'off', format: DEFAULT_DATE_PATTERN }
       } as FileNamingConfig
     }
     return {
@@ -73,6 +74,7 @@ export function loadSettings(): AppSettings {
       fileNaming: {
         ...DEFAULT_FILE_NAMING,
         ...raw.fileNaming,
+        date: { ...DEFAULT_FILE_NAMING.date, ...(raw.fileNaming?.date ?? {}), format: migrateDatePattern(raw.fileNaming?.date?.format) },
         sizeToken: { ...DEFAULT_FILE_NAMING.sizeToken, ...(raw.fileNaming?.sizeToken ?? {}) }
       },
       metadata: { ...DEFAULT_METADATA, ...(raw.metadata ?? {}) }

@@ -48,3 +48,13 @@ A screen that hits an error now shows a message and a Reload button instead of a
 - [ ] E1 **See it.** In the dev app: Settings > General, scroll to "Development only" and press "Show the error screen". The window shows "Something went wrong on this screen", a pink Reload button, and a folded "What happened". Open it: the message and the screens involved are there, and "Copy details" copies them. Press Reload: the app comes back and you are still signed in.
 - [ ] E2 **One tab only.** (Developer check, or when a real tab error happens.) An error inside a tab shows the same card inside the tab area with Reload and "Try again"; switching to another tab clears it and the other tabs work.
 - [ ] E3 **A dead page.** (Developer check.) If the window's page itself stops (for example after a crash), a box says "FlickrFetch stopped working" with Reload and Quit, instead of leaving a blank window.
+
+## Date stamp pattern (#266)
+
+The Date stamp in File Naming is now a pattern you build, with the four old formats kept as quick picks.
+
+- [ ] F1 **Old settings carry over.** Settings > File Naming > Date stamp (set it to Prefix or Suffix): the Pattern box shows your old choice written the new way (for example `yyyy-MM-dd HH-mm-ss`), with the same example as before, and the "File name example" at the bottom matches.
+- [ ] F2 **Type and click.** Type `yyyy.MM.dd 'at' HH-mm`: the example shows `2024.03.15 at 14-22`. Click the part buttons (Year, Month, Day, Weekday, Time): each adds its letters where the cursor is. Click a Quick pick: the box changes to it and the pick is highlighted.
+- [ ] F3 **Problems are explained.** Type `yyyy at HH`: the box turns red and says to put the word in quotes. Type `yyyy/MM`: it says a file name cannot contain / or :. While it is red, the file name example keeps the last good pattern.
+- [ ] F4 **Weekday, month name, 12-hour.** `EEEE, MMMM d` gives `Friday, March 15`; `hh-mm a` gives `02-22 PM`. With Prefix chosen, a 12-hour pattern shows the note that it does not sort in time order.
+- [ ] F5 **A real download.** Download one photo with a date stamp (for example `yyyy-MM-dd EEE`): the file name has the stamp, and nothing in it is `/` or `:`. A photo downloaded before keeps its name.

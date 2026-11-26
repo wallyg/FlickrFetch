@@ -37,7 +37,7 @@ export interface FlickrPhoto {
 
 export type FileNamingCore = 'title' | 'id' | 'id-title' | 'title-id'
 export type FileNamingSep = '.' | '-' | '_' | ' ' | '|'
-export type DateFormat = 'YYYY-MM-DD' | 'YYYY-MM-DD HH-MM-SS' | 'YYYY.MM.DD' | 'YYYY.MM.DD HH.MM.SS'
+export type DateFormat = string   // a date pattern such as yyyy-MM-dd (see shared/dateStamp.ts); saved settings from before patterns hold one of four old formats and are migrated on load
 export type PartPosition = 'off' | 'prefix' | 'suffix'
 export type CaseTransform = 'none' | 'lowercase' | 'uppercase'
 export type DownloadSize = 'original' | 'xlarge' | 'large' | 'medium' | 'small' | 'square'

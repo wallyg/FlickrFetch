@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import DateStampEditor from './DateStampEditor'
+import { DATE_EXAMPLE_TAKEN, DEFAULT_DATE_PATTERN, formatDateStamp } from '../../shared/dateStamp'
 import CloseButton from '../ui/CloseButton'
 import Dialog from '../ui/Dialog'
 import { fieldBox, tabMark, primaryBtn, putAsideBtn, quietBtn, smallBtn } from '../ui/kit'
@@ -15,13 +17,6 @@ import type {
 
 export type SettingsTab = 'general' | 'downloads' | 'naming' | 'metadata' | 'health' | 'albums'
 type Tab = SettingsTab
-
-const DATE_EXAMPLES: Record<DateFormat, string> = {
-  'YYYY-MM-DD':          '2024-03-15',
-  'YYYY-MM-DD HH-MM-SS': '2024-03-15 14-22-05',
-  'YYYY.MM.DD':          '2024.03.15',
-  'YYYY.MM.DD HH.MM.SS': '2024.03.15 14.22.05',
-}
 
 const SIZE_TOKEN_MAP: Record<DownloadSize, string> = {
   original: 'o', xlarge: 'xl', large: 'l', medium: 'm', small: 's', square: 'sq'
@@ -108,7 +103,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
   const [core, setCore] = useState<FileNamingCore>('title')
   const [sep, setSep] = useState<FileNamingSep>('.')
   const [datePos, setDatePos] = useState<PartPosition>('off')
-  const [dateFmt, setDateFmt] = useState<DateFormat>('YYYY-MM-DD')
+  const [dateFmt, setDateFmt] = useState<DateFormat>(DEFAULT_DATE_PATTERN)
   const [seqPos, setSeqPos] = useState<PartPosition>('off')
   const [customPos, setCustomPos] = useState<PartPosition>('off')
   const [customText, setCustomText] = useState('')
@@ -260,8 +255,8 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
     }
     const pre: string[] = []
     const suf: string[] = []
-    if (datePos === 'prefix') pre.push(DATE_EXAMPLES[dateFmt])
-    if (datePos === 'suffix') suf.push(DATE_EXAMPLES[dateFmt])
+    if (datePos === 'prefix') pre.push(formatDateStamp(dateFmt, DATE_EXAMPLE_TAKEN))
+    if (datePos === 'suffix') suf.push(formatDateStamp(dateFmt, DATE_EXAMPLE_TAKEN))
     if (seqPos === 'prefix') pre.push('001')
     if (seqPos === 'suffix') suf.push('001')
     const ct = customText.trim() || 'MyText'
@@ -559,13 +554,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
                 </div>
                 {datePos !== 'off' && (
                   <div style={s.subOpts}>
-                    {(['YYYY-MM-DD', 'YYYY-MM-DD HH-MM-SS', 'YYYY.MM.DD', 'YYYY.MM.DD HH.MM.SS'] as DateFormat[]).map(f => (
-                      <div key={f} style={s.subOptRow} onClick={() => { setDateFmt(f) }} role="radio" aria-checked={dateFmt === f}>
-                        <RadioDot active={dateFmt === f} size={14} />
-                        <span style={s.fmtLabel}>{f}</span>
-                        <span style={s.fmtExample}>{DATE_EXAMPLES[f]}</span>
-                      </div>
-                    ))}
+                    <DateStampEditor value={dateFmt} onChange={setDateFmt} position={datePos === 'suffix' ? 'suffix' : 'prefix'} />
                   </div>
                 )}
 
@@ -904,8 +893,6 @@ const s: Record<string, React.CSSProperties> = {
   posBtnActive: { background: 'var(--ff-pink)', color: 'var(--ff-white)', fontWeight: '700' },
   subOpts: { margin: '1px 0 0', padding: '10px 12px', background: 'color-mix(in srgb, var(--ff-pink) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--ff-pink) 12%, transparent)', borderTop: 'none', borderRadius: '0 0 8px 8px', display: 'flex', flexDirection: 'column' as const, gap: '7px' },
   subOptRow: { display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' },
-  fmtLabel: { flex: 1, fontSize: '12px', color: 'var(--ff-text)' },
-  fmtExample: { fontSize: '11px', fontFamily: 'monospace', color: 'var(--ff-text-secondary)' },
   textInput: { ...fieldBox, width: '100%', boxSizing: 'border-box' as const },
 
   // Scroll fade + chevron
