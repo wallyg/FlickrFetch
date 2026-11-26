@@ -53,16 +53,19 @@ test('a screen that uses Dialog leaves Esc to it, and uses the shared close butt
 })
 
 // "Change settings" in the Confirm download box opens Settings over it, even though Settings is written earlier on the page (the first 3.13 test report)
-test('a dialog opened over another sits above it, whichever one is written first on the page', () => {
-  const confirm = pushDialog()
-  const settings = pushDialog()                      // opened from the confirm box
-  assert.ok(depthOf(settings) > depthOf(confirm))
-  assert.equal(depthOf(confirm), 1)
-  popDialog(confirm)                                 // the one underneath closes first: the other keeps its place above whatever opens next
-  const next = pushDialog()
-  assert.ok(depthOf(next) > 0)
+test('a dialog opened over another sits above it, whichever one is written first on the page, even after another one closed', () => {
+  const confirm = pushDialog(); const atConfirm = depthOf(confirm)         // each dialog keeps the layer it was given when it opened
+  const settings = pushDialog(); const atSettings = depthOf(settings)      // opened from the confirm box
+  assert.ok(atSettings > atConfirm)
+  assert.equal(atConfirm, 1)
+  popDialog(confirm)                                                       // the one underneath closes first
+  const next = pushDialog(); const atNext = depthOf(next)
+  assert.ok(atNext > atSettings, 'a new dialog must not tie with one that is still open')
   popDialog(settings); popDialog(next)
-  assert.equal(depthOf(settings), 0)                 // not open: no place
+  assert.equal(depthOf(settings), 0)                                       // not open: no place
+  const again = pushDialog()
+  assert.equal(depthOf(again), 1)                                          // all closed: layers start again
+  popDialog(again)
 })
 
 test('the dialog shell puts each dialog on its own layer from its place in the stack', () => {

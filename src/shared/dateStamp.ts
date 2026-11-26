@@ -85,7 +85,8 @@ export function formatDateStamp(pattern: string, dateTaken: string): string {
   const [hh, mi, ss] = timePart.split(':').map(Number)
   const year = Number.isFinite(y) ? y : 0, month = Number.isFinite(m) && m >= 1 && m <= 12 ? m : 1, day = Number.isFinite(d) && d >= 1 ? d : 1
   const hour = Number.isFinite(hh) ? hh : 0, minute = Number.isFinite(mi) ? mi : 0, second = Number.isFinite(ss) ? ss : 0
-  const weekday = new Date(Date.UTC(year, month - 1, day)).getUTCDay()
+  const when = new Date(Date.UTC(2000, month - 1, day)); when.setUTCFullYear(year)   // setUTCFullYear: a year under 100 stays that year
+  const weekday = when.getUTCDay()
   const hour12 = hour % 12 === 0 ? 12 : hour % 12
   const value: Record<string, string> = {
     yyyy: String(year).padStart(4, '0'), yy: String(year % 100).padStart(2, '0'),

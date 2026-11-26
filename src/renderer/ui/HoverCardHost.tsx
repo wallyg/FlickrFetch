@@ -21,11 +21,29 @@ interface Shown { anchorEl: Element; text: string; pointerX: number | null }
 function tipOf(target: EventTarget | null): Element | null {
   return target instanceof Element ? target.closest('[data-tip],[title]') : null
 }
-// A disabled control gets no pointer events from the browser, so (with pointer-events: none from index.html) it is found by where the pointer is
+// A disabled control gets no pointer events from the browser, so (with pointer-events: none from index.html) it is found by where the pointer is.
+// It only counts when it is really under the pointer: not covered by a dialog that opened over its screen, and not scrolled out of view inside a box that clips it.
+let candidates: Element[] = []
+let candidatesAt = 0
+function reachable(el: Element, x: number, y: number): boolean {
+  const top = document.elementFromPoint(x, y)
+  if (!top) return false
+  if ((el.closest('[data-dialog]') ?? null) !== (top.closest('[data-dialog]') ?? null)) return false   // a dialog is over it (or it is in one and the pointer is outside)
+  for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) {
+    const cs = getComputedStyle(a)
+    if (cs.overflowX === 'visible' && cs.overflowY === 'visible') continue
+    const r = a.getBoundingClientRect()
+    if (x < r.left || x > r.right || y < r.top || y > r.bottom) return false                             // scrolled out of its box
+  }
+  return true
+}
 function disabledAt(x: number, y: number): Element | null {
-  for (const el of Array.from(document.querySelectorAll('[disabled][title],[disabled][data-tip]'))) {
+  const now = Date.now()
+  if (now - candidatesAt > 300) { candidates = Array.from(document.querySelectorAll('[disabled][title],[disabled][data-tip]')); candidatesAt = now }   // not a whole-page search on every pointer move
+  for (const el of candidates) {
+    if (!el.isConnected) continue
     const r = el.getBoundingClientRect()
-    if (r.width > 0 && x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return el
+    if (r.width > 0 && x >= r.left && x <= r.right && y >= r.top && y <= r.bottom && reachable(el, x, y)) return el
   }
   return null
 }
@@ -113,6 +131,12 @@ export default function HoverCardHost(): React.JSX.Element | null {
     }
     const key = (e: KeyboardEvent): void => { if (!KEEP_KEYS.has(e.key)) hide() }
 
+    // A disabled control lets the pointer through, so a click on it must not reach what is underneath (a row or tile that opens when clicked)
+    const swallow = (e: MouseEvent): void => {
+      if (disabledAt(e.clientX, e.clientY)) { e.stopPropagation(); e.preventDefault(); hide() }
+    }
+    const SWALLOWED = ['click', 'dblclick', 'auxclick', 'contextmenu', 'mousedown', 'mouseup'] as const
+    for (const n of SWALLOWED) document.addEventListener(n, swallow, true)
     document.addEventListener('mouseover', over)
     document.addEventListener('mouseout', out)
     document.addEventListener('mousemove', move, { passive: true })
@@ -126,6 +150,7 @@ export default function HoverCardHost(): React.JSX.Element | null {
     window.addEventListener('resize', hide)
     return () => {
       hide()
+      for (const n of SWALLOWED) document.removeEventListener(n, swallow, true)
       document.removeEventListener('mouseover', over)
       document.removeEventListener('mouseout', out)
       document.removeEventListener('mousemove', move)

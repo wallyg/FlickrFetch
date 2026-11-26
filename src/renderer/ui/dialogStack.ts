@@ -1,13 +1,19 @@
 // Which dialog is on top, and where Tab goes inside one. Kept apart from the screen code so it can be tested.
 
 const stack: number[] = []
+const depths = new Map<number, number>()
 let next = 1
 
 /** A dialog opening takes the top place; give the number back to popDialog when it closes. */
-export function pushDialog(): number { const id = next++; stack.push(id); return id }
-export function popDialog(id: number): void { const i = stack.indexOf(id); if (i >= 0) stack.splice(i, 1) }
-/** How many dialogs are open up to and including this one (1 for the first). A dialog opened later sits above the ones already open, whichever is written first in the page. */
-export function depthOf(id: number): number { return stack.indexOf(id) + 1 }
+export function pushDialog(): number {
+  const id = next++
+  stack.push(id)
+  depths.set(id, Math.max(0, ...depths.values()) + 1)   // one above the highest dialog still open, so two dialogs never share a layer
+  return id
+}
+export function popDialog(id: number): void { const i = stack.indexOf(id); if (i >= 0) stack.splice(i, 1); depths.delete(id) }
+/** The layer of a dialog: 1 for the first open, and always above every dialog open when it opened (0 when it is not open). A dialog opened later sits above the ones already open, whichever is written first in the page. */
+export function depthOf(id: number): number { return depths.get(id) ?? 0 }
 /** Only the dialog on top answers Esc, so a note opened over About closes first and About stays. */
 export function isTopDialog(id: number): boolean { return stack[stack.length - 1] === id }
 

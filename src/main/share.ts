@@ -73,7 +73,7 @@ export function registerShareIpc(getWindow: () => BrowserWindow | null): void {
       const folder = join(app.getPath('temp'), 'FlickrFetch-share')
       mkdirSync(folder, { recursive: true })
       const now = Date.now()
-      const waiting = readdirSync(folder).map(name => ({ name, changedMs: statSync(join(folder, name)).mtimeMs }))
+      const waiting = readdirSync(folder).flatMap(name => { try { return [{ name, changedMs: statSync(join(folder, name)).mtimeMs }] } catch { return [] } })   // a file that vanished meanwhile is skipped
       for (const old of staleShareFiles(waiting, now)) { try { unlinkSync(join(folder, old)) } catch { /* it goes next time */ } }
       const file = join(folder, safePngName(defaultName))
       writeFileSync(file, Buffer.from(dataUrl.slice(PNG_PREFIX.length), 'base64'))

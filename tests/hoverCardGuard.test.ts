@@ -79,3 +79,13 @@ test('a tip never changes the pointer: the (i) marks keep the plain arrow, like 
   for (const f of files(SRC)) if (/cursor:\s*['"]?help/.test(readFileSync(f, 'utf8')) || /cursor:\s*help/.test(readFileSync(f, 'utf8'))) found.push(relative(SRC, f))
   assert.deepEqual(found, [])
 })
+
+test('a disabled control only gets a card when it is really under the pointer, and a click on it does not reach what is underneath', () => {
+  const host = read('ui/HoverCardHost.tsx')
+  assert.match(host, /function reachable/)
+  assert.match(host, /&& reachable\(el, x, y\)/)                     // and it is used
+  assert.match(host, /document\.elementFromPoint\(x, y\)/)           // not covered by a dialog
+  assert.match(host, /cs\.overflowX === 'visible'/)                     // not scrolled out of a box that clips it
+  assert.match(host, /const SWALLOWED = \['click'/)
+  assert.match(host, /e\.stopPropagation\(\); e\.preventDefault\(\)/)
+})
