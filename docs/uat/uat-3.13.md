@@ -82,3 +82,13 @@ Every tip in the app is now one white card with a soft shadow: the old browser t
 - [ ] H7 **Keyboard.** Press Tab to move through Settings: an (i) or an icon button shows its card while it has focus, and Esc or Tab hides it. Clicking a button with the mouse does not leave a card behind.
 - [ ] H8 **Health Check "How it works".** Still opens on a click, stays open, closes on a click elsewhere, Esc (focus returns to the button) or Tab. Select some of its text with the mouse: it stays open.
 - [ ] H9 **On This Day Details.** On the On This Day card, point at the little bars icon: the Details panel opens as before (years, tags, pictures), now as the same white card. Move the pointer onto the panel: it stays. Click the icon: it stays open until you click elsewhere or press Esc.
+
+## Polaroid frame (#269)
+
+The Polaroid cards were rebuilt: the caption is sized to the card so nothing overlaps, and the cards grow to fill the picture.
+
+- [ ] I1 **Square.** On This Day > collage or card > Frame Polaroid > Shape Square 1:1 with about 6 photos: the year, "N years ago" and the link sit side by side under each photo, nothing overlapping; the cards fill the width of the picture, with a modest gap, not small cards floating in a big grey field.
+- [ ] I2 **Every shape.** Switch through Auto, Portrait, Story and Wide, and Standard / Large: no text ever overlaps; the white strip under the caption is only as tall as the caption.
+- [ ] I3 **Few and many.** Try one photo (one big card) and a day with 12 or more photos (small cards, text still readable and not touching).
+- [ ] I4 **Links off.** Untick "Short Flickr link under each photo": the caption is the year and "N years ago", nicely centred in the strip.
+- [ ] I5 **Saved file.** Save a Square image and open it: it looks the same as the preview.

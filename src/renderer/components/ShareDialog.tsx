@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import CloseButton from '../ui/CloseButton'
+import { polaroidLayout, captionPlan, type TextKind } from '../ui/polaroid'
 import Dialog from '../ui/Dialog'
 import type { DayPhoto } from '../../shared/types'
 import logoImg from '../assets/logo-tray.png'
@@ -196,23 +197,6 @@ function drawTagIcon(ctx: CanvasRenderingContext2D, x: number, y: number, size: 
   ctx.restore()
 }
 
-// Polaroid cards: a square photo with a caption strip. In a fixed shape the cards pick the columns and rows that let them
-// be as large as possible; with Auto they use two columns up to four photos, three beyond.
-const POL_CAP = 118, POL_GX = 34, POL_GY = 58
-function polaroidLayout(n: number, cw: number, ch?: number): { cols: number; rows: number; w: number; h: number; offY: number; h_total: number } {
-  const options = ch === undefined ? [n === 1 ? 1 : n <= 4 ? 2 : 3] : Array.from({ length: n }, (_, i) => i + 1)
-  let best = { cols: 1, rows: 1, w: 0, h: 0, offY: 0, h_total: 0 }
-  for (const cols of options) {
-    const rows = Math.ceil(n / cols)
-    let w = (cw - POL_GX * (cols - 1)) / cols
-    if (ch !== undefined) w = Math.min(w, (ch - POL_GY * (rows - 1)) / rows - POL_CAP)
-    if (w <= 0) continue
-    const total = rows * (w + POL_CAP) + POL_GY * (rows - 1)
-    if (w > best.w) best = { cols, rows, w, h: w + POL_CAP, offY: ch !== undefined ? Math.max(0, (ch - total) / 2) : 0, h_total: total }
-  }
-  return best
-}
-
 // ── component ────────────────────────────────────────────────────────────────
 
 interface ShareProps {
@@ -347,7 +331,7 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
     // Work out the sizes: a fixed shape gives the photos exactly the room between the header and the footer
     const bodyAvail = fixed ? Math.max(120, sh.h - pad - headerH - footerH - bottom) : undefined
     const pol = polaroidLayout(n, cw, bodyAvail)
-    const body = frame === 'polaroid' ? { rects: [] as Rect[], h: pol.h_total } : cellsFor(layout, n, cw, bodyAvail)
+    const body = frame === 'polaroid' ? { rects: [] as Rect[], h: pol.total } : cellsFor(layout, n, cw, bodyAvail)
     const contentH = fixed ? (bodyAvail as number) : body.h
     const H = fixed ? sh.h : Math.ceil(pad + headerH + contentH + footerH + bottom)
     canvas.width = Math.round(OW * m); canvas.height = Math.round(H * m)
@@ -405,27 +389,25 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
       ready.forEach((p, i) => {
         const col = i % pol.cols, row = Math.floor(i / pol.cols)
         const inRow = row === pol.rows - 1 ? n - pol.cols * (pol.rows - 1) : pol.cols
-        const off = (cw - (inRow * pol.w + POL_GX * (inRow - 1))) / 2
-        const x = padX + off + col * (pol.w + POL_GX), y = top + pol.offY + row * (pol.h + POL_GY)
+        const off = (cw - (inRow * pol.w + pol.gx * (inRow - 1))) / 2
+        const x = padX + off + col * (pol.w + pol.gx), y = top + pol.offY + row * (pol.h + pol.gy)
         const pw = pol.w
         ctx.save()
         ctx.translate(x + pw / 2, y + pol.h / 2); ctx.rotate((rot[i % 6] * Math.PI) / 180); ctx.translate(-pw / 2, -pol.h / 2)
         ctx.shadowColor = brand.shadow; ctx.shadowBlur = 16; ctx.shadowOffsetY = 5
         ctx.fillStyle = brand.white; ctx.fillRect(0, 0, pw, pol.h)
         ctx.shadowColor = 'transparent'
-        drawCover(ctx, src.get(p.id) as HTMLImageElement, { x: 14, y: 14, w: pw - 28, h: pw - 28 })
-        // Caption: the year in big handwriting, how long ago, and the short Flickr link
-        const k = Math.min(1.2, Math.max(0.72, pw / 420))   // caption type follows the card width
-        const base = pw - 14 + Math.round(66 * k)
+        drawCover(ctx, src.get(p.id) as HTMLImageElement, { x: pol.pad, y: pol.pad, w: pol.photoW, h: pol.photoH })
+        // Caption: the year in big handwriting, how long ago, and the short Flickr link. Sized and placed by captionPlan so no text touches another.
         const yr = p.dateTaken.slice(0, 4), yrsAgo = nowYear - Number(yr)
+        const agoText = yrsAgo <= 0 ? 'this year' : `${yrsAgo} year${yrsAgo === 1 ? '' : 's'} ago`
+        const fontOf = (kind: TextKind, size: number): string => kind === 'hand' ? `${size}px "Bradley Hand", "Segoe Print", "Comic Sans MS", cursive` : `${kind === 'sansBold' ? 600 : 500} ${size}px ${SANS}`
+        const cap = captionPlan(pol, yr, agoText, showLinks ? links[i] : null, (t, size, kind) => { ctx.font = fontOf(kind, size); return ctx.measureText(t).width })
         ctx.fillStyle = '#3a3a3a'; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'
-        ctx.font = `${Math.round(56 * k)}px "Bradley Hand", "Segoe Print", "Comic Sans MS", cursive`
-        ctx.fillText(yr, 18, base)
-        // How long ago (and the link under it) on the right, so the year has room
+        ctx.font = fontOf('hand', cap.yearSize); ctx.fillText(yr, cap.yearX, cap.yearBase)
         ctx.textAlign = 'right'
-        ctx.font = `600 ${Math.round(30 * k)}px ${SANS}`; ctx.fillStyle = '#666666'
-        ctx.fillText(yrsAgo <= 0 ? 'this year' : `${yrsAgo} year${yrsAgo === 1 ? '' : 's'} ago`, pw - 18, showLinks ? base - Math.round(24 * k) : base - 4)
-        if (showLinks) { ctx.font = `500 ${Math.round(22 * k)}px ${SANS}`; ctx.fillStyle = '#7a7a7a'; ctx.fillText(links[i], pw - 18, base + Math.round(8 * k)) }
+        ctx.font = fontOf('sansBold', cap.agoSize); ctx.fillStyle = '#666666'; ctx.fillText(agoText, cap.rightX, cap.agoBase)
+        if (showLinks) { ctx.font = fontOf('sans', cap.linkSize); ctx.fillStyle = '#7a7a7a'; ctx.fillText(links[i], cap.rightX, cap.linkBase) }
         ctx.restore()
       })
     } else {
