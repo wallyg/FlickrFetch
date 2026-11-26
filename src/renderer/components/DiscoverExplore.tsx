@@ -38,7 +38,7 @@ export default function DiscoverExplore({ onDownload }: Props): React.JSX.Elemen
       setPage(result.page)
       setPages(result.pages)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load Explore feed')
+      setError(e instanceof Error ? e.message : 'Couldn\'t load Explore.')
     } finally {
       setLoading(false)
       setLoadingMore(false)

@@ -32,7 +32,7 @@ export default function HealthOverview({ refreshKey, onOpenList }: { refreshKey:
     return () => { stale = true }
   }, [refreshKey, attempt])
 
-  if (!data) return <div style={dash.wrap}><span style={dash.muted}>{failed ? <>This could not be loaded. <button style={{ background: 'none', border: 'none', color: 'var(--ff-blue)', cursor: 'pointer', fontSize: 'inherit', textDecoration: 'underline', padding: 0 }} onClick={() => setAttempt(n => n + 1)}>Try again</button></> : 'Checking your photos…'}</span></div>
+  if (!data) return <div style={dash.wrap}><span style={dash.muted}>{failed ? <>Couldn't load this. <button style={{ background: 'none', border: 'none', color: 'var(--ff-blue)', cursor: 'pointer', fontSize: 'inherit', textDecoration: 'underline', padding: 0 }} onClick={() => setAttempt(n => n + 1)}>Try again</button></> : 'Checking your photos…'}</span></div>
   if (!data.hasData) return <div style={dash.wrap}><span style={dash.muted}>Rebuild your library list first (the data button, top right).</span></div>
 
   const fmt = (n: number): string => n.toLocaleString()

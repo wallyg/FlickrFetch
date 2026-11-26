@@ -387,7 +387,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
 
           {loadFailed && (
             <div style={{ ...s.section, color: 'var(--ff-error)', fontSize: 13 }} role="alert">
-              Your settings could not be read, so changes are not being saved. <button style={{ background: 'none', border: 'none', color: 'var(--ff-blue)', cursor: 'pointer', fontSize: 13, textDecoration: 'underline', padding: 0 }} onClick={() => setLoadTry(n => n + 1)}>Try again</button>
+              Couldn't read your settings, so changes are not being saved. <button style={{ background: 'none', border: 'none', color: 'var(--ff-blue)', cursor: 'pointer', fontSize: 13, textDecoration: 'underline', padding: 0 }} onClick={() => setLoadTry(n => n + 1)}>Try again</button>
             </div>
           )}
 

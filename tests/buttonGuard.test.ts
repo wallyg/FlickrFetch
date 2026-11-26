@@ -78,3 +78,15 @@ test('no button says Retry, OK or Confirm on its own', () => {
   }
   assert.deepEqual(bad, [], 'Say "Try again", or name what the button does ("Clear records"). See assets/brand/brand-tokens.md, Wording.')
 })
+
+// Wording (#243): a problem reads "Couldn't <do it>.", with no "Failed to ..." or "... could not be loaded", and nothing asks "please".
+test('error lines say Couldn\'t, never Failed to, could not be, or please', () => {
+  const bad: string[] = []
+  const all = [...files(SRC, /\.tsx?$/), ...readdirSync(join(root, 'src/main')).filter(n => /\.ts$/.test(n)).map(n => join(root, 'src/main', n))]
+  for (const f of all) {
+    if (/data\/changelog\.ts$/.test(f)) continue
+    const code = readFileSync(f, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1').split('\n').filter(l => !l.includes('console.')).join('\n')   // a note to the log is not a line the person reads
+    for (const m of code.matchAll(/(?:['"`>])[^'"`<\n]*(?:Failed to |\bplease\b|\bPlease\b|could not be (?:loaded|saved|read|updated)|Could not )[^'"`<\n]*/g)) bad.push(`${relative(root, f)}: ${m[0].slice(0, 80)}`)
+  }
+  assert.deepEqual(bad, [], 'Say "Couldn\'t load ...". No "please". See docs/copy/ui-copy.md.')
+})

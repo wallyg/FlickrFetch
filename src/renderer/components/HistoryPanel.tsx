@@ -97,7 +97,7 @@ function ExpandableSection({ label, color, defaultExpanded, children }: {
 
 // Shown when a read of the download records fails, instead of waiting on Loading forever
 function LoadFailed({ onRetry }: { onRetry: () => void }): React.JSX.Element {
-  return <p style={styles.empty}>This could not be loaded. <button style={{ background: 'none', border: 'none', color: 'var(--ff-blue)', cursor: 'pointer', fontSize: 'inherit', textDecoration: 'underline', padding: 0 }} onClick={onRetry}>Try again</button></p>
+  return <p style={styles.empty}>Couldn't load this. <button style={{ background: 'none', border: 'none', color: 'var(--ff-blue)', cursor: 'pointer', fontSize: 'inherit', textDecoration: 'underline', padding: 0 }} onClick={onRetry}>Try again</button></p>
 }
 
 function BatchesTab({ onClear }: { onClear: () => void }) {

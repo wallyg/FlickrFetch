@@ -26,7 +26,7 @@ export async function saveCsvFile(getWindow: () => BrowserWindow | null, default
     writeFileSync(result.filePath, BYTE_ORDER_MARK + [header, ...lines].map(l => l.join(',')).join('\n') + '\n', 'utf-8')
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err)
-    const box = { type: 'error' as const, message: 'The spreadsheet could not be saved', detail }
+    const box = { type: 'error' as const, message: 'Couldn\'t save the spreadsheet', detail }
     if (win) await dialog.showMessageBox(win, box)
     else await dialog.showMessageBox(box)
     return null

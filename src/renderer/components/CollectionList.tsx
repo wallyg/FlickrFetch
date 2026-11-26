@@ -23,7 +23,7 @@ export default function CollectionList({ onCollectionSelect, active = true }: Co
   useEffect(() => {
     window.flickrAPI.getCollectionTree()
       .then(setCollections)
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load collections'))
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Couldn\'t load collections.'))
       .finally(() => setLoading(false))
   }, [])
 

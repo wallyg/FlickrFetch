@@ -33,7 +33,7 @@ export default function AuditOverview({ refreshKey, onOpenList }: { refreshKey: 
     return () => { stale = true }
   }, [refreshKey, attempt])
 
-  if (!data) return <div style={dash.wrap}><span style={dash.muted}>{failed ? <>This could not be loaded. <button style={{ background: 'none', border: 'none', color: 'var(--ff-blue)', cursor: 'pointer', fontSize: 'inherit', textDecoration: 'underline', padding: 0 }} onClick={() => setAttempt(n => n + 1)}>Try again</button></> : 'Checking your tags…'}</span></div>
+  if (!data) return <div style={dash.wrap}><span style={dash.muted}>{failed ? <>Couldn't load this. <button style={{ background: 'none', border: 'none', color: 'var(--ff-blue)', cursor: 'pointer', fontSize: 'inherit', textDecoration: 'underline', padding: 0 }} onClick={() => setAttempt(n => n + 1)}>Try again</button></> : 'Checking your tags…'}</span></div>
   if (!data.hasIndex) return <div style={dash.wrap}><span style={dash.muted}>Build your library list first (Tags tab).</span></div>
 
   const fmt = (n: number): string => n.toLocaleString()

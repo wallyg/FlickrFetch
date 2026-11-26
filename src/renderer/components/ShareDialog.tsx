@@ -522,12 +522,12 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
   }
   const copy = async (): Promise<void> => {
     if (!(await confirmPrivacy())) return
-    setNote((await window.flickrAPI.copyShareImage(await dataUrl())) ? 'Image copied. Paste it into a message or post.' : 'Could not copy the image.')
+    setNote((await window.flickrAPI.copyShareImage(await dataUrl())) ? 'Image copied. Paste it into a message or post.' : 'Couldn\'t copy the image.')
   }
   const copyLinks = async (): Promise<void> => {
     if (!(await confirmPrivacy())) return
     const text = ready.map(p => `${p.dateTaken.slice(0, 4)}  ${p.title || 'untitled'}  https://${shortLink(p.id)}`).join('\n')
-    try { await navigator.clipboard.writeText(text); setNote('Links copied. Paste them next to the image.') } catch { setNote('Could not copy the links.') }
+    try { await navigator.clipboard.writeText(text); setNote('Links copied. Paste them next to the image.') } catch { setNote('Couldn\'t copy the links.') }
   }
 
   return (
@@ -595,7 +595,7 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
           <div style={styles.preview}>
             {loading ? <span style={styles.muted}>Getting bigger pictures from Flickr…{progress.total > 0 ? ` ${Math.min(progress.done, progress.total)} of ${progress.total}` : ''}</span>
               : basePicks.length === 0 ? <span style={styles.muted}>{publicOnly ? 'None of this day\'s photos are public. Untick "Use public photos only" to include them.' : 'No photos to use.'}</span>
-              : ready.length === 0 ? <span style={{ ...styles.muted, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>Could not get these pictures from Flickr. Check your connection and try again.<button style={styles.btn} onClick={() => { setLoading(true); setAttempt(a => a + 1) }}>Try again</button></span>
+              : ready.length === 0 ? <span style={{ ...styles.muted, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>Couldn't get these pictures from Flickr. Check your connection, then try again.<button style={styles.btn} onClick={() => { setLoading(true); setAttempt(a => a + 1) }}>Try again</button></span>
               : <canvas ref={canvasRef} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', boxShadow: '0 2px 12px var(--ff-shadow-mid)' }} />}
           </div>
         </div>

@@ -46,7 +46,7 @@ export function registerShareIpc(getWindow: () => BrowserWindow | null): void {
     try {
       writeFileSync(result.filePath, Buffer.from(dataUrl.slice(PNG_PREFIX.length), 'base64'))
     } catch (err) {
-      const box = { type: 'error' as const, message: 'The image could not be saved', detail: err instanceof Error ? err.message : String(err) }
+      const box = { type: 'error' as const, message: 'Couldn\'t save the image', detail: err instanceof Error ? err.message : String(err) }
       if (win) await dialog.showMessageBox(win, box); else await dialog.showMessageBox(box)
       return null
     }

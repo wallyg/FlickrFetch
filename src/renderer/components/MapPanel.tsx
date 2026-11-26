@@ -524,9 +524,9 @@ export default function MapPanel({ active, onDownload, onFullRescan, refreshKey,
             </div>
           )}
           {marker && <div style={{ ...styles.note, left: 'auto', bottom: 'auto', right: 10, top: 10 }}>The place from Health Check is marked. <button style={sharedStyles.clearFiltersLink} onClick={() => setMarker(null)}>Remove mark</button></div>}
-          {streetFailed && <div style={{ ...styles.note, bottom: 34 }}>The street map could not be loaded (are you online?). Showing the outline.</div>}
+          {streetFailed && <div style={{ ...styles.note, bottom: 34 }}>Couldn't load the street map. Check your connection. Showing the outline instead.</div>}
           {data && hasFilter && data.matching === 0 && <div style={{ ...styles.note, left: '50%', bottom: 'auto', top: 12, transform: 'translateX(-50%)' }}>No photo with a location matches these filters. <button style={sharedStyles.clearFiltersLink} onClick={clearAll}>Clear all</button></div>}
-          {failed && <div style={styles.note}>The map could not be read. Try moving it again.</div>}
+          {failed && <div style={styles.note}>Couldn't read the map. Try moving it again.</div>}
           {outline.length === 0 && <div style={styles.note}>The country outline is not installed, so only your photos are shown.</div>}
         </div>
         {pick && (

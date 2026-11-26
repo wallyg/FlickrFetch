@@ -108,7 +108,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
   // One list that only changes when the photos do, so the collage maker is not restarted by every redraw of the page
   const candidates = useMemo(() => (data ? data.years.flatMap(y => expanded[y.year] ?? y.photos).filter(p => p.media !== 'video') : []), [data, expanded])
 
-  if (!data) return <div style={styles.pad}><span style={styles.muted}>Looking through your photos…</span></div>
+  if (!data) return <div style={styles.pad}><span style={styles.muted}>Loading your photos…</span></div>
   if (!data.hasData) return <div style={styles.pad}><span style={styles.muted}>Build your tag list first (Tags tab). It also keeps the dates On This Day needs.</span></div>
 
   const ins = data.insights

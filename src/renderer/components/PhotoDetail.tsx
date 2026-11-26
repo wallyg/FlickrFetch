@@ -389,7 +389,7 @@ export default function PhotoDetail({
       setVideoStreamUrl(url)
       setVideoPlaying(true)
     } catch {
-      setVideoError('Could not load video')
+      setVideoError('Couldn\'t load the video.')
     } finally {
       setVideoResolving(false)
     }
@@ -412,7 +412,7 @@ export default function PhotoDetail({
             controls
             autoPlay
             style={styles.videoPlayer}
-            onError={() => { setVideoPlaying(false); setVideoError('Video failed to play') }}
+            onError={() => { setVideoPlaying(false); setVideoError('Couldn\'t play the video.') }}
           />
         ) : (
           <>

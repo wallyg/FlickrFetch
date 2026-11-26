@@ -59,7 +59,7 @@ export async function startOAuthFlow(): Promise<string> {
   const oauthTokenSecret = params.get('oauth_token_secret')
 
   if (!oauthToken || !oauthTokenSecret) {
-    throw new Error('Failed to get request token from Flickr')
+    throw new Error('Couldn\'t start the sign-in with Flickr.')
   }
 
   // Store both in memory — needed when the user enters the verifier code
@@ -72,7 +72,7 @@ export async function startOAuthFlow(): Promise<string> {
 // Step 2: Exchange the verifier code (typed by user) for an access token
 export async function verifyOAuth(verifierCode: string): Promise<FlickrTokenData> {
   if (!pendingRequestToken || !pendingRequestTokenSecret) {
-    throw new Error('No pending auth session — please click Connect to Flickr again')
+    throw new Error('The sign-in timed out. Choose Connect to Flickr again.')
   }
 
   const oauthToken = pendingRequestToken
@@ -119,7 +119,7 @@ export async function verifyOAuth(verifierCode: string): Promise<FlickrTokenData
   const fullname = params.get('fullname')
 
   if (!accessToken || !accessTokenSecret || !nsid || !username) {
-    throw new Error('Incomplete response from Flickr — please try again')
+    throw new Error('Flickr\'s answer was cut short. Try again.')
   }
 
   const tokenData: FlickrTokenData = {

@@ -99,7 +99,7 @@ export default function BackupPanel({ refreshKey, toolbarLeft, onDownload, openR
         <div style={dash.wrap}>
           <div style={dash.card}>
             <h3 style={dash.cardTitle}>How much of your library is downloaded? <span style={dash.hint}>(from FlickrFetch’s own records)</span></h3>
-            {!summary ? <div style={dash.muted}>{summaryFailed ? <>This could not be loaded. <button style={{ background: 'none', border: 'none', color: 'var(--ff-blue)', cursor: 'pointer', fontSize: 'inherit', textDecoration: 'underline', padding: 0 }} onClick={() => setAttempt(n => n + 1)}>Try again</button></> : 'Counting…'}</div> : (
+            {!summary ? <div style={dash.muted}>{summaryFailed ? <>Couldn't load this. <button style={{ background: 'none', border: 'none', color: 'var(--ff-blue)', cursor: 'pointer', fontSize: 'inherit', textDecoration: 'underline', padding: 0 }} onClick={() => setAttempt(n => n + 1)}>Try again</button></> : 'Counting…'}</div> : (
               <>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
                   <span style={{ fontSize: 24, fontWeight: 700, color: 'var(--ff-text)' }}>{summary.downloaded.toLocaleString()}</span>

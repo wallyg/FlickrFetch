@@ -102,7 +102,7 @@ export default function AlbumPhotoGrid({ albumId, findActive, onPhotoSelect, sel
         onPhotosLoaded?.(data.photos)
         onPageInfo?.(data.page, data.pages)
       })
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load photos'))
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Couldn\'t load photos.'))
       .finally(() => setLoading(false))
   }, [loadPage])
 

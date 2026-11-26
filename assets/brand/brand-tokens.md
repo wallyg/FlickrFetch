@@ -129,8 +129,10 @@ Found before the sweep: 14 text boxes and selects typed out by hand with six pad
 One label per action, one phrase per state:
 - **Cancel** abandons something; **Close** dismisses a window or note; **Done** finishes a task.
 - **Try again** (retire "Retry") after something failed.
-- **Loading…** when nothing more specific helps; otherwise "Reading <the thing>…".
+- **Loading…** when nothing more specific helps; otherwise "Loading <the thing>…". "Checking <the thing>…" only where Health Check is working. Not "Reading", "Getting" or "Looking through" (decided 26 Nov, #243).
 - Buttons name what happens ("Download these 12"), never "OK".
+- A problem reads "Couldn't <do it>." ("Couldn't load albums."), followed by Try again where it helps. Never "Failed to ...", "... could not be loaded" or "please".
+- Health Check keeps its own words (snapshot, audits, check): the owner prefers them (decided 26 Nov).
 
 Voice (draft, refined in the edit pass, #243): simple, clear, not too wordy. Plain words, said in the person's terms, no jargon, no apologies, no "please". One idea per line. A button is one to three words, a hint is one short sentence, the first line of a note is about a dozen words, and rules go in bullets. Sentence case; numerals with thousands separators. The Health Check texts (`docs/copy/check-copy.md`) set the tone.
 

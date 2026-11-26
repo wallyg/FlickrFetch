@@ -85,7 +85,7 @@ export default function DiscoverGroups({ findActive = true }: { findActive?: boo
     setLoading(true)
     window.flickrAPI.discoverGetMyGroups()
       .then(g => { setGroups(g); setLoading(false) })
-      .catch(e => { setError(e instanceof Error ? e.message : 'Failed to load groups'); setLoading(false) })
+      .catch(e => { setError(e instanceof Error ? e.message : 'Couldn\'t load groups.'); setLoading(false) })
   }, [])
 
   const filteredGroups = groupFilter.trim()
@@ -120,7 +120,7 @@ export default function DiscoverGroups({ findActive = true }: { findActive?: boo
       setPoolPage(result.page)
       setPoolPages(result.pages)
     } catch (e) {
-      setPoolError(e instanceof Error ? e.message : 'Failed to load group pool')
+      setPoolError(e instanceof Error ? e.message : 'Couldn\'t load the group\'s photos.')
     } finally {
       setPoolLoading(false)
     }
@@ -593,7 +593,7 @@ export default function DiscoverGroups({ findActive = true }: { findActive?: boo
 
         <AttributionNotice />
 
-        {poolLoading && <div style={s.loadingState}>Loading group pool…</div>}
+        {poolLoading && <div style={s.loadingState}>Loading the group's photos…</div>}
         {poolError && <div style={s.errorState}>{poolError}</div>}
         {!poolLoading && !poolError && poolPhotos.length === 0 && (
           <EmptyState title="This group pool is empty" body="No public photos have been added to it yet." />

@@ -83,7 +83,7 @@ export default function DuplicatesList({ status, search, sort, selected, setSele
       await Promise.all(g.photos.map(p => window.flickrAPI.setHealthStatus({ photoId: p.photoId, condition: 'duplicates', status: next })))
     } catch {
       // Some of the photos may have been marked and some not: read the list again so it shows what is true
-      setNotice('Some photos in that group could not be updated. The list has been reloaded.')
+      setNotice('Couldn\'t update some photos in that group. The list is reloaded.')
       setAttempt(n => n + 1)
       onChanged()
       return
@@ -98,8 +98,8 @@ export default function DuplicatesList({ status, search, sort, selected, setSele
   const toggle = (id: string, on: boolean): void => setSelected(prev => { const n = new Set(prev); if (on) n.add(id); else n.delete(id); return n })
   const shown = groups.reduce((n, g) => n + g.photos.length, 0)
 
-  if (loading && groups.length === 0) return <div style={styles.muted}>Looking for duplicates…</div>
-  if (failed) return <div style={styles.muted}>This could not be loaded. <button style={styles.link} onClick={() => setAttempt(n => n + 1)}>Try again</button></div>
+  if (loading && groups.length === 0) return <div style={styles.muted}>Checking for duplicates…</div>
+  if (failed) return <div style={styles.muted}>Couldn't load this. <button style={styles.link} onClick={() => setAttempt(n => n + 1)}>Try again</button></div>
   if (groups.length === 0) return <div style={styles.muted}>{status === 'open' ? 'No possible duplicates left to review.' : 'Nothing here.'}</div>
 
   return (

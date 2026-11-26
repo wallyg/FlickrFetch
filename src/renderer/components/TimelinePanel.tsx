@@ -106,7 +106,7 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
     return { map, vmap, max, years: [...years].sort((a, b) => b - a), withPhotos }   // newest year first, so the busy recent years are on screen
   }, [data])
 
-  if (!data) return <div style={styles.pad}><span style={styles.muted}>Looking through your photos…</span></div>
+  if (!data) return <div style={styles.pad}><span style={styles.muted}>Loading your photos…</span></div>
   if (!data.hasData) return <div style={styles.pad}><span style={styles.muted}>Build your tag list first (Tags tab). It also keeps the dates the Timeline needs.</span></div>
 
   const strength = (n: number, max: number): number => (n === 0 ? 0 : 0.14 + 0.86 * Math.sqrt(n / max))

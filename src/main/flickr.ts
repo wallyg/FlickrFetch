@@ -89,7 +89,7 @@ export async function getPhotoInfo(photoId: string, tokenData: FlickrTokenData):
   })
 
   if (response.data.stat !== 'ok') {
-    throw new Error(`Flickr API error: ${response.data.message ?? 'unknown error'}`)
+    throw new Error(`Flickr returned an error: ${response.data.message ?? 'unknown error'}`)
   }
 
   const photo = response.data.photo
@@ -195,7 +195,7 @@ export async function getPhotoSizes(photoId: string, tokenData: FlickrTokenData)
   })
 
   if (response.data.stat !== 'ok') {
-    throw new Error(`Flickr API error: ${response.data.message ?? 'unknown error'}`)
+    throw new Error(`Flickr returned an error: ${response.data.message ?? 'unknown error'}`)
   }
 
   return (response.data.sizes.size as Record<string, string>[]).map((s) => ({
@@ -225,7 +225,7 @@ export async function getAlbums(tokenData: FlickrTokenData, page: number = 1): P
   })
 
   if (response.data.stat !== 'ok') {
-    throw new Error(`Flickr API error: ${response.data.message ?? 'unknown error'}`)
+    throw new Error(`Flickr returned an error: ${response.data.message ?? 'unknown error'}`)
   }
 
   const data = response.data.photosets
@@ -275,7 +275,7 @@ export async function getPublicAlbumPhotos(albumId: string, ownerNsid: string, t
   })
 
   if (response.data.stat !== 'ok') {
-    throw new Error(`Flickr API error: ${response.data.message ?? 'unknown error'}`)
+    throw new Error(`Flickr returned an error: ${response.data.message ?? 'unknown error'}`)
   }
 
   const data = response.data.photoset
@@ -317,7 +317,7 @@ export async function getAlbumPhotos(albumId: string, tokenData: FlickrTokenData
   })
 
   if (response.data.stat !== 'ok') {
-    throw new Error(`Flickr API error: ${response.data.message ?? 'unknown error'}`)
+    throw new Error(`Flickr returned an error: ${response.data.message ?? 'unknown error'}`)
   }
 
   const data = response.data.photoset
@@ -422,7 +422,7 @@ export async function getCollectionTree(tokenData: FlickrTokenData): Promise<Fli
   })
 
   if (response.data.stat !== 'ok') {
-    throw new Error(`Flickr API error: ${response.data.message ?? 'unknown error'}`)
+    throw new Error(`Flickr returned an error: ${response.data.message ?? 'unknown error'}`)
   }
 
   const topLevel = (response.data.collections?.collection as Record<string, unknown>[] | undefined) ?? []
@@ -577,7 +577,7 @@ export async function getPhotos(tokenData: FlickrTokenData, page: number = 1, so
   const { response, folded } = await searchWithTagFallback(tokenData, tokenData.nsid, search?.tagQuery, buildUrl)
 
   if (response.data.stat !== 'ok') {
-    throw new Error(`Flickr API error: ${response.data.message ?? 'unknown error'}`)
+    throw new Error(`Flickr returned an error: ${response.data.message ?? 'unknown error'}`)
   }
 
   const data = response.data.photos
@@ -722,7 +722,7 @@ export async function findDiscoverUser(query: string, tokenData: FlickrTokenData
     `&format=json&nojsoncallback=1`
   const authHeader2 = getOAuthHeader(infoUrl, 'GET', tokenData)
   const r2 = await http.get(infoUrl, { headers: { ...authHeader2, 'User-Agent': USER_AGENT } })
-  if (r2.data.stat !== 'ok') throw new Error(r2.data.message ?? 'Could not get user info')
+  if (r2.data.stat !== 'ok') throw new Error(r2.data.message ?? 'Couldn\'t get your Flickr details.')
 
   const person = r2.data.person
   return {
@@ -749,7 +749,7 @@ export async function getDiscoverCollectionTree(nsid: string, tokenData: FlickrT
   })
 
   if (response.data.stat !== 'ok') {
-    throw new Error(`Flickr API error: ${response.data.message ?? 'unknown error'}`)
+    throw new Error(`Flickr returned an error: ${response.data.message ?? 'unknown error'}`)
   }
 
   const topLevel = (response.data.collections?.collection as Record<string, unknown>[] | undefined) ?? []
@@ -924,7 +924,7 @@ export async function getRecentlyUpdated(tokenData: FlickrTokenData, minDate: nu
   })
 
   if (response.data.stat !== 'ok') {
-    throw new Error(`Flickr API error: ${response.data.message ?? 'unknown error'}`)
+    throw new Error(`Flickr returned an error: ${response.data.message ?? 'unknown error'}`)
   }
 
   const data = response.data.photos

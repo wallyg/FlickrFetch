@@ -123,13 +123,13 @@ function MissingRow({ f, onChange }: { f: AuditFinding; onChange: (f: AuditFindi
         <span style={styles.count}>{f.count.toLocaleString()} photo{f.count === 1 ? '' : 's'} may need it</span>
       </div>
       <div style={styles.ev}><HoverNote text={why} block={false}>Why these photos?</HoverNote></div>
-      {open && (!photos ? <div style={{ ...styles.muted, marginTop: 8 }}>Loading the photos…</div> : <PhotoStrip photos={photos} ticked={ticked} onToggle={toggle} />)}
+      {open && (!photos ? <div style={{ ...styles.muted, marginTop: 8 }}>Loading photos…</div> : <PhotoStrip photos={photos} ticked={ticked} onToggle={toggle} />)}
       <div style={styles.actions}>
         {f.status === 'open' && (
           <>
             <button style={styles.secondaryBtn} aria-expanded={open} onClick={() => setOpen(o => !o)}>{open ? 'Hide the photos' : `Show the ${f.count.toLocaleString()} photo${f.count === 1 ? '' : 's'}`}</button>
             {picking && ticked.size === 0
-              ? <span style={styles.muted}>{photos && photos.length === 0 ? 'The photos could not be loaded' : 'Tick a photo to add the tag in Flickr\'s organizer'}</span>
+              ? <span style={styles.muted}>{photos && photos.length === 0 ? 'Couldn\'t load the photos.' : 'Tick a photo to add the tag in Flickr\'s organizer'}</span>
               : <BatchEditButton key={`${f.tag}|${picking ? ticked.size : 'all'}`} label={picking ? `Add "${f.display}" to ${ticked.size.toLocaleString()} in Flickr's organizer` : `Add "${f.display}" in Flickr's organizer`} style={styles.secondaryBtn}
                   getIds={() => (picking ? Promise.resolve([...ticked]) : window.flickrAPI.getAuditPhotoIds(f.tag, 'missing'))} />}
             <button style={styles.secondaryBtn} onClick={() => onChange(f, 'fine')}>This one is fine</button>

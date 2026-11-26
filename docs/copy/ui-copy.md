@@ -1,6 +1,6 @@
 # UI copy review (3.13, #243)
 
-For you to review at your own pace. Take the **Proposed** column as the default; change or strike any line. Nothing below the three decisions has been applied yet, except the two mechanical rules already agreed (done in code, see "Already applied").
+Status (26 Nov 2026): **Decisions 1 and 2 are applied** (63 lines changed in the app, kept in line by `tests/buttonGuard.test.ts`). **Decision 3 is declined:** the owner prefers the Health Check wording as it is (snapshot, audits). Still to do: the Cancel, Close and Done audit and the empty lines (see the end of this section), then the line-by-line read of notes, Settings text, README and changelog.
 
 Rules (from `assets/brand/brand-tokens.md`): Cancel abandons, Close dismisses, Done finishes; Try again after a failure; buttons name what happens; plain words, no apologies, no "please", sentence case.
 
@@ -11,7 +11,7 @@ Rules (from `assets/brand/brand-tokens.md`): Cancel abandons, Close dismisses, D
 | Batch names "Retry: <album>" | "Try again: <album>" |
 | Confirm (four steps in History > clear records) | Clear records (three), Clear all records (one) |
 
-## Decision 1: loading lines
+## Decision 1: loading lines (applied)
 The brand rule says "Loading…" when nothing more specific helps, otherwise "Reading <thing>…". Applied literally, "Loading albums…" would become "Reading albums…", which sounds odd for things fetched from Flickr. **Proposed:** "Loading <thing>…" everywhere, and "Checking <thing>…" only where Health Check is working. Drop "Reading", "Getting" and "Looking through". (If you prefer the rule as written, say so and I will apply that instead.)
 
 | Screen | Now | Proposed |
@@ -26,7 +26,7 @@ The brand rule says "Loading…" when nothing more specific helps, otherwise "Re
 | Albums | Counting… | Loading… |
 | Several screens | Loading… | keep (nothing more specific helps) |
 
-## Decision 2: errors say "Couldn't <do it>." and offer Try again
+## Decision 2: errors say "Couldn't <do it>." and offer Try again (applied)
 Today there are three patterns: "Failed to load X", "X could not be loaded" and "This could not be loaded." **Proposed:** "Couldn't load <the thing>." followed by a Try again button where one makes sense.
 
 | Screen | Now | Proposed |
@@ -53,7 +53,7 @@ Today there are three patterns: "Failed to load X", "X could not be loaded" and 
 | Sign-in | Failed to get request token from Flickr | Couldn't start the sign-in with Flickr. |
 | Any Flickr error | Flickr API error: <message> | Flickr returned an error: <message> |
 
-## Decision 3: jargon in the Health Check "How it works" note
+## Decision 3: jargon in the Health Check "How it works" note (declined: keep snapshot and audits)
 "Snapshot" and "audits" are our words, not yours; the app calls them the saved list and checks everywhere else.
 
 | Now | Proposed |

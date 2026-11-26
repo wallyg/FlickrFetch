@@ -29,7 +29,7 @@ export default function LoginPage({ onAuthSuccess }: LoginPageProps): React.JSX.
       await window.flickrAPI.startAuth()
       setStep('waiting')
     } catch (err) {
-      const raw = err instanceof Error ? err.message : 'Failed to open Flickr.'
+      const raw = err instanceof Error ? err.message : 'Couldn\'t open Flickr.'
       setError(raw.replace(/^Error invoking remote method '[^']+': (Error: )?/, ''))
     }
   }
@@ -39,21 +39,21 @@ export default function LoginPage({ onAuthSuccess }: LoginPageProps): React.JSX.
     try {
       await window.flickrAPI.startAuth()
     } catch (err) {
-      const raw = err instanceof Error ? err.message : 'Failed to open Flickr.'
+      const raw = err instanceof Error ? err.message : 'Couldn\'t open Flickr.'
       setError(raw.replace(/^Error invoking remote method '[^']+': (Error: )?/, ''))
     }
   }
 
   const handleVerify = async (): Promise<void> => {
     const code = normalizeCode(verifierCode).trim()
-    if (!code) { setError('Please enter the authorization code from Flickr.'); return }
+    if (!code) { setError('Enter the code Flickr gave you.'); return }
     setStep('verifying')
     setError(null)
     try {
       const { user } = await window.flickrAPI.verifyAuth(code)
       onAuthSuccess(user)
     } catch (err) {
-      const raw = err instanceof Error ? err.message : 'Could not verify code.'
+      const raw = err instanceof Error ? err.message : 'Couldn\'t check that code.'
       setError(raw.replace(/^Error invoking remote method '[^']+': (Error: )?/, ''))
       setStep('waiting')
     }

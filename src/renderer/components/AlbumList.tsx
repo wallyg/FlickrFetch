@@ -66,7 +66,7 @@ export default function AlbumList({ onAlbumSelect, active = true }: AlbumListPro
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to load albums')
+          setError(err instanceof Error ? err.message : 'Couldn\'t load albums.')
           setLoading(false)
         }
       }

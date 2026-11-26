@@ -212,7 +212,7 @@ export default function DiscoverPeople({ isActive, findActive = true }: { isActi
       setPhotosPages(result.pages)
     } catch (e) {
       if (reqId !== searchReqRef.current) return
-      setPhotosError(e instanceof Error ? e.message : 'Failed to load photos')
+      setPhotosError(e instanceof Error ? e.message : 'Couldn\'t load photos.')
     } finally {
       if (reqId === searchReqRef.current) setPhotosLoading(false)
     }
@@ -249,7 +249,7 @@ export default function DiscoverPeople({ isActive, findActive = true }: { isActi
       if (reqId !== searchReqRef.current) return
       // Don't leave the previous (unfiltered) photos on screen looking like the search result
       setUserPhotos([])
-      setPhotosError(e instanceof Error ? e.message : 'Failed to load photos')
+      setPhotosError(e instanceof Error ? e.message : 'Couldn\'t load photos.')
     } finally {
       if (reqId === searchReqRef.current) setPhotosLoading(false)
     }
@@ -276,7 +276,7 @@ export default function DiscoverPeople({ isActive, findActive = true }: { isActi
       const result = await window.flickrAPI.discoverGetUserAlbums(foundUser.nsid, 1)
       setUserAlbums(result.albums)
     } catch (e) {
-      setAlbumsError(e instanceof Error ? e.message : 'Failed to load albums')
+      setAlbumsError(e instanceof Error ? e.message : 'Couldn\'t load albums.')
     } finally {
       setAlbumsLoading(false)
     }
@@ -291,7 +291,7 @@ export default function DiscoverPeople({ isActive, findActive = true }: { isActi
       setUserCollections(result)
       setCollectionsLoaded(true)
     } catch (e) {
-      setCollectionsError(e instanceof Error ? e.message : 'Failed to load collections')
+      setCollectionsError(e instanceof Error ? e.message : 'Couldn\'t load collections.')
     } finally {
       setCollectionsLoading(false)
     }
@@ -328,7 +328,7 @@ export default function DiscoverPeople({ isActive, findActive = true }: { isActi
       setAlbumPhotosPage(albumResult.page)
       setAlbumPhotosPages(albumResult.pages)
     } catch (e) {
-      setAlbumPhotosError(e instanceof Error ? e.message : 'Failed to load album')
+      setAlbumPhotosError(e instanceof Error ? e.message : 'Couldn\'t load the album.')
     } finally {
       setAlbumPhotosLoading(false)
     }
@@ -1497,7 +1497,7 @@ export default function DiscoverPeople({ isActive, findActive = true }: { isActi
         </div>
         {contactsLoading && <div style={s.loadingState}>Loading contacts…</div>}
         {!contactsLoading && contactsFailed && (
-          <div style={s.emptyState}>Your contacts could not be loaded. <button style={{ background: 'none', border: 'none', color: 'var(--ff-blue)', cursor: 'pointer', fontSize: 'inherit', textDecoration: 'underline', padding: 0 }} onClick={() => setContactsTry(n => n + 1)}>Try again</button></div>
+          <div style={s.emptyState}>Couldn't load your contacts. <button style={{ background: 'none', border: 'none', color: 'var(--ff-blue)', cursor: 'pointer', fontSize: 'inherit', textDecoration: 'underline', padding: 0 }} onClick={() => setContactsTry(n => n + 1)}>Try again</button></div>
         )}
         {!contactsLoading && !contactsFailed && filteredContacts.length === 0 && contacts.length === 0 && (
           <EmptyState title="You're not following anyone yet" body="People you follow on Flickr will show up here. You can also find someone by username above." />

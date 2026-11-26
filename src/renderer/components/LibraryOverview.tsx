@@ -53,7 +53,7 @@ export default function LibraryOverview({ refreshKey, offCount, onGoTags, onGoPh
     return () => { cancelled = true }
   }, [refreshKey, attempt])
 
-  if (!audit || !health) return <div style={dash.wrap}><span style={dash.muted}>{failed ? <>This could not be loaded. <button style={{ background: 'none', border: 'none', color: 'var(--ff-blue)', cursor: 'pointer', fontSize: 'inherit', textDecoration: 'underline', padding: 0 }} onClick={() => setAttempt(n => n + 1)}>Try again</button></> : 'Checking your library…'}</span></div>
+  if (!audit || !health) return <div style={dash.wrap}><span style={dash.muted}>{failed ? <>Couldn't load this. <button style={{ background: 'none', border: 'none', color: 'var(--ff-blue)', cursor: 'pointer', fontSize: 'inherit', textDecoration: 'underline', padding: 0 }} onClick={() => setAttempt(n => n + 1)}>Try again</button></> : 'Checking your library…'}</span></div>
 
   const fmt = (n: number): string => n.toLocaleString()
   const tagsOn = audit.byType.filter(r => r.state === 'on')

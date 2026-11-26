@@ -23,3 +23,10 @@ About 85 hand-built buttons now use the shared looks. Visible shifts: boxed grey
 - [ ] B3 **Settings and the photo view.** Change, Cancel, Restore defaults, the small "Reset" and "Cancel" lines, Copy, Download and "Show in Finder" look consistent. Anything that looks squeezed or too wide?
 - [ ] B4 **One name for Flickr's tool.** Every button that opens Flickr's editor for many photos says "Open in Flickr's organizer" (with a count or "selected" where it had one): On This Day, Timeline, Camera roll, Duplicates, the Photostream and Albums selection bars, Albums, Health Check lists. Right-click a photo: the menu says the same. No button says "Batch editor" or "Fix in Flickr's batch editor".
 - [ ] B5 **Your plan.** On the Tags tab open Your plan: each open item has "Open on Flickr", "View photos" and "Open in Flickr's organizer", in that order; the last opens Flickr's editor with the photos that carry that tag.
+
+## Wording (#243), part 1
+
+- [ ] C1 **Try again.** In the download bar after a download had failed photos, the button says "Try 3 failed again" (not "Retry 3 failed"). In History, any "couldn't load" line has a Try again link.
+- [ ] C2 **Clear records.** History > Clear: the confirm button says "Clear records" for a preset, a date before and a date after, and "Clear all records" for clear all (not "Confirm").
+- [ ] C3 **Loading lines.** While tabs load you see "Loading your photos…" (Camera roll, On This Day, Timeline), "Loading photos…", "Loading the group's photos…", "Checking for duplicates…". None says "Looking through", "Reading" or "Getting".
+- [ ] C4 **Error lines.** With Wi-Fi off, open a tab that needs Flickr (Albums, Collections, Discover): the message says "Couldn't load albums." and the like, not "Failed to load ...". On the sign-in page, a wrong code says "That code is not right. Check it and try again." and an empty box says "Enter the code Flickr gave you." No message says "please".

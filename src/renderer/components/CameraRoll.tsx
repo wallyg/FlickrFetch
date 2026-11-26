@@ -90,7 +90,7 @@ export default function CameraRoll({ from, to, title, scope, extra, extraText, o
         </div>
       )}
 
-      {loading && days.length === 0 ? <div style={styles.muted}>Looking through your photos…</div>
+      {loading && days.length === 0 ? <div style={styles.muted}>Loading your photos…</div>
         : days.length === 0 ? <div style={styles.muted}>No photos here{scopeNote}.</div>
         : days.map(d => (
           <div key={d.date} style={{ margin: '14px 0 4px' }}>

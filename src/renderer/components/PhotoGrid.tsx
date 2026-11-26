@@ -104,7 +104,7 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
       onPhotosLoaded?.(pageNum === 1 ? result.photos : [...photos, ...result.photos])
       onPageInfo?.(result.page, result.pages)
     } catch (err) {
-      const raw = err instanceof Error ? err.message : 'Failed to load photos'
+      const raw = err instanceof Error ? err.message : 'Couldn\'t load photos.'
       if (reqId !== loadReqRef.current) return
       setError(raw.replace(/^Error invoking remote method '[^']+': (Error: )?/, ''))
     } finally {

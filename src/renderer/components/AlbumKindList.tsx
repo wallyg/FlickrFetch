@@ -36,8 +36,8 @@ export default function AlbumKindList(): React.JSX.Element {
   }, [rows, search, changedOnly])
   useEffect(() => { setShown(PAGE) }, [search, changedOnly])
 
-  if (failed) return <div style={styles.muted}>This could not be loaded. <button style={styles.link} onClick={load}>Try again</button></div>
-  if (!rows) return <div style={styles.muted}>Reading your albums…</div>
+  if (failed) return <div style={styles.muted}>Couldn't load this. <button style={styles.link} onClick={load}>Try again</button></div>
+  if (!rows) return <div style={styles.muted}>Loading your albums…</div>
   if (rows.length === 0) return <div style={styles.muted}>No albums yet. A Rebuild reads them.</div>
 
   return (

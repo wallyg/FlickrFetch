@@ -220,13 +220,13 @@ ipcMain.handle('auth:start', async () => {
   } catch (err: unknown) {
     const status = (err as { response?: { status?: number } })?.response?.status
     if (status === 429) {
-      throw new Error('Flickr is rate-limiting requests. Please wait 30 seconds and try again.')
+      throw new Error('Flickr is asking us to slow down. Wait 30 seconds, then try again.')
     }
     if (status === 401) {
       process.stderr.write('[flickrfetch] auth:start was refused with HTTP 401 (check the API key and secret)\n')
-      throw new Error('Flickr refused the sign-in request. Please try again in a little while.')
+      throw new Error('Flickr turned down the sign-in. Try again in a little while.')
     }
-    throw new Error('Could not connect to Flickr. Check your internet connection and try again.')
+    throw new Error('Couldn\'t reach Flickr. Check your internet connection, then try again.')
   }
 })
 
@@ -241,9 +241,9 @@ ipcMain.handle('auth:verify', async (_event, verifierCode: string) => {
     process.stderr.write(`[flickrfetch] auth:verify ERROR: ${err instanceof Error ? err.message : String(err)}\n`)
     const status = (err as { response?: { status?: number } })?.response?.status
     if (status === 401) {
-      throw new Error('Invalid code — please check you entered it correctly and try again.')
+      throw new Error('That code is not right. Check it and try again.')
     }
-    throw new Error('Could not verify code. Please try connecting again.')
+    throw new Error('Couldn\'t check the code. Connect again.')
   }
 })
 
