@@ -11,7 +11,7 @@ import { join, relative, resolve } from 'node:path'
 const root = resolve(process.cwd())
 const SRC = join(root, 'src/renderer')
 const CEILING_FILE = join(root, 'tests/button-ceiling.json')
-const files = (dir: string): string[] => readdirSync(dir).flatMap(n => { const p = join(dir, n); return statSync(p).isDirectory() ? files(p) : /\.tsx$/.test(n) ? [p] : [] })
+const files = (dir: string, ext = /\.tsx$/): string[] => readdirSync(dir).flatMap(n => { const p = join(dir, n); return statSync(p).isDirectory() ? files(p, ext) : ext.test(n) ? [p] : [] })
 const KIT = /\.\.\.(?:primaryBtn|quietBtn|smallBtn|doThisBtn|doThisSmallBtn|putAsideBtn|dangerBtn|linkBtn|pillBtn|chip|selectedOn|fieldBox|fieldCompact|selectBox|selectCompact)\b/
 
 /** Style entries written as `name: { ... }` that mention a pointer cursor and type out a 1 px edge or the pink fill, without a kit spread. */
@@ -60,7 +60,7 @@ test('no file types out more boxed or pink buttons than its ceiling, and a file 
 // Wording (#261): Flickr's tool for editing many photos is "Flickr's organizer", and opening it is "Open ...", never "Fix ..." or "batch editor".
 test('Flickr\'s organizer is called that everywhere the user reads it', () => {
   const bad: string[] = []
-  const all = [...files(SRC), ...readdirSync(join(root, 'src/main')).filter(n => /\.ts$/.test(n)).map(n => join(root, 'src/main', n))]
+  const all = [...files(SRC, /\.tsx?$/), ...readdirSync(join(root, 'src/main')).filter(n => /\.ts$/.test(n)).map(n => join(root, 'src/main', n))]
   for (const f of all) {
     if (/data\/changelog\.ts$/.test(f)) continue   // the release notes are history
     const code = readFileSync(f, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1')
