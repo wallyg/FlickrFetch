@@ -97,6 +97,28 @@ The README also does not mention On This Day, the Timeline, the collage maker or
 |---|---|---|---|
 | G1 | 3.13, last bullet "Fixes from a full review" | One bullet of about 2,700 characters, 40 fixes joined by semicolons, some with a second "and" in the middle (a result of adding to it pass by pass) | Split into six short bullets that match the release notes: your files and downloads; accounts and Flickr; On This Day; steadier everywhere; and so on. Same facts, readable. The release notes draft already has the wording. |
 
+## H. Headings with jargon (for your review)
+
+Settings headings and labels that use our words or technical words. Reply with the numbers you want.
+
+| # | Where | Now | Proposed |
+|---|---|---|---|
+| H1 | File naming | "Core" | "Main part of the name" |
+| H2 | File naming | "Optional parts" | "Extra parts" |
+| H3 | File naming | "Part separator" | "Separator" |
+| H4 | File naming | Two headings for one thing: "Title transform" and "Case" | One: "Letter case" |
+| H5 | File naming | "Size indicator" | "Size code" |
+| H6 | File naming | "Character substitutions" (it only removes brackets) | "Remove brackets from titles" |
+| H7 | Metadata | "Core metadata" | "Details saved in the file" |
+| H8 | Metadata | "Keep Flickr's HTML" | "Keep description formatting" |
+| H9 | Metadata | "GPS coordinates" | "Location (GPS)" |
+| H10 | Metadata | "Rights and provenance" | "Rights and source" |
+| H11 | Metadata | "Output files" / "Sidecar JSON" | "Extra files" / "Details file (.json)" |
+| H12 | Confirm download box | "Metadata embedding" / "Individual files" | "Details saved in the file" / "Separate files" |
+| H13 | Smart Download menu | "Download updated" / "Download never downloaded" | "Download changed photos" / "Download new photos only" |
+| H14 | Tune checks, album fit | "cluster", "outliers", "spread" (C13 and C14 above) | the plain versions in C13 and C14 |
+| H15 | Tune checks | "Tune checks" | keep? (it is the name you chose; say if you want "Adjust checks") |
+
 ## Not proposed
 
 Settings and hover texts that are already short, plain and accurate (most of them), the "The problem FlickrFetch solves" essay (it is yours and reads well), and everything in Health Check's own voice.
