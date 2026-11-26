@@ -294,7 +294,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
           <div style={s.updateBanner}>
             <span style={s.updateText}><Icon name="arrowUp" /> FlickrFetch {updateVersion} is available</span>
             <button style={s.updateBtn} onClick={() => window.flickrAPI.openExternal('https://github.com/wallyg/FlickrFetch/releases/latest')}>
-              Get Update
+              Get update
             </button>
           </div>
         )}

@@ -83,3 +83,9 @@ test('On This Day ignores a slow "Show all" for a day you have moved off', () =>
   const src = read('src/renderer/components/OnThisDayPanel.tsx')
   assert.ok(/viewRef\.current\+\+/.test(src) && /if \(view !== viewRef\.current\) return/.test(src))
 })
+
+test('a download that finishes for a photo you have moved off does not mark the photo now on screen', () => {
+  const src = read('src/renderer/components/PhotoDetail.tsx')
+  assert.ok(/shownId\.current = photo\.id/.test(src))
+  assert.equal((src.match(/if \(forId !== shownId\.current\) return/g) ?? []).length, 2, 'both the finish and the failure are checked')
+})

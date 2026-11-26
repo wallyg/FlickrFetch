@@ -187,6 +187,8 @@ export default function PhotoDetail({
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const dragStartX = useRef<number | null>(null)
   const dragStartWidth = useRef<number>(PANEL_DEFAULT)
+  const shownId = useRef(photo.id)   // the photo on screen now: a download that finishes for a photo you have moved off must not mark this one
+  shownId.current = photo.id
 
   const handleDragStart = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
@@ -295,10 +297,12 @@ export default function PhotoDetail({
     setDownloadProgress(0)
     setDownloadError(null)
     setSavedPath(null)
+    const forId = photo.id
     try {
       const { filePath } = discoverMode
         ? await window.flickrAPI.discoverDownloadPhoto(photo.id, photo.title, downloadSize, photo.thumbnailUrl, photo.lastUpdate ?? 0, sourceName)
         : await window.flickrAPI.downloadPhoto(photo.id, photo.title, downloadSize, trackDownload, photo.thumbnailUrl, photo.lastUpdate ?? 0)
+      if (forId !== shownId.current) return
       if (filePath) {
         setSavedPath(filePath)
         setDownloadState('done')
@@ -307,6 +311,7 @@ export default function PhotoDetail({
         setDownloadState('idle')
       }
     } catch (err) {
+      if (forId !== shownId.current) return
       const raw = err instanceof Error ? err.message : 'Download failed'
       const cleaned = raw.replace(/^Error invoking remote method '[^']+': (Error: )?/, '')
       if (cleaned.toLowerCase().includes('cancel') || cleaned.toLowerCase().includes('abort')) {
