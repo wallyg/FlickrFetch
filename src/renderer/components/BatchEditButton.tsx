@@ -29,12 +29,14 @@ export default function BatchEditButton({ getIds, label = "Open in Flickr's orga
   const [busy, setBusy] = useState(false)
   const [note, setNote] = useState<'hidden' | 'shown' | 'fading'>('hidden')
   const [hint, setHint] = useState(false)
+  const [failed, setFailed] = useState(false)
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
   const clearTimers = (): void => { timers.current.forEach(clearTimeout); timers.current = [] }
   useEffect(() => clearTimers, [])
 
   const open = async (p: number, known?: string[]): Promise<void> => {
     setBusy(true)
+    setFailed(false)
     try {
       const all = known ?? await getIds()
       setIds(all)
@@ -47,6 +49,8 @@ export default function BatchEditButton({ getIds, label = "Open in Flickr's orga
         const stay = repeat ? HINT_SHOW_MS : SHOW_MS
         timers.current = [setTimeout(() => setNote('fading'), stay), setTimeout(() => setNote('hidden'), stay + FADE_MS)]
       }
+    } catch {
+      setFailed(true)   // the list of photos could not be gathered, or the organizer could not be opened: say so instead of doing nothing
     } finally { setBusy(false) }
   }
 
@@ -58,7 +62,8 @@ export default function BatchEditButton({ getIds, label = "Open in Flickr's orga
           {busy ? 'Opening…' : label} <span aria-hidden><Icon name="external" /></span>
         </button>
       </HoverNote>
-      {ids && note !== 'hidden' && (
+      {failed && <div role="alert" style={noteStyle}>Couldn&rsquo;t open the organizer. Try again.</div>}
+      {ids && note !== 'hidden' && !failed && (
         <div role="status" style={{ ...noteStyle, opacity: note === 'fading' ? 0 : 1 }}>
           {n === 0 ? 'Nothing to open here.' : parts > 1
             ? <>Opened part {part + 1} of {parts} ({Math.min(500, n - part * 500).toLocaleString()} of {n.toLocaleString()} photos). </>

@@ -113,10 +113,13 @@ export function computeJustifiedRows(
   }
 
   if (rowPhotos.length > 0) {
+    // The last row is left at the target height, unless a single very wide photo (a panorama) would run past the edge: then it is shrunk to fit
+    const natural = rowPhotoWidthSum + (rowPhotos.length - 1) * gap
+    const scale = natural > containerWidth ? (containerWidth - (rowPhotos.length - 1) * gap) / rowPhotoWidthSum : 1
     rows.push({
       photos: rowPhotos,
-      widths: rowAspects.map(a => a * targetHeight),
-      height: targetHeight
+      widths: rowAspects.map(a => a * targetHeight * scale),
+      height: targetHeight * scale
     })
   }
 
