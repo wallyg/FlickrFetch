@@ -54,6 +54,9 @@ export default function AlbumPhotoGrid({ albumId, findActive, onPhotoSelect, sel
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // A page that would not load: the filters' auto-loading stops there (instead of asking again in a loop) until "Load more" is pressed
+  const [moreError, setMoreError] = useState<string | null>(null)
+  const albumReq = useRef(0)   // each album opened (and each page asked for) gets a number, so a slow answer for an album you left is ignored
   const [hoveredId, setHoveredId] = useState<string | null>(null)
 
   const [sort, setSort] = useState<SortOrder>('album-order')
@@ -94,24 +97,32 @@ export default function AlbumPhotoGrid({ albumId, findActive, onPhotoSelect, sel
   }, [albumId])
 
   useEffect(() => {
+    const req = ++albumReq.current
     setLoading(true)
+    setLoadingMore(false)
+    setError(null)
+    setMoreError(null)
     setPhotos([])
     loadPage(1)
       .then((data) => {
+        if (req !== albumReq.current) return
         setPhotos(data.photos)
         setPageInfo({ page: data.page, pages: data.pages, total: data.total })
         onPhotosLoaded?.(data.photos)
         onPageInfo?.(data.page, data.pages)
       })
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Couldn\'t load photos.'))
-      .finally(() => setLoading(false))
+      .catch((err: unknown) => { if (req === albumReq.current) setError(err instanceof Error ? err.message : 'Couldn\'t load photos.') })
+      .finally(() => { if (req === albumReq.current) setLoading(false) })
   }, [loadPage])
 
   const handleLoadMore = useCallback(async (): Promise<void> => {
     if (!pageInfo || pageInfo.page >= pageInfo.pages) return
+    const req = albumReq.current
     setLoadingMore(true)
+    setMoreError(null)
     try {
       const data = await loadPage(pageInfo.page + 1)
+      if (req !== albumReq.current) return
       setPhotos(prev => {
         const updated = [...prev, ...data.photos]
         onPhotosLoaded?.(updated)
@@ -119,8 +130,10 @@ export default function AlbumPhotoGrid({ albumId, findActive, onPhotoSelect, sel
       })
       setPageInfo({ page: data.page, pages: data.pages, total: data.total })
       onPageInfo?.(data.page, data.pages)
+    } catch (err) {
+      if (req === albumReq.current) setMoreError(err instanceof Error ? err.message : 'Couldn\'t load more photos.')
     } finally {
-      setLoadingMore(false)
+      if (req === albumReq.current) setLoadingMore(false)
     }
   }, [pageInfo, loadPage, onPhotosLoaded, onPageInfo])
 
@@ -260,10 +273,10 @@ export default function AlbumPhotoGrid({ albumId, findActive, onPhotoSelect, sel
   // Auto-load remaining pages when any filter is active (albums are finite — no page cap)
   useEffect(() => {
     const filterActive = mediaFilter !== 'all' || privacyFilter !== 'all' || downloadFilter !== 'all' || licenseFilter !== 'all' || !!activeTitleQuery || !!activeTagQuery || !!activeDateMin || !!activeDateMax
-    if (filterActive && photos.length > 0 && pageInfo && pageInfo.page < pageInfo.pages && !loadingMore && !loading) {
+    if (filterActive && photos.length > 0 && pageInfo && pageInfo.page < pageInfo.pages && !loadingMore && !loading && !moreError) {
       handleLoadMore()
     }
-  }, [mediaFilter, privacyFilter, downloadFilter, licenseFilter, activeTitleQuery, activeTagQuery, activeDateMin, activeDateMax, photos.length, pageInfo?.page, pageInfo?.pages, loadingMore, loading, handleLoadMore])
+  }, [mediaFilter, privacyFilter, downloadFilter, licenseFilter, activeTitleQuery, activeTagQuery, activeDateMin, activeDateMax, photos.length, pageInfo?.page, pageInfo?.pages, loadingMore, loading, moreError, handleLoadMore])
 
   useLayoutEffect(() => {
     if (loading) return
@@ -695,8 +708,9 @@ export default function AlbumPhotoGrid({ albumId, findActive, onPhotoSelect, sel
 
       {hasMore && (
         <div style={styles.loadMore}>
+          {moreError && <p style={styles.mutedText}>Couldn't load the next page ({moreError}). Press the button to try again.</p>}
           <button style={styles.loadMoreBtn} onClick={handleLoadMore} disabled={loadingMore}>
-            {loadingMore ? 'Loading…' : `Load more (${(pageInfo!.total - photos.length).toLocaleString()} remaining)`}
+            {loadingMore ? 'Loading…' : `${moreError ? 'Try again' : 'Load more'} (${(pageInfo!.total - photos.length).toLocaleString()} remaining)`}
           </button>
         </div>
       )}

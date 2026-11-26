@@ -21,7 +21,7 @@ declare global {
       getAlbums: (page: number) => Promise<AlbumPage>
       getAlbumPhotos: (albumId: string, page: number) => Promise<PhotoPage>
       getCollectionTree: () => Promise<FlickrCollection[]>
-      startCollectionBatch: (collection: FlickrCollection) => Promise<{ queued: number }>
+      startCollectionBatch: (collection: FlickrCollection) => Promise<{ queued: number; skipped: number }>
       getTagIndexStatus: () => Promise<TagIndexStatus>
       startTagScan: (mode: 'full' | 'refresh') => Promise<{ started: boolean }>
       cancelTagScan: () => void

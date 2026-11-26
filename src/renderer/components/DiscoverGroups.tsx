@@ -9,6 +9,7 @@ import { AttributionNotice, DiscoverTile, DiscoverSelectBar } from './DiscoverEx
 import SmartDownloadButton from './SmartDownloadButton'
 import { GridIcon, ListIcon, JustifiedIcon, ChevronLeftIcon, ChevronRightIcon, sharedStyles as ss, type PhotoViewMode, type MediaFilter, type DownloadFilter, type LicenseFilter, PhotoListRow, DownloadFilterSelect, LicenseFilterSelect, matchesLicenseFilter, DOWNLOAD_FILTER_LABEL, LICENSE_FILTER_LABEL, DRAWER_LABEL_WIDTH, Chip, loadPhotoViewMode, savePhotoViewMode, loadRowHeight, saveRowHeight, computeJustifiedRows } from './PhotoGridShared'
 import EmptyState from './EmptyState'
+import { parseTagInput, hasTags } from '../../shared/tags'
 import WaveHeader, { DISCOVER_GUTTER } from './WaveHeader'
 import HoverNote from '../ui/HoverNote'
 
@@ -150,14 +151,9 @@ export default function DiscoverGroups({ findActive = true }: { findActive?: boo
       result = result.filter(p => p.title.toLowerCase().includes(q))
     }
     if (poolAppliedTagInput.trim()) {
-      const tags = poolAppliedTagInput.trim().toLowerCase().split(/\s+/).filter(Boolean)
-      result = result.filter(p => {
-        if (!p.tags || p.tags.length === 0) return false
-        const photoTags = p.tags.map(t => t.toLowerCase())
-        return poolAppliedTagMode === 'all'
-          ? tags.every(t => photoTags.includes(t))
-          : tags.some(t => photoTags.includes(t))
-      })
+      const tags = parseTagInput(poolAppliedTagInput)
+      // Commas between tags and Flickr's own tag form, like every other tag box ("New York" finds "newyork")
+      if (tags.length) result = result.filter(p => hasTags(p.tags, tags, poolAppliedTagMode))
     }
     if (poolAppliedDatePreset !== 'all' || poolAppliedDateFrom || poolAppliedDateTo) {
       const now = new Date()
@@ -495,7 +491,7 @@ export default function DiscoverGroups({ findActive = true }: { findActive?: boo
                     <span style={ss.drawerLabel}>Tags</span>
                     <input
                       style={{ ...ss.searchInput, border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '5px 8px' }}
-                      placeholder="tag1 tag2…"
+                      placeholder="paris, travel…"
                       value={poolPendingTagInput}
                       onChange={e => setPoolPendingTagInput(e.target.value)}
                     />

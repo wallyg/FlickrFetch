@@ -4,6 +4,18 @@ export function cleanTag(s: string): string {
   return s.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '')
 }
 
+/** The tags typed in a filter box: separated by commas, each in Flickr's own form, so "New York, Paris" is two tags, "newyork" and "paris". */
+export function parseTagInput(input: string): string[] {
+  return input.split(',').map(cleanTag).filter(Boolean)
+}
+
+/** Whether a photo carries the wanted tags (from parseTagInput): all of them, or at least one. No tags typed means every photo matches. */
+export function hasTags(photoTags: readonly string[] | undefined, wanted: readonly string[], mode: 'any' | 'all'): boolean {
+  if (wanted.length === 0) return true
+  const have = (photoTags ?? []).map(cleanTag)
+  return mode === 'all' ? wanted.every(t => have.includes(t)) : wanted.some(t => have.includes(t))
+}
+
 // The Unicode block of combining accent marks (U+0300 to U+036F), written with code points so it stays readable
 const COMBINING_ACCENTS = new RegExp(`[${String.fromCharCode(0x300)}-${String.fromCharCode(0x36f)}]`, 'g')
 

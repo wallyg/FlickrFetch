@@ -1042,7 +1042,7 @@ export default function DiscoverPeople({ isActive, findActive = true }: { isActi
                     <span style={ss.drawerLabel}>Tags</span>
                     <input
                       style={s.drawerInput}
-                      placeholder="tag1 tag2…"
+                      placeholder="paris, travel…"
                       value={tagInput}
                       onChange={e => setTagInput(e.target.value)}
                     />

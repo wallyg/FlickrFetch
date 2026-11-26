@@ -28,6 +28,7 @@ import { safeFolderName } from './safeName'
 import { buildFilename } from './fileNaming'
 import { selectedPlace } from './batchFolder'
 import { privacyLevelOf } from '../shared/privacy'
+import { collectionAlbums } from '../shared/collections'
 import { ownerNsid, forgetOwnerNsid } from './owner'
 import { openDatabase, closeDatabase, writeBatchLog, writePhotoRecord, getPhotoRecord, getPhotoRecordsBatch, getBatchLog, clearBatchLog, searchPhotoRecords, deletePhotoRecord, deletePhotoRecords, clearPhotoRecords, writeDiscoverRecord, getDiscoverRecordsBatch, searchDiscoverRecords, deleteDiscoverRecord, deleteDiscoverRecords, clearDiscoverRecords } from './database'
 import type { AppSettings, BatchProgress, DownloadSize, CameraExif, PhotoSearchParams, MetadataSettings, DiscoverUser, DiscoverContact, DiscoverGroup } from '../shared/types'
@@ -348,7 +349,7 @@ interface BatchJob {
   discoverGroupId?: string     // group ID for discover-group batch
   discoverFolder?: string      // target subfolder override
   // Collections
-  collectionTitle?: string     // parent collection folder for collection batch downloads
+  collectionPath?: string[]    // folders for collection batch downloads: the collection, then any sub-collection the album sits in
   // Export
   zipMode?: boolean             // zip all downloads into a single archive
 }
@@ -400,7 +401,7 @@ async function runNextBatch(): Promise<void> {
     } else if (job.albumId === '__photostream__') {
       await runPhotostreamBatch(job.albumTitle, job.track ?? true, job.smartMode, job.privacyFilter, job.sort, job.zipMode)
     } else {
-      await runAlbumBatch(job.albumId!, job.albumTitle, job.mediaType, job.privacyFilter, job.track ?? true, job.smartMode, job.collectionTitle, job.zipMode)
+      await runAlbumBatch(job.albumId!, job.albumTitle, job.mediaType, job.privacyFilter, job.track ?? true, job.smartMode, job.collectionPath, job.zipMode)
     }
   } catch (err) {
     process.stderr.write(`[flickrfetch] batch error: ${err}\n`)
@@ -414,7 +415,7 @@ async function runNextBatch(): Promise<void> {
   runNextBatch()
 }
 
-async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'photo' | 'video', privacyFilter?: string, track = true, smartMode?: 'updated' | 'never-downloaded', collectionTitle?: string, zipMode = false): Promise<void> {
+async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'photo' | 'video', privacyFilter?: string, track = true, smartMode?: 'updated' | 'never-downloaded', collectionPath?: string[], zipMode = false): Promise<void> {
   if (!mainWindow) return
   const tokenData = loadToken()
   if (!tokenData) return
@@ -422,9 +423,9 @@ async function runAlbumBatch(albumId: string, albumTitle: string, mediaType?: 'p
   activeBatchAlbumId = albumId
   const { fileNaming, downloadFolder, showDockProgress, notifyOnComplete, conflictBehavior, downloadSize, openFinderOnComplete, metadata } = loadSettings()
   const safeAlbumTitle = safeFolderName(albumTitle)
-  const safeCollectionTitle = collectionTitle ? safeFolderName(collectionTitle) : undefined
-  const zipParentDir = safeCollectionTitle ? join(downloadFolder, safeCollectionTitle) : downloadFolder
-  const albumFolder = safeCollectionTitle ? join(zipParentDir, safeAlbumTitle) : join(downloadFolder, safeAlbumTitle)
+  const safeCollectionParts = (collectionPath ?? []).map(safeFolderName).filter(Boolean)
+  const zipParentDir = join(downloadFolder, ...safeCollectionParts)
+  const albumFolder = join(zipParentDir, safeAlbumTitle)
 
   const tempDir = zipMode ? join(tmpdir(), `ff-zip-${Date.now()}`) : null
   if (tempDir) mkdirSync(tempDir, { recursive: true })
@@ -1174,19 +1175,16 @@ ipcMain.handle('batch:retryDiscoverSelected', (_event, photos: { id: string; tit
   enqueueBatch({ type: 'discover-selected', photos, albumTitle, discoverFolder: targetFolder, track: true })
 })
 
-function collectCollectionAlbums(col: import('../shared/types').FlickrCollection): { id: string; title: string }[] {
-  const result: { id: string; title: string }[] = []
-  for (const set of col.sets) result.push({ id: set.id, title: set.title })
-  for (const sub of col.collections) result.push(...collectCollectionAlbums(sub))
-  return result
-}
-
 ipcMain.handle('batch:startCollection', (_event, collection: import('../shared/types').FlickrCollection) => {
-  const albums = collectCollectionAlbums(collection)
-  for (const { id, title } of albums) {
-    enqueueBatch({ type: 'album', albumId: id, albumTitle: title, collectionTitle: collection.title, track: true })
+  // Like a single album: one already waiting or downloading is not queued again (a second click would download everything twice)
+  let queued = 0, skipped = 0
+  for (const { id, title, path } of collectionAlbums(collection)) {
+    const already = (activeBatchController !== null && activeBatchAlbumId === id) || batchQueue.some(j => j.type === 'album' && j.albumId === id)
+    if (already) { skipped++; continue }
+    enqueueBatch({ type: 'album', albumId: id, albumTitle: title, collectionPath: path, track: true })
+    queued++
   }
-  return { queued: albums.length }
+  return { queued, skipped }
 })
 
 ipcMain.handle('batch:startAlbum', (_event, albumId: string, albumTitle: string, photoCount?: number, videoCount?: number, force?: boolean, mediaType?: 'photo' | 'video', privacyFilter?: string, track = true, smartMode?: 'updated' | 'never-downloaded', zipMode?: boolean) => {

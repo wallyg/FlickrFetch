@@ -8,6 +8,7 @@ import MapPanel from '../components/MapPanel'
 import type { RangeOpts } from '../components/DateFilterBar'
 import type { PrivacyFilter } from '../components/PhotoGridShared'
 import BatchEditButton from '../components/BatchEditButton'
+import { collectionAlbums } from '../../shared/collections'
 import type { FlickrUser, FlickrPhoto, FlickrAlbum, FlickrCollection, FlickrSet, BatchProgress, TagMode } from '../../shared/types'
 import PhotoGrid from '../components/PhotoGrid'
 import PhotoDetail from '../components/PhotoDetail'
@@ -170,6 +171,8 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
   const [showAlbumOverflow, setShowAlbumOverflow] = useState(false)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false)
+  const [collectionToDownload, setCollectionToDownload] = useState<FlickrCollection | null>(null)
+  const [collectionNote, setCollectionNote] = useState<string | null>(null)   // what the last "Download all albums" did, when it did less than asked
   useEffect(() => window.flickrAPI.onTagScanProgress(p => { if (p.phase === 'done') setDataKey(k => k + 1) }), [])
   useEffect(() => window.flickrAPI.onOpenOnThisDay(() => { setAppMode('you'); setOnThisDayVisited(true); setView('onthisday') }), [])
 
@@ -802,11 +805,14 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
           <div style={{ flex: 1 }} />
           <button
             style={styles.downloadAllBtn}
-            onClick={() => void window.flickrAPI.startCollectionBatch(currentCollection)}
+            onClick={() => setCollectionToDownload(currentCollection)}
           >
             <Icon name="arrowDown" /> Download all albums
           </button>
         </div>
+      )}
+      {appMode === 'you' && view === 'collection-detail' && collectionNote && (
+        <p style={{ ...styles.confirmBody, margin: '8px 24px 0' }}>{collectionNote} <button style={styles.confirmCancel} onClick={() => setCollectionNote(null)}>Dismiss</button></p>
       )}
 
       <main ref={discoverMainRef} style={{ ...styles.main, display: appMode === 'discover' ? 'flex' : 'none', flexDirection: 'column' }}>
@@ -975,6 +981,30 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             </div>
 </Dialog>
       )}
+      {collectionToDownload && (() => {
+        const albums = collectionAlbums(collectionToDownload)
+        const col = collectionToDownload
+        const start = (): void => {
+          setCollectionToDownload(null)
+          window.flickrAPI.startCollectionBatch(col)
+            .then(r => setCollectionNote(r.skipped > 0 ? `${r.queued} album${r.queued !== 1 ? 's' : ''} queued. ${r.skipped} already waiting or downloading, so not added again.` : null))
+            .catch(() => setCollectionNote('Couldn\u2019t start the download. Try again.'))
+        }
+        return (
+          <Dialog label="Download all albums" size="small" onClose={() => setCollectionToDownload(null)} cardStyle={{ padding: 24 }}>
+            <p style={styles.confirmTitle}>Download all albums in &ldquo;{col.title}&rdquo;?</p>
+            <p style={styles.confirmBody}>
+              {albums.length === 0
+                ? 'There are no albums in this collection.'
+                : <>{albums.length.toLocaleString()} album{albums.length !== 1 ? 's' : ''}, including any in sub-collections, will be added to the download queue. Each saves into its own folder, inside a folder named for the collection.<br /><br />An album that is already waiting or downloading is not added again.</>}
+            </p>
+            <div style={styles.confirmActions}>
+              <button style={styles.confirmCancel} onClick={() => setCollectionToDownload(null)}>Cancel</button>
+              {albums.length > 0 && <button style={styles.downloadAllBtn} onClick={start}>Download {albums.length.toLocaleString()} album{albums.length !== 1 ? 's' : ''}</button>}
+            </div>
+          </Dialog>
+        )
+      })()}
       {showSignOutConfirm && (
         <Dialog label="Sign out of Flickr" size="small" onClose={() => setShowSignOutConfirm(false)} cardStyle={{ padding: 24 }}>
             <p style={styles.confirmTitle}>Sign out of Flickr?</p>
