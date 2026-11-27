@@ -250,9 +250,12 @@ export function GuessedNote({ stats, go }: { stats: LibraryStats; go: Go }): Rea
   const g = stats.guessed
   if (g.items === 0) return null
   return (
-    <div style={{ ...styles.insight, marginTop: 12 }}>
-      <b>{fmt(g.items)} {g.items === 1 ? 'item has' : 'items have'} a guessed or placeholder date</b>, so these date charts leave {g.items === 1 ? 'it' : 'them'} out. {g.items === 1 ? 'It is' : 'They are'} still counted everywhere else. <InfoTip text={GUESSED_HELP} />{' '}
-      <button style={styles.link} onClick={() => go.list('datePlaceholder')}>Open the Placeholder date check</button>
+    <div style={{ ...styles.insight, ...styles.noteRow }}>
+      <InfoTip text={GUESSED_HELP} />
+      <span>
+        <b>{fmt(g.items)} {g.items === 1 ? 'item has' : 'items have'} a guessed or placeholder date</b>, so these date charts leave {g.items === 1 ? 'it' : 'them'} out. {g.items === 1 ? 'It is' : 'They are'} still counted everywhere else.{' '}
+        <button style={styles.link} onClick={() => go.list('datePlaceholder')}>Open the Placeholder date check</button>
+      </span>
     </div>
   )
 }
@@ -373,6 +376,7 @@ const styles: Record<string, React.CSSProperties> = {
   tileValue: { fontSize: 24, fontWeight: 700, color: 'var(--ff-text)', lineHeight: 1.2, fontVariantNumeric: 'tabular-nums' },
   insight: { marginTop: 8, padding: '8px 12px', borderRadius: 8, background: 'var(--ff-info-bg)', border: '1px solid var(--ff-info-line)', fontSize: 12, color: 'var(--ff-text)', lineHeight: 1.5 },
   link: { ...linkBtn, fontSize: 12 },
+  noteRow: { marginTop: 12, display: 'flex', gap: 8, alignItems: 'flex-start' },
   stack: { display: 'flex', height: 16, borderRadius: 6, overflow: 'hidden', background: 'var(--ff-warm)' },
   figures: { display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px 16px', marginTop: 12 },
   figure: { display: 'flex', alignItems: 'flex-start', gap: 8, borderRadius: 6, padding: 2 },

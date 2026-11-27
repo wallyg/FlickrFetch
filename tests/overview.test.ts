@@ -77,7 +77,7 @@ test('many decades get short labels so none is cut off', () => {
 
 test('the guessed-dates note has an (i) that explains what a guessed date is and why it is left out', () => {
   const cards = read('src/renderer/components/DashboardCards.tsx')
-  assert.match(cards, /<InfoTip text=\{GUESSED_HELP\} \/>/)
+  assert.match(cards, /<InfoTip text=\{GUESSED_HELP\} \/>\s*<span>\s*<b>\{fmt\(g\.items\)\}/)   // the (i) leads the note, so it is not read as part of the link at the end
   assert.match(cards, /What a guessed date is/); assert.match(cards, /Why they are left out/); assert.match(cards, /What you can do/)
 })
 
