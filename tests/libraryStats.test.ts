@@ -110,8 +110,24 @@ test('tags on nearly the same photos share a group; a tag on a few of the same p
   const ids = (p: string, n: number): string[] => Array.from({ length: n }, (_, i) => `${p}${i}`)
   addTag(db, 'Big Apple', ids('g', 100)); addTag(db, 'The Big Apple', [...ids('g', 96), 'h1'])     // nearly the same photos
   addTag(db, 'Borough', ids('g', 30))                                                      // some of them: a part of a place, not the same thing
-  const top = topTagsWithGroups(db)
+  addPhotos(db, ids('g', 100).map(id => ({ id, taken: '2023-03-03 10:00:00' })))   // a library of a few hundred, so these tags are a fair share of it
+  addPhotos(db, ids('z', 300).map(id => ({ id, taken: '2023-04-04 10:00:00' })))
+  const items = (db.prepare('SELECT COUNT(*) AS n FROM photo_meta').get() as { n: number }).n
+  const top = topTagsWithGroups(db, items)
   const group = (name: string): number | undefined => top.find(t => t.name === name)?.group
   assert.ok(group('Big Apple') !== undefined && group('Big Apple') === group('The Big Apple'))
   assert.equal(group('Borough'), undefined)
+})
+
+test('the safeguards: a tag on nearly every photo, and a very small tag, are left out of the same-photos comparison', () => {
+  const db = getDb()!
+  const ids = (p: string, n: number): string[] => Array.from({ length: n }, (_, i) => `${p}${i}`)
+  const items = (db.prepare('SELECT COUNT(*) AS n FROM photo_meta').get() as { n: number }).n
+  const everything = Array.from({ length: items }, (_, i) => (db.prepare('SELECT photo_id FROM photo_meta LIMIT 1 OFFSET ?').get(i) as { photo_id: string }).photo_id)
+  addTag(db, 'Everywhere', everything); addTag(db, 'On Every One', everything.slice(0, everything.length - 2))   // two tags on nearly every photo
+  addTag(db, 'Tiny One', ids('q', 5)); addTag(db, 'Tiny Two', ids('q', 5))                                       // two small tags on the same few photos
+  const top = topTagsWithGroups(db, items)
+  const group = (name: string): number | undefined => top.find(t => t.name === name)?.group
+  assert.equal(group('Everywhere'), undefined); assert.equal(group('On Every One'), undefined)
+  assert.equal(group('Tiny One'), undefined); assert.equal(group('Tiny Two'), undefined)
 })

@@ -44,18 +44,24 @@ function ranked(db: Database.Database, sql: string, limit: number): Ranked[] {
 
 /** How alike two tags' photos must be (shared photos over all photos of either) for them to count as "on nearly the same photos". */
 export const SAME_PHOTOS = 0.8
+/** Two safeguards so a small or odd library is not told something silly: a tag needs this many photos to be compared, and a tag on more than this share of the library (one put on nearly every photo) says nothing about another. */
+export const MIN_TAG_PHOTOS = 20
+export const MAX_TAG_SHARE = 0.5
 
 /**
  * The 25 most-used tags. Tags that sit on nearly the same photos get the same `group` number (NY, NYC, New York and New York City, for example): the app
  * cannot know they mean the same, but photos that always carry all of them say so. Only the top 25 are compared, so this stays quick.
  */
-export function topTagsWithGroups(db: Database.Database): Named[] {
+export function topTagsWithGroups(db: Database.Database, items: number): Named[] {
   const top = db.prepare('SELECT id, COALESCE(display, name) AS name, photo_count AS n FROM tag_names WHERE photo_count > 0 ORDER BY photo_count DESC, name LIMIT 25').all() as { id: number; name: string; n: number }[]
   const photos = top.map(t => new Set((db.prepare('SELECT photo_id FROM tag_photo WHERE tag_id = ?').pluck().all(t.id) as string[])))
   const parent = top.map((_, i) => i)
   const root = (i: number): number => { while (parent[i] !== i) { parent[i] = parent[parent[i]]; i = parent[i] } return i }
+  const comparable = top.map(t => t.n >= MIN_TAG_PHOTOS && t.n <= items * MAX_TAG_SHARE)
   for (let a = 0; a < top.length; a++) {
+    if (!comparable[a]) continue
     for (let b = a + 1; b < top.length; b++) {
+      if (!comparable[b]) continue
       const [small, big] = photos[a].size <= photos[b].size ? [photos[a], photos[b]] : [photos[b], photos[a]]
       if (small.size === 0) continue
       let shared = 0
@@ -183,7 +189,7 @@ export function computeLibraryStats(db: Database.Database): LibraryStats {
       burst: burstRow && burstRow.n > 1 ? { hour: burstRow.k, items: burstRow.n } : null,
       oldest: bounds.lo ?? '', newest: bounds.hi ?? ''
     },
-    topTags: topTagsWithGroups(db),
+    topTags: topTagsWithGroups(db, items),
     topAlbums: (db.prepare('SELECT id, title, photo_count AS n FROM album WHERE photo_count > 0 ORDER BY photo_count DESC, title LIMIT 25').all() as { id: string; title: string; n: number }[]).map(r => ({ name: r.title, items: r.n, id: r.id })),
     places: { countries: list(byCountry), states: list(byState), usItems, strayAt: stray && stray.n >= 20 ? { lat: stray.lat, lon: stray.lon, items: stray.n } : null },
     leastLocatedYear: least ? { year: least.year, percent: Math.round(least.percent * 10) / 10 } : null
