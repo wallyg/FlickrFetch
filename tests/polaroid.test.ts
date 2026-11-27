@@ -86,7 +86,7 @@ test('the caption never overlaps itself or leaves its card, at every card size a
 test('the collage header has room: the subtitle and tag lines sit well below the "Created with FlickrFetch" block, and the body starts under the rule', async () => {
   const { readFileSync } = await import('node:fs')
   const code = readFileSync('src/renderer/components/ShareDialog.tsx', 'utf8')
-  assert.match(code, /const headerH = 282/)
+  assert.match(code, /HEADER_H = 282/)
   assert.match(code, /ctx\.fillText\(line1, hx, ty \+ 118\)/)
   assert.match(code, /const ruleY = pad \+ tileH \+ 62/)
   assert.ok(!/brandLeft/.test(code))

@@ -150,7 +150,7 @@ contextBridge.exposeInMainWorld('flickrAPI', {
   fetchShareImage: (url: string): Promise<string | null> => ipcRenderer.invoke('share:image', url),
   saveShareImage: (dataUrl: string, defaultName: string): Promise<string | null> => ipcRenderer.invoke('share:savePng', dataUrl, defaultName),
   copyShareImage: (dataUrl: string): Promise<boolean> => ipcRenderer.invoke('share:copyImage', dataUrl),
-  shareImage: (dataUrl: string, defaultName: string, x: number, y: number): Promise<boolean> => ipcRenderer.invoke('share:shareImage', dataUrl, defaultName, x, y),
+  shareImage: (dataUrl: string, defaultName: string, x: number, y: number, text?: string): Promise<boolean> => ipcRenderer.invoke('share:shareImage', dataUrl, defaultName, x, y, text),
 
   // Batch downloads
   startBatch: (albumId: string, albumTitle: string, photoCount?: number, videoCount?: number, force?: boolean, mediaType?: 'photo' | 'video', privacyFilter?: string, track?: boolean, smartMode?: 'updated' | 'never-downloaded', zipMode?: boolean): Promise<{ alreadyQueued: boolean }> =>

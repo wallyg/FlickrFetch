@@ -7,6 +7,18 @@ export interface Release {
 
 const changelog: Release[] = [
   {
+    version: '3.15',
+    date: 'November 2026',
+    highlights: [
+      'More photos in a collage — up to 8 (6 for Polaroid), with the limit worked out from your look, arrangement and shape so no photo shrinks to a sliver; with more photos than years, the busiest years give a second',
+      'Three new arrangements — Mosaic (tiles of different sizes), Filmstrip (one big photo with a strip beside it) and Year ladder (photos grouped under a heading for each year)',
+      'Swap and replace — click a photo in the strip to pick a different one from that day, or drag one onto another to swap places',
+      'Move and zoom — click a photo in the picture, drag it to move it inside its slot, and zoom in; Reset puts it back',
+      'A collage of one year — "Collage from these N" on each year of On This Day makes a collage from that year alone',
+      'Share with links — Share… sends the picture together with one line for each year of the day, each a link to that day on your Flickr page (a year with a single photo links to the photo itself); Copy links includes those lines too'
+    ]
+  },
+  {
     version: '3.14',
     date: 'November 2026',
     highlights: [

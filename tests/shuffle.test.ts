@@ -14,7 +14,7 @@ const first = (): DayPhoto[] => [pool[0], pool[3], pool[4], pool[6]]   // one pe
 test('one photo from each year: the years stay, a year with a choice gets a different photo, a year with one photo keeps it', () => {
   for (let seed = 1; seed <= 50; seed++) {
     const next = shufflePicks('years', pool, [], first(), 4, rng(seed))
-    assert.deepEqual(next.map(p => p.dateTaken.slice(0, 4)), ['2022', '2021', '2020', '2019'])
+    assert.deepEqual(next.slice(0, 4).map(p => p.dateTaken.slice(0, 4)), ['2022', '2021', '2020', '2019'])   // one a year first; any more are extras after them
     assert.notEqual(next[0].id, 'a1')            // 2022 had three to choose from
     assert.equal(next[1].id, 'b1')               // 2021 had one
     assert.notEqual(next[2].id, 'c1')            // 2020 had two

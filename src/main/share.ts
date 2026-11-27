@@ -64,7 +64,7 @@ export function registerShareIpc(getWindow: () => BrowserWindow | null): void {
 
   // The Mac share sheet (Mail, Messages, AirDrop, Notes...). It needs a file, so the picture is written to a folder of its own in the
   // system's temporary files; `x` and `y` are where the Share button sits in the window, so the sheet opens right under it.
-  ipcMain.handle('share:shareImage', (_e, dataUrl: string, defaultName: string, x: number, y: number): boolean => {
+  ipcMain.handle('share:shareImage', (_e, dataUrl: string, defaultName: string, x: number, y: number, text?: string): boolean => {
     if (process.platform !== 'darwin') return false
     if (typeof dataUrl !== 'string' || !dataUrl.startsWith(PNG_PREFIX)) return false
     const win = getWindow()
@@ -77,7 +77,9 @@ export function registerShareIpc(getWindow: () => BrowserWindow | null): void {
       for (const old of staleShareFiles(waiting, now)) { try { unlinkSync(join(folder, old)) } catch { /* it goes next time */ } }
       const file = join(folder, safePngName(defaultName))
       writeFileSync(file, Buffer.from(dataUrl.slice(PNG_PREFIX.length), 'base64'))
-      const menu = new ShareMenu({ filePaths: [file] })
+      // The words (links to each year, #267) travel with the picture; a share target that takes only one of them takes the picture
+      const words = typeof text === 'string' ? text.trim().slice(0, 5000) : ''
+      const menu = new ShareMenu(words ? { filePaths: [file], texts: [words] } : { filePaths: [file] })
       menu.popup({ window: win, x: Math.round(Number.isFinite(x) ? x : 0), y: Math.round(Number.isFinite(y) ? y : 0) })
       return true
     } catch { return false }

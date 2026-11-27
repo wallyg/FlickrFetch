@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import CloseButton from '../ui/CloseButton'
 import { polaroidLayout, captionPlan, type TextKind } from '../ui/polaroid'
-import { canShuffle, shufflePicks, type ShuffleMode } from '../ui/shuffle'
+import { canShuffle, shufflePicks, withExtras, SHUFFLE_MAX, type ShuffleMode } from '../ui/shuffle'
+import { cellsFor, cellsFit, maxPhotos, cropSource, panCrop, zoomCrop, hitTest, MAX_ZOOM, MIN_SIDE, type Layout, type Rect, type Crop } from '../ui/collage'
+import { dayLinkText, type DayLinkYear } from '../../shared/dayLinks'
 import Icon from '../ui/Icon'
 import Dialog from '../ui/Dialog'
 import type { DayPhoto } from '../../shared/types'
@@ -14,20 +16,19 @@ import { mapColours } from '../ui/mapColours'
 // Collage and card maker for On This Day: pick how many photos, a layout and a frame, then save or copy the
 // picture. Drawn on a canvas here; nothing is uploaded anywhere. The frame colors come from the photos.
 
-type Layout = 'grid' | 'feature' | 'banner' | 'row' | 'column'
 type Frame = 'polaroid' | 'matched' | 'paper' | 'gallery' | 'film'
-type Rect = { x: number; y: number; w: number; h: number }
 type RGB = [number, number, number]
 
 const LAYOUTS: { key: Layout; label: string }[] = [
-  { key: 'grid', label: 'Grid' }, { key: 'feature', label: 'Feature' }, { key: 'banner', label: 'Banner' }, { key: 'row', label: 'Row' }, { key: 'column', label: 'Column' }
+  { key: 'grid', label: 'Grid' }, { key: 'feature', label: 'Feature' }, { key: 'banner', label: 'Banner' }, { key: 'row', label: 'Row' }, { key: 'column', label: 'Column' },
+  { key: 'mosaic', label: 'Mosaic' }, { key: 'filmstrip', label: 'Filmstrip' }, { key: 'ladder', label: 'Year ladder' }
 ]
 const FRAMES: { key: Frame; label: string }[] = [
   { key: 'polaroid', label: 'Polaroid' }, { key: 'matched', label: 'Matched' }, { key: 'paper', label: 'Paper' }, { key: 'gallery', label: 'Gallery' }, { key: 'film', label: 'Film' }
 ]
 
 const W = 1080
-const GAP = 14
+const PAD = 56, HEADER_H = 282, BOTTOM = 40   // the picture's top margin, the header's height and the bottom margin
 
 // Saved shapes (at standard size). 'auto' keeps the collage's own height; the others give the photos exactly the room
 // between the header and the footer, and the layout adapts to it.
@@ -94,99 +95,16 @@ async function fetchBig(thumbUrl: string): Promise<HTMLImageElement | null> {
   return null
 }
 
-function drawCover(ctx: CanvasRenderingContext2D, img: HTMLImageElement, r: Rect): void {
-  const s = Math.max(r.w / img.width, r.h / img.height)
-  const sw = r.w / s, sh = r.h / s
-  ctx.drawImage(img, (img.width - sw) / 2, (img.height - sh) / 2, sw, sh, r.x, r.y, r.w, r.h)
+// The photo fills its slot: the middle of it, or the part you moved and zoomed to (#270)
+function drawCover(ctx: CanvasRenderingContext2D, img: HTMLImageElement, r: Rect, crop?: Crop): void {
+  const c = cropSource(img.width, img.height, r, crop)
+  ctx.drawImage(img, c.sx, c.sy, c.sw, c.sh, r.x, r.y, r.w, r.h)
 }
 
-// ── layouts: where the photos go inside the framed area ──────────────────────
-
-// A big photo on the left with the rest stacked or gridded on the right, filling a box cw wide and H tall
-function bigLeft(n: number, cw: number, H: number): Rect[] {
-  const g = GAP
-  if (n === 2) { const w = (cw - g) / 2; return [{ x: 0, y: 0, w, h: H }, { x: w + g, y: 0, w, h: H }] }
-  if (n === 6) {
-    const w = (cw - 2 * g) / 3, h = (H - g) / 2
-    return Array.from({ length: 6 }, (_, i) => ({ x: (i % 3) * (w + g), y: Math.floor(i / 3) * (h + g), w, h }))
-  }
-  const bigW = n === 5 ? cw * 0.5 : cw * 0.64
-  const rects: Rect[] = [{ x: 0, y: 0, w: bigW, h: H }]
-  const restX = bigW + g, restW = cw - restX
-  if (n === 5) {
-    const w = (restW - g) / 2, h = (H - g) / 2
-    for (let i = 0; i < 4; i++) rects.push({ x: restX + (i % 2) * (w + g), y: Math.floor(i / 2) * (h + g), w, h })
-  } else {
-    const k = n - 1, h = (H - g * (k - 1)) / k
-    for (let i = 0; i < k; i++) rects.push({ x: restX, y: i * (h + g), w: restW, h })
-  }
-  return rects
-}
-
-// A big photo across the top with the rest in a row underneath, filling a box cw wide and H tall
-function bigTop(n: number, cw: number, H: number, share: number): Rect[] {
-  const g = GAP
-  if (n === 2) { const h = (H - g) / 2; return [{ x: 0, y: 0, w: cw, h }, { x: 0, y: h + g, w: cw, h }] }
-  const topH = H * share, k = n - 1, w = (cw - g * (k - 1)) / k
-  return [{ x: 0, y: 0, w: cw, h: topH }, ...Array.from({ length: k }, (_, i) => ({ x: i * (w + g), y: topH + g, w, h: H - topH - g }))]
-}
-
-const stackOf = (n: number, cw: number, H: number): Rect[] => { const h = (H - GAP * (n - 1)) / n; return Array.from({ length: n }, (_, i) => ({ x: 0, y: i * (h + GAP), w: cw, h })) }
-const rowOf = (n: number, cw: number, H: number): Rect[] => { const w = (cw - GAP * (n - 1)) / n; return Array.from({ length: n }, (_, i) => ({ x: i * (w + GAP), y: 0, w, h: H })) }
-
-// Rows and columns of roughly 4:3 cells that fill a box; a short last row sits in the middle (or stretches to fill, in a fixed shape)
-function gridOf(n: number, cw: number, H: number, stretch = false): Rect[] {
-  const g = GAP
-  let best = { cols: 1, score: -Infinity }
-  for (let c = 1; c <= n; c++) {
-    const r = Math.ceil(n / c), w = (cw - g * (c - 1)) / c, h = (H - g * (r - 1)) / r
-    if (w <= 0 || h <= 0) continue
-    // closest to 4:3 cells, and a mild preference for rows that fill completely (no lone photo on the last row)
-    const score = -Math.abs(Math.log(w / h / 1.3)) - (n % c === 0 ? 0 : 0.8)
-    if (score > best.score) best = { cols: c, score }
-  }
-  const cols = best.cols, rows = Math.ceil(n / cols), w = (cw - g * (cols - 1)) / cols, h = (H - g * (rows - 1)) / rows
-  return Array.from({ length: n }, (_, i) => {
-    const row = Math.floor(i / cols), inRow = row === rows - 1 ? n - cols * (rows - 1) : cols
-    if (stretch && inRow < cols) {   // in a fixed shape a short last row stretches to fill the width
-      const sw = (cw - g * (inRow - 1)) / inRow
-      return { x: (i % cols) * (sw + g), y: row * (h + g), w: sw, h }
-    }
-    const offset = (cw - (inRow * w + g * (inRow - 1))) / 2
-    return { x: offset + (i % cols) * (w + g), y: row * (h + g), w, h }
-  })
-}
-
-// Where each photo goes inside the content box (cw wide). In a fixed shape (ch given) the photos fill the whole box and the
-// arrangement adapts to it (a Row turns into a stack in a tall shape, a Column into a row in a wide one). With Auto (no ch)
-// each layout keeps its own natural height.
-function cellsFor(layout: Layout, n: number, cw: number, ch?: number): { rects: Rect[]; h: number } {
-  const g = GAP
-  if (ch !== undefined) {
-    const aspect = cw / ch
-    if (n === 1) return { rects: [{ x: 0, y: 0, w: cw, h: ch }], h: ch }
-    const rects = layout === 'grid' ? gridOf(n, cw, ch, true)
-      : layout === 'feature' ? (aspect < 0.85 ? bigTop(n, cw, ch, 0.58) : bigLeft(n, cw, ch))
-      : layout === 'banner' ? (aspect >= 1.5 ? bigLeft(n, cw, ch) : bigTop(n, cw, ch, 0.52))
-      : layout === 'row' ? (aspect < 0.85 ? stackOf(n, cw, ch) : rowOf(n, cw, ch))
-      : (aspect >= 1.5 ? rowOf(n, cw, ch) : stackOf(n, cw, ch))
-    return { rects, h: ch }
-  }
-  if (n === 1) return { rects: [{ x: 0, y: 0, w: cw, h: cw * 0.75 }], h: cw * 0.75 }
-  if (layout === 'grid') {
-    const cols = n <= 4 ? 2 : 3, rows = Math.ceil(n / cols)
-    const w = (cw - g * (cols - 1)) / cols, h = w * 0.75
-    const H = rows * h + (rows - 1) * g
-    return { rects: gridOf(n, cw, H), h: H }
-  }
-  if (layout === 'feature') { const H = cw * 0.78; return { rects: bigLeft(n, cw, H), h: H } }
-  if (layout === 'banner') {
-    const topH = cw * 0.5, k = n - 1, w = (cw - g * (k - 1)) / k, h = Math.min(w * 0.85, cw * 0.3)
-    return { rects: [{ x: 0, y: 0, w: cw, h: topH }, ...Array.from({ length: k }, (_, i) => ({ x: i * (w + g), y: topH + g, w, h }))], h: topH + g + h }
-  }
-  if (layout === 'row') { const w = (cw - g * (n - 1)) / n, h = Math.max(w * 1.3, 300); return { rects: rowOf(n, cw, h), h } }
-  const h = cw * 0.4   // column
-  return { rects: stackOf(n, cw, n * h + (n - 1) * g), h: n * h + (n - 1) * g }
+// "5 years ago" for the header of a one-year collage
+function yearAgo(year: string): string {
+  const ago = new Date().getFullYear() - Number(year)
+  return ago <= 0 ? 'this year' : `${ago} year${ago === 1 ? '' : 's'} ago`
 }
 
 // A small price-tag icon (crisper and more consistent than an emoji)
@@ -207,12 +125,13 @@ interface ShareProps {
   userPicked: boolean         // true when `photos` is your own selection (kept as is, apart from the public-only choice)
   defaultPublicOnly: boolean
   tag?: string                // set when the page is showing only photos with one tag
+  onlyYear?: string           // set for a collage of one year's photos (#164)
   month: number
   day: number
   onClose: () => void
 }
 
-export default function ShareDialog({ photos, candidates, userPicked, defaultPublicOnly, tag, month, day, onClose }: ShareProps): React.JSX.Element {
+export default function ShareDialog({ photos, candidates, userPicked, defaultPublicOnly, tag, onlyYear, month, day, onClose }: ShareProps): React.JSX.Element {
   const [publicOnly, setPublicOnly] = useState(defaultPublicOnly)
   const [layout, setLayout] = useState<Layout>('feature')
   const [frame, setFrame] = useState<Frame>('polaroid')
@@ -220,6 +139,13 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
   const [resolution, setResolution] = useState<Resolution>('standard')
   const [showLinks, setShowLinks] = useState(true)
   const [source, setSource] = useState<'ticked' | 'years'>('ticked')   // when photos were ticked: use those, or one from each year
+  const [includeYearLinks, setIncludeYearLinks] = useState(true)       // Share sends a link to each year's day on Flickr (#267)
+  const [nsid, setNsid] = useState('')
+  const [crops, setCrops] = useState<Record<string, Crop>>({})          // how you moved and zoomed each photo (#270), by photo id
+  const [selId, setSelId] = useState<string | null>(null)               // the photo being moved and zoomed
+  const [picker, setPicker] = useState<{ index: number; candidate: DayPhoto | null } | null>(null)   // the "replace this photo" box (#143)
+  const hitRef = useRef<{ id: string; x: number; y: number; w: number; h: number }[]>([])   // where each photo sits in the picture, for clicks
+  const dragRef = useRef<{ id: string; x: number; y: number } | null>(null)
   const [loading, setLoading] = useState(true)
   const [, bump] = useState(0)
   const [note, setNote] = useState('')
@@ -228,47 +154,78 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
   const cache = useRef<Map<string, HTMLImageElement>>(new Map())   // bigger pictures already fetched, by photo id
 
   // The photos to choose from: your ticks as they are, or one per year (newest year first); public ones only when asked
-  const mode: ShuffleMode = userPicked && source === 'ticked' ? 'ticked' : 'years'
-  const poolPhotos = useMemo(() => (publicOnly ? candidates.filter(p => p.privacy === 0) : candidates), [candidates, publicOnly])
+  const mode: ShuffleMode = onlyYear ? 'year' : userPicked && source === 'ticked' ? 'ticked' : 'years'
+  const poolPhotos = useMemo(() => {
+    const all = onlyYear ? candidates.filter(p => p.dateTaken.slice(0, 4) === onlyYear) : candidates
+    return publicOnly ? all.filter(p => p.privacy === 0) : all
+  }, [candidates, publicOnly, onlyYear])
   const tickedPhotos = useMemo(() => (publicOnly ? photos.filter(p => p.privacy === 0) : photos), [photos, publicOnly])
   const autoPicks = useMemo(() => {
-    if (mode === 'ticked') return tickedPhotos.slice(0, 6)
+    if (mode === 'ticked') return tickedPhotos.slice(0, SHUFFLE_MAX)
+    if (mode === 'year') return poolPhotos.slice(0, SHUFFLE_MAX)
     const byYear = new Map<string, DayPhoto>()
     for (const p of poolPhotos) { const y = p.dateTaken.slice(0, 4); if (!byYear.has(y)) byYear.set(y, p) }
-    return [...byYear.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1)).map(e => e[1]).slice(0, 6)
+    const firsts = [...byYear.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1)).map(e => e[1]).slice(0, SHUFFLE_MAX)
+    return withExtras(firsts, poolPhotos, SHUFFLE_MAX)   // more photos than years: the busiest years give a second
   }, [mode, poolPhotos, tickedPhotos])
   // Shuffle: a fresh set for the same choices above. A change to those choices (source, public only) goes back to the first set.
   const [shuffled, setShuffled] = useState<{ key: string; list: DayPhoto[] } | null>(null)
   const pickMode = `${mode}|${publicOnly}`
   const basePicks = shuffled && shuffled.key === pickMode ? shuffled.list : autoPicks
+  // Replace and swap (#143) edit the list; a Shuffle or a change of source starts a fresh list
+  const baseKey = basePicks.map(p => p.id).join(',')
+  const [override, setOverride] = useState<{ key: string; list: DayPhoto[] } | null>(null)
+  const picks = override && override.key === baseKey ? override.list : basePicks
 
-  const maxCount = Math.min(6, basePicks.length)
-  const [count, setCount] = useState(Math.min(4, maxCount))
+  // How many photos fit: no more than 8 (6 for Polaroid), and none smaller than MIN_SIDE of the picture's width, for this look, arrangement and shape
+  const shapeInfo = SHAPES.find(x => x.key === shape) ?? SHAPES[0]
+  const fixedShape = shapeInfo.key !== 'auto'
+  const pictureW = fixedShape ? shapeInfo.w : W
+  // The room the photos have for n of them: the picture's width inside its margins and, in a fixed shape, the height between the header and the footer
+  function boxFor(n: number): { padX: number; cw: number; ch?: number; footerH: number } {
+    const padX = frame === 'film' ? 92 : 56
+    const linkLines = showLinks && frame !== 'polaroid' ? Math.ceil(n / 3) : 0
+    const footerH = linkLines > 0 ? 54 + (linkLines - 1) * 30 : 14
+    return { padX, cw: pictureW - 2 * padX, ch: fixedShape ? Math.max(120, shapeInfo.h - PAD - HEADER_H - footerH - BOTTOM) : undefined, footerH }
+  }
+  const yearsOf = (n: number): string[] => picks.slice(0, n).map(p => p.dateTaken.slice(0, 4))
+  const fitsCount = (n: number): boolean => {
+    const b = boxFor(n)
+    if (frame === 'polaroid') return polaroidLayout(n, b.cw, b.ch).w >= b.cw * MIN_SIDE
+    if (layout === 'column' && !fixedShape && n > 6) return false   // a tall stack of eight is more than a picture
+    return cellsFit(cellsFor(layout, n, b.cw, b.ch, yearsOf(n)), b.cw)
+  }
+  const maxCount = maxPhotos(picks.length, frame === 'polaroid', fitsCount)
+  const [count, setCount] = useState(4)
   const shownCount = Math.min(Math.max(count, 1), Math.max(maxCount, 1))
-  const chosen = useMemo(() => basePicks.slice(0, shownCount), [basePicks, shownCount])
-  const dateLabel = `${MONTHS[month - 1]} ${day}`
+  const chosen = useMemo(() => picks.slice(0, shownCount), [picks, shownCount])
+  const chosenYears = new Set(chosen.map(p => p.dateTaken.slice(0, 4)))
+  const dateLabel = onlyYear ? `${MONTHS[month - 1]} ${day}, ${onlyYear}` : `${MONTHS[month - 1]} ${day}`
   const nonPublic = chosen.filter(p => p.privacy > 0).length
 
   // What the header says about the whole day (all of its photos, or only the public ones when that is ticked)
-  const [facts, setFacts] = useState<{ total: number; videos: number; years: number; tags: string[] } | null>(null)   // tags: the day's most common, up to 8
+  const [facts, setFacts] = useState<{ total: number; videos: number; years: number; tags: string[]; yearList: DayLinkYear[] } | null>(null)   // tags: the day's most common, up to 8
   useEffect(() => {
     let cancelled = false
     void window.flickrAPI.getDayView({ month, day, scope: publicOnly ? 'public' : 'all', perYear: 1, tag }).then(v => {
-      if (!cancelled) setFacts({ total: v.total, videos: v.videos, years: v.years.length, tags: v.insights.topTags.map(t => t.name) })
+      if (!cancelled) setFacts({ total: v.total, videos: v.videos, years: v.years.length, tags: v.insights.topTags.map(t => t.name), yearList: v.years.map(g => ({ year: g.year, count: g.count, videos: g.videos, photoId: g.count === 1 ? g.photos[0]?.id : undefined })) })
     })
     return () => { cancelled = true }
   }, [month, day, publicOnly, tag])
+
+  // Whose Flickr pages the year links point to
+  useEffect(() => { void window.flickrAPI.getAuthState().then(a => setNsid(a.user?.nsid ?? '')).catch(() => setNsid('')) }, [])
 
   // Load the bigger pictures (each one once) and the logo. The effect follows the list of photo ids, not the array
   // itself, so a redraw of the page behind the dialog never restarts the downloads.
   const [attempt, setAttempt] = useState(0)
   const [progress, setProgress] = useState({ done: 0, total: 0 })
-  const pickKey = basePicks.map(p => p.id).join(',')
+  const pickKey = picks.map(p => p.id).join(',')
   useEffect(() => {
     let cancelled = false
     void (async () => {
       try { if (!logoRef.current) logoRef.current = await loadImage(logoImg) } catch { /* the mark is drawn without the logo */ }
-      const need = basePicks.filter(p => !cache.current.has(p.id))
+      const need = picks.filter(p => !cache.current.has(p.id))
       if (need.length > 0) setProgress({ done: 0, total: need.length })
       await Promise.all(need.map(async p => {
         const img = await fetchBig(p.thumbUrl)
@@ -305,9 +262,12 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
     const c = compose(1)
     if (!c) return
     view.width = c.width; view.height = c.height
-    view.getContext('2d')?.drawImage(c, 0, 0)
+    const vctx = view.getContext('2d')
+    vctx?.drawImage(c, 0, 0)
+    const sel = selId ? hitRef.current.find(h => h.id === selId) : undefined
+    if (vctx && sel) { vctx.strokeStyle = mapColours().pink; vctx.lineWidth = 8; vctx.strokeRect(sel.x + 4, sel.y + 4, sel.w - 8, sel.h - 8) }   // shows which photo is being moved; never saved
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready.map(p => p.id).join(','), layout, frame, shape, showLinks, palette, loading, facts])
+  }, [ready.map(p => p.id).join(','), layout, frame, shape, showLinks, palette, loading, facts, crops, selId, onlyYear])
 
   const outW = (SHAPES.find(x => x.key === shape)?.w || W) * (resolution === 'large' ? 2 : 1)
   const outH = shape === 'auto' ? null : (SHAPES.find(x => x.key === shape)?.h ?? 0) * (resolution === 'large' ? 2 : 1)
@@ -319,6 +279,7 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
     const fixed = sh.key !== 'auto'
     const brand = mapColours()   // the brand colours and shadow, read from the page's tokens
     const OW = fixed ? sh.w : W   // canvas width at standard size
+    const hits: typeof hitRef.current = []
     const theme = {
       polaroid: { bg: css(palette.mat), fg: css(palette.text), rule: css(palette.accent), tab: css(palette.accent), tabText: brand.white, dark: false },
       matched: { bg: css(palette.mat), fg: css(palette.text), rule: css(palette.accent), tab: css(palette.accent), tabText: brand.white, dark: false },
@@ -328,18 +289,16 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
     }[frame]
     const SANS = '-apple-system, "SF Pro Display", Helvetica, Arial, sans-serif'
     const setSpacing = (v: string): void => { (ctx as unknown as { letterSpacing: string }).letterSpacing = v }
-    const padX = frame === 'film' ? 92 : 56, pad = 56
-    const cw = OW - 2 * padX
     const n = ready.length
+    const { padX, cw, footerH } = boxFor(n)
+    const pad = PAD, headerH = HEADER_H, bottom = BOTTOM
     const links = ready.map(p => shortLink(p.id))
     const linkLines = showLinks && frame !== 'polaroid' ? Math.ceil(links.length / 3) : 0
-    const footerH = linkLines > 0 ? 54 + (linkLines - 1) * 30 : 14
-    const headerH = 282, bottom = 40
 
     // Work out the sizes: a fixed shape gives the photos exactly the room between the header and the footer
     const bodyAvail = fixed ? Math.max(120, sh.h - pad - headerH - footerH - bottom) : undefined
     const pol = polaroidLayout(n, cw, bodyAvail)
-    const body = frame === 'polaroid' ? { rects: [] as Rect[], h: pol.total } : cellsFor(layout, n, cw, bodyAvail)
+    const body = frame === 'polaroid' ? { rects: [] as Rect[], h: pol.total, heads: [] } : cellsFor(layout, n, cw, bodyAvail, ready.map(p => p.dateTaken.slice(0, 4)))
     const contentH = fixed ? (bodyAvail as number) : body.h
     const H = fixed ? sh.h : Math.ceil(pad + headerH + contentH + footerH + bottom)
     canvas.width = Math.round(OW * m); canvas.height = Math.round(H * m)
@@ -365,7 +324,10 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
     const nowYear = new Date().getFullYear()
     const years = ready.map(p => Number(p.dateTaken.slice(0, 4)))
     const ago = n === 1 ? nowYear - years[0] : 0
-    const line1 = n === 1 ? (ago <= 0 ? 'Today' : `${ago} year${ago === 1 ? '' : 's'} ago today`)
+    const yearFacts = onlyYear ? facts?.yearList.find(g => g.year === onlyYear) : undefined
+    const sinceYear = onlyYear ? nowYear - Number(onlyYear) : 0
+    const line1 = onlyYear ? `${yearFacts ? itemsLabel(yearFacts.count, yearFacts.videos) : onlyYear} · ${sinceYear <= 0 ? 'this year' : `${sinceYear} year${sinceYear === 1 ? '' : 's'} ago`}`
+      : n === 1 ? (ago <= 0 ? 'Today' : `${ago} year${ago === 1 ? '' : 's'} ago today`)
       : facts ? `${itemsLabel(facts.total, facts.videos)} from ${facts.years} year${facts.years === 1 ? '' : 's'}`
       : `${Math.min(...years)} to ${Math.max(...years)}`
     // The day's whole count (photos and videos), shrunk a little if a long line would not fit
@@ -373,7 +335,7 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
     ctx.font = `700 ${l1Size}px ${SANS}`
     while (l1Size > 22 && ctx.measureText(line1).width > hMax) { l1Size -= 1; ctx.font = `700 ${l1Size}px ${SANS}` }
     ctx.globalAlpha = 0.95; ctx.fillText(line1, hx, ty + 118)   // room under the "Created with FlickrFetch" block at the right
-    if (n > 1 && facts && facts.tags.length > 0) {
+    if (n > 1 && !onlyYear && facts && facts.tags.length > 0) {
       // One row: up to five ordinary-length tags, spaced out; fewer only if the row would run out of room
       const iconW = 36
       ctx.font = `500 25px ${SANS}`; ctx.globalAlpha = 0.85
@@ -405,7 +367,8 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
         ctx.shadowColor = brand.shadow; ctx.shadowBlur = 16; ctx.shadowOffsetY = 5
         ctx.fillStyle = brand.white; ctx.fillRect(0, 0, pw, pol.h)
         ctx.shadowColor = 'transparent'
-        drawCover(ctx, src.get(p.id) as HTMLImageElement, { x: pol.pad, y: pol.pad, w: pol.photoW, h: pol.photoH })
+        drawCover(ctx, src.get(p.id) as HTMLImageElement, { x: pol.pad, y: pol.pad, w: pol.photoW, h: pol.photoH }, crops[p.id])
+        hits.push({ id: p.id, x: x + pol.pad, y: y + pol.pad, w: pol.photoW, h: pol.photoH })   // (the slight tilt is ignored for clicks)
         // Caption: the year in big handwriting, how long ago, and the short Flickr link. Sized and placed by captionPlan so no text touches another.
         const yr = p.dateTaken.slice(0, 4), yrsAgo = nowYear - Number(yr)
         const agoText = yrsAgo <= 0 ? 'this year' : `${yrsAgo} year${yrsAgo === 1 ? '' : 's'} ago`
@@ -422,8 +385,10 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
       ready.forEach((p, i) => {
         const r = body.rects[i]
         const rx = padX + r.x, ry = top + r.y
-        drawCover(ctx, src.get(p.id) as HTMLImageElement, { x: rx, y: ry, w: r.w, h: r.h })
+        drawCover(ctx, src.get(p.id) as HTMLImageElement, { x: rx, y: ry, w: r.w, h: r.h }, crops[p.id])
+        hits.push({ id: p.id, x: rx, y: ry, w: r.w, h: r.h })
         if (frame === 'gallery') { ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 2; ctx.strokeRect(rx, ry, r.w, r.h) }
+        if (layout === 'ladder' && body.heads.length > 0) return   // the Year ladder has a heading over each year instead of a tab on each photo
         // A year tab on the corner of every photo, so each year sits with its picture
         const yr = p.dateTaken.slice(0, 4)
         ctx.font = `800 30px ${SANS}`
@@ -434,6 +399,12 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
         ctx.textBaseline = 'alphabetic'
       })
     }
+
+    if (frame !== 'polaroid') {   // the Year ladder's headings, one over each band
+      ctx.fillStyle = theme.fg; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.font = `800 30px ${SANS}`
+      for (const h of body.heads) ctx.fillText(h.text, padX + h.x, top + h.y + 30)
+    }
+    hitRef.current = hits
 
     // "Created with FlickrFetch", top right of the header (always there)
     {
@@ -465,6 +436,65 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
     }
     return { H, bg: theme.bg }
   }
+
+  // The words Share sends with the picture: a link for each year of the day (#267). Not while one tag is showing: Flickr's day pages cannot filter by tag.
+  const yearLinksAvailable = !tag && !!nsid && !!facts && facts.yearList.length > 0
+  const yearLinks = includeYearLinks && yearLinksAvailable ? dayLinkText(nsid, facts?.yearList ?? [], month, day, { onlyYear, everyone: publicOnly }) : ''
+
+  // Replace one photo with another from the day, or swap two places (#143). A photo that moves keeps its crop; a replaced one is simply a different photo.
+  const edit = (list: DayPhoto[]): void => setOverride({ key: baseKey, list })
+  const swapPlaces = (a: number, b: number): void => {
+    if (a === b || a >= picks.length || b >= picks.length) return
+    const list = picks.slice(); [list[a], list[b]] = [list[b], list[a]]
+    edit(list)
+  }
+  const replaceWith = async (index: number, cand: DayPhoto): Promise<void> => {
+    setNote('Loading the picture…')
+    if (!cache.current.has(cand.id)) {
+      const img = await fetchBig(cand.thumbUrl)
+      if (!img) { setNote('Couldn\'t load that picture. Try another.'); return }
+      cache.current.set(cand.id, img)
+    }
+    const list = picks.slice()
+    const at = list.findIndex(p => p.id === cand.id)   // already further down the list (not shown yet): trade places so no photo appears twice
+    if (at >= 0) list[at] = list[index]
+    list[index] = cand
+    edit(list)
+    setPicker(null); setNote(''); setSelId(null)
+  }
+  const others = useMemo(() => poolPhotos.filter(p => !chosen.some(c => c.id === p.id)), [poolPhotos, chosen])
+
+  // Click a photo in the picture to select it; drag the selected photo to move it inside its slot (#270)
+  const toPicture = (e: React.PointerEvent<HTMLCanvasElement>): { x: number; y: number; k: number } => {
+    const box = e.currentTarget.getBoundingClientRect(), k = e.currentTarget.width / box.width
+    return { x: (e.clientX - box.left) * k, y: (e.clientY - box.top) * k, k }
+  }
+  const pointerDown = (e: React.PointerEvent<HTMLCanvasElement>): void => {
+    const pt = toPicture(e), i = hitTest(hitRef.current, pt.x, pt.y)
+    if (i < 0) { setSelId(null); return }
+    const id = hitRef.current[i].id
+    setSelId(id); setPicker(null)
+    dragRef.current = { id, x: e.clientX, y: e.clientY }
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+  const pointerMove = (e: React.PointerEvent<HTMLCanvasElement>): void => {
+    const d = dragRef.current
+    if (!d) return
+    const hit = hitRef.current.find(h => h.id === d.id), img = cache.current.get(d.id)
+    if (!hit || !img) return
+    const k = e.currentTarget.width / e.currentTarget.getBoundingClientRect().width
+    const dx = (e.clientX - d.x) * k, dy = (e.clientY - d.y) * k
+    dragRef.current = { id: d.id, x: e.clientX, y: e.clientY }
+    setCrops(c => ({ ...c, [d.id]: panCrop(c[d.id], dx, dy, img.width, img.height, hit) }))
+  }
+  const pointerUp = (): void => { dragRef.current = null }
+  const setZoom = (z: number): void => {
+    const hit = hitRef.current.find(h => h.id === selId), img = selId ? cache.current.get(selId) : undefined
+    if (!selId || !hit || !img) return
+    setCrops(c => ({ ...c, [selId]: zoomCrop(c[selId], z, img.width, img.height, hit) }))
+  }
+  const resetCrop = (): void => { if (selId) setCrops(c => { const n = { ...c }; delete n[selId]; return n }) }
+  const selPhoto = selId ? chosen.find(p => p.id === selId) : undefined
 
   const confirmPrivacy = async (): Promise<boolean> => {
     if (nonPublic === 0) return true
@@ -522,19 +552,19 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
   const share = async (button: HTMLElement): Promise<void> => {
     if (!(await confirmPrivacy())) return
     const box = button.getBoundingClientRect()
-    const ok = await window.flickrAPI.shareImage(await dataUrl(), fileName(), box.left, box.bottom + 4)
+    const ok = await window.flickrAPI.shareImage(await dataUrl(), fileName(), box.left, box.bottom + 4, yearLinks)
     if (!ok) setNote('Couldn\'t open sharing.')
   }
   const copyLinks = async (): Promise<void> => {
     if (!(await confirmPrivacy())) return
-    const text = ready.map(p => `${p.dateTaken.slice(0, 4)}  ${p.title || 'untitled'}  https://${shortLink(p.id)}`).join('\n')
+    const text = ready.map(p => `${p.dateTaken.slice(0, 4)}  ${p.title || 'untitled'}  https://${shortLink(p.id)}`).join('\n') + (yearLinks ? `\n\n${yearLinks}` : '')
     try { await navigator.clipboard.writeText(text); setNote('Links copied. Paste them next to the image.') } catch { setNote('Couldn\'t copy the links.') }
   }
 
   return (
     <Dialog label="Collage or card" width="min(1100px, 94vw)" onClose={onClose} cardStyle={{ background: 'var(--ff-cream)', height: 'min(760px, 92vh)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div style={styles.head}>
-          <b style={{ fontSize: 16, color: 'var(--ff-navy)' }}>Collage or card · {dateLabel}</b>
+          <b style={{ fontSize: 16, color: 'var(--ff-navy)' }}>Collage or card · {dateLabel}{onlyYear ? ` · ${yearAgo(onlyYear)}` : ''}</b>
           <CloseButton onClick={onClose} />
         </div>
         <div style={styles.body}>
@@ -545,13 +575,28 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
                   <button style={styles.step} disabled={shownCount <= 1} onClick={() => setCount(Math.max(1, shownCount - 1))}>−</button>
                   <b style={{ fontSize: 18, minWidth: 18, textAlign: 'center' }}>{shownCount}</b>
                   <button style={styles.step} disabled={shownCount >= maxCount} onClick={() => setCount(Math.min(maxCount, shownCount + 1))}>+</button>
-                  <span style={styles.muted}>up to {maxCount}. One photo makes a single card.</span>
+                  <span style={styles.muted}>up to {maxCount}{maxCount < Math.min(picks.length, frame === 'polaroid' ? 6 : 8) ? ' for this look' : ''}. One photo makes a single card.</span>
+                </div>
+                <div style={styles.muted}>Click a photo to replace it. Drag one onto another to swap places.</div>
+                <div style={styles.strip}>
+                  {chosen.map((p, i) => (
+                    <button key={p.id} draggable style={{ ...styles.thumb, backgroundImage: `url(${p.thumbUrl})`, ...(picker?.index === i || selId === p.id ? styles.thumbOn : {}) }}
+                      title={`${p.dateTaken.slice(0, 4)}. Click to replace, drag onto another to swap places.`} aria-label={`Photo ${i + 1}, ${p.dateTaken.slice(0, 4)}. Replace`}
+                      onClick={() => { setSelId(null); setPicker(picker?.index === i ? null : { index: i, candidate: null }) }}
+                      onDragStart={e => { e.dataTransfer.setData('text/plain', String(i)); e.dataTransfer.effectAllowed = 'move' }}
+                      onDragOver={e => e.preventDefault()}
+                      onDrop={e => { e.preventDefault(); const from = Number(e.dataTransfer.getData('text/plain')); if (Number.isInteger(from)) swapPlaces(from, i) }}>
+                      <span style={styles.thumbYear}>{p.dateTaken.slice(0, 4)}</span>
+                    </button>
+                  ))}
                 </div>
                 <div>
                   <button style={styles.btn} disabled={!canShuffle(mode, poolPhotos, tickedPhotos, shownCount)} onClick={shuffleNow}
                     title={canShuffle(mode, poolPhotos, tickedPhotos, shownCount) ? 'Pick a different set of photos for this day' : 'There is nothing else to pick from'}><Icon name="shuffle" /> Shuffle</button>
                 </div>
-                {userPicked ? (
+                {onlyYear ? (
+                  <div style={styles.muted}>Photos from {onlyYear} only. (One year at a time, so there is no "one from each year".)</div>
+                ) : userPicked ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 2 }}>
                     <label style={styles.check}><input type="radio" name="otd-source" checked={source === 'ticked'} onChange={() => setSource('ticked')} /> The {photos.length} photo{photos.length === 1 ? '' : 's'} I ticked</label>
                     <label style={styles.check}><input type="radio" name="otd-source" checked={source === 'years'} onChange={() => setSource('years')} /> One photo from each year</label>
@@ -568,7 +613,12 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
                 {frame !== 'polaroid' && (
                   <>
                     <div style={{ ...styles.label, marginTop: 4 }}>Arrangement</div>
-                    <div style={styles.chips}>{LAYOUTS.map(l => <button key={l.key} style={{ ...styles.chip, ...(layout === l.key ? styles.chipOn : {}) }} onClick={() => setLayout(l.key)}>{l.label}</button>)}</div>
+                    <div style={styles.chips}>{LAYOUTS.map(l => {
+                      const off = l.key === 'ladder' && chosenYears.size < 2   // a ladder needs more than one year
+                      return <button key={l.key} style={{ ...styles.chip, ...(layout === l.key ? styles.chipOn : {}), ...(off ? { opacity: 0.45, cursor: 'default' } : {}) }} disabled={off}
+                        title={off ? 'The Year ladder needs photos from more than one year' : undefined} onClick={() => setLayout(l.key)}>{l.label}</button>
+                    })}</div>
+                    {layout === 'ladder' && chosenYears.size < 2 && <div style={styles.muted}>The Year ladder needs photos from more than one year, so Mosaic is shown.</div>}
                   </>
                 )}
                 <div style={styles.muted}>Colors come from your photos.{frame === 'polaroid' ? ' Polaroids arrange themselves.' : ''}</div>
@@ -583,7 +633,12 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
               </Step>
               <Step n={4} label="Extras">
                 <label style={styles.check}><input type="checkbox" checked={showLinks} onChange={e => setShowLinks(e.target.checked)} /> Short Flickr link under each photo</label>
-                <div style={styles.muted}>A saved picture can't hold a clickable link, so it is printed. "Copy links" gives clickable ones to paste beside it. "Created with FlickrFetch" is always included.</div>
+                <div style={styles.muted}>A saved picture can't hold a clickable link, so it is printed. "Created with FlickrFetch" is always included.</div>
+                <label style={{ ...styles.check, marginTop: 4, ...(yearLinksAvailable ? {} : { opacity: 0.55 }) }}
+                  title={tag ? 'Flickr\'s day pages cannot show one tag, so this is off while a tag is showing' : !nsid ? 'Sign in to Flickr to include links' : undefined}>
+                  <input type="checkbox" checked={includeYearLinks && yearLinksAvailable} disabled={!yearLinksAvailable} onChange={e => setIncludeYearLinks(e.target.checked)} /> Include {onlyYear ? `a link to ${onlyYear}` : 'links to each year'} on Flickr when sharing
+                </label>
+                <div style={styles.muted}>Share… sends the picture with {onlyYear ? 'a line' : 'one line per year'}, {onlyYear ? 'a link to that day' : 'each a link to that day'} on your Flickr page. A year with one photo links to that photo. "Copy links" gives clickable links for the photos here{yearLinksAvailable ? ' and those lines' : ''}.</div>
               </Step>
             </div>
             <div style={styles.dock}>
@@ -601,7 +656,37 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
             {loading ? <span style={styles.muted}>Loading bigger pictures…{progress.total > 0 ? ` ${Math.min(progress.done, progress.total)} of ${progress.total}` : ''}</span>
               : basePicks.length === 0 ? <span style={styles.muted}>{publicOnly ? 'None of this day\'s photos are public. Untick "Use public photos only" to include them.' : 'No photos to use.'}</span>
               : ready.length === 0 ? <span style={{ ...styles.muted, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>Couldn't load these pictures. Check your connection and try again.<button style={styles.btn} onClick={() => { setLoading(true); setAttempt(a => a + 1) }}>Try again</button></span>
-              : <canvas ref={canvasRef} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', boxShadow: '0 2px 12px var(--ff-shadow-mid)' }} />}
+              : <canvas ref={canvasRef} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', boxShadow: '0 2px 12px var(--ff-shadow-mid)', cursor: selId ? 'grab' : 'pointer', touchAction: 'none' }}
+                  onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerCancel={pointerUp} />}
+            {picker && picker.index < chosen.length && (
+              <div style={styles.pop} role="dialog" aria-label="Replace a photo">
+                <b>Replace photo {picker.index + 1} ({chosen[picker.index].dateTaken.slice(0, 4)})</b>
+                <div style={styles.muted}>{others.length === 0 ? 'There are no other photos loaded for this day. Show more photos on the page first.' : `Other photos from ${dateLabel}. The ones already in the picture are not listed.`}</div>
+                <div style={styles.popGrid}>
+                  {others.slice(0, 60).map(p => (
+                    <button key={p.id} style={{ ...styles.popThumb, backgroundImage: `url(${p.thumbUrl})`, ...(picker.candidate?.id === p.id ? styles.thumbOn : {}) }} aria-label={`Use the photo from ${p.dateTaken.slice(0, 4)}`}
+                      onClick={() => setPicker({ ...picker, candidate: p })}><span style={styles.thumbYear}>{p.dateTaken.slice(0, 4)}</span></button>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button style={styles.primary} disabled={!picker.candidate} onClick={() => picker.candidate && void replaceWith(picker.index, picker.candidate)}>Use this one</button>
+                  <button style={styles.btn} onClick={() => setPicker(null)}>Cancel</button>
+                </div>
+              </div>
+            )}
+            {selPhoto && !picker && (
+              <div style={styles.tool}>
+                <b>Move and zoom the {selPhoto.dateTaken.slice(0, 4)} photo</b>
+                <span style={styles.muted}>Drag it in the picture to move it.</span>
+                <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12 }}>Zoom
+                  <input type="range" min={100} max={MAX_ZOOM * 100} step={5} value={Math.round((crops[selPhoto.id]?.zoom ?? 1) * 100)} onChange={e => setZoom(Number(e.target.value) / 100)} aria-label="Zoom" style={{ width: 120 }} />
+                  <span style={{ minWidth: 36 }}>{Math.round((crops[selPhoto.id]?.zoom ?? 1) * 100)}%</span>
+                </label>
+                <button style={styles.btn} disabled={!crops[selPhoto.id]} onClick={resetCrop}>Reset</button>
+                <button style={styles.btn} onClick={() => setPicker({ index: chosen.findIndex(p => p.id === selPhoto.id), candidate: null })}>Replace…</button>
+                <button style={styles.primary} onClick={() => setSelId(null)}>Done</button>
+              </div>
+            )}
           </div>
         </div>
 </Dialog>
@@ -628,7 +713,15 @@ const styles: Record<string, React.CSSProperties> = {
   scroll: { flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16, paddingRight: 6, paddingBottom: 8 },
   dock: { flexShrink: 0, borderTop: '1px solid var(--ff-border)', paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 8 },
   num: { flexShrink: 0, width: 20, height: 20, borderRadius: '50%', background: 'var(--ff-navy)', color: 'var(--ff-white)', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 0 },
-  preview: { flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ece8e1', borderRadius: 8, padding: 12, overflow: 'hidden' },
+  preview: { flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ece8e1', borderRadius: 8, padding: 12, overflow: 'hidden', position: 'relative' },
+  strip: { display: 'flex', gap: 4, flexWrap: 'wrap' },
+  thumb: { position: 'relative', width: 38, height: 38, padding: 0, border: '2px solid transparent', borderRadius: 4, cursor: 'pointer', backgroundSize: 'cover', backgroundPosition: 'center', backgroundColor: 'var(--ff-warm)' },
+  thumbOn: { borderColor: 'var(--ff-pink)' },
+  thumbYear: { position: 'absolute', left: 2, bottom: 0, fontSize: 11, fontWeight: 700, color: 'var(--ff-white)', textShadow: '0 0 3px var(--ff-shadow-mid)' },
+  pop: { position: 'absolute', left: 12, top: 12, zIndex: 'var(--ff-z-sticky)', width: 'min(340px, calc(100% - 24px))', maxHeight: 'calc(100% - 24px)', overflowY: 'auto', background: 'var(--ff-white)', border: '1px solid var(--ff-border)', borderRadius: 12, boxShadow: '0 6px 20px var(--ff-shadow-mid)', padding: 12, display: 'flex', flexDirection: 'column', gap: 8 },
+  popGrid: { display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 4 },
+  popThumb: { position: 'relative', aspectRatio: '1', padding: 0, border: '2px solid transparent', borderRadius: 4, cursor: 'pointer', backgroundSize: 'cover', backgroundPosition: 'center', backgroundColor: 'var(--ff-warm)' },
+  tool: { position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)', zIndex: 'var(--ff-z-sticky)', width: 'min(94%, 520px)', background: 'var(--ff-white)', border: '1px solid var(--ff-border)', borderRadius: 12, boxShadow: '0 6px 20px var(--ff-shadow-mid)', padding: '8px 12px', display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center', fontSize: 13 },
   group: { display: 'flex', flexDirection: 'column', gap: 6 },
   label: { fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ff-text-secondary)' },
   muted: { fontSize: 12, color: 'var(--ff-text-secondary)' },

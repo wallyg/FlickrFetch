@@ -48,7 +48,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
   const [expanded, setExpanded] = useState<Record<string, DayPhoto[]>>({})
   const [allYears, setAllYears] = useState(false)   // Across the years: the five biggest years, or every year
   const [selected, setSelected] = useState<Map<string, DayPhoto>>(new Map())
-  const [share, setShare] = useState<{ photos: DayPhoto[]; userPicked: boolean } | null>(null)
+  const [share, setShare] = useState<{ photos: DayPhoto[]; userPicked: boolean; year?: string; pool?: DayPhoto[] } | null>(null)
   const reqRef = useRef(0)
   const viewRef = useRef(0)   // changes whenever the day or a filter does, so a slow "Show all" for the day you left is ignored
   const dateRef = useRef<HTMLInputElement>(null)
@@ -116,7 +116,17 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
   const startShare = (): void => {
     if (!data) return
     if (pickedStills.length >= 2) setShare({ photos: pickedStills, userPicked: true })
-    else setShare({ photos: data.years.map(y => y.photos.find(isStill)).filter((p): p is DayPhoto => !!p).slice(0, 6), userPicked: false })
+    else setShare({ photos: data.years.map(y => y.photos.find(isStill)).filter((p): p is DayPhoto => !!p).slice(0, 8), userPicked: false })
+  }
+
+  // A collage of one year (#164): that year's photos, all of them, so the maker can replace and shuffle among every one
+  const startYearShare = async (year: string): Promise<void> => {
+    const view = viewRef.current
+    const all = await window.flickrAPI.getDayPhotos({ month, day, year, scope, offset: 0, limit: 1000, tag: tag?.key, ...extra })
+    if (view !== viewRef.current) return
+    const stills = all.filter(isStill)
+    if (stills.length === 0) return
+    setShare({ photos: [], userPicked: false, year, pool: stills })
   }
 
   // One list that only changes when the photos do, so the collage maker is not restarted by every redraw of the page
@@ -277,6 +287,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
                   <span style={styles.muted}>{ago === 0 ? 'this year' : `${ago} year${ago === 1 ? '' : 's'} ago`} · {itemsLabel(g.count, g.videos)}</span>
                   <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: 8 }}>
                     <button style={pillBtn} onClick={() => openYear(g.year)} title={openTitle(extra, 'that date')}><span style={iconBlue}><OpenIcon /></span>Open in Photostream</button>
+                    {g.count - g.videos >= 2 && <button style={pillBtn} onClick={() => void startYearShare(g.year)} title={`Make a collage from the photos taken on ${dateLabel}, ${g.year}`}><span style={iconBlue}><Icon name="collage" /></span>Collage from these {(g.count - g.videos).toLocaleString()}</button>}
                     <button style={pillBtn} onClick={() => void download(g.year)}><span style={iconBlue}><DownloadIcon /></span>Download these {g.count.toLocaleString()}</button>
                   </span>
                 </div>
@@ -297,7 +308,8 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
       {share && (
         <ShareDialog
           photos={share.photos}
-          candidates={candidates}
+          candidates={share.pool ?? candidates}
+          onlyYear={share.year}
           tag={tag?.key}
           userPicked={share.userPicked}
           defaultPublicOnly={privacy === 'public'}
