@@ -8,6 +8,8 @@ import LoadFailed from './LoadFailed'
 import DateFilterBar, { dateExtra, extraNote, openTitle, rangeOpts, type MediaChoice, type RangeOpts } from './DateFilterBar'
 import type { PrivacyFilter } from './PhotoGridShared'
 import type { PickedAlbum } from './AlbumBox'
+import ScreenTop from '../ui/ScreenTop'
+import MoreMenu from '../ui/MoreMenu'
 import { primaryBtn, quietBtn, linkBtn, pillBtn, selectedOn, chip as kitChip, chipCount as chipCountLook } from '../ui/kit'
 import BackToTop from '../ui/BackToTop'
 import { asButton } from '../ui/a11y'
@@ -142,7 +144,9 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
 
   return (
     <div style={styles.wrap}>
-      <div style={styles.hero}>
+      <div style={{ borderBottom: '1px solid var(--ff-line-strong)', paddingBottom: 12, marginBottom: 8 }}>
+      <ScreenTop
+        context={<>
         <button style={styles.bigTile} onClick={openPicker} title="Pick any date; only the month and day are used" aria-label="Pick a date">
           <div style={styles.bigMonth}>{MONTHS[month - 1].slice(0, 3).toUpperCase()}</div>
           <div style={styles.bigDay}>{day}</div>
@@ -169,25 +173,29 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
             />
           </div>
         </div>
-        <div style={styles.actions}>
+        </>}
+        actions={<>
           <button style={styles.cta} disabled={data.total - data.videos === 0} onClick={startShare} title={data.videos > 0 ? 'Videos are left out of collages' : undefined}>
             <span style={styles.stack} aria-hidden="true"><s style={{ ...styles.stackCard, left: 0, top: 3, transform: 'rotate(-12deg)' }} /><s style={{ ...styles.stackCard, left: 6, top: 0, transform: 'rotate(3deg)' }} /><s style={{ ...styles.stackCard, left: 12, top: 3, transform: 'rotate(15deg)' }} /></span>
             Make a shareable collage
           </button>
-          <BatchEditButton inline style={quietBtn} getIds={async () => (await window.flickrAPI.getDatePhotoIds({ kind: 'day', month, day, scope, tag: tag?.key, ...extra })).map(p => p.id)} />
-          <button style={quietBtn} disabled={data.total === 0} onClick={() => void download()}>Download all {data.total.toLocaleString()}</button>
-        </div>
-      </div>
-
-      <div style={styles.row}>
+          <MoreMenu items={[{ key: 'all', label: `Download all ${data.total.toLocaleString()}`, disabled: data.total === 0, onClick: () => void download() }]}>
+            <BatchEditButton style={styles.menuBtn} getIds={async () => (await window.flickrAPI.getDatePhotoIds({ kind: 'day', month, day, scope, tag: tag?.key, ...extra })).map(p => p.id)} />
+          </MoreMenu>
+        </>}
+        filters={<>
         <DateFilterBar media={media} onMedia={setMedia} privacy={privacy} onPrivacy={setPrivacy} albums={albums} onAlbums={setAlbums}
           levels={data.levels} hasCatalog={data.hasCatalog} onOpenHealth={onFullRescan}
           onClearAll={() => { setMedia('all'); setPrivacy('all'); setAlbums([]); setTag(null) }} />
+        </>}
+        info={<>
         {data.hasCatalog && <span style={styles.muted}><Icon name="lock" /> marks photos that are not public. Arrow counts follow the switches.</span>}
-        <label style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 6 }} title={`Photo size: ${tileSize}px`}>
+        <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }} title={`Photo size: ${tileSize}px`}>
           <span style={styles.muted}>Photo size</span>
           <input type="range" min={TILE_MIN} max={TILE_MAX} step={5} value={tileSize} onChange={e => setTileSize(Number(e.target.value))} style={{ width: 110 }} aria-label="Photo size" />
         </label>
+        </>}
+      />
       </div>
 
       {tag && (
@@ -319,7 +327,8 @@ const styles: Record<string, React.CSSProperties> = {
   bigTile: { width: 72, flexShrink: 0, borderRadius: 12, overflow: 'hidden', background: 'var(--ff-surface)', boxShadow: '0 3px 12px color-mix(in srgb, var(--ff-navy) 22%, transparent)', textAlign: 'center', border: 'none', padding: 0, cursor: 'pointer' },
   bigMonth: { background: 'var(--ff-pink)', color: 'var(--ff-white)', fontSize: 12, fontWeight: 700, letterSpacing: '0.2em', padding: '4px 0 4px' },
   bigDay: { fontSize: 38, fontWeight: 700, color: 'var(--ff-navy)', lineHeight: '48px' },
-  headText: { flex: '1 1 auto', minWidth: 0 },   // its own width, so the buttons wrap under it in a narrow window instead of squeezing the day buttons
+  headText: { flex: '1 1 auto', minWidth: 0 },
+  menuBtn: { background: 'none', border: 'none', padding: '6px 8px', fontSize: 13, color: 'var(--ff-text)', cursor: 'pointer', textAlign: 'left', width: '100%' },   // its own width, so the buttons wrap under it in a narrow window instead of squeezing the day buttons
   title: { fontSize: 24, fontWeight: 700, letterSpacing: '-0.5px', color: 'var(--ff-navy)', lineHeight: 1.1 },
   count: { fontSize: 16, fontWeight: 700, color: 'var(--ff-text)' },
   countNote: { fontSize: 13, fontWeight: 400, color: 'var(--ff-text-secondary)', marginLeft: 6 },
