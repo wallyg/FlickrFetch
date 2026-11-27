@@ -7,6 +7,7 @@ import { mapColours } from '../ui/mapColours'
 import { quietBtn, primaryBtn, selectBox, headingCard } from '../ui/kit'
 import { dash } from './DashboardParts'
 import AlbumBox from './AlbumBox'
+import ScreenTop from '../ui/ScreenTop'
 import PhotoPeek from './PhotoPeek'
 import { Chip, DateMode, PRIVACY_LABELS, PRIVACY_OPTIONS, PrivacyFilter, formatDateChip, getPresetDates, sharedStyles } from './PhotoGridShared'
 import InfoTip from '../ui/InfoTip'
@@ -412,11 +413,18 @@ export default function MapPanel({ active, onDownload, onFullRescan, refreshKey,
 
   return (
     <div style={{ ...styles.wrap, display: active ? 'flex' : undefined }}>
-      <div style={styles.bar}>
+      <div style={{ padding: '8px 24px' }}>
+      <ScreenTop
+        context={<>
+          <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--ff-navy)' }}>Map</span>
         <span style={styles.count}>
           {data ? <><b>{n(data.located)}</b> of {n(data.photos)} photos have a location · {hasFilter && <><b>{n(data.matching)}</b> match · </>}<b>{n(data.inView)}</b> in view</> : 'Reading your photos…'}
         </span>
-        <span style={{ flex: 1 }} />
+        </>}
+        actions={<>
+        <label style={styles.field}><input type="checkbox" checked={street} onChange={e => turnStreet(e.target.checked)} /> Show street map</label>
+        </>}
+        filters={<>
         <div style={sharedStyles.segGroup}>
           {(['all', 'photo', 'video'] as MediaChoice[]).map(v => (
             <button key={v} style={{ ...sharedStyles.seg, ...(media === v ? sharedStyles.segActive : {}) }} onClick={() => setMedia(v)} aria-pressed={media === v}>
@@ -429,7 +437,8 @@ export default function MapPanel({ active, onDownload, onFullRescan, refreshKey,
           Filters
           {drawerBadge > 0 && !drawerOpen && <span style={sharedStyles.drawerBadge}>{drawerBadge}</span>}
         </button>
-        <label style={styles.field}><input type="checkbox" checked={street} onChange={e => turnStreet(e.target.checked)} /> Show street map</label>
+        </>}
+      />
       </div>
 
       {drawerOpen && (
