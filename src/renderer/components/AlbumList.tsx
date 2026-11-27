@@ -349,7 +349,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '8px 12px',
     display: 'flex',
     flexDirection: 'column',
-    gap: '3px'
+    gap: '2px'
   },
   title: {
     fontSize: '13px',

@@ -179,14 +179,14 @@ const styles: Record<string, React.CSSProperties> = {
   rail: { flexShrink: 0, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 8, padding: 6 },
   main: { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: 0 },
   list: { flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: 4 },
-  card: { display: 'flex', gap: 12, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 8, padding: 10, marginBottom: 8 },
+  card: { display: 'flex', gap: 12, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 8, padding: 8, marginBottom: 8 },
   thumb: { width: 76, height: 76, borderRadius: 6, objectFit: 'cover', background: 'var(--ff-border)', flexShrink: 0 },
   l1: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   title: { fontSize: 14, fontWeight: 700, color: 'var(--ff-text)', overflowWrap: 'anywhere' },
-  pill: { fontSize: 11, borderRadius: 8, padding: '1px 8px', background: 'var(--ff-warm)', color: 'var(--ff-text-secondary)' },
+  pill: { fontSize: 11, borderRadius: 8, padding: '0px 8px', background: 'var(--ff-warm)', color: 'var(--ff-text-secondary)' },
   actions: { display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, flexWrap: 'wrap' },
   mainActionBtn: { ...doThisBtn },
   moreBtn: { ...quietBtn, width: '100%', marginBottom: 12 },
-  track: { height: 10, borderRadius: 6, background: 'var(--ff-warm)', overflow: 'hidden', marginTop: 10 },
+  track: { height: 10, borderRadius: 6, background: 'var(--ff-warm)', overflow: 'hidden', marginTop: 8 },
   fill: { height: 10, background: 'var(--ff-pink)' }
 }

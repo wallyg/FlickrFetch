@@ -95,7 +95,7 @@ export default function LibraryOverview({ refreshKey, offCount, onGoTags, onGoPh
         </div>
       </div>
 
-      <div style={{ ...dash.card, marginTop: 14 }}>
+      <div style={{ ...dash.card, marginTop: 12 }}>
         <h3 style={dash.cardTitle}>Biggest issues to address <span style={dash.hint}>(by photos affected, across tags and photos; click for the list)</span></h3>
         {starts.length === 0 && <span style={dash.muted}>No issues right now.</span>}
         {shown.map(s => (
@@ -105,11 +105,11 @@ export default function LibraryOverview({ refreshKey, offCount, onGoTags, onGoPh
           </div>
         ))}
         {starts.length > 5 && (
-          <button style={{ ...chip, fontSize: 12, padding: '2px 10px', marginTop: 8 }} onClick={() => setMore(m => !m)}>{more ? 'Show fewer' : 'Show more'}</button>
+          <button style={{ ...chip, fontSize: 12, padding: '2px 8px', marginTop: 8 }} onClick={() => setMore(m => !m)}>{more ? 'Show fewer' : 'Show more'}</button>
         )}
       </div>
 
-      <div style={{ ...dash.card, marginTop: 14 }}>
+      <div style={{ ...dash.card, marginTop: 12 }}>
         <h3 style={dash.cardTitle}>Warnings to review <span style={dash.hint}>(could be better; these never lower the scores above)</span></h3>
         {optionalTags.length + optionalPhotos.length === 0 && <span style={dash.muted}>Nothing to show.</span>}
         {optionalPhotos.map(t => (
@@ -122,7 +122,7 @@ export default function LibraryOverview({ refreshKey, offCount, onGoTags, onGoPh
             <span>{TAG_NAMES[r.category]}<span style={dash.pill}>tags</span></span><b>{fmt(r.open + r.plan)}</b>
           </div>
         ))}
-        <div style={{ ...dash.muted, marginTop: 10, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ ...dash.muted, marginTop: 8, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           {offCount > 0 ? `${offCount} check${offCount === 1 ? ' is' : 's are'} switched off.` : 'Every check is set to Issue or Warning.'}
           <button style={quietBtn} onClick={onTune}>Tune checks…</button>
         </div>
@@ -132,6 +132,6 @@ export default function LibraryOverview({ refreshKey, offCount, onGoTags, onGoPh
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  cards: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 14 },
-  score: { background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 12, padding: '14px 16px', cursor: 'pointer', minWidth: 0 }
+  cards: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 12 },
+  score: { background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 12, padding: '12px 16px', cursor: 'pointer', minWidth: 0 }
 }

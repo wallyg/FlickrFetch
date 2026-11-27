@@ -158,7 +158,7 @@ export default function TuneChecks({ stateOf, setState, onOpenAlbumTab }: Props)
         {report === 'albums' && (
           <div style={styles.rule}>
             <div style={styles.ruleTop}>
-              <span style={{ fontWeight: 700, padding: '4px 0 4px 18px' }}>How each album is judged</span>
+              <span style={{ fontWeight: 700, padding: '4px 0 4px 16px' }}>How each album is judged</span>
               {onOpenAlbumTab && <button style={styles.resetBtn} onClick={onOpenAlbumTab}>Open the Album Checks tab</button>}
             </div>
           </div>
@@ -189,19 +189,19 @@ export default function TuneChecks({ stateOf, setState, onOpenAlbumTab }: Props)
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  body: { display: 'flex', flexDirection: 'column', gap: 26 },
+  body: { display: 'flex', flexDirection: 'column', gap: 24 },
   groupHead: { fontSize: 14, fontWeight: 700, color: 'var(--ff-text)', margin: '2px 0 4px', scrollMarginTop: 48 },
   rules: { display: 'flex', flexDirection: 'column', gap: 8 },
-  rule: { padding: '8px 14px', border: '1px solid var(--ff-border)', borderRadius: 8, background: 'var(--ff-cream)', fontSize: 13 },
+  rule: { padding: '8px 12px', border: '1px solid var(--ff-border)', borderRadius: 8, background: 'var(--ff-cream)', fontSize: 13 },
   ruleTop: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 },
   ruleToggle: { flex: 1, minWidth: 0, display: 'flex', alignItems: 'baseline', flexWrap: 'wrap', gap: 4, textAlign: 'left', background: 'none', border: 'none', padding: '4px 0', font: 'inherit', color: 'inherit', cursor: 'pointer' },
   chev: { width: 14, color: 'var(--ff-text-muted)', flex: 'none' },
-  changed: { marginLeft: 6, fontSize: 11, padding: '0 7px', borderRadius: 8, background: 'var(--ff-warm)', color: 'var(--ff-text-secondary)' },
-  ruleBody: { padding: '4px 0 6px 18px', display: 'flex', flexDirection: 'column', gap: 6 },
+  changed: { marginLeft: 6, fontSize: 11, padding: '0 6px', borderRadius: 8, background: 'var(--ff-warm)', color: 'var(--ff-text-secondary)' },
+  ruleBody: { padding: '4px 0 6px 16px', display: 'flex', flexDirection: 'column', gap: 6 },
   logic: { fontSize: 12, color: 'var(--ff-text)', lineHeight: 1.5 },
   small: { fontSize: 12, color: 'var(--ff-text-muted)' },
   chips: { position: 'sticky', top: 0, zIndex: 'var(--ff-z-sticky)', display: 'flex', gap: 8, padding: '6px 0 8px', background: 'var(--ff-white)' },
-  chip: { border: '1px solid var(--ff-line-strong)', background: 'var(--ff-white)', borderRadius: 12, padding: '3px 12px', fontSize: 13, color: 'var(--ff-text-secondary)', cursor: 'pointer' },
+  chip: { border: '1px solid var(--ff-line-strong)', background: 'var(--ff-white)', borderRadius: 12, padding: '2px 12px', fontSize: 13, color: 'var(--ff-text-secondary)', cursor: 'pointer' },
   chipN: { color: 'var(--ff-text-muted)', fontWeight: 400 },
   count: { fontWeight: 400, color: 'var(--ff-text-secondary)' },
   numberRow: { display: 'flex', alignItems: 'center', gap: 8, marginTop: 6, fontSize: 12, color: 'var(--ff-text)' },

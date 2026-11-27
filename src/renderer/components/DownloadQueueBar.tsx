@@ -514,7 +514,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'flex-start',
     gap: '8px',
-    padding: '11px 20px'
+    padding: '12px 16px'
   },
   dotActive: {
     fontSize: '14px',
@@ -563,7 +563,7 @@ const styles: Record<string, React.CSSProperties> = {
   batchTitleRow: {
     display: 'flex',
     alignItems: 'baseline',
-    gap: '10px'
+    gap: '8px'
   },
   batchTitle: {
     fontSize: '13px',
@@ -613,7 +613,7 @@ const styles: Record<string, React.CSSProperties> = {
   divider: {
     height: '1px',
     backgroundColor: 'var(--ff-grey-100)',
-    margin: '0 20px'
+    margin: '0 16px'
   },
   failureToggle: {
     background: 'none',
@@ -631,7 +631,7 @@ const styles: Record<string, React.CSSProperties> = {
   failureItem: {
     fontSize: '11px',
     color: 'var(--ff-warning-text)',
-    padding: '1px 0'
+    padding: '0px 0'
   },
   retryBtn: {
     background: 'none',

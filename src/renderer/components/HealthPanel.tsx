@@ -168,7 +168,7 @@ export default function HealthPanel({ refreshKey, onFullRescan, toolbarLeft, sta
             <BatchEditButton key={`${condition}|${status}|${search}|${year}`} style={{ ...styles.secondaryBtn, width: '100%' }}
               getIds={() => window.flickrAPI.getHealthPhotoIds({ condition, status, search, sort, year: year || undefined, reason: condition === 'title' && reason ? reason : undefined })} />
           </div>
-          {saved && <div style={{ ...styles.muted, padding: '6px 9px 2px' }}>Saved to {saved.split('/').pop()} <button style={styles.linkBtn} onClick={() => window.flickrAPI.showInFinder(saved)}>Show in Finder</button></div>}
+          {saved && <div style={{ ...styles.muted, padding: '6px 8px 2px' }}>Saved to {saved.split('/').pop()} <button style={styles.linkBtn} onClick={() => window.flickrAPI.showInFinder(saved)}>Show in Finder</button></div>}
         </div>
         </div>
 
@@ -177,7 +177,7 @@ export default function HealthPanel({ refreshKey, onFullRescan, toolbarLeft, sta
           <ListHead sort={condition === 'title' && reasons ? (
             <span style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--ff-text-secondary)' }}>Reason
-                <select style={{ border: '1px solid var(--ff-border)', borderRadius: 6, padding: '5px 8px', fontSize: 13, background: 'var(--ff-surface)', color: 'var(--ff-text)' }} value={reason} aria-label="Show only one kind of title problem" onChange={e => setReason(e.target.value as '' | 'none' | 'camera')}>
+                <select style={{ border: '1px solid var(--ff-border)', borderRadius: 6, padding: '4px 8px', fontSize: 13, background: 'var(--ff-surface)', color: 'var(--ff-text)' }} value={reason} aria-label="Show only one kind of title problem" onChange={e => setReason(e.target.value as '' | 'none' | 'camera')}>
                   <option value="">All ({(reasons.none + reasons.camera).toLocaleString()})</option>
                   <option value="none">No title ({reasons.none.toLocaleString()})</option>
                   <option value="camera">Camera-file title ({reasons.camera.toLocaleString()})</option>
@@ -210,7 +210,7 @@ export default function HealthPanel({ refreshKey, onFullRescan, toolbarLeft, sta
                       {p.kind && <span style={styles.pill}>{p.kind}</span>}
                     </div>
                     <div style={styles.muted}>{p.dateTaken ? `Taken ${p.dateTaken.slice(0, 10)}` : 'No date taken'}</div>
-                    {p.hint && <div style={{ ...styles.muted, marginTop: 3 }}>{p.hint}</div>}
+                    {p.hint && <div style={{ ...styles.muted, marginTop: 2 }}>{p.hint}</div>}
                     <div style={styles.actions}>
                       <button style={styles.mainActionBtn} onClick={() => window.flickrAPI.openExternal(p.flickrUrl)}>Open on Flickr <Icon name="external" /></button>
                       {p.hintGeo && onShowOnMap
@@ -239,23 +239,23 @@ const styles: Record<string, React.CSSProperties> = {
   wrap: { flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' },
   top: { display: 'flex', alignItems: 'center', padding: '6px 24px' },
   muted: { fontSize: 13, color: 'var(--ff-text-secondary)' },
-  empty: { padding: '60px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, textAlign: 'center', maxWidth: 520, margin: '0 auto' },
+  empty: { padding: '60px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, textAlign: 'center', maxWidth: 520, margin: '0 auto' },
   emptyTitle: { fontSize: 14, fontWeight: 700, color: 'var(--ff-navy)' },
   body: { flex: 1, minHeight: 0, display: 'flex', gap: 16, padding: '4px 24px 12px' },
   railCol: { width: 230, flexShrink: 0, alignSelf: 'flex-start', maxHeight: '100%', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12 },   // long lists of checks scroll inside this column
   rail: { flexShrink: 0, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 8, padding: 6 },
   main: { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: 0 },
   statusRow: { display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, flexWrap: 'wrap' },
-  statusChip: { border: '1px solid var(--ff-border)', borderRadius: 12, padding: '3px 11px', fontSize: 13, background: 'var(--ff-surface)', color: 'var(--ff-text)', cursor: 'pointer' },
+  statusChip: { border: '1px solid var(--ff-border)', borderRadius: 12, padding: '2px 12px', fontSize: 13, background: 'var(--ff-surface)', color: 'var(--ff-text)', cursor: 'pointer' },
   statusChipOn: { ...selectedOn },
   list: { flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: 4 },
-  card: { display: 'flex', gap: 12, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 8, padding: 10, marginBottom: 8 },
+  card: { display: 'flex', gap: 12, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 8, padding: 8, marginBottom: 8 },
   tick: { alignSelf: 'flex-start', marginTop: 4, flexShrink: 0, cursor: 'pointer' },
   thumb: { width: 76, height: 76, borderRadius: 6, objectFit: 'cover', background: 'var(--ff-border)', flexShrink: 0 },
   cardBody: { flex: 1, minWidth: 0 },
   l1: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   title: { fontSize: 14, fontWeight: 700, color: 'var(--ff-text)', overflowWrap: 'anywhere' },
-  pill: { fontSize: 11, borderRadius: 8, padding: '1px 8px', background: 'var(--ff-warning-bg)', color: 'var(--ff-warning-text)' },
+  pill: { fontSize: 11, borderRadius: 8, padding: '0px 8px', background: 'var(--ff-warning-bg)', color: 'var(--ff-warning-text)' },
   actions: { display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, flexWrap: 'wrap' },
   primaryBtn: { ...primaryBtn },
   secondaryBtn: { ...quietBtn },

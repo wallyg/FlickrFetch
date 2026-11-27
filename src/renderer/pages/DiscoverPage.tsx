@@ -72,8 +72,8 @@ const s: Record<string, React.CSSProperties> = {
   tab: {
     ...tabMark,
     background: 'none', border: 'none', borderBottom: '2px solid transparent',
-    padding: '10px 16px', cursor: 'pointer', fontSize: '14px', fontWeight: 400,
-    color: 'var(--ff-text-secondary)', marginBottom: '-1px', outline: 'none',
+    padding: '8px 16px', cursor: 'pointer', fontSize: '14px', fontWeight: 400,
+    color: 'var(--ff-text-secondary)', marginBottom: '0px', outline: 'none',
   },
   tabActive: { borderBottom: '2px solid var(--ff-pink)', color: 'var(--ff-pink)' },
   content: { flex: 1, overflowY: 'auto', position: 'relative' },

@@ -231,7 +231,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '8px 12px',
     display: 'flex',
     flexDirection: 'column',
-    gap: '5px'
+    gap: '4px'
   },
   cardTitle: {
     fontSize: '13px',

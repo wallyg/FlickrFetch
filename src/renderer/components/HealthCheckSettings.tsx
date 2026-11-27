@@ -35,10 +35,10 @@ export default function HealthCheckSettings({ reloadKey = 0, onOpenAlbumTab }: {
     await window.flickrAPI.setSettings({ autoUpdateWhen: w })
   }
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 30 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
       <div>
         <div style={styles.head}>Keep the library list up to date</div>
-        <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 7 }}>Update automatically <InfoTip text={WHEN_HELP} /></div>
+        <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>Update automatically <InfoTip text={WHEN_HELP} /></div>
         <div style={segGroup} role="radiogroup" aria-label="Update automatically">
           {WHEN_OPTIONS.map(o => (
             <button key={o.key} role="radio" aria-checked={when === o.key} style={{ ...segBtn, ...(when === o.key ? selectedOn : {}) }} onClick={() => void change(o.key)}>{o.label}</button>
@@ -46,7 +46,7 @@ export default function HealthCheckSettings({ reloadKey = 0, onOpenAlbumTab }: {
         </div>
       </div>
       <div>
-        <div style={{ ...styles.head, display: 'flex', alignItems: 'center', gap: 7 }}>Tune checks <InfoTip text={TUNE_HELP} /></div>
+        <div style={{ ...styles.head, display: 'flex', alignItems: 'center', gap: 6 }}>Tune checks <InfoTip text={TUNE_HELP} /></div>
         <div style={{ ...styles.desc, marginTop: 0, marginBottom: 12 }}>Choose how each check is treated. Changes apply at once.</div>
         <TuneChecks stateOf={rules.stateOf} setState={(id, st) => void rules.setState(id, st)} onOpenAlbumTab={onOpenAlbumTab} />
       </div>

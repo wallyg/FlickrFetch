@@ -7,7 +7,7 @@ import { linkBtn } from '../ui/kit'
 
 export default function AlbumCheckSettings({ onOpenHealth }: { onOpenHealth: () => void }): React.JSX.Element {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div>
         <div style={styles.head}>Health Check · Albums</div>
         <div style={styles.desc}>

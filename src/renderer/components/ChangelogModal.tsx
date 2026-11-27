@@ -70,7 +70,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   content: {
     overflowY: 'auto' as const,
-    padding: '0 24px 20px'
+    padding: '0 24px 16px'
   },
   release: {
     borderTop: '1px solid var(--ff-border)',

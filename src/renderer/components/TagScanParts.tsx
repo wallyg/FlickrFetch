@@ -59,7 +59,7 @@ export function LibraryDataChip({ status, info, onUpdate, onRebuild, compact }: 
   return (
     <span ref={box} style={{ position: 'relative', display: 'inline-flex' }}>
       <button
-        style={{ ...quietBtn, display: 'inline-flex', alignItems: 'center', gap: 8, padding: '5px 11px', ...(old ? { borderColor: 'var(--ff-warning)', background: 'var(--ff-warning-bg)' } : {}) }}
+        style={{ ...quietBtn, display: 'inline-flex', alignItems: 'center', gap: 8, padding: '4px 12px', ...(old ? { borderColor: 'var(--ff-warning)', background: 'var(--ff-warning-bg)' } : {}) }}
         onClick={() => setOpen(o => !o)} aria-expanded={open} aria-label="Library data: update or rebuild"
       >
         <span title={dotNote} style={{ width: 8, height: 8, borderRadius: '50%', background: old ? 'var(--ff-warning)' : 'var(--ff-success)' }} />
@@ -71,16 +71,16 @@ export function LibraryDataChip({ status, info, onUpdate, onRebuild, compact }: 
         <div style={styles.dataPanel} role="dialog" aria-label="Your library list">
           <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ff-navy)' }}>Your library list</div>
           <div style={{ ...styles.muted, fontSize: 12, marginTop: 2 }}>{status.tagCount.toLocaleString()} tags · {status.indexedPhotos.toLocaleString()} photos · updated {when}</div>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginTop: 12 }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginTop: 12 }}>
             <button style={styles.updateBtn} onClick={() => { setOpen(false); onUpdate() }}><Icon name="refresh" /> Update now</button>
             <span style={{ ...styles.muted, fontSize: 12 }}>Looks for new and edited photos, usually a few seconds. It does not notice deleted photos.</span>
           </div>
-          <div style={{ height: 1, background: 'var(--ff-border)', margin: '14px 0 8px' }} />
-          <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+          <div style={{ height: 1, background: 'var(--ff-border)', margin: '12px 0 8px' }} />
+          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
             <button style={{ ...styles.linkBtn, whiteSpace: 'nowrap', padding: 0, fontSize: 13 }} onClick={() => { setOpen(false); onRebuild() }}>Rebuild from scratch…</button>
             <span style={{ ...styles.muted, fontSize: 12 }}>Reads every photo again, three to five minutes. Use it after deleting photos, or if the counts look wrong.</span>
           </div>
-          {info && <div style={{ ...styles.muted, fontSize: 12, marginTop: 10 }}><RichNote text={info} /></div>}
+          {info && <div style={{ ...styles.muted, fontSize: 12, marginTop: 8 }}><RichNote text={info} /></div>}
         </div>
       )}
     </span>
@@ -140,16 +140,16 @@ export function ScanLine({ status, scanError, onRefresh, onFullRescan }: {
 
 const styles: Record<string, React.CSSProperties> = {
   center: { height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--ff-cream)' },
-  header: { display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 24px 6px', fontSize: '13px', color: 'var(--ff-text)' },
+  header: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px 6px', fontSize: '13px', color: 'var(--ff-text)' },
   headline: { fontSize: '14px' },
   muted: { color: 'var(--ff-text-secondary)', fontSize: '13px' },
   notice: { margin: '0 24px 6px', padding: '8px 12px', background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: '8px', fontSize: '13px', color: 'var(--ff-text-secondary)' },
-  secondaryBtn: { ...quietBtn, padding: '5px 12px' },
+  secondaryBtn: { ...quietBtn, padding: '4px 12px' },
   linkBtn: { ...linkBtn, fontSize: '13px' },
-  progressCard: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', width: '360px', padding: '28px', background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: '12px' },
+  progressCard: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', width: '360px', padding: '24px', background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: '12px' },
   cardTitle: { fontSize: '14px', fontWeight: 700, color: 'var(--ff-navy)' },
   barTrack: { width: '100%', height: '8px', background: 'var(--ff-border)', borderRadius: '4px', overflow: 'hidden' },
   barFill: { height: '100%', background: 'var(--ff-pink)', transition: 'width 0.3s' },
   updateBtn: { ...primaryBtn, whiteSpace: 'nowrap' },
-  dataPanel: { position: 'absolute', top: 'calc(100% + 6px)', right: 0, width: 370, background: 'var(--ff-surface)', border: '1px solid var(--ff-line-strong)', borderRadius: 12, boxShadow: '0 10px 30px var(--ff-shadow-mid)', padding: '14px 16px', zIndex: 'var(--ff-z-menu)' }
+  dataPanel: { position: 'absolute', top: 'calc(100% + 6px)', right: 0, width: 370, background: 'var(--ff-surface)', border: '1px solid var(--ff-line-strong)', borderRadius: 12, boxShadow: '0 10px 30px var(--ff-shadow-mid)', padding: '12px 16px', zIndex: 'var(--ff-z-menu)' }
 }

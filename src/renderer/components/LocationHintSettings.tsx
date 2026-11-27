@@ -61,8 +61,8 @@ export default function LocationHintSettings(): React.JSX.Element {
 const styles: Record<string, React.CSSProperties> = {
   box: { marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6, maxWidth: 560 },
   muted: { fontSize: 12, color: 'var(--ff-text-muted)' },
-  row: { display: 'flex', alignItems: 'center', gap: 10, fontSize: 12, color: 'var(--ff-text)' },
+  row: { display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--ff-text)' },
   input: { ...fieldCompact, width: 72 },
   link: { ...putAsideBtn, alignSelf: 'flex-start' },
-  stats: { fontSize: 12, color: 'var(--ff-text)', background: 'var(--ff-warm)', borderRadius: 6, padding: '6px 10px', display: 'flex', flexDirection: 'column', gap: 2 }
+  stats: { fontSize: 12, color: 'var(--ff-text)', background: 'var(--ff-warm)', borderRadius: 6, padding: '6px 8px', display: 'flex', flexDirection: 'column', gap: 2 }
 }

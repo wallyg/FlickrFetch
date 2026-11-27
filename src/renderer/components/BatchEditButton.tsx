@@ -76,4 +76,4 @@ export default function BatchEditButton({ getIds, label = "Open in Flickr's orga
   )
 }
 
-const noteStyle: React.CSSProperties = { fontSize: 12, color: 'var(--ff-text-secondary)', lineHeight: 1.5, maxWidth: 360, padding: '2px 14px 2px 4px', transition: `opacity ${FADE_MS}ms ease` }
+const noteStyle: React.CSSProperties = { fontSize: 12, color: 'var(--ff-text-secondary)', lineHeight: 1.5, maxWidth: 360, padding: '2px 12px 2px 4px', transition: `opacity ${FADE_MS}ms ease` }

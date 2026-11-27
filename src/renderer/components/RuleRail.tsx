@@ -22,7 +22,7 @@ export function RailHead({ children, first }: { children: React.ReactNode; first
 // The list's heading line: what the check means on the left, how the list is ordered on the right
 export function ListHead({ children, sort, tip }: { children: React.ReactNode; sort: React.ReactNode; tip?: string }): React.JSX.Element {
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, margin: '2px 0 10px' }}>
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, margin: '2px 0 8px' }}>
       <div style={{ flex: 1, minWidth: 0, fontSize: 13, color: 'var(--ff-text-secondary)' }}><HoverNote text={tip} block>{children}</HoverNote></div>
       {sort}
     </div>
@@ -34,7 +34,7 @@ export function SortBox<T extends string>({ value, onChange, options }: { value:
     <label style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--ff-text-secondary)' }}>
       Sort
       <select value={value} onChange={e => onChange(e.target.value as T)} title="How this list is ordered" aria-label="Sort this list"
-        style={{ border: '1px solid var(--ff-border)', borderRadius: 6, padding: '5px 8px', fontSize: 13, background: 'var(--ff-surface)', color: 'var(--ff-text)' }}>
+        style={{ border: '1px solid var(--ff-border)', borderRadius: 6, padding: '4px 8px', fontSize: 13, background: 'var(--ff-surface)', color: 'var(--ff-text)' }}>
         {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
     </label>
@@ -44,7 +44,7 @@ export function SortBox<T extends string>({ value, onChange, options }: { value:
 export function RailRow({ selected, dim, label, count, pending, onSelect, dot }: { selected: boolean; dim?: boolean; label: string; count: number; pending?: boolean; onSelect: () => void; dot?: string }): React.JSX.Element {
   return (
     <div style={{ ...railItem, ...(selected ? railSel : {}), opacity: dim && !selected ? 0.55 : 1 }} {...asButton(onSelect)} aria-current={selected ? 'true' : undefined}>
-      <span style={{ display: 'flex', alignItems: 'baseline', gap: 7 }}>{dot && <i aria-hidden="true" style={{ width: 8, height: 8, borderRadius: '50%', background: dot, flex: 'none', display: 'inline-block' }} />}{label}</span>
+      <span style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>{dot && <i aria-hidden="true" style={{ width: 8, height: 8, borderRadius: '50%', background: dot, flex: 'none', display: 'inline-block' }} />}{label}</span>
       {pending ? <b style={{ fontWeight: 700 }} title="This check needs a Rebuild before it can count">–</b> : <b style={{ fontWeight: 700 }}>{count.toLocaleString()}</b>}
     </div>
   )
@@ -85,7 +85,7 @@ export default function RuleRail({ rules, stateOf, selectedId, onSelect, offText
           </React.Fragment>
         )
       })}
-      {rules.some(r => r.pending && stateOf(r.id) !== 'off') && <div style={{ fontSize: 12, color: 'var(--ff-text-secondary)', padding: '10px 9px 4px', lineHeight: 1.45 }}>A dash means that check needs a Rebuild first.</div>}
+      {rules.some(r => r.pending && stateOf(r.id) !== 'off') && <div style={{ fontSize: 12, color: 'var(--ff-text-secondary)', padding: '8px 8px 4px', lineHeight: 1.45 }}>A dash means that check needs a Rebuild first.</div>}
       {rules.every(r => stateOf(r.id) === 'off') && <div style={{ fontSize: 13, color: 'var(--ff-text-secondary)', padding: 8 }}>{offText}</div>}
     </>
   )

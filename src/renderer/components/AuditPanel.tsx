@@ -295,7 +295,7 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
   const planButton = (
     <span ref={planRef} style={{ position: 'relative', display: 'inline-flex' }}>
       <button
-        style={{ ...styles.planBtn, display: 'inline-flex', alignItems: 'center', gap: 7, ...(plan ? selectedOn : {}) }}
+        style={{ ...styles.planBtn, display: 'inline-flex', alignItems: 'center', gap: 6, ...(plan ? selectedOn : {}) }}
         aria-expanded={!!plan}
         onClick={() => { if (plan) setPlan(null); else void refreshPlan() }}
       >
@@ -337,7 +337,7 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
           <input ref={filterRef} style={filterInput} placeholder="Filter this list…" value={search} onChange={e => setSearch(e.target.value)} aria-label="Filter this list" />
           <RailHead>This list</RailHead>
           <button style={{ ...styles.secondaryBtn, width: '100%' }} title="Save every row of this list as a spreadsheet" onClick={async () => { setListSaved(await window.flickrAPI.saveAuditListCsv({ category, status, search, sort, reason: category === 'junk' && reason ? reason : undefined })) }}>Export this list</button>
-          {listSaved && <div style={{ ...styles.muted, padding: '6px 9px 2px' }}>Saved to {listSaved.split('/').pop()} <button style={{ ...styles.viewBtn, marginLeft: 0 }} onClick={() => window.flickrAPI.showInFinder(listSaved)}>Show in Finder</button></div>}
+          {listSaved && <div style={{ ...styles.muted, padding: '6px 8px 2px' }}>Saved to {listSaved.split('/').pop()} <button style={{ ...styles.viewBtn, marginLeft: 0 }} onClick={() => window.flickrAPI.showInFinder(listSaved)}>Show in Finder</button></div>}
         </div>
         </div>
 
@@ -414,7 +414,7 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
 
 const styles: Record<string, React.CSSProperties> = {
   wrap: { flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' },
-  top: { display: 'flex', alignItems: 'center', gap: 10, padding: '6px 24px' },
+  top: { display: 'flex', alignItems: 'center', gap: 8, padding: '6px 24px' },
   muted: { fontSize: 13, color: 'var(--ff-text-secondary)' },
   empty: { padding: 40, textAlign: 'center', fontSize: 13, color: 'var(--ff-text-secondary)' },
   body: { flex: 1, minHeight: 0, display: 'flex', gap: 16, padding: '4px 24px 12px' },
@@ -422,19 +422,19 @@ const styles: Record<string, React.CSSProperties> = {
   rail: { flexShrink: 0, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 8, padding: 6 },
   main: { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: 0 },
   statusRow: { display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, flexWrap: 'wrap' },
-  statusChip: { border: '1px solid var(--ff-border)', borderRadius: 12, padding: '3px 11px', fontSize: 13, background: 'var(--ff-surface)', color: 'var(--ff-text)', cursor: 'pointer' },
+  statusChip: { border: '1px solid var(--ff-border)', borderRadius: 12, padding: '2px 12px', fontSize: 13, background: 'var(--ff-surface)', color: 'var(--ff-text)', cursor: 'pointer' },
   statusChipOn: { ...selectedOn },
   list: { flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: 4 },
-  card: { background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 8, padding: '10px 12px', marginBottom: 8 },
+  card: { background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 8, padding: '8px 12px', marginBottom: 8 },
   l1: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   tagName: { fontSize: 14, fontWeight: 700, color: 'var(--ff-text)', overflowWrap: 'anywhere' },
-  glue: { display: 'inline-block', width: 2, height: 15, background: 'var(--ff-error)', verticalAlign: -3, margin: '0 1px' },
-  pill: { fontSize: 11, borderRadius: 8, padding: '1px 8px' },
+  glue: { display: 'inline-block', width: 2, height: 15, background: 'var(--ff-error)', verticalAlign: -3, margin: '0 0px' },
+  pill: { fontSize: 11, borderRadius: 8, padding: '0px 8px' },
   pillHigh: { background: 'var(--ff-success-bg)', color: 'var(--ff-success)' },   // Fixed
   confVery: { background: 'var(--ff-navy)', color: 'var(--ff-white)' },
   confPossible: { background: 'transparent', color: 'var(--ff-navy)', boxShadow: 'inset 0 0 0 1px var(--ff-navy)' },
   pillLow: { background: 'var(--ff-border)', color: 'var(--ff-text-secondary)' },
-  reasonLabel: { fontSize: 12, color: 'var(--ff-text-secondary)', background: 'var(--ff-warm)', borderRadius: 8, padding: '1px 8px' },
+  reasonLabel: { fontSize: 12, color: 'var(--ff-text-secondary)', background: 'var(--ff-warm)', borderRadius: 8, padding: '0px 8px' },
   reasonBox: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--ff-text-secondary)' },
   reasonSelect: { ...selectBox },
   count: { marginLeft: 'auto', fontSize: 12, color: 'var(--ff-text-secondary)', whiteSpace: 'nowrap' },
@@ -444,13 +444,13 @@ const styles: Record<string, React.CSSProperties> = {
   actions: { display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, flexWrap: 'wrap' },
   primaryBtn: { ...primaryBtn },
   secondaryBtn: { ...quietBtn },
-  planBtn: { ...quietBtn, padding: '5px 12px' },
+  planBtn: { ...quietBtn, padding: '4px 12px' },
   viewBtn: { ...linkBtn, whiteSpace: 'nowrap', marginLeft: 'auto' },
   moreBtn: { width: '100%', padding: 8, background: 'none', border: '1px dashed var(--ff-line-strong)', borderRadius: 8, color: 'var(--ff-text-secondary)', fontSize: 13, cursor: 'pointer', marginBottom: 12 },
-  planPop: { position: 'absolute', top: 'calc(100% + 6px)', right: 0, width: 600, maxWidth: 'calc(100vw - 48px)', maxHeight: '62vh', overflowY: 'auto', background: 'var(--ff-surface)', border: '1px solid var(--ff-line-strong)', borderRadius: 12, boxShadow: '0 10px 30px var(--ff-shadow-mid)', padding: '14px 16px', zIndex: 'var(--ff-z-menu)' },
-  planBadge: { background: 'var(--ff-pink-action)', color: 'var(--ff-white)', borderRadius: 8, padding: '0 7px', fontSize: 12, fontWeight: 700 },
+  planPop: { position: 'absolute', top: 'calc(100% + 6px)', right: 0, width: 600, maxWidth: 'calc(100vw - 48px)', maxHeight: '62vh', overflowY: 'auto', background: 'var(--ff-surface)', border: '1px solid var(--ff-line-strong)', borderRadius: 12, boxShadow: '0 10px 30px var(--ff-shadow-mid)', padding: '12px 16px', zIndex: 'var(--ff-z-menu)' },
+  planBadge: { background: 'var(--ff-pink-action)', color: 'var(--ff-white)', borderRadius: 8, padding: '0 6px', fontSize: 12, fontWeight: 700 },
   planTitle: { fontSize: 14, fontWeight: 700, marginBottom: 4, color: 'var(--ff-text)' },
-  planType: { fontSize: 11, borderRadius: 8, padding: '1px 8px', background: 'var(--ff-tint)', color: 'var(--ff-pink-action)', whiteSpace: 'nowrap', marginLeft: 'auto' },
+  planType: { fontSize: 11, borderRadius: 8, padding: '0px 8px', background: 'var(--ff-tint)', color: 'var(--ff-pink-action)', whiteSpace: 'nowrap', marginLeft: 'auto' },
   planRemove: { background: 'none', border: 'none', color: 'var(--ff-text-muted)', fontSize: 13, cursor: 'pointer', padding: '0 2px', width: 18 },
   planLine: { display: 'flex', alignItems: 'baseline', gap: 8, fontSize: 13, padding: '2px 0', color: 'var(--ff-text)' }
 }

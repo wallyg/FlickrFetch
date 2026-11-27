@@ -144,7 +144,7 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: 'column',
     padding: '24px 24px 16px',
     minWidth: 0,
-    gap: '14px'
+    gap: '12px'
   },
   heading: {
     fontSize: '16px',
@@ -178,7 +178,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '12px',
     fontWeight: '700',
     color: 'var(--ff-text)',
-    margin: '0 0 3px'
+    margin: '0 0 2px'
   },
   sectionText: {
     fontSize: '12px',

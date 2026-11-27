@@ -39,8 +39,8 @@ export default function DuplicateSettings(): React.JSX.Element {
 
 const styles: Record<string, React.CSSProperties> = {
   box: { marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6, maxWidth: 560 },
-  row: { display: 'flex', alignItems: 'center', gap: 10, fontSize: 12, color: 'var(--ff-text)' },
+  row: { display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--ff-text)' },
   input: { ...fieldCompact, width: 80 },
   link: { ...putAsideBtn, alignSelf: 'flex-start' },
-  stats: { fontSize: 12, color: 'var(--ff-text)', background: 'var(--ff-warm)', borderRadius: 6, padding: '6px 10px' }
+  stats: { fontSize: 12, color: 'var(--ff-text)', background: 'var(--ff-warm)', borderRadius: 6, padding: '6px 8px' }
 }

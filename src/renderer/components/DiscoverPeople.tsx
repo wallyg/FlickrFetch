@@ -742,7 +742,7 @@ export default function DiscoverPeople({ isActive, findActive = true }: { isActi
 
           {/* More filters drawer */}
           {albumPhotosDrawerOpen && (
-            <div style={{ ...ss.drawer, marginLeft: '-20px', marginRight: '-20px', paddingLeft: '20px', paddingRight: '20px' }}>
+            <div style={{ ...ss.drawer, marginLeft: '-16px', marginRight: '-16px', paddingLeft: '16px', paddingRight: '16px' }}>
               <div style={ss.drawerRow}>
                 <span style={ss.drawerLabel}>Downloaded</span>
                 <DownloadFilterSelect value={albumPhotosDownloadFilter} onChange={setAlbumPhotosDownloadFilter} />
@@ -1593,7 +1593,7 @@ function DiscoverCollCard({ col, onClick }: { col: FlickrCollection; onClick: ()
 const s: Record<string, React.CSSProperties> = {
   container: { display: 'flex', flexDirection: 'column', gap: '16px', padding: `0 ${DISCOVER_GUTTER}px 32px` },
   stickyHeader: { position: 'sticky' as const, top: 0, zIndex: 'var(--ff-z-sticky)', background: 'var(--ff-surface)', display: 'flex', flexDirection: 'column' as const },
-  headerRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', paddingTop: '20px', paddingBottom: '8px' },
+  headerRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', paddingTop: '16px', paddingBottom: '8px' },
   heading: { margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--ff-text)' },
   subheading: { margin: '4px 0 0', fontSize: '13px', color: 'var(--ff-text-secondary)' },
   backBtn: { ...linkBtn, fontSize: '14px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '4px' },
@@ -1603,7 +1603,7 @@ const s: Record<string, React.CSSProperties> = {
     flex: 1, height: '36px', borderRadius: '8px', border: '1px solid var(--ff-line-strong)',
     padding: '0 12px', fontSize: '14px', outline: 'none',
   },
-  searchBtn: { ...primaryBtn, height: '36px', padding: '0 20px', borderRadius: '8px', fontSize: '14px', flexShrink: 0 },
+  searchBtn: { ...primaryBtn, height: '36px', padding: '0 16px', borderRadius: '8px', fontSize: '14px', flexShrink: 0 },
   searchError: { color: 'var(--ff-error)', fontSize: '13px' },
   contactsSection: { display: 'flex', flexDirection: 'column', gap: '12px' },
   contactsLabel: { fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--ff-text-secondary)' },
@@ -1626,7 +1626,7 @@ const s: Record<string, React.CSSProperties> = {
     ...tabMark,
     background: 'none', border: 'none', borderBottom: '2px solid transparent',
     padding: '8px 16px', cursor: 'pointer', fontSize: '14px', fontWeight: 400,
-    color: 'var(--ff-text-secondary)', marginBottom: '-1px', outline: 'none',
+    color: 'var(--ff-text-secondary)', marginBottom: '0px', outline: 'none',
   },
   userTabActive: { borderBottom: '2px solid var(--ff-pink)', color: 'var(--ff-pink)' },
   userAvatar: { width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 },
@@ -1636,8 +1636,8 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' as const,
     padding: '8px 0 6px', backgroundColor: 'var(--ff-grey-100)',
     borderBottom: '1px solid var(--ff-border)',
-    marginLeft: '-20px', marginRight: '-20px',
-    paddingLeft: '20px', paddingRight: '20px',
+    marginLeft: '-16px', marginRight: '-16px',
+    paddingLeft: '16px', paddingRight: '16px',
   },
   drawerInput: {
     border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '4px 8px',
@@ -1658,7 +1658,7 @@ const s: Record<string, React.CSSProperties> = {
   albumCover: { aspectRatio: '1', overflow: 'hidden', background: 'var(--ff-grey-100)' },
   albumCoverImg: { width: '100%', height: '100%', objectFit: 'cover' },
   albumCoverPlaceholder: { width: '100%', height: '100%', background: 'var(--ff-border)' },
-  albumInfo: { padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: '2px' },
+  albumInfo: { padding: '8px 8px', display: 'flex', flexDirection: 'column', gap: '2px' },
   albumTitle: { fontSize: '13px', fontWeight: 400, color: 'var(--ff-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
   albumMeta: { fontSize: '11px', color: 'var(--ff-text-secondary)' },
   albumListContainer: { display: 'flex', flexDirection: 'column' },
@@ -1679,9 +1679,9 @@ const s: Record<string, React.CSSProperties> = {
   collectionIconArea: { width: '100%', aspectRatio: '1', background: 'var(--ff-grey-100)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' as const },
   collectionCollage: { position: 'absolute' as const, inset: 0, display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr' },
   collectionCollageCell: { width: '100%', height: '100%', objectFit: 'cover' as const, display: 'block' },
-  collectionCardInfo: { padding: '10px 12px', display: 'flex', flexDirection: 'column' as const, gap: '5px' },
+  collectionCardInfo: { padding: '8px 12px', display: 'flex', flexDirection: 'column' as const, gap: '4px' },
   collectionCardTitle: { fontSize: '13px', fontWeight: 700, color: 'var(--ff-text)', whiteSpace: 'nowrap' as const, overflow: 'hidden', textOverflow: 'ellipsis' },
-  collectionChips: { display: 'flex', gap: '5px', flexWrap: 'wrap' as const },
+  collectionChips: { display: 'flex', gap: '4px', flexWrap: 'wrap' as const },
   collectionChip: { fontSize: '11px', color: 'var(--ff-text-secondary)', background: 'var(--ff-warm)', borderRadius: '4px', padding: '2px 6px' },
   collectionSectionLabel: { fontSize: '11px', fontWeight: 700, color: 'var(--ff-text-secondary)', textTransform: 'uppercase' as const, letterSpacing: '0.06em', margin: '0 0 12px 0' },
   collectionAlbumsHeader: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' },

@@ -90,7 +90,7 @@ export function LocationScope(): React.JSX.Element {
 
 const styles: Record<string, React.CSSProperties> = {
   box: { marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 },
-  line: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', fontSize: 13, color: 'var(--ff-text)' },
+  line: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', fontSize: 13, color: 'var(--ff-text)' },
   label: { width: 56, fontSize: 12, color: 'var(--ff-text-secondary)' },
   desc: { fontSize: 12, color: 'var(--ff-text-secondary)' }
 }

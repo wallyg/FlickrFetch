@@ -392,7 +392,7 @@ export default function DiscoverGroups({ findActive = true }: { findActive?: boo
                 This group has {groupDownloadWarning.photoCount.toLocaleString()} photos. Downloading all may take a while to start.
               </span>
               <button
-                style={{ background: 'none', border: '1px solid color-mix(in srgb, var(--ff-warning) 50%, transparent)', borderRadius: '6px', padding: '4px 10px', fontSize: '12px', color: 'var(--ff-warning-text)', cursor: 'pointer', flexShrink: 0 }}
+                style={{ background: 'none', border: '1px solid color-mix(in srgb, var(--ff-warning) 50%, transparent)', borderRadius: '6px', padding: '4px 8px', fontSize: '12px', color: 'var(--ff-warning-text)', cursor: 'pointer', flexShrink: 0 }}
                 onClick={() => {
                   setGroupDownloadWarning(null)
                   void window.flickrAPI.startDiscoverGroupBatch(activeGroup.id, activeGroup.name, `↓ ${activeGroup.name}`, true, undefined)
@@ -490,7 +490,7 @@ export default function DiscoverGroups({ findActive = true }: { findActive?: boo
                   <div style={ss.drawerRow}>
                     <span style={ss.drawerLabel}>Tags</span>
                     <input
-                      style={{ ...ss.searchInput, border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '5px 8px' }}
+                      style={{ ...ss.searchInput, border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '4px 8px' }}
                       placeholder="paris, travel…"
                       value={poolPendingTagInput}
                       onChange={e => setPoolPendingTagInput(e.target.value)}
@@ -543,7 +543,7 @@ export default function DiscoverGroups({ findActive = true }: { findActive?: boo
                     </div>
                   )}
                   {(poolActiveFilterCount > 0 || poolPendingTagInput.trim() !== '') && (
-                    <div style={{ ...ss.drawerRow, justifyContent: 'flex-end', gap: '10px' }}>
+                    <div style={{ ...ss.drawerRow, justifyContent: 'flex-end', gap: '8px' }}>
                       <button style={ss.clearFiltersLink} onClick={() => {
                         setPoolPendingDownloadFilter('all'); setPoolPendingLicenseFilter('all'); setPoolPendingTagInput(''); setPoolPendingTagMode('any')
                         setPoolPendingDateField('posted'); setPoolPendingDatePreset('all'); setPoolPendingDateFrom(''); setPoolPendingDateTo('')
@@ -755,7 +755,7 @@ export default function DiscoverGroups({ findActive = true }: { findActive?: boo
 const s: Record<string, React.CSSProperties> = {
   container: { display: 'flex', flexDirection: 'column', gap: '16px', padding: `0 ${DISCOVER_GUTTER}px 32px` },
   stickyHeader: { position: 'sticky' as const, top: 0, zIndex: 'var(--ff-z-sticky)', background: 'var(--ff-surface)', paddingBottom: '8px' },
-  headerRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '20px' },
+  headerRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '16px' },
   heading: { margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--ff-text)' },
   subheading: { margin: '4px 0 0', fontSize: '13px', color: 'var(--ff-text-secondary)' },
   backBtn: { ...linkBtn, fontSize: '14px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '4px' },

@@ -85,7 +85,7 @@ export default function HealthOverview({ refreshKey, onOpenList }: { refreshKey:
         </div>
       </div>
 
-      <div style={{ ...dash.card, marginTop: 14 }}>
+      <div style={{ ...dash.card, marginTop: 12 }}>
         <h3 style={dash.cardTitle}>Issues by type</h3>
         {sortedTypes.length === 0 && <span style={dash.muted}>No check is set to Issue (see Tune checks).</span>}
         {sortedTypes.map(t => {
@@ -169,7 +169,7 @@ export default function HealthOverview({ refreshKey, onOpenList }: { refreshKey:
       </div>
 
       {optionalTypes.length > 0 && (
-        <div style={{ ...dash.card, marginTop: 14 }}>
+        <div style={{ ...dash.card, marginTop: 12 }}>
           <h3 style={dash.cardTitle}>Biggest warnings to heed <span style={dash.hint}>(by photos affected; never lowers the score)</span></h3>
           {optionalTypes.map(t => (
             <BarRow key={t.condition} name={NAMES(t.condition)} max={data.photos} number={fmt(t.open)} onClick={() => onOpenList(t.condition)}
@@ -185,11 +185,11 @@ const STACK = { issue: 'var(--ff-blue)', both: '#6a9be8', warn: '#bfd3f6' }   //
 const swatch = (c: string): React.CSSProperties => ({ width: 10, height: 10, borderRadius: 4, background: c, display: 'inline-block' })
 
 const styles: Record<string, React.CSSProperties> = {
-  years: { display: 'flex', alignItems: 'flex-end', gap: 3, height: 130 },
+  years: { display: 'flex', alignItems: 'flex-end', gap: 2, height: 130 },
   bar: { flex: 1, minWidth: 4, borderRadius: '3px 3px 0 0' },
   stack: { display: 'flex', flexDirection: 'column', overflow: 'hidden' },
   key: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--ff-text-secondary)', marginTop: 8 },
   axis: { display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--ff-text-secondary)', marginTop: 4 },
-  chip: { ...chipBase, fontSize: 12, padding: '2px 10px' },
+  chip: { ...chipBase, fontSize: 12, padding: '2px 8px' },
   chipOn: { ...selectedOn }
 }

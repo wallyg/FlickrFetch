@@ -369,7 +369,7 @@ export function DiscoverSelectBar({ count, onDownload, onCancel, onClearSelectio
 const sb: Record<string, React.CSSProperties> = {
   bar: {
     display: 'flex', alignItems: 'center',
-    gap: '10px', padding: '8px 0',
+    gap: '8px', padding: '8px 0',
     borderBottom: '1px solid var(--ff-border)', marginBottom: '4px',
   },
   label: { fontSize: '13px', color: 'var(--ff-text-secondary)' },
@@ -377,7 +377,7 @@ const sb: Record<string, React.CSSProperties> = {
   downloadBtn: { ...primaryBtn, flexShrink: 0 },
   downloadBtnDisabled: { opacity: 0.5, cursor: 'not-allowed' },
   cancelBtn: {
-    background: 'none', border: 'none', padding: '5px 8px',
+    background: 'none', border: 'none', padding: '4px 8px',
     fontSize: '13px', fontWeight: 700, color: 'var(--ff-text-secondary)', cursor: 'pointer',
   },
 }
@@ -385,15 +385,15 @@ const sb: Record<string, React.CSSProperties> = {
 const s: Record<string, React.CSSProperties> = {
   container: { display: 'flex', flexDirection: 'column', gap: '16px', padding: `0 ${DISCOVER_GUTTER}px 32px` },
   stickyHeader: { position: 'sticky' as const, top: 0, zIndex: 'var(--ff-z-sticky)', background: 'var(--ff-surface)', paddingBottom: '8px' },
-  headerRow: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', paddingTop: '20px' },
+  headerRow: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', paddingTop: '16px' },
   heading: { margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--ff-text)' },
   subheading: { margin: '4px 0 0', fontSize: '13px', color: 'var(--ff-text-secondary)' },
   attrNotice: {
     display: 'flex', alignItems: 'flex-start', gap: '8px',
     background: 'var(--ff-cream)', border: '1px solid #f0dfc0', borderRadius: '8px',
-    padding: '10px 14px', fontSize: '12px', color: 'var(--ff-warning-text)', lineHeight: 1.5
+    padding: '8px 12px', fontSize: '12px', color: 'var(--ff-warning-text)', lineHeight: 1.5
   },
-  lockIcon: { fontSize: '14px', flexShrink: 0, marginTop: '1px' },
+  lockIcon: { fontSize: '14px', flexShrink: 0, marginTop: '0px' },
   grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '4px' },
   justifiedContainer: { padding: '0' },
   tile: {

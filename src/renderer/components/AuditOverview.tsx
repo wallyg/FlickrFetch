@@ -82,8 +82,8 @@ export default function AuditOverview({ refreshKey, onOpenList }: { refreshKey: 
         </div>
       </div>
 
-      <div style={{ ...dash.card, marginTop: 14 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+      <div style={{ ...dash.card, marginTop: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
           <h3 style={dash.cardTitle}>Issues by type</h3>
           <div style={dash.seg}>
             {([['tags', 'Tags'], ['photos', 'Photos affected']] as const).map(([k, label]) => (
@@ -109,7 +109,7 @@ export default function AuditOverview({ refreshKey, onOpenList }: { refreshKey: 
           : <div style={{ ...dash.muted, marginTop: 8 }}>Photos that carry at least one tag with that problem. A photo can appear under more than one type.</div>}
       </div>
 
-      <div style={{ ...dash.card, marginTop: 14 }}>
+      <div style={{ ...dash.card, marginTop: 12 }}>
         <h3 style={dash.cardTitle}>Biggest issues to address <span style={dash.hint}>(by photos affected)</span></h3>
         {data.biggest.length === 0 && <span style={dash.muted}>Nothing flagged.</span>}
         {biggest.map(b => (
@@ -119,12 +119,12 @@ export default function AuditOverview({ refreshKey, onOpenList }: { refreshKey: 
           </div>
         ))}
         {data.biggest.length > 5 && (
-          <button style={{ ...chip, fontSize: 12, padding: '2px 10px', marginTop: 8 }} onClick={() => setMore(m => !m)}>{more ? 'Show fewer' : `Show ${data.biggest.length - 5} more`}</button>
+          <button style={{ ...chip, fontSize: 12, padding: '2px 8px', marginTop: 8 }} onClick={() => setMore(m => !m)}>{more ? 'Show fewer' : `Show ${data.biggest.length - 5} more`}</button>
         )}
       </div>
 
       {data.biggestWarnings.length > 0 && (
-        <div style={{ ...dash.card, marginTop: 14 }}>
+        <div style={{ ...dash.card, marginTop: 12 }}>
           <h3 style={dash.cardTitle}>Biggest warnings to heed <span style={dash.hint}>(by photos affected)</span></h3>
           {(moreWarn ? data.biggestWarnings : data.biggestWarnings.slice(0, 5)).map(b => (
             <div key={`${b.category}|${b.display}`} style={dash.item} {...asButton(() => onOpenList(b.category))}>
@@ -133,13 +133,13 @@ export default function AuditOverview({ refreshKey, onOpenList }: { refreshKey: 
             </div>
           ))}
           {data.biggestWarnings.length > 5 && (
-            <button style={{ ...chip, fontSize: 12, padding: '2px 10px', marginTop: 8 }} onClick={() => setMoreWarn(m => !m)}>{moreWarn ? 'Show fewer' : `Show ${data.biggestWarnings.length - 5} more`}</button>
+            <button style={{ ...chip, fontSize: 12, padding: '2px 8px', marginTop: 8 }} onClick={() => setMoreWarn(m => !m)}>{moreWarn ? 'Show fewer' : `Show ${data.biggestWarnings.length - 5} more`}</button>
           )}
         </div>
       )}
 
       {optionalRows.length > 0 && (
-        <div style={{ ...dash.card, marginTop: 14 }}>
+        <div style={{ ...dash.card, marginTop: 12 }}>
           <h3 style={dash.cardTitle}>Warnings by type <span style={dash.hint}>(never lowers the score)</span></h3>
           {optionalRows.map(r => (
             <BarRow key={r.category} name={NAMES[r.category]} max={maxOptional} number={fmt(r.open + r.plan)} onClick={() => onOpenList(r.category)}

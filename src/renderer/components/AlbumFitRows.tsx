@@ -64,7 +64,7 @@ export function MissingRow({ item, onFine, onKind }: { item: AlbumItem; onFine: 
       <div style={styles.body}>
         <div style={styles.title}>{item.title || '(no title)'}</div>
         <div style={styles.muted}>{item.detail}</div>
-        <div style={{ ...styles.muted, marginTop: 3 }}>{open ? item.why : first}</div>
+        <div style={{ ...styles.muted, marginTop: 2 }}>{open ? item.why : first}</div>
 
         {open && (
           <>
@@ -94,7 +94,7 @@ export function MissingRow({ item, onFine, onKind }: { item: AlbumItem; onFine: 
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  card: { display: 'flex', gap: 12, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 8, padding: 10, marginBottom: 8 },
+  card: { display: 'flex', gap: 12, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 8, padding: 8, marginBottom: 8 },
   thumb: { width: 76, height: 76, borderRadius: 6, objectFit: 'cover', background: 'var(--ff-border)', flexShrink: 0 },
   body: { flex: 1, minWidth: 0 },
   title: { fontSize: 14, fontWeight: 700, color: 'var(--ff-text)', overflowWrap: 'anywhere' },
