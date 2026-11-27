@@ -566,6 +566,10 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
                   </div>
                   <div style={styles.avatarPopoverDivider} />
                   <button
+                    style={styles.avatarPopoverItem}
+                    onClick={() => { setShowAvatarPopover(false); window.flickrAPI.openAbout() }}
+                  >About FlickrFetch</button>
+                  <button
                     style={styles.avatarPopoverSignOut}
                     onClick={() => { setShowAvatarPopover(false); setShowSignOutConfirm(true) }}
                   >Sign out</button>
@@ -1188,6 +1192,16 @@ const styles: Record<string, React.CSSProperties> = {
     height: '1px',
     backgroundColor: 'var(--ff-grey-100)',
     margin: '8px 0',
+  },
+  avatarPopoverItem: {
+    display: 'block',
+    background: 'none',
+    border: 'none',
+    padding: '0 0 8px',
+    fontSize: '13px',
+    color: 'var(--ff-text)',
+    cursor: 'pointer',
+    textAlign: 'left' as const,
   },
   avatarPopoverSignOut: {
     background: 'none',

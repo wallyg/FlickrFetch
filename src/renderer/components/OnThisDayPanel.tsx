@@ -319,12 +319,12 @@ const styles: Record<string, React.CSSProperties> = {
   bigTile: { width: 72, flexShrink: 0, borderRadius: 12, overflow: 'hidden', background: 'var(--ff-surface)', boxShadow: '0 3px 12px color-mix(in srgb, var(--ff-navy) 22%, transparent)', textAlign: 'center', border: 'none', padding: 0, cursor: 'pointer' },
   bigMonth: { background: 'var(--ff-pink)', color: 'var(--ff-white)', fontSize: 12, fontWeight: 700, letterSpacing: '0.2em', padding: '4px 0 4px' },
   bigDay: { fontSize: 38, fontWeight: 700, color: 'var(--ff-navy)', lineHeight: '48px' },
-  headText: { flex: '1 1 320px', minWidth: 0 },
+  headText: { flex: '1 1 auto', minWidth: 0 },   // its own width, so the buttons wrap under it in a narrow window instead of squeezing the day buttons
   title: { fontSize: 24, fontWeight: 700, letterSpacing: '-0.5px', color: 'var(--ff-navy)', lineHeight: 1.1 },
   count: { fontSize: 16, fontWeight: 700, color: 'var(--ff-text)' },
   countNote: { fontSize: 13, fontWeight: 400, color: 'var(--ff-text-secondary)', marginLeft: 6 },
   actions: { display: 'flex', flexDirection: 'row', gap: 8, alignItems: 'center', flexWrap: 'wrap' },
-  navSeg: { display: 'inline-flex', border: '1px solid var(--ff-line-strong)', borderRadius: 8, background: 'var(--ff-surface)', overflow: 'hidden' },
+  navSeg: { display: 'inline-flex', flexShrink: 0, border: '1px solid var(--ff-line-strong)', borderRadius: 8, background: 'var(--ff-surface)', overflow: 'hidden' },   // never squeezed: the Today button wraps below instead
   navBtn: { background: 'var(--ff-surface)', border: 'none', borderRight: '1px solid var(--ff-border)', padding: '4px 12px', fontSize: 13, color: 'var(--ff-text)', cursor: 'pointer', whiteSpace: 'nowrap' },
   cta: { ...primaryBtn, display: 'inline-flex', alignItems: 'center', gap: 8, padding: '4px 12px 4px 12px' },   // the Main button, the same size as the buttons beside it, with a small picture as its icon (#251)
   stack: { position: 'relative', width: 26, height: 16, flexShrink: 0, display: 'block', marginLeft: 2 },   // room for the tilted left card, so it never touches the button's edge

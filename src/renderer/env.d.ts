@@ -102,6 +102,7 @@ declare global {
       removeFromQueue: (id: string) => Promise<void>
       confirm: (message: string, detail?: string, confirmLabel?: string) => Promise<boolean>
       onBatchProgress: (cb: (progress: BatchProgress) => void) => () => void
+      openAbout: () => void
       onShowAbout: (cb: (data: { version: string }) => void) => () => void
       onOpenSettings: (cb: () => void) => () => void
       onOpenHistory: (cb: () => void) => () => void

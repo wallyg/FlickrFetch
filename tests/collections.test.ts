@@ -171,3 +171,17 @@ test('3.14 design passes: About says whose Flickr the link opens, and the Confir
   assert.ok(/Saved in each file:/.test(confirm) && /Not saved:/.test(confirm), 'one line for what is saved, one for what is left out')
   assert.ok(!/>Change settings</.test(confirm) && (confirm.match(/>Change</g) ?? []).length >= 3, 'each thing you can change has its own Change link')
 })
+
+test('About opens from the avatar menu as well as the Mac menu bar, both through the one handler in the main process', () => {
+  const main = read('src/main/index.ts')
+  assert.ok(/function showAbout\(\)/.test(main) && /ipcMain\.on\('app:openAbout', \(\) => showAbout\(\)\)/.test(main) && /label: 'About FlickrFetch',\s*click: \(\) => \{\s*showAbout\(\)/.test(main))
+  assert.ok(/openAbout: \(\): void => ipcRenderer\.send\('app:openAbout'\)/.test(read('src/preload/index.ts')))
+  const page = read('src/renderer/pages/MainPage.tsx')
+  assert.ok(/window\.flickrAPI\.openAbout\(\)[\s\S]{0,80}About FlickrFetch/.test(page) && page.indexOf('About FlickrFetch</button>') < page.indexOf('>Sign out</button>'), 'above Sign out')
+})
+
+test('On This Day: the day buttons are never squeezed by the action buttons in a narrow window (the Tomorrow button was cut off)', () => {
+  const src = read('src/renderer/components/OnThisDayPanel.tsx')
+  assert.ok(/navSeg: \{[^}]*flexShrink: 0/.test(src), 'the Yesterday / Jump / Tomorrow group keeps its width')
+  assert.ok(/headText: \{ flex: '1 1 auto'/.test(src), 'the heading block is as wide as its content, so the buttons wrap under it')
+})

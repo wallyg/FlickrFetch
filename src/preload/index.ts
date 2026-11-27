@@ -182,6 +182,9 @@ contextBridge.exposeInMainWorld('flickrAPI', {
     return () => ipcRenderer.removeListener('batch:progress', handler)
   },
 
+  // Opens the About box from inside the window (the avatar menu); the same box the Mac menu bar opens
+  openAbout: (): void => ipcRenderer.send('app:openAbout'),
+
   onShowAbout: (cb: (data: { version: string }) => void): (() => void) => {
     const handler = (_evt: IpcRendererEvent, data: { version: string }) => cb(data)
     ipcRenderer.on('app:showAbout', handler)

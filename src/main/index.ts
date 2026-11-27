@@ -176,6 +176,10 @@ async function endAccountSession(): Promise<void> {
   closeDatabase()
 }
 
+// The About box: opened from the Mac menu bar and from the avatar menu in the window
+function showAbout(): void { mainWindow?.webContents.send('app:showAbout', { version: app.getVersion() }) }
+ipcMain.on('app:openAbout', () => showAbout())
+
 // Step 1: Get a request token and open the Flickr authorize page in the browser
 ipcMain.handle('auth:start', async () => {
   try {
@@ -1359,7 +1363,7 @@ app.whenReady().then(() => {
         {
           label: 'About FlickrFetch',
           click: () => {
-            mainWindow?.webContents.send('app:showAbout', { version: app.getVersion() })
+            showAbout()
           }
         },
         { type: 'separator' },
