@@ -182,7 +182,7 @@ export function YearCard({ stats, go, series, span, onSeries, onSpan, thisYear, 
   }
   // One bar a year; everything before 2000 shares a bar
   const before = stats.years.filter(y => y.year < '2000').reduce((n, y) => n + y[series], 0)
-  const bars = [...(before > 0 ? [{ label: 'Before 2000', key: 'before', n: before, from: ALL_FROM, to: '1999-12-31' }] : []),
+  const bars = [...(before > 0 ? [{ label: 'Before 2000', key: 'before', n: before, from: stats.records.oldest ? `${stats.records.oldest.slice(0, 4)}-01-01` : ALL_FROM, to: '1999-12-31' }] : []),
     ...stats.years.filter(y => y.year >= '2000' && y[series] > 0).map(y => ({ label: y.year, key: y.year, n: y[series], from: `${y.year}-01-01`, to: `${y.year}-12-31` }))]
   const max = Math.max(1, ...bars.map(b => b.n))
   const sumBars = bars.reduce((a, b) => a + b.n, 0)
@@ -190,7 +190,7 @@ export function YearCard({ stats, go, series, span, onSeries, onSpan, thisYear, 
     <Card title={`${word} a year`} hint={series === 'taken' ? 'by date taken' : 'by date uploaded'} wide={!compact} right={switches}>
       <div style={styles.years} role="img" aria-label={`Bars of ${word.toLowerCase()} per year`}>
         {bars.map(b => (
-          <div key={b.key} style={{ ...styles.yearBar, height: `${Math.max(2, (b.n / max) * 100)}%`, background: b.n === max ? 'var(--ff-navy)' : 'var(--ff-blue)' }} title={`${b.label}: ${fmt(b.n)} ${unitWord(stats)}, ${percent(b.n, sumBars)} of the total${linkable ? '. Click to show them.' : ''}`}
+          <div key={b.key} style={{ ...styles.yearBar, height: `${Math.max(2, (b.n / max) * 100)}%`, background: b.n === max ? 'var(--ff-navy)' : 'var(--ff-blue)' }} title={`${b.label}: ${fmt(b.n)} ${unitWord(stats)}, ${percent(b.n, sumBars)} of the total${linkable ? `. Click to show them${stats.guessed.items > 0 ? ' (this list also includes any with a guessed date)' : ''}.` : ''}`}
             {...(linkable ? { ...asButton(() => go.range(b.from, b.to)), 'data-bar-link': '' } : {})} />
         ))}
       </div>

@@ -21,6 +21,12 @@ test('a point is placed in its country and its US state, from the outlines on th
   assert.equal(countries.find(139.69, 35.69), 'Japan')
 })
 
+test('a sea point inside a big country\'s bounding box is not counted as that country', () => {
+  assert.equal(countries.locate(-90, 25, 1), null)        // the middle of the Gulf of Mexico: inside the United States mainland box, far from its coast
+  assert.equal(countries.locate(-70, 30, 1), null)        // the Atlantic off the Carolinas, again inside the box
+  assert.equal(countries.locate(-73.97, 40.4, 1), 'United States of America')   // a little off the New Jersey coast is still near it
+})
+
 test('a point at sea or in the wrong place belongs to no country, and a point just off a coast takes the nearest one', () => {
   assert.equal(countries.locate(-30, 0, 1), null)          // the middle of the Atlantic
   assert.equal(countries.locate(-21.9, -81.1, 1), null)    // a geotag in Antarctica's sea ice (not a country)

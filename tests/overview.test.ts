@@ -87,6 +87,17 @@ test('the guessed-dates note says what it is and what it does, with no example d
   assert.ok(!/such as \$\{/.test(cards))
 })
 
+test('review fixes: the corner card keeps off the Map and the download bar, the PDF is printed before the dialog, Before 2000 starts at a real year', () => {
+  const main = read('src/renderer/pages/MainPage.tsx')
+  assert.match(main, /view !== 'map' && !\(batchProgress && batchProgress\.status !== 'error' \|\| completedBatches\.length > 0\) && <OnThisDayCard/)
+  const pdf = read('src/main/dashboardPdf.ts')
+  assert.ok(pdf.indexOf('printToPDF') < pdf.indexOf('showSaveDialog'), 'print first, then ask where to save')
+  assert.ok(!/toISOString/.test(pdf), 'the file name uses the local date')
+  const cards = read('src/renderer/components/DashboardCards.tsx')
+  assert.match(cards, /from: stats\.records\.oldest \? `\$\{stats\.records\.oldest\.slice\(0, 4\)\}-01-01` : ALL_FROM/)
+  assert.match(cards, /this list also includes any with a guessed date/)
+})
+
 test('the "numbers differ" notice has an alert icon and a dismiss button, and comes back only when a number changes', () => {
   const code = read('src/renderer/components/TagScanParts.tsx')
   assert.match(code, /<Icon name="warning" size=\{18\} \/>/)

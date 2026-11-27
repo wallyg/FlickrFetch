@@ -27,6 +27,15 @@ function decodeArcs(topo: Topo): Pt[][] {
   })
 }
 
+/** Squared distance, in degrees, from a point to the line segment a to b. */
+function segmentDistance2(px: number, py: number, ax: number, ay: number, bx: number, by: number): number {
+  const dx = bx - ax, dy = by - ay
+  const len2 = dx * dx + dy * dy
+  const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / len2))
+  const cx = ax + t * dx - px, cy = ay + t * dy - py
+  return cx * cx + cy * cy
+}
+
 export function makeLookup(topo: Topo, objectName: string): Lookup {
   const arcs = decodeArcs(topo)
   const ring = (idx: number[]): Pt[] => {
@@ -72,13 +81,17 @@ export function makeLookup(topo: Topo, objectName: string): Lookup {
     const exact = find(lon, lat)
     if (exact) return exact
     for (const [dx, dy] of NUDGES) { const n = find(lon + dx, lat + dy); if (n) return n }
+    // The nearest place is the one whose EDGE is nearest (a bounding box would claim every sea point inside a big country's box)
     let best: { d: number; name: string } | null = null
     for (const p of places) {
       for (const poly of p.polys) {
         const b = poly.box
-        const dx = Math.max(b[0] - lon, 0, lon - b[2]), dy = Math.max(b[1] - lat, 0, lat - b[3])
-        const d = dx * dx + dy * dy
-        if (!best || d < best.d) best = { d, name: p.name }
+        if (lon < b[0] - maxDeg || lon > b[2] + maxDeg || lat < b[1] - maxDeg || lat > b[3] + maxDeg) continue
+        const r = poly.outer
+        for (let i = 0, j = r.length - 1; i < r.length; j = i++) {
+          const d = segmentDistance2(lon, lat, r[j][0], r[j][1], r[i][0], r[i][1])
+          if (!best || d < best.d) best = { d, name: p.name }
+        }
       }
     }
     return best && best.d < maxDeg * maxDeg ? best.name : null

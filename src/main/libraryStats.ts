@@ -205,8 +205,9 @@ export function libraryStats(): LibraryStats {
     const stats = computeLibraryStats(db)
     cache = { key, stats }
     return stats
-  } catch {
-    return NONE   // the library tables are not there yet (no scan)
+  } catch (err) {
+    console.error('Library stats could not be read', err)   // usually the library tables are not there yet (no scan)
+    return NONE
   }
 }
 

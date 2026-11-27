@@ -641,7 +641,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
           </button>
         </div>
       </div>}
-      {appMode === 'you' && view !== 'onthisday' && view !== 'photo-detail' && <OnThisDayCard refreshKey={dataKey} onOpen={() => { setOnThisDayVisited(true); setView('onthisday') }} />}
+      {appMode === 'you' && view !== 'onthisday' && view !== 'photo-detail' && view !== 'map' && !(batchProgress && batchProgress.status !== 'error' || completedBatches.length > 0) && <OnThisDayCard refreshKey={dataKey} onOpen={() => { setOnThisDayVisited(true); setView('onthisday') }} />}
       {appMode === 'you' && view === 'photostream' && !photostreamSelectMode && (
         <div style={{ padding: '8px 16px 0' }}>
           <ScreenTop
