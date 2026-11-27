@@ -218,3 +218,9 @@ test('On This Day is announced by a count on its tab and a once-a-day note, not 
   assert.match(hint, /setInterval\(load, LOOK_AGAIN_MS\)/)         // a window left open overnight changes to the new day by itself
   assert.match(hint, /addEventListener\('focus', load\)/)
 })
+
+test('the On This Day note only counts down while the window is in front of you, so it is not missed while you are away (#300)', () => {
+  const hint = read('src/renderer/components/OnThisDayHint.tsx')
+  assert.match(hint, /document\.hasFocus\(\) && document\.visibilityState === 'visible'/)
+  assert.match(hint, /if \(!due \|\| held \|\| !watching\) return/)
+})

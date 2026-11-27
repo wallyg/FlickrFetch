@@ -58,12 +58,20 @@ export function OnThisDayNote({ summary, onOpen }: { summary: TodaySummary | nul
     void window.flickrAPI.hideOnThisDayCardToday()   // once a day: it does not come back until tomorrow
   }, [])
 
+  // The ten seconds only run while the window is in front of you: a note that appears while you are away waits for you
+  const [watching, setWatching] = useState(() => document.hasFocus() && document.visibilityState === 'visible')
   useEffect(() => {
-    if (!due || held) return
+    const look = (): void => setWatching(document.hasFocus() && document.visibilityState === 'visible')
+    window.addEventListener('focus', look); window.addEventListener('blur', look); document.addEventListener('visibilitychange', look)
+    return () => { window.removeEventListener('focus', look); window.removeEventListener('blur', look); document.removeEventListener('visibilitychange', look) }
+  }, [])
+
+  useEffect(() => {
+    if (!due || held || !watching) return
     const t1 = setTimeout(() => setFading(true), NOTE_SHOWN_MS)
     const t2 = setTimeout(finish, NOTE_SHOWN_MS + NOTE_FADE_MS)
     return () => { clearTimeout(t1); clearTimeout(t2); setFading(false) }
-  }, [due, held, finish])
+  }, [due, held, watching, finish])
 
   if (!due || !summary) return null
   return (
