@@ -4,7 +4,7 @@ import type { TodaySummary } from '../../shared/types'
 import { itemsLabel } from '../../shared/counts'
 import { linkBtn } from '../ui/kit'
 
-// How On This Day tells you there is something today (#300): a count on its tab, and a small note the first time you
+// How On This Day tells you there is something today (#300): a dot on its tab, and a small note the first time you
 // look each day. Neither takes any room on the screen: the count sits in the tab bar and the note floats over the
 // content, then fades by itself. Both can be switched off in Settings.
 
@@ -25,7 +25,7 @@ export function useTodaySummary(refreshKey: number): TodaySummary | null {
   return s
 }
 
-/** The number on the tab, or null when today has no photos or the notice is switched off. */
+/** The count behind the dot on the tab, or null when today has no photos or the notice is switched off. */
 export function todayCount(s: TodaySummary | null): number | null {
   return s && s.cardEnabled && s.total > 0 ? s.total : null
 }
@@ -35,11 +35,11 @@ export function todayHint(s: TodaySummary): string {
   return `${itemsLabel(s.total, s.videos)} from this day in past years`
 }
 
-/** The count on the On This Day tab. */
+/** The dot on the On This Day tab: today has photos. The count is in its hover text. */
 export function TabCount({ summary }: { summary: TodaySummary | null }): React.JSX.Element | null {
   const n = todayCount(summary)
   if (n === null || !summary) return null
-  return <span style={styles.count} title={todayHint(summary)}>{n.toLocaleString()}</span>
+  return <span style={styles.dot} role="img" aria-label={todayHint(summary)} title={todayHint(summary)} />
 }
 
 /** The note: once a day, over the content, fading after a few seconds. Pointing at it or tabbing into it keeps it. */
@@ -91,7 +91,7 @@ export function OnThisDayNote({ summary, onOpen }: { summary: TodaySummary | nul
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  count: { marginLeft: 6, color: 'var(--ff-pink-action)', fontSize: 'inherit', fontWeight: 'inherit', lineHeight: 'inherit' },   // plain text in the tab's own size, so the tab keeps its line
+  dot: { display: 'inline-block', width: 8, height: 8, borderRadius: 50, marginLeft: 6, background: 'var(--ff-pink-action)', verticalAlign: 'middle' },   // a dot, not a number: next to a tab name a number reads like a year
   anchor: { position: 'relative', height: 0, zIndex: 'var(--ff-z-toast)' as unknown as number },
   note: { position: 'absolute', top: 8, left: 24, display: 'flex', alignItems: 'center', gap: 12, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 8, padding: '6px 8px 6px 12px', boxShadow: '0 2px 8px color-mix(in srgb, var(--ff-navy) 18%, transparent)', transition: `opacity ${NOTE_FADE_MS}ms ease`, maxWidth: 'calc(100vw - 48px)' },
   text: { fontSize: 13, color: 'var(--ff-text)' },

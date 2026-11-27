@@ -207,7 +207,7 @@ test('the four photo screens use the one shared top (#257): Photostream, Timelin
   assert.ok(/export default function MoreMenu/.test(read('src/renderer/ui/MoreMenu.tsx')) && /Escape/.test(read('src/renderer/ui/MoreMenu.tsx')), 'More closes on Esc')
 })
 
-test('On This Day is announced by a count on its tab and a once-a-day note, not a banner above the content (#300)', () => {
+test('On This Day is announced by a dot on its tab and a once-a-day note, not a banner above the content (#300)', () => {
   const main = read('src/renderer/pages/MainPage.tsx')
   assert.ok(!/OnThisDayCard/.test(main), 'the banner is gone from every screen')
   assert.match(main, /On This Day<TabCount summary=\{todaySummary\} \/>/)
