@@ -93,15 +93,25 @@ const noticeListeners = new Set<() => void>()   // every notice on screen follow
 const hideUpgradeNotice = (): void => { upgradeNoticeHidden = true; noticeListeners.forEach(l => l()) }
 const watchUpgradeNotice = (l: () => void): (() => void) => { noticeListeners.add(l); return () => { noticeListeners.delete(l) } }
 
+// The "numbers differ" notice can be dismissed. It stays dismissed for those two numbers and comes back when either one changes (the remembered pair is kept on this computer).
+const GAP_KEY = 'ff-dismissed-count-gap'
+const readGap = (): string => { try { return localStorage.getItem(GAP_KEY) ?? '' } catch { return '' } }
+let dismissedGap = readGap()
+const dismissGap = (pair: string): void => { dismissedGap = pair; try { localStorage.setItem(GAP_KEY, pair) } catch { /* it just comes back next time */ } noticeListeners.forEach(l => l()) }
+
 // Warnings under the data line: the library list and Flickr disagree, or the last scan failed
 export function ScanNotices({ status, scanError, onRebuild }: { status: TagIndexStatus; scanError: string | null; onRebuild: () => void }): React.JSX.Element {
   const libraryGap = status.flickrTotal !== null ? status.flickrTotal - status.indexedPhotos : 0
   const hidden = useSyncExternalStore(watchUpgradeNotice, () => upgradeNoticeHidden)
+  const gapDismissed = useSyncExternalStore(watchUpgradeNotice, () => dismissedGap)
+  const pair = `${status.flickrTotal}|${status.indexedPhotos}`
   return (
     <>
-      {(libraryGap < 0 || libraryGap > 10) && (
-        <div style={styles.notice}>
-          Flickr reports {status.flickrTotal?.toLocaleString()} photos but {status.indexedPhotos.toLocaleString()} are in your tag list. Photos may have been added or removed. Update picks up new and changed photos, but only a Rebuild drops deleted ones.
+      {(libraryGap < 0 || libraryGap > 10) && gapDismissed !== pair && (
+        <div style={{ ...styles.notice, display: 'flex', gap: 12, alignItems: 'flex-start' }} role="status">
+          <span style={styles.alertIcon}><Icon name="warning" size={18} /></span>
+          <span style={{ flex: 1, minWidth: 0 }}>Flickr reports {status.flickrTotal?.toLocaleString()} photos but {status.indexedPhotos.toLocaleString()} are in your tag list. Photos may have been added or removed. Update picks up new and changed photos, but only a Rebuild drops deleted ones.</span>
+          <button style={styles.dismiss} onClick={() => dismissGap(pair)} aria-label="Dismiss this notice" title="Dismiss until the numbers change"><Icon name="close" /></button>
         </div>
       )}
       {status.hasIndex && (!status.hasCatalogV3 || !status.hasAlbums) && !hidden && (
@@ -145,6 +155,8 @@ const styles: Record<string, React.CSSProperties> = {
   muted: { color: 'var(--ff-text-secondary)', fontSize: '13px' },
   notice: { margin: '0 24px 6px', padding: '8px 12px', background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: '8px', fontSize: '13px', color: 'var(--ff-text-secondary)' },
   secondaryBtn: { ...quietBtn, padding: '4px 12px' },
+  alertIcon: { color: 'var(--ff-warning)', display: 'inline-flex', flex: 'none', marginTop: 2 },
+  dismiss: { background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--ff-text-secondary)', display: 'inline-flex', flex: 'none', borderRadius: 6 },
   linkBtn: { ...linkBtn, fontSize: '13px' },
   progressCard: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', width: '360px', padding: '24px', background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: '12px' },
   cardTitle: { ...headingCard },

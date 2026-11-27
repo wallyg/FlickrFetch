@@ -104,7 +104,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
   // Set by 'Open in Photostream' in On This Day or the Timeline; the photostream applies it as a date range
   const [dateSearchRequest, setDateSearchRequest] = useState<{ from: string; to: string; privacy?: PrivacyFilter; media?: 'photo' | 'video'; tag?: string; backLabel?: string; nonce: number } | null>(null)
   const handledDateSearch = useRef(0)
-  const [dateBackView, setDateBackView] = useState<'onthisday' | 'timeline'>('onthisday')
+  const [dateBackView, setDateBackView] = useState<'onthisday' | 'timeline' | 'cleanup'>('onthisday')
   const [otdJump, setOtdJump] = useState<{ month: number; day: number; year?: number; nonce: number } | null>(null)
   // In a narrow window the sub-tab row tightens (smaller text and gaps) so all eight labels still fit on one line
   const [tight, setTight] = useState(typeof window !== 'undefined' && window.innerWidth < 860)
@@ -319,10 +319,10 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
       },
     })
   }
-  const openDateRange = (from: string, to: string, opts: RangeOpts, from_view: 'onthisday' | 'timeline'): void => {
+  const openDateRange = (from: string, to: string, opts: RangeOpts, from_view: 'onthisday' | 'timeline' | 'cleanup'): void => {
     exitPhotostreamSelect()
     setDateBackView(from_view)
-    setDateSearchRequest({ from, to, privacy: opts.privacy, media: opts.media, tag: opts.tag, backLabel: from_view === 'onthisday' ? 'On This Day' : 'Timeline', nonce: Date.now() })
+    setDateSearchRequest({ from, to, privacy: opts.privacy, media: opts.media, tag: opts.tag, backLabel: from_view === 'onthisday' ? 'On This Day' : from_view === 'cleanup' ? 'Health Check' : 'Timeline', nonce: Date.now() })
     setView('photostream')
   }
 
@@ -843,7 +843,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             handledTagRequest={handledTagSearch}
             dateSearchRequest={dateSearchRequest}
             handledDateRequest={handledDateSearch}
-            onBackToDates={() => { if (dateBackView === 'timeline') setTimelineVisited(true); else setOnThisDayVisited(true); setView(dateBackView) }}
+            onBackToDates={() => { if (dateBackView === 'timeline') setTimelineVisited(true); else if (dateBackView === 'cleanup') setCleanupVisited(true); else setOnThisDayVisited(true); setView(dateBackView) }}
           />
         </div>
         {onThisDayVisited && (
@@ -901,6 +901,9 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
               settingsKey={settingsKey}
               onOpenSettings={() => openSettings('health')}
               onShowOnMap={showOnMap}
+              onOpenRange={(from, to, opts) => openDateRange(from, to, opts ?? {}, 'cleanup')}
+              onOpenAlbum={(id, title, items) => { exitPhotostreamSelect(); setLoadedAlbumPhotos([]); setSelectedAlbum({ id, title, description: '', photoCount: items, videoCount: 0, coverPhotoUrl: '' }); setAlbumDetailOrigin('albums'); setAlbumsVisited(true); setView('album-detail') }}
+              onGoTab={v => { if (v === 'albums') { setAlbumsVisited(true); setSelectedAlbum(null); setView('albums') } else { setTagsVisited(true); setView('tags') } }}
               backupRequest={backupRequest}
               onDownload={startDateDownload}
               onViewPhotos={(tags, mode) => {

@@ -59,13 +59,57 @@ p { margin: 0; }
 .tune { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 12px; color: var(--ff-text-secondary); margin-top: 8px; }
 .tune button { font: inherit; border: 1px solid var(--ff-line-strong); background: var(--ff-surface); border-radius: 6px; padding: 4px 12px; }
 .cap { font-size: 12px; color: var(--ff-text-secondary); margin-top: 8px; }
+/* library stats */
+.figs { display: flex; gap: 24px; flex-wrap: wrap; }
+.figs div { display: flex; flex-direction: column; }
+.figs b { font-size: 22px; color: var(--ff-text); font-variant-numeric: tabular-nums; line-height: 1.2; }
+.figs span { font-size: 12px; color: var(--ff-text-secondary); }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 4px 24px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--ff-warm); }
+.facts div { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; padding: 2px 0; }
+.facts span { color: var(--ff-text-secondary); }
+.facts b { font-variant-numeric: tabular-nums; text-align: right; }
+.link { background: none; border: 0; padding: 0; font: inherit; color: var(--ff-blue); cursor: pointer; }
+.chart { display: flex; align-items: flex-end; gap: 3px; height: 90px; margin-top: 8px; }
+.chart div { flex: 1; min-width: 4px; background: var(--ff-blue); border-radius: 3px 3px 0 0; }
+.chart div.top { background: var(--ff-navy); }
+/* dashboard */
+.hl { display: flex; align-items: baseline; gap: 8px; padding: 3px 0; white-space: nowrap; }
+.hl i { width: 10px; height: 10px; border-radius: 4px; display: inline-block; transform: translateY(1px); flex: none; }
+.hl .sp { flex: 1; }
+.hl b, .hl .muted { font-variant-numeric: tabular-nums; }
+.sec { display: flex; align-items: center; gap: 12px; margin: 12px 0 0; font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ff-text-secondary); }
+.sec::after { content: ''; flex: 1; height: 1px; background: var(--ff-border); order: 1; }
+.sec a { order: 2; text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--ff-blue); }
+.sec:first-child { margin-top: 0; }
+.grid6 { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 12px; }
+.s2 { grid-column: span 4; } .s3 { grid-column: span 6; } .s4 { grid-column: span 8; } .s6 { grid-column: span 12; } .q3 { grid-column: span 3; } .q6 { grid-column: span 6; }
+.kpi b { display: block; font-size: 26px; line-height: 1.15; color: var(--ff-text); font-variant-numeric: tabular-nums; }
+.kpi span { font-size: 12px; color: var(--ff-text-secondary); }
+.kpi .lbl { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--ff-text-secondary); display: block; margin-bottom: 2px; }
+.stack { display: flex; height: 16px; border-radius: 6px; overflow: hidden; background: var(--ff-warm); }
+.stack i { display: block; height: 100%; }
+.hrow { display: grid; grid-template-columns: 110px 1fr 104px; gap: 8px; align-items: center; padding: 3px 0; font-size: 13px; }
+.hrow .track { height: 12px; border-radius: 6px; background: var(--ff-warm); overflow: hidden; }
+.hrow .track i { display: block; height: 100%; background: var(--ff-blue); border-radius: 6px; }
+.hrow .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hrow .v { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+.heat { display: grid; grid-template-columns: 34px repeat(12, 1fr); gap: 2px; font-size: 10px; color: var(--ff-text-secondary); align-items: center; }
+.heat .c { height: 14px; border-radius: 3px; }
+.mini { display: flex; align-items: flex-end; gap: 3px; height: 90px; margin-top: 6px; }
+.mini div { flex: 1; background: var(--ff-blue); border-radius: 3px 3px 0 0; min-width: 3px; }
+.mini div.top { background: var(--ff-navy); }
+.minilab { display: flex; justify-content: space-between; font-size: 10px; color: var(--ff-text-secondary); margin-top: 2px; }
+.insight { margin-top: 8px; padding: 8px 12px; border-radius: 8px; background: var(--info-bg); border: 1px solid var(--info-line); font-size: 12px; }
+.rec { display: flex; justify-content: space-between; gap: 8px; padding: 4px 0; border-top: 1px solid var(--ff-warm); font-size: 13px; }
+.rec:first-of-type { border-top: 0; }
+@media (max-width: 760px) { .s2, .s3, .s4, .q3, .q6 { grid-column: span 12; } }
 @media (max-width: 520px) { .row { grid-template-columns: 1fr auto; } .row .track { grid-column: 1 / -1; order: 3; } .legend { grid-template-columns: 10px auto auto; } }
 </style>
 
 <div class="wrap">
   <div>
     <h1>Health Check overview</h1>
-    <p class="muted">Mock-up for #220. The numbers are made up, to show the layout. Click through the three screens.</p>
+    <p class="muted">Mock-up for #220. The Dashboard tab uses the real figures from your library list, except the rings and the issue list, which are still made up. The other tabs are as built, with made-up numbers.</p>
   </div>
 
   <div class="notes">
@@ -82,14 +126,21 @@ p { margin: 0; }
       </ul>
     </div>
     <div class="pick">
-      <h2>Two things for you to pick</h2>
-      <p><b>1. The bar scale</b> on the Tags screen. Flip between A and B there.</p>
-      <p style="margin-top:8px"><b>2. The front page's "Where to start" list.</b> It is the only place that mixes tags and photos, so I kept it, in the same row format, with "Show all".</p>
+      <h2>New: a library dashboard</h2>
+      <p>The first tab, with your real figures. My advice:</p>
+      <ul style="margin-top:4px">
+        <li><b>Health first.</b> It is the tab's job. One band of three rings, Tags, Photos and Albums, each with its Issue and Warning counts and percentages. The full lists are on the next screens.</li>
+        <li><b>Four headed sections:</b> Health, Your library, When you take photos, What's in it. Thin rule and small capitals, like the roadmap board.</li>
+        <li><b>Year, month, weekday and time sit together</b> under "When you take photos". Guessed or placeholder dates are left out of them, and a note counts them.</li>
+        <li><b>Photos and videos are named together</b> in Health and in the date charts. The label follows the "Include videos in the checks" setting, so it says Photos when videos are left out.</li>
+        <li><b>No issue lists on this page.</b> Cameras and collections wait.</li>
+      </ul>
     </div>
   </div>
 
   <div class="tabs" role="group" aria-label="Screen">
-    <button id="t-front" aria-pressed="true">Front page</button>
+    <button id="t-lib" aria-pressed="true">Dashboard (new)</button>
+    <button id="t-front" aria-pressed="false">Front page as built</button>
     <button id="t-tags" aria-pressed="false">Tags summary</button>
     <button id="t-photos" aria-pressed="false">Photos summary</button>
   </div>
@@ -113,7 +164,7 @@ p { margin: 0; }
     .map(function (y, i) { var k = Math.abs(Math.sin(i * 1.7 + 1)); return { y: y, issue: 6 + Math.round(k * 24) + (y === 2013 ? 18 : 0), warn: 4 + Math.round(Math.abs(Math.cos(i * 1.1)) * 14) }; });
 
   // ---- pieces -----------------------------------------------------------------------------------------
-  function ring(parts, label) {
+  function ring(parts, label, sub) {
     var off = 25, s = '<svg width="130" height="130" viewBox="0 0 42 42" role="img" aria-label="' + label + '" style="flex-shrink:0">' +
       '<circle cx="21" cy="21" r="15.9" fill="none" stroke="var(--ff-warm)" stroke-width="6"/>';
     parts.forEach(function (p) {
@@ -121,11 +172,12 @@ p { margin: 0; }
       s += '<circle cx="21" cy="21" r="15.9" fill="none" stroke="' + p.c + '" stroke-width="6" stroke-dasharray="' + len + ' ' + (100 - len) + '" stroke-dashoffset="' + off + '"/>';
       off -= len;
     });
+    if (sub) return s + '<text x="21" y="21.2" text-anchor="middle" font-size="6.2" font-weight="700" fill="var(--ff-navy)">' + label + '</text><text x="21" y="26" text-anchor="middle" font-size="3.2" fill="var(--ff-text-secondary)">' + sub + '</text></svg>';
     return s + '<text x="21" y="22.5" text-anchor="middle" font-size="7" font-weight="700" fill="var(--ff-navy)">' + label + '</text></svg>';
   }
   function pct(a, b) { return (Math.round(a / b * 1000) / 10) + '%'; }
   function legend(rows, withPhotos) {
-    var h = '<div class="legend"><span></span><span class="hd"></span><span class="hd n">' + (withPhotos ? 'Tags' : 'Photos') + '</span>' + (withPhotos ? '<span class="hd n">Photos</span>' : '<span></span>') + '<span class="hd n">Share</span>';
+    var h = '<div class="legend"><span></span><span class="hd"></span><span class="hd n">' + (withPhotos ? 'Tags' : 'Items') + '</span>' + (withPhotos ? '<span class="hd n">Photos</span>' : '<span></span>') + '<span class="hd n">Share</span>';
     rows.forEach(function (r) {
       h += '<i style="background:' + r.c + '"></i><span>' + r.label + '</span><span class="n"><b>' + fmt(r.a) + '</b></span>' +
         (withPhotos ? '<span class="n"><b>' + fmt(r.b) + '</b></span>' : '<span></span>') + '<span class="n muted">' + r.share + '</span>';
@@ -138,6 +190,155 @@ p { margin: 0; }
   function card(title, body, extra) { return '<div class="card"><div class="head"><h3>' + title + '</h3>' + (extra || '') + '</div>' + body + '</div>'; }
   function tune() { return '<div class="tune">2 checks are switched off. <button type="button">Tune checks…</button></div>'; }
 
+  // ---- Dashboard (real figures from the owner's library list; the rings and the issue list are still made up) ----
+  var MONTHS = [2529, 2353, 2225, 10134, 11937, 4536, 8844, 7599, 6854, 3111, 5619, 4328];
+  var WEEKDAYS = [13884, 7717, 5603, 5304, 6991, 10473, 20097];   // Sunday first
+  var HOURS = [1433, 343, 389, 263, 432, 486, 594, 783, 1660, 2746, 4397, 6198, 6862, 7012, 6750, 7911, 6434, 4829, 3717, 2625, 1936, 1301, 652, 316];
+  var TOPTAGS = [['New York', 16529], ['NY', 16009], ['NYC', 14770], ['New York City', 14666], ['Sculpture', 9264], ['Landmark', 9184], ['Manhattan', 8860], ['National Register of Historic Places', 8848], ['NRHP', 8796], ['U.S. National Register of Historic Places', 8341], ['Liberty', 7243], ['JAsper', 7142], ['Museum', 7113], ['Statue', 6441], ['Europe', 6067], ['New Jersey', 5646], ['NJ', 5307], ['Street art', 4870], ['California', 4242], ['NHL', 3962], ['Mural', 3956], ['National Historic Landmark', 3929], ['U.S. National Historic Landmark', 3485], ['Lucy', 3393], ['France', 3372]];
+  var ALBUMS = [['Streetart', 4360], ['Spring Break 2025', 2923], ['Food Porn', 2752], ['Fall Break 2025', 1622], ['Summer Vacation 2026', 1312], ['NJ: Hudson - Jersey City', 941], ['Twins: 11-12 years old', 864], ['Disney World 2017', 843], ['Twins: 8-9 years old', 812], ['Shea', 787], ['Paris - Musée du Louvre', 743], ['Versailles', 695], ['Google Map Icons', 689], ['NYC: Metropolitan Museum', 668], ['Twins: 5-6 years', 648], ['Twins: 4 - 4.5 years', 633], ['Twins: 2.5-3 years', 601], ['Twins: 9-10 years old', 570], ['NYC: Midtown East', 548], ['Twins: 10-11 years old', 539], ['Twins: 7-8 years old', 529], ['Twins: 3.5 - 4 years', 525], ['Twins: 4.5 - 5 years', 523], ['NYC: Union Sq, Gramercy, & Flatiron', 499], ['Bklyn: Burg and Point', 491]];
+  function miniBars(vals, labels) {
+    var mx = Math.max.apply(null, vals);
+    return '<div class="mini">' + vals.map(function (v, i) { return '<div class="' + (v === mx ? 'top' : '') + '" style="height:' + (v / mx * 100).toFixed(1) + '%" title="' + labels[i] + ': ' + fmt(v) + '"></div>'; }).join('') + '</div>';
+  }
+  function hbars(list, squeeze, ofTotal) {
+    var mx = list[0][1];
+    return list.map(function (r) { return '<div class="hrow"><div class="nm" title="' + r[0] + '">' + r[0] + '</div><div class="track"><i style="width:' + Math.max(1.5, (squeeze ? Math.sqrt(r[1] / mx) : r[1] / mx) * 100).toFixed(1) + '%"></i></div><div class="v">' + fmt(r[1]) + (ofTotal ? ' <span class="muted" style="font-weight:400">' + (r[1] / ofTotal * 100).toFixed(1) + '%</span>' : '') + '</div></div>'; }).join('');
+  }
+  function dash() {
+    var kpis = [['Photos', '70,034', '4,158 in the last 12 months'], ['Videos', '1,121', '1.6% of everything'], ['Albums', '508', '177 items on average'], ['Tags', '88,829', '17.0 on each photo'], ['Days with photos', '2,789', '1945 to 2026']];
+    var kp = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">' + kpis.map(function (k) { return '<div class="card kpi"><span class="lbl">' + k[0] + '</span><b>' + k[1] + '</b><span>' + k[2] + '</span></div>'; }).join('') + '</div>';
+    // photos a year, or a decade
+    var yearly;
+    var insightBox = function (t) { return '<div class="insight">' + t + '</div>'; };
+    var yearInsight = series === 'taken'
+      ? insightBox('2007 to 2012 hold 46% of everything you have taken. 2025, with 5,099 items, is your biggest year since 2012, after a low of 705 in 2020.')
+      : insightBox('Your biggest upload years were 2007, 2012 and 2010, close to when you took the most.');
+    var decInsight = series === 'taken'
+      ? insightBox('The 2020s have already passed the 2000s, 18,292 items to 17,956, with three years still to go. The 2010s hold 47% of your library.')
+      : insightBox('The 2010s took in half of your uploads, 34,383 of 71,155.');
+    var switches = '<div style="display:flex;gap:8px;flex-wrap:wrap"><div class="seg" role="group" aria-label="Year or decade"><button id="sYear" aria-pressed="' + (span === 'year') + '">By year</button><button id="sDec" aria-pressed="' + (span === 'decade') + '">By decade</button></div><div class="seg" role="group" aria-label="Which date"><button id="sTaken" aria-pressed="' + (series === 'taken') + '">Taken</button><button id="sUp" aria-pressed="' + (series === 'up') + '">Uploaded</button></div></div>';
+    if (span === 'year') {
+      var max = Math.max.apply(null, PERYEAR.map(function (e) { return e[series]; }));
+      var bars = PERYEAR.map(function (e) { return '<div class="' + (e[series] === max ? 'top' : '') + '" style="height:' + (e[series] / max * 100).toFixed(1) + '%" title="' + e.y + ': ' + fmt(e[series]) + ' items"></div>'; }).join('');
+      yearly = '<div class="card s6"><div class="head"><h3>Photos and videos a year</h3>' + switches + '</div><div class="chart" style="height:130px" role="img" aria-label="Bars of photos and videos per year">' + bars + '</div><div class="axis"><span>Before 2000</span><span>2013</span><span>2026</span></div><p class="cap">The 517 items from before 2000 share one bar.</p>' + yearInsight + '</div>';
+    } else {
+      var dd = DECADES[series], dmax = Math.max.apply(null, dd.map(function (d) { return d[1]; }));
+      var dbars = dd.map(function (d) { return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0"><span style="font-size:11px;font-variant-numeric:tabular-nums;color:var(--ff-text-secondary)">' + fmt(d[1]) + '</span><div style="width:100%;height:' + Math.max(1, d[1] / dmax * 100 * 0.8).toFixed(1) + '%;background:' + (d[1] === dmax ? 'var(--ff-navy)' : 'var(--ff-blue)') + ';border-radius:3px 3px 0 0"></div></div>'; }).join('');
+      var dlabs = dd.map(function (d) { return '<span style="flex:1;text-align:center">' + d[0] + '</span>'; }).join('');
+      yearly = '<div class="card s6"><div class="head"><h3>Photos and videos a decade</h3>' + switches + '</div><div style="display:flex;gap:8px;height:150px;align-items:flex-end;margin-top:8px" role="img" aria-label="Bars of photos per decade">' + dbars + '</div><div class="axis" style="gap:8px">' + dlabs + '</div><p class="cap">' + (series === 'taken' ? 'The 2020s are only partly over. Your oldest items, from the 1940s to the 1990s, are 517 in all.' : 'Flickr uploads start in 2006, so there is nothing before the 2000s.') + '</p>' + decInsight + '</div>';
+    }
+    var vtot = 71155, vs = [['Public', 55253, 'var(--ff-blue)'], ['Friends and family', 15602, '#6a9be8'], ['Friends or family only', 213, '#9db8e8'], ['Private', 87, 'var(--ff-navy)']];
+    var vpct = function (n) { var v = n / vtot * 100; return v < 1 ? (v < 0.1 ? 'under 0.1%' : v.toFixed(1) + '%') : v.toFixed(1) + '%'; };
+    var vis = '<div class="card s3" style="display:flex;flex-direction:column"><h3>Who can see them</h3>' +
+      '<div class="stack">' + vs.map(function (v) { return '<i style="width:' + Math.max(0.5, v[1] / vtot * 100).toFixed(2) + '%;background:' + v[2] + '" title="' + v[0] + '"></i>'; }).join('') + '</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px;margin-top:10px;font-size:12px;color:var(--ff-text-secondary)">' + vs.map(function (v) { return '<span style="display:flex;gap:8px;align-items:flex-start"><i style="width:10px;height:10px;border-radius:4px;background:' + v[2] + ';display:inline-block;flex:none;margin-top:4px"></i><span style="display:flex;flex-direction:column"><span>' + v[0] + '</span><span><b style="color:var(--ff-text);font-size:15px">' + vpct(v[1]) + '</b> · ' + fmt(v[1]) + '</span></span></span>'; }).join('') + '</div>' +
+      '<div class="insight" style="margin-top:auto">99.9% of your items can be seen by someone besides you. Only 87 are private, and 22% are shared with friends and family but not the public.</div></div>';
+    // health band
+    var small = function (parts, label) { return ring(parts, label, 'no Issue').replace(/width="130" height="130"/, 'width="92" height="92"'); };
+    var band = function (title, whole, n, issue, warn, ringParts, label) {
+      return '<div class="card s2"><h3>' + title + ' <span class="muted" style="font-weight:400">' + whole + '</span></h3><div class="ringrow">' + small(ringParts, label) +
+        '<div style="flex:1 1 170px;min-width:0;font-size:13px">' +
+        '<div class="hl"><i style="background:var(--issue)"></i><span>Issue</span><span class="sp"></span><b>' + fmt(issue) + '</b><span class="muted">' + pct(issue, n) + '</span></div>' +
+        '<div class="hl"><i style="background:var(--warn)"></i><span>Warning</span><span class="sp"></span><b>' + fmt(warn) + '</b><span class="muted">' + pct(warn, n) + '</span></div>' +
+        '<div class="hl"><i style="background:var(--fine)"></i><span>No problems</span><span class="sp"></span><b>' + fmt(n - issue - warn) + '</b><span class="muted">' + pct(n - issue - warn, n) + '</span></div></div></div></div>';
+    };
+    var AL = { n: 508, issue: 74, warn: 118 };
+    var health = band('Tags', fmt(TAGS.total), TAGS.total, TAGS.issue.tags, TAGS.warn.tags, [{ f: TAGS.issue.tags / TAGS.total, c: C.issue }, { f: TAGS.warn.tags / TAGS.total, c: C.warn }, { f: TAGS.fine.tags / TAGS.total, c: C.fine }], pct(TAGS.total - TAGS.issue.tags, TAGS.total)) +
+      band('Photos and videos', fmt(PH.total), PH.total, PH.issue, PH.warn, [{ f: PH.issue / PH.total, c: C.issue }, { f: PH.warn / PH.total, c: C.warn }, { f: PH.fine / PH.total, c: C.fine }], pct(PH.total - PH.issue, PH.total)) +
+      band('Albums', fmt(AL.n), AL.n, AL.issue, AL.warn, [{ f: AL.issue / AL.n, c: C.issue }, { f: AL.warn / AL.n, c: C.warn }, { f: (AL.n - AL.issue - AL.warn) / AL.n, c: C.fine }], pct(AL.n - AL.issue, AL.n));
+    // patterns: by month, by weekday, by time of day (the year view is above)
+    var byMonth = '<div class="card s2"><h3>By month</h3>' + miniBars(MONTHS, ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']) + '<div class="minilab"><span>Jan</span><span>Jun</span><span>Dec</span></div><p class="cap">May is your busiest month, then April.</p></div>';
+    var byDay = '<div class="card s2"><h3>By day</h3>' + miniBars(WEEKDAYS, ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']) + '<div class="minilab"><span>Sun</span><span>Wed</span><span>Sat</span></div><p class="cap">Saturday is your day, by a long way.</p></div>';
+    var byHour = '<div class="card s2"><h3>By time of day</h3>' + miniBars(HOURS, HOURS.map(function (_, i) { return i + ':00'; })) + '<div class="minilab"><span>0h</span><span>12h</span><span>23h</span></div><p class="cap">Most are taken around 3 pm.</p></div>';
+    var guess = '<div class="s6 insight" style="margin-top:0"><b>1,086 items have a guessed or placeholder date</b> and are left out of these date charts, such as 599 on 8 Oct 2011. They are still counted everywhere else. <button class="link" type="button">Open the Placeholder date check</button></div>';
+    var pat = byMonth + byDay + byHour + guess;
+    // rankings
+    var sizeSeg = function (group, total, n, margin) {
+      var sizes = [5, 10, 25].map(function (k) { return Math.min(k, total); }).filter(function (k, i2, a) { return a.indexOf(k) === i2; });
+      return '<div class="seg" data-group="' + group + '" role="group" aria-label="How many to show" style="margin:' + (margin || '12px 0 14px') + '">' + sizes.map(function (k, i2) { return '<button data-n="' + k + '" aria-pressed="' + (Math.min(n, total) === k) + '">' + (i2 === sizes.length - 1 && k === total && k < 25 ? 'All ' + k : 'Top ' + k) + '</button>'; }).join('') + '</div>';
+    };
+    var tagsN = whatN, albumsN = whatN;
+    var tagNote = tagsN <= 5 ? 'Four of your top five are the same place: New York, NY, NYC and New York City.'
+      : tagsN <= 10 ? 'Seven of your top ten are two things typed more than one way: New York (four ways) and National Register of Historic Places (three).'
+      : 'Twelve of your top 25 are just four things typed more than one way: New York, National Register of Historic Places, National Historic Landmark and New Jersey.';
+    var tags = '<div class="card s3" style="display:flex;flex-direction:column"><h3>Most-used tags</h3>' + hbars(TOPTAGS.slice(0, tagsN)) +
+      '<div class="insight" style="margin-top:auto">' + tagNote + ' <button class="link" type="button">Open Typed more than one way</button></div></div>';
+    var albumNote = albumsN <= 5 ? 'The five biggest albums hold 18% of your items.'
+      : albumsN <= 10 ? 'The ten biggest albums hold 24% of your items. The typical album has 117, and only 7 have fewer than 10.'
+      : 'The 25 biggest albums hold 37% of your items. Ten of them are the twins, one for each age.';
+    var albums = '<div class="card s3" style="display:flex;flex-direction:column"><h3>Biggest albums</h3>' + hbars(ALBUMS.slice(0, albumsN)) +
+      '<div class="insight" style="margin-top:auto">' + albumNote + ' <button class="link" type="button">Open Albums</button></div></div>';
+    var BUSY = { days: [['15 May 2010', 932], ['19 Jul 2012', 629], ['13 Apr 2025', 531], ['6 Jun 2009', 527], ['15 Apr 2025', 496]], months: [['April 2025', 3011], ['July 2012', 2908], ['May 2010', 2815], ['May 2011', 2205], ['May 2013', 1707]] };
+    var busyRows = BUSY[busy].map(function (b, i) { return '<div class="rec"><span><span class="muted" style="display:inline-block;width:18px">' + (i + 1) + '</span>' + b[0] + '</span><b>' + fmt(b[1]) + ' items</b></div>'; }).join('');
+    var busyCard = '<div class="card s3"><div class="head"><h3>Busiest ' + (busy === 'days' ? 'days' : 'months') + ' <span class="muted" style="font-weight:400">by date taken</span></h3><div class="seg" role="group" aria-label="Days or months"><button id="bDays" aria-pressed="' + (busy === 'days') + '">Days</button><button id="bMonths" aria-pressed="' + (busy === 'months') + '">Months</button></div></div>' + busyRows + '</div>';
+    var more = [['Longest streak, taken', '16 days in a row, from 14 May 2010'], ['Longest quiet spell, taken', '34 days, 10 Feb to 16 Mar 2013'], ['Biggest upload day', '15 Jul 2010 · 1,019 items'], ['Fastest burst, taken', '208 items in an hour, 8 Nov 2025'], ['Oldest, taken', '1 Nov 1945'], ['Newest, taken', '25 Nov 2026']];
+    var moreCard = '<div class="card s3"><h3>More records</h3>' + more.map(function (x) { return '<div class="rec"><span class="muted">' + x[0] + '</span><b style="text-align:right">' + x[1] + '</b></div>'; }).join('') + '</div>';
+    var recs = busyCard + moreCard;
+    // what is filled in (the second card beside Who can see them)
+    var fills = [['Title', 71074], ['Tags', 70980], ['Description', 59011], ['Location', 69109]];
+    var complete = '<div class="card s3" style="display:flex;flex-direction:column"><h3>What is filled in</h3>' +
+      '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 16px;font-size:12px;color:var(--ff-text-secondary)">' + fills.map(function (f) { return '<span style="display:flex;flex-direction:column;gap:2px"><span>' + f[0] + '</span><span><b style="color:var(--ff-text);font-size:15px">' + (f[1] / 71155 * 100).toFixed(1) + '%</b> · ' + fmt(f[1]) + '</span><span class="stack" style="height:6px"><i style="width:' + (f[1] / 71155 * 100).toFixed(1) + '%;background:var(--ff-blue)"></i></span></span>'; }).join('') + '</div>' +
+      '<div class="insight" style="margin-top:auto">Descriptions are the gap: 12,144 items have none. <button class="link" type="button">Open the No description check</button></div></div>';
+    // where: places, and how exact
+    var STATES = [['New York', 17990], ['New Jersey', 10532], ['California', 4619], ['Pennsylvania', 3017], ['Colorado', 2657], ['Florida', 2309], ['Texas', 2158], ['Massachusetts', 2016], ['Washington, DC', 1860], ['Hawaii', 1555], ['Louisiana', 993], ['Georgia', 980], ['Virginia', 716], ['South Carolina', 711], ['Maryland', 705], ['Maine', 644], ['Rhode Island', 376], ['Illinois', 235], ['Ohio', 180], ['Connecticut', 134], ['Nevada', 110], ['Puerto Rico', 72], ['New Hampshire', 12], ['Kentucky', 8], ['Minnesota', 7]];
+    var COUNTRIES = [['United States', 54330], ['France', 3370], ['Argentina', 2249], ['Japan', 2138], ['United Kingdom', 1895], ['Mexico', 1355], ['Canada', 1150], ['Hungary', 845], ['Brazil', 642], ['Greece', 248], ['Switzerland', 190], ['Puerto Rico', 72], ['India', 12], ['Spain', 12], ['United Arab Emirates', 2]];
+    var moreChip = sizeSeg('places', place === 'countries' ? COUNTRIES.length : STATES.length, placeN);
+    var places = '<div class="card s3" style="display:flex;flex-direction:column"><div class="head"><h3>Top places <span class="muted" style="font-weight:400">' + (place === 'countries' ? 'countries' : 'US states') + '</span></h3></div>' +
+      (place === 'countries'
+        ? hbars(COUNTRIES.slice(0, placeN), true, 69109) + '<div class="insight" style="margin-top:auto">79% of your located items are in the United States. 15 countries in all; the percentages are shares of your 69,109 located items. Bars use the squeezed scale. <button class="link" type="button">Open the Map</button></div>'
+        : hbars(STATES.slice(0, placeN), true, 54599) + '<div class="insight" style="margin-top:auto">New York and New Jersey hold 52% of your US photos. 27 states and districts in all; the percentages are shares of your 54,599 US items. Near a state line the count can be off by a block or two. <button class="link" type="button">Open the Map</button></div>') + '</div>';
+    var LOCYEAR = [['2006',99.8],['2007',99.9],['2008',99.5],['2009',99.4],['2010',97.5],['2011',100],['2012',100],['2013',99.9],['2014',99],['2015',99.8],['2016',99.5],['2017',98.2],['2018',96.2],['2019',92.6],['2020',91.6],['2021',73.8],['2022',94.9],['2023',95.1],['2024',95.3],['2025',97.4],['2026',95.8]];
+    var locBars = '<h3 style="margin:14px 0 0">Located, by year <span class="muted" style="font-weight:400">bars start at 60%</span></h3><div class="mini" style="height:70px">' + LOCYEAR.map(function (e) { var low = e[1] === 73.8; return '<div class="' + (low ? 'top' : '') + '" style="height:' + ((e[1] - 60) / 40 * 100).toFixed(1) + '%" title="' + e[0] + ': ' + e[1] + '% have a location"></div>'; }).join('') + '</div><div class="minilab"><span>2006</span><span>2016</span><span>2026</span></div>';
+    var exact = [['Street', 66694, 'var(--ff-blue)'], ['Town', 1006, '#6a9be8'], ['Vague', 604, '#9db8e8'], ['Not recorded', 805, 'var(--ff-fine-line)']];
+    var exactCard = '<div class="card s3" style="display:flex;flex-direction:column"><h3>How exact the locations are</h3>' +
+      '<div class="stack">' + exact.map(function (v) { return '<i style="width:' + (v[1] / 69109 * 100).toFixed(2) + '%;background:' + v[2] + '" title="' + v[0] + '"></i>'; }).join('') + '</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px;margin-top:10px;font-size:12px;color:var(--ff-text-secondary)">' + exact.map(function (v) { return '<span style="display:flex;gap:8px;align-items:flex-start"><i style="width:10px;height:10px;border-radius:4px;background:' + v[2] + ';display:inline-block;flex:none;margin-top:4px"></i><span style="display:flex;flex-direction:column"><span>' + v[0] + '</span><span><b style="color:var(--ff-text);font-size:15px">' + (v[1] / 69109 * 100).toFixed(1) + '%</b> · ' + fmt(v[1]) + '</span></span></span>'; }).join('') + '</div>' +
+      '<div class="insight" style="margin-top:auto">591 items share one spot in Antarctica, almost certainly a wrong geotag. 2021 is your least-located year: 74% have a location. <button class="link" type="button">Show them on the Map</button></div></div>';
+    var sec = function (label, link, extra) { return '<div class="sec"><span>' + label + '</span>' + (extra ? '<span style="order:2;text-transform:none;letter-spacing:0;font-weight:400">' + extra + '</span>' : '') + (link ? '<a href="#" onclick="return false">' + link + '</a>' : '') + '</div>'; };
+    return sec('Health', 'Open Tags · Photos · Albums', '<button class="chip" type="button" title="Saves what is on screen as a PDF">Save as PDF…</button>') + '<div class="grid6">' + health + '<p class="cap s6" style="margin:-4px 0 0">The number in each ring is the share with no Issue. Warnings never lower it.</p></div>' +
+      sec('Your library') + kp + '<div class="grid6">' + vis + complete + '</div>' +
+      sec('When you take photos') + '<div class="grid6">' + yearly + pat + '</div>' +
+      sec('Where you take photos', 'Open the Map', '<span style="display:inline-flex;gap:8px"><span class="seg" role="group" aria-label="Countries or states"><button id="pC" aria-pressed="' + (place === 'countries') + '">Countries</button><button id="pS" aria-pressed="' + (place === 'states') + '">US states</button></span>' + sizeSeg('places', place === 'countries' ? COUNTRIES.length : STATES.length, placeN, '0') + '</span>') + '<div class="grid6">' + places + exactCard + '</div>' +
+      sec('What\'s in it', null, sizeSeg('what', 25, whatN, '0')) + '<div class="grid6">' + tags + albums + '</div>' + sec('Records') + '<div class="grid6">' + recs + '</div>';
+  }
+
+  // ---- Front page with library stats --------------------------------------------------------------------
+  // Real counts from the owner's library list (date taken; uploaded). Everything before 2000 is one bar in the year view. Guessed and placeholder dates are left out of 'taken'.
+  var TAKEN = [['Before 2000', 517], ['2000', 34], ['2001', 331], ['2002', 121], ['2003', 180], ['2004', 84], ['2005', 479], ['2006', 2277], ['2007', 6704], ['2008', 3298], ['2009', 4448], ['2010', 6471], ['2011', 5588], ['2012', 5880], ['2013', 2744], ['2014', 1752], ['2015', 1538], ['2016', 2433], ['2017', 2713], ['2018', 2564], ['2019', 1621], ['2020', 705], ['2021', 1373], ['2022', 3974], ['2023', 2041], ['2024', 2379], ['2025', 5099], ['2026', 2721]];
+  var UP = { 2006: 3774, 2007: 6597, 2008: 3316, 2009: 4422, 2010: 6318, 2011: 5686, 2012: 6509, 2013: 2870, 2014: 2045, 2015: 1644, 2016: 2470, 2017: 2661, 2018: 2665, 2019: 1515, 2020: 672, 2021: 1185, 2022: 3576, 2023: 2623, 2024: 2447, 2025: 5082, 2026: 3078 };
+  var PERYEAR = TAKEN.map(function (t) { return { y: t[0], taken: t[1], up: UP[t[0]] || 0 }; });
+  var series = 'taken', span = 'year', busy = 'days', place = 'countries', placeN = 5, whatN = 5;
+  var DECADES = { taken: [['1940s', 1], ['1950s', 0], ['1960s', 1], ['1970s', 177], ['1980s', 105], ['1990s', 233], ['2000s', 17956], ['2010s', 33304], ['2020s', 18292]], up: [['2000s', 18109], ['2010s', 34383], ['2020s', 18663]] };
+  function lib() {
+    var big = '<div class="figs"><div><b>70,034</b><span>photos</span></div><div><b>1,121</b><span>videos</span></div><div><b>508</b><span>albums</span></div><div><b>88,829</b><span>tags</span></div></div>';
+    var facts = '<div class="facts">' +
+      '<div><span>Taken</span><b>1945 to 2026</b></div><div><span>Busiest year</span><b>2007 · 6,718</b></div><div><span>Average a year, 2000 on</span><b>2,616</b></div>' +
+      '<div><span>Public</span><b>78%</b></div><div><span>Friends and family</span><b>22%</b></div><div><span>Private</span><b>under 1%</b></div>' +
+      '<div><span>With a location</span><b>97%</b></div><div><span>Average tags a photo</span><b>17.0</b></div><div><span>Average photos an album</span><b>177</b></div>' +
+      '<div><span>Uploaded, last 12 months</span><b>4,158</b></div><div><span>Dates that are a guess</span><b>1,084</b></div><div><span>First upload</span><b>Apr 2006</b></div></div>';
+    var max = Math.max.apply(null, PERYEAR.map(function (e) { return e[series]; }));
+    var bars = PERYEAR.map(function (e) { return '<div class="' + (e[series] === max ? 'top' : '') + '" style="height:' + (e[series] / max * 100).toFixed(1) + '%" title="' + e.y + ': ' + fmt(e[series]) + ' photos"></div>'; }).join('');
+    var chart = '<div class="head" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--ff-warm)"><h3 style="margin:0">Photos a year</h3><div class="seg" role="group" aria-label="Which date"><button id="sTaken" aria-pressed="' + (series === 'taken') + '">Taken</button><button id="sUp" aria-pressed="' + (series === 'up') + '">Uploaded</button></div></div>' +
+      '<div class="chart" role="img" aria-label="Bars of photos per year">' + bars + '</div><div class="axis"><span>Before 2000</span><span>2013</span><span>2026</span></div><div class="cap">The 518 photos from 1945 to 1999 share one bar. Dates that Flickr marks as a guess are included here and counted above.</div>';
+    var library = card('Your library', big + facts + chart);
+    var tr = ring([{ f: TAGS.issue.tags / TAGS.total, c: C.issue }, { f: TAGS.warn.tags / TAGS.total, c: C.warn }, { f: TAGS.fine.tags / TAGS.total, c: C.fine }], pct(TAGS.total - TAGS.issue.tags, TAGS.total)).replace(/width="130" height="130"/, 'width="96" height="96"');
+    var pr = ring([{ f: PH.issue / PH.total, c: C.issue }, { f: PH.warn / PH.total, c: C.warn }, { f: PH.fine / PH.total, c: C.fine }], pct(PH.total - PH.issue, PH.total)).replace(/width="130" height="130"/, 'width="96" height="96"');
+    var scores = '<div class="cards2">' +
+      '<div class="card"><h3>Tags</h3><div class="ringrow">' + tr + '<div class="big"><b>' + fmt(TAGS.issue.tags) + '</b>have an Issue<br>' + fmt(TAGS.warn.tags) + ' have a Warning</div></div></div>' +
+      '<div class="card"><h3>Photos</h3><div class="ringrow">' + pr + '<div class="big"><b>' + fmt(PH.issue) + '</b>have an Issue<br>' + fmt(PH.warn) + ' have a Warning</div></div></div></div>';
+    var start = [];
+    TAGS.issues.forEach(function (r) { start.push({ n: r[0], k: 'tags', t: r[1], p: r[2] }); });
+    PH.issues.forEach(function (r) { start.push({ n: r[0], k: 'photos', t: null, p: r[1] }); });
+    start.sort(function (a, b) { return b.p - a.p; });
+    var top3 = start.slice(0, 3).map(function (s2) {
+      var nums = s2.t === null ? '<b>' + fmt(s2.p) + '</b> photos' : '<b>' + fmt(s2.t) + '</b> tags · <b>' + fmt(s2.p) + '</b> photos';
+      return '<div class="row start"><div>' + s2.n + '<span class="pill">' + s2.k + '</span></div><div class="nums">' + nums + '</div></div>';
+    }).join('');
+    var biggest = card('Biggest issues to address <span class="muted" style="font-weight:400">(by photos affected)</span>', top3 +
+      '<div class="tune"><button class="link" type="button">See all ' + start.length + '</button><span>·</span><span>17 warnings to review on the Tags and Photos screens.</span><button type="button" style="margin-left:auto">Tune checks…</button></div>');
+    return library + scores + biggest;
+  }
+
   // ---- Front page -------------------------------------------------------------------------------------
   var showAll = false;
   function front() {
@@ -145,7 +346,7 @@ p { margin: 0; }
     var pr = ring([{ f: PH.issue / PH.total, c: C.issue }, { f: PH.warn / PH.total, c: C.warn }, { f: PH.fine / PH.total, c: C.fine }], pct(PH.total - PH.issue, PH.total));
     var scores = '<div class="cards2">' +
       '<div class="card">' + '<h3>Tags</h3><div class="ringrow">' + tr + '<div class="big"><b>' + fmt(TAGS.issue.tags) + '</b>of ' + fmt(TAGS.total) + ' tags have an Issue<br>' + fmt(TAGS.warn.tags) + ' more have a Warning</div></div></div>' +
-      '<div class="card">' + '<h3>Photos</h3><div class="ringrow">' + pr + '<div class="big"><b>' + fmt(PH.issue) + '</b>of ' + fmt(PH.total) + ' photos have an Issue<br>' + fmt(PH.warn) + ' more have a Warning</div></div></div></div>';
+      '<div class="card">' + '<h3>Photos and videos</h3><div class="ringrow">' + pr + '<div class="big"><b>' + fmt(PH.issue) + '</b>of ' + fmt(PH.total) + ' items have an Issue<br>' + fmt(PH.warn) + ' more have a Warning</div></div></div></div>';
     var start = [];
     TAGS.issues.forEach(function (r) { start.push({ n: r[0], k: 'tags', t: r[1], p: r[2], by: r[2] }); });
     PH.issues.forEach(function (r) { start.push({ n: r[0], k: 'photos', t: null, p: r[1], by: r[1] }); });
@@ -202,11 +403,11 @@ p { margin: 0; }
       { c: C.warn, label: 'Warning', a: p.warn, share: pct(p.warn, p.total) },
       { c: C.fine, label: 'No problems', a: p.fine, share: pct(p.fine, p.total) }
     ];
-    var top = card('How complete is your library?', '<div class="ringrow">' + rg + '<div style="flex:1;min-width:0"><div class="big"><b>' + fmt(p.total) + '</b>photos in your library</div>' + legend(rows, false) +
-      '<p class="cap">Each photo is counted once, under its worst.</p></div></div>');
+    var top = card('How complete is your library?', '<div class="ringrow">' + rg + '<div style="flex:1;min-width:0"><div class="big"><b>' + fmt(p.total) + '</b>photos and videos in your library</div>' + legend(rows, false) +
+      '<p class="cap">Each item is counted once, under its worst. Videos are included; Tune checks can leave them out, and then this says photos.</p></div></div>');
     var maxI = p.issues[0][1], maxW = p.warns[0][1];
-    var iss = card('Issues by type', p.issues.map(function (r) { return bar(r[0], Math.sqrt(r[1] / maxI) * 100, C.issue, '<b>' + fmt(r[1]) + '</b> photos'); }).join(''));
-    var wrn = card('Warnings by type <span class="muted" style="font-weight:400">(never lower the score)</span>', p.warns.map(function (r) { return bar(r[0], Math.sqrt(r[1] / maxW) * 100, C.warn, '<b>' + fmt(r[1]) + '</b> photos'); }).join(''));
+    var iss = card('Issues by type', p.issues.map(function (r) { return bar(r[0], Math.sqrt(r[1] / maxI) * 100, C.issue, '<b>' + fmt(r[1]) + '</b> items'); }).join(''));
+    var wrn = card('Warnings by type <span class="muted" style="font-weight:400">(never lower the score)</span>', p.warns.map(function (r) { return bar(r[0], Math.sqrt(r[1] / maxW) * 100, C.warn, '<b>' + fmt(r[1]) + '</b> items'); }).join(''));
     var chips = [['all', 'All gaps']].concat(p.issues.map(function (r) { return [r[0], r[0]]; })).concat(p.warns.map(function (r) { return [r[0], r[0]]; }));
     var top1 = Math.max.apply(null, YEARS.map(function (e) { return e.issue + e.warn; }));
     var bars = YEARS.map(function (e) {
@@ -226,17 +427,30 @@ p { margin: 0; }
   }
 
   // ---- wiring -----------------------------------------------------------------------------------------
-  var current = 'front';
+  var current = 'lib';
   function draw() {
     var el = document.getElementById('screen');
-    el.innerHTML = current === 'front' ? front() : current === 'tags' ? tagsScreen() : photosScreen();
-    ['front', 'tags', 'photos'].forEach(function (k) { document.getElementById('t-' + k).setAttribute('aria-pressed', String(k === current)); });
+    el.innerHTML = current === 'lib' ? dash() : current === 'front' ? front() : current === 'tags' ? tagsScreen() : photosScreen();
+    ['lib', 'front', 'tags', 'photos'].forEach(function (k) { document.getElementById('t-' + k).setAttribute('aria-pressed', String(k === current)); });
     var more = document.getElementById('more'); if (more) more.onclick = function () { showAll = !showAll; draw(); };
     var a = document.getElementById('sA'), b = document.getElementById('sB');
     if (a) a.onclick = function () { scale = 'A'; draw(); };
     if (b) b.onclick = function () { scale = 'B'; draw(); };
+    document.querySelectorAll('.seg[data-group] button').forEach(function (b) { b.onclick = function () { var n = Number(b.getAttribute('data-n')), g = b.parentNode.getAttribute('data-group'); if (g === 'places') placeN = n; else whatN = n; draw(); }; });
+    var pc = document.getElementById('pC'), ps = document.getElementById('pS');
+    if (pc) pc.onclick = function () { place = 'countries'; draw(); };
+    if (ps) ps.onclick = function () { place = 'states'; draw(); };
+    var sy = document.getElementById('sYear'), sd = document.getElementById('sDec');
+    if (sy) sy.onclick = function () { span = 'year'; draw(); };
+    if (sd) sd.onclick = function () { span = 'decade'; draw(); };
+    var bd = document.getElementById('bDays'), bm = document.getElementById('bMonths');
+    if (bd) bd.onclick = function () { busy = 'days'; draw(); };
+    if (bm) bm.onclick = function () { busy = 'months'; draw(); };
+    var st = document.getElementById('sTaken'), su = document.getElementById('sUp');
+    if (st) st.onclick = function () { series = 'taken'; draw(); };
+    if (su) su.onclick = function () { series = 'up'; draw(); };
   }
-  ['front', 'tags', 'photos'].forEach(function (k) { document.getElementById('t-' + k).onclick = function () { current = k; draw(); }; });
+  ['lib', 'front', 'tags', 'photos'].forEach(function (k) { document.getElementById('t-' + k).onclick = function () { current = k; draw(); }; });
   draw();
 })();
 </script>

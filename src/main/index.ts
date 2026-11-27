@@ -18,6 +18,8 @@ import { registerAuditIpc } from './tagAudit'
 import { registerHealthIpc } from './photoHealth'
 import { registerFineIpc } from './fineReasons'
 import { registerAlbumsIpc } from './albumChecks'
+import { registerLibraryStatsIpc } from './libraryStats'
+import { registerDashboardPdfIpc } from './dashboardPdf'
 import { registerMapIpc } from './mapPoints'
 import { registerTileIpc } from './mapTiles'
 import { registerDatesIpc } from './dateViews'
@@ -324,6 +326,8 @@ registerAuditIpc(() => mainWindow)
 registerHealthIpc(() => mainWindow)
 registerFineIpc(() => mainWindow)
 registerAlbumsIpc(() => mainWindow)
+registerLibraryStatsIpc()
+registerDashboardPdfIpc(() => mainWindow)
 registerMapIpc()
 registerTileIpc()
 registerDatesIpc(() => mainWindow)

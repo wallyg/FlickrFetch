@@ -8,7 +8,6 @@
   "src/renderer/components/DiscoverPeople.tsx": 4,
   "src/renderer/components/DownloadQueueBar.tsx": 4,
   "src/renderer/components/HistoryPanel.tsx": 4,
-  "src/renderer/components/LibraryOverview.tsx": 1,
   "src/renderer/components/MapPanel.tsx": 2,
   "src/renderer/components/PhotoDetail.tsx": 1,
   "src/renderer/components/PhotoGrid.tsx": 1,

@@ -579,6 +579,35 @@ export interface AuditOverview {
   byType: { category: AuditCategory; state: 'optional' | 'on'; open: number; plan: number; fine: number; photos: number }[]   // checks that are Off are left out
 }
 
+// ── The library dashboard (Health Check front page): totals, patterns, where, what is in it, records. Worked out from the local library list. ──
+export interface Ranked { label: string; items: number }
+export interface Named { name: string; items: number; id?: string; lat?: number; lon?: number }   // id: an album's id; lat and lon: where most of a place's items were taken (for the Map)
+export interface LibraryStats {
+  hasData: boolean
+  items: number; photos: number; videos: number; albums: number; tags: number; tagUses: number
+  addedLast12Months: number     // by upload date
+  daysWithPhotos: number        // distinct days with a real date taken
+  avgTagsPerItem: number; avgItemsPerAlbum: number; medianAlbum: number; smallAlbums: number   // smallAlbums: fewer than 10 items
+  visibility: { public: number; friendsFamily: number; onlyOne: number; private: number }   // onlyOne: friends only, or family only
+  filled: { title: number; tags: number; description: number; location: number }
+  precision: { street: number; town: number; vague: number; none: number }   // of the located items
+  located: number
+  years: { year: string; taken: number; uploaded: number }[]   // taken leaves out guessed and placeholder dates
+  guessed: { items: number; biggestDay: { day: string; items: number } | null }
+  months: number[]; weekdays: number[]; hours: number[]        // 12, 7 (Sunday first) and 24 counts, by date taken
+  records: {
+    days: Ranked[]; months: Ranked[]                           // busiest first, at most 5
+    streak: { days: number; from: string } | null              // most days in a row with a photo taken
+    quiet: { days: number; from: string; to: string; since: string } | null   // longest stretch with none, since the first busy year
+    uploadDay: { day: string; items: number } | null
+    burst: { hour: string; items: number } | null              // most in one clock hour ("2025-11-08 16")
+    oldest: string; newest: string
+  }
+  topTags: Named[]; topAlbums: Named[]                         // at most 25 each
+  places: { countries: Named[]; states: Named[]; usItems: number; strayAt: { lat: number; lon: number; items: number } | null }
+  leastLocatedYear: { year: string; percent: number } | null
+}
+
 export interface HealthOverview {
   hasData: boolean
   photos: number

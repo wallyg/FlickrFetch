@@ -46,20 +46,35 @@ test('the screens use one row, the three names and no green', () => {
   const parts = read('src/renderer/components/DashboardParts.tsx')
   assert.match(parts, /export const COLORS = \{ open: [^}]*warn: [^}]*fine: [^}]*\}/)
   assert.ok(!/fixed:|plan:|ff-success\)/.test(parts.slice(parts.indexOf('export const COLORS'), parts.indexOf('export const COLORS') + 300)), 'no green and no blue plan colour')
-  for (const f of ['AuditOverview', 'HealthOverview', 'LibraryOverview']) {
+  for (const f of ['AuditOverview', 'HealthOverview', 'LibraryOverview', 'HealthBand', 'DashboardCards']) {
     const code = read(`src/renderer/components/${f}.tsx`)
     assert.ok(!/Dealt with|Fixed|COLORS\.fixed|COLORS\.plan/.test(code), `${f} has no fixed or dealt-with`)
-    assert.match(code, /Counts/)
   }
+  for (const f of ['AuditOverview', 'HealthOverview']) assert.match(read(`src/renderer/components/${f}.tsx`), /Counts/)
   assert.match(read('src/renderer/components/AuditOverview.tsx'), /StatusLegend rows=\{legend\} withTags/)
   assert.match(read('src/renderer/components/HealthOverview.tsx'), /StatusLegend rows=\{legend\} withTags=\{false\}/)
+  // The front page is the dashboard: a health band first, no lists of issues (they are on the Tags, Photos and Albums screens)
   const front = read('src/renderer/components/LibraryOverview.tsx')
-  assert.match(front, /Biggest issues to address/)
-  assert.match(front, /Biggest warnings to review/)
-  assert.ok(!/Where to start|Warnings to review </.test(front))
+  assert.match(front, /<HealthBand /)
+  assert.ok(front.indexOf('<HealthBand') < front.indexOf('<Totals'), 'health comes first')
+  assert.ok(!/Biggest issues|Biggest warnings|Where to start|Warnings to review/.test(front))
 })
 
 test('the Tags screen: no "Fixed" tab, no fixed ticks in the plan', () => {
   const panel = read('src/renderer/components/AuditPanel.tsx')
   assert.ok(!/key: 'fixed'|status === 'fixed'|p\.status/.test(panel))
+})
+
+test('every bar on the dashboard has a hover that says its figure and share, and where a click goes', () => {
+  const cards = read('src/renderer/components/DashboardCards.tsx')
+  for (const what of ['of the total', 'of those with a date', 'Click to show them', 'Click to see it on the Map', 'Click to open the album']) assert.ok(cards.includes(what), what)
+  assert.match(read('src/renderer/components/DashboardParts.tsx'), /title=\{title\}/)   // a bar row carries its own hover
+})
+
+test('the "numbers differ" notice has an alert icon and a dismiss button, and comes back only when a number changes', () => {
+  const code = read('src/renderer/components/TagScanParts.tsx')
+  assert.match(code, /<Icon name="warning" size=\{18\} \/>/)
+  assert.match(code, /aria-label="Dismiss this notice"/)
+  assert.match(code, /gapDismissed !== pair/)                                          // dismissed for this pair of numbers only
+  assert.match(code, /const pair = `\$\{status\.flickrTotal\}\|\$\{status\.indexedPhotos\}`/)
 })

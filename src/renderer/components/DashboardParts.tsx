@@ -8,12 +8,12 @@ export interface BarPart { value: number; color: string; title?: string }
 
 // One labelled row: name, a bar made of coloured parts (scaled against `max`), and the figures. `squeeze` draws the bar on a square-root
 // scale, so a small row still shows next to a huge one; the figures carry the exact counts (#220).
-export function BarRow({ name, parts, max, number, onClick, squeeze }: { name: string; parts: BarPart[]; max: number; number: React.ReactNode; onClick?: () => void; squeeze?: boolean }): React.JSX.Element {
+export function BarRow({ name, parts, max, number, onClick, squeeze, title }: { name: string; parts: BarPart[]; max: number; number: React.ReactNode; onClick?: () => void; squeeze?: boolean; title?: string }): React.JSX.Element {
   const total = parts.reduce((n, p) => n + p.value, 0)
   const share = max > 0 ? total / max : 0
   const width = max > 0 ? Math.max(total > 0 ? 1.5 : 0, (squeeze ? Math.sqrt(share) : share) * 100) : 0
   return (
-    <div style={{ ...styles.row, cursor: onClick ? 'pointer' : 'default' }} {...(onClick ? asButton(onClick) : {})}>
+    <div style={{ ...styles.row, cursor: onClick ? 'pointer' : 'default' }} title={title} {...(onClick ? { ...asButton(onClick), 'data-row-link': '' } : {})}>
       <div style={styles.rowName}>{name}</div>
       <div style={styles.barTrack}>
         <div style={{ display: 'flex', width: `${width}%`, height: '100%' }}>
@@ -22,7 +22,7 @@ export function BarRow({ name, parts, max, number, onClick, squeeze }: { name: s
           ))}
         </div>
       </div>
-      <div style={styles.rowNum}>{number}</div>
+      <div style={styles.rowNum}>{number}{onClick ? <span style={{ color: 'var(--ff-text-secondary)' }}> ›</span> : null}</div>
     </div>
   )
 }
@@ -79,13 +79,13 @@ export function Ring({ fraction, color, label }: { fraction: number; color: stri
 // A ring in several coloured parts (each part is a share of the whole, in order from the top). Hovering a part
 // (or whatever the page passes as `active`, such as a legend row) makes it stand out and puts its figure in the middle.
 export interface RingPart { fraction: number; color: string; n: number; short: string; title: string }
-export function RingParts({ parts, label, active, onActive }: {
-  parts: RingPart[]; label: string; active: number | null; onActive: (i: number | null) => void
+export function RingParts({ parts, label, sub, size = 130, active, onActive }: {
+  parts: RingPart[]; label: string; sub?: string; size?: number; active: number | null; onActive: (i: number | null) => void
 }): React.JSX.Element {
   let offset = 25
   const cur = active !== null ? parts[active] : null
   return (
-    <svg width="130" height="130" viewBox="0 0 42 42" role="img" aria-label={label} style={{ flexShrink: 0 }}>
+    <svg width={size} height={size} viewBox="0 0 42 42" role="img" aria-label={sub ? `${label} ${sub}` : label} style={{ flexShrink: 0 }}>
       <circle cx="21" cy="21" r="15.9" fill="none" stroke="var(--ff-warm)" strokeWidth="6" />
       {parts.map((p, i) => {
         const len = Math.max(0, Math.min(1, p.fraction)) * 100
@@ -107,6 +107,11 @@ export function RingParts({ parts, label, active, onActive }: {
         <>
           <text x="21" y="21.6" textAnchor="middle" fontSize="6" fontWeight="700" fill="var(--ff-navy)" style={{ pointerEvents: 'none' }}>{cur.n.toLocaleString()}</text>
           <text x="21" y="26" textAnchor="middle" fontSize="3" fill="var(--ff-text-secondary)" style={{ pointerEvents: 'none' }}>{cur.short}</text>
+        </>
+      ) : sub ? (
+        <>
+          <text x="21" y="21.2" textAnchor="middle" fontSize="6.2" fontWeight="700" fill="var(--ff-navy)" style={{ pointerEvents: 'none' }}>{label}</text>
+          <text x="21" y="26" textAnchor="middle" fontSize="3.2" fill="var(--ff-text-secondary)" style={{ pointerEvents: 'none' }}>{sub}</text>
         </>
       ) : (
         <text x="21" y="22.5" textAnchor="middle" fontSize="7" fontWeight="700" fill="var(--ff-navy)" style={{ pointerEvents: 'none' }}>{label}</text>

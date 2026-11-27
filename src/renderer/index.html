@@ -70,6 +70,25 @@
       button[style*="--ff-tab"]:focus-visible { outline-offset: -3px !important; border-radius: 6px; }
       /* A dialog takes focus as a whole when it opens; it needs no ring of its own. */
       [data-dialog]:focus-visible { outline: none !important; }
+      /* Saving the Health Check dashboard as a PDF: the screen marks the page (data-printing) and everything but the dashboard is left out, so it prints
+         alone and runs over as many pages as it needs. Controls (data-noprint) stay off the paper; cards (data-card) are not cut across two pages. */
+      [data-print-only] { display: none; }
+      @media print {
+        html[data-printing], html[data-printing] body { height: auto !important; overflow: visible !important; background: var(--ff-cream) !important; }
+        html[data-printing] body *:not(#ff-dashboard):not(:has(#ff-dashboard)):not(#ff-dashboard *) { display: none !important; }
+        html[data-printing] body *:has(#ff-dashboard) { display: block !important; position: static !important; height: auto !important; min-height: 0 !important; overflow: visible !important; padding: 0 !important; margin: 0 !important; border: 0 !important; transform: none !important; }
+        html[data-printing] #ff-dashboard { display: block !important; height: auto !important; overflow: visible !important; padding: 0 !important; }
+        html[data-printing] [data-noprint] { display: none !important; }
+        html[data-printing] [data-print-only] { display: block !important; }
+        html[data-printing] [data-card] { break-inside: avoid; }
+        html[data-printing] [data-section] { break-after: avoid; }
+        html[data-printing] * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      }
+      /* A dashboard figure that opens a screen (a row, a tile, a bar): a light wash under the pointer. */
+      [data-row-link] { cursor: pointer; }
+      [data-row-link]:hover { background-color: var(--ff-wash-hover); }
+      [data-bar-link] { cursor: pointer; }
+      [data-bar-link]:hover { filter: brightness(1.2); }
       /* Hover and pressed: a bordered button or a select takes a grey tint (a wash over its own colour, so a pink button stays pink). Buttons from ui/kit.ts carry the --ff-box marker; other bordered buttons are matched by their written-out border. */
       button[style*="--ff-box"]:not(:disabled):hover, button[style*="border: 1px"]:not(:disabled):hover, select:not(:disabled):hover { background-image: linear-gradient(var(--ff-wash-hover), var(--ff-wash-hover)); }
       button[style*="--ff-box"]:not(:disabled):active, button[style*="border: 1px"]:not(:disabled):active { background-image: linear-gradient(var(--ff-wash-press), var(--ff-wash-press)); }

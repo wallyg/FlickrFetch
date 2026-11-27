@@ -63,6 +63,7 @@ Metadata that lives only on a website disappears when the website does, or when 
 - Your photos with a location, as dots and numbered circles on a world map. Click one to see its photos, open a photo on Flickr, or download them
 - Filter by photos or videos, privacy, tags, album, date and how precise the location is
 - An optional street map, off by default, using OpenStreetMap. The map images are saved on your Mac (not your photos), and you can set a size limit
+- Country outlines from Natural Earth (public domain) and US state outlines from the US Census Bureau (via the us-atlas package), both kept inside the app. The Health Check dashboard uses them to count your photos by country and US state on your Mac, with no lookup online
 
 ## Privacy and safety
 

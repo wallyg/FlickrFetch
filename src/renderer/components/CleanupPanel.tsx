@@ -10,6 +10,7 @@ import HealthPanel from './HealthPanel'
 import BackupPanel from './BackupPanel'
 import AlbumsPanel from './AlbumsPanel'
 import LibraryOverview from './LibraryOverview'
+import type { PrivacyFilter } from './PhotoGridShared'
 import { LibraryDataChip, ScanNotices, ScanProgressCard } from './TagScanParts'
 import { useTagScan } from '../hooks/useTagScan'
 import { useCleanupRules } from '../hooks/useCleanupRules'
@@ -26,12 +27,15 @@ interface Props {
   settingsKey: number          // goes up when Settings has been closed, so the checks are read again
   onOpenSettings: () => void   // opens Settings on its Health Check tab (Tune checks)
   onShowOnMap?: (lat: number, lon: number) => void   // opens the Map tab on a place (a suggested location, or a geotag that looks wrong)
+  onOpenRange: (from: string, to: string, opts?: { privacy?: PrivacyFilter; media?: 'photo' | 'video' }) => void   // the dashboard: the Photostream on a date range, with a way back here
+  onOpenAlbum: (id: string, title: string, items: number) => void   // the dashboard: one album
+  onGoTab: (v: 'albums' | 'tags') => void                           // the dashboard: the Albums or Tags tab of My Flickr
   backupRequest?: { list: 'smaller'; nonce: number } | null   // a finished download asking for one Backup list
 }
 
 type View = 'overview' | 'tags' | 'photos' | 'albums' | 'backup'
 
-export default function CleanupPanel({ onViewPhotos, onDownload, settingsKey, onOpenSettings, onShowOnMap, backupRequest }: Props): React.JSX.Element {
+export default function CleanupPanel({ onViewPhotos, onDownload, settingsKey, onOpenSettings, onShowOnMap, onOpenRange, onOpenAlbum, onGoTab, backupRequest }: Props): React.JSX.Element {
   const scan = useTagScan()
   const rules = useCleanupRules(settingsKey)
   const [view, setView] = useState<View>('overview')
@@ -122,9 +126,10 @@ export default function CleanupPanel({ onViewPhotos, onDownload, settingsKey, on
           offCount={offCount}
           onGoTags={() => { setTagReq(null); goTo('tags') }}
           onGoPhotos={() => { setPhotoReq(null); goTo('photos') }}
-          onOpenTags={category => { setTagReq({ category, nonce: Date.now() }); goTo('tags') }}
+          onGoAlbums={() => goTo('albums')}
           onOpenPhotos={(condition, year) => { setPhotoReq({ condition, year, nonce: Date.now() }); goTo('photos') }}
           onTune={onOpenSettings}
+          go={{ range: onOpenRange, tab: onGoTab, album: onOpenAlbum, tagPhotos: tag => onViewPhotos([tag], 'any'), map: (lat, lon) => onShowOnMap?.(lat, lon) }}
         />
       )}
       {seen.tags && (

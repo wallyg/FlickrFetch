@@ -56,6 +56,9 @@ function healthDb(): Database.Database {
 
 // The days devices fall back to when their clock is not set (Unix 1970, Mac 1904, DOS 1980, Y2K 2000, 1900)
 const PLACEHOLDER_DAYS = "'1970-01-01', '1904-01-01', '1980-01-01', '2000-01-01', '1900-01-01'"
+// A guessed or placeholder date taken: Flickr marks it unknown, it is one of those fallback days, or it is before 1900. The Placeholder date check and the
+// library dashboard both use this, so their counts always agree. `p` is the photo_meta alias.
+export const GUESSED_DATE_SQL = `(p.date_unknown = 1 OR (p.date_taken <> '' AND (substr(p.date_taken, 1, 10) IN (${PLACEHOLDER_DAYS}) OR substr(p.date_taken, 1, 4) < '1900')))`
 
 // Photos with this many tags or more are flagged by "Too many tags" (Flickr stops at 75)
 function tagLimit(): number {
@@ -147,7 +150,7 @@ function conditionSql(db: Database.Database, c: HealthCondition): string {
     case 'dateFuture': return "(p.date_taken <> '' AND substr(p.date_taken, 1, 10) > date('now', 'localtime'))"
     // Compared by day, so time zones cannot cause a false alarm
     case 'dateAfterUpload': return "(p.date_upload IS NOT NULL AND p.date_taken <> '' AND substr(p.date_taken, 1, 10) > date(p.date_upload, 'unixepoch', 'localtime'))"
-    case 'datePlaceholder': return `(p.date_unknown = 1 OR (p.date_taken <> '' AND (substr(p.date_taken, 1, 10) IN (${PLACEHOLDER_DAYS}) OR substr(p.date_taken, 1, 4) < '1900')))`
+    case 'datePlaceholder': return GUESSED_DATE_SQL
     case 'descLink': return `(p.desc_flags & ${DESC_ONLY_LINK}) <> 0`
     case 'descCopy': return `(p.desc_flags & ${DESC_COPIES_TITLE}) <> 0`
     case 'descMarkup': return `(p.desc_flags & ${DESC_ONLY_MARKUP}) <> 0`
