@@ -83,7 +83,7 @@ export function OnThisDayNote({ summary, onOpen }: { summary: TodaySummary | nul
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  count: { marginLeft: 6, background: 'var(--ff-pink-action)', color: 'var(--ff-white)', borderRadius: 12, padding: '0 6px', fontSize: 11, fontWeight: 700, lineHeight: '16px', display: 'inline-block', verticalAlign: 'middle' },
+  count: { marginLeft: 6, color: 'var(--ff-pink-action)', fontSize: 'inherit', fontWeight: 'inherit', lineHeight: 'inherit' },   // plain text in the tab's own size, so the tab keeps its line
   anchor: { position: 'relative', height: 0, zIndex: 'var(--ff-z-toast)' as unknown as number },
   note: { position: 'absolute', top: 8, left: 24, display: 'flex', alignItems: 'center', gap: 12, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 8, padding: '6px 8px 6px 12px', boxShadow: '0 2px 8px color-mix(in srgb, var(--ff-navy) 18%, transparent)', transition: `opacity ${NOTE_FADE_MS}ms ease`, maxWidth: 'calc(100vw - 48px)' },
   text: { fontSize: 13, color: 'var(--ff-text)' },
