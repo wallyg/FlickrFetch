@@ -35,7 +35,7 @@ About 85 hand-built buttons now use the shared looks. Visible shifts: boxed grey
 
 Eight dialogs now share one shell: same backdrop, card, shadow, close mark, Esc, backdrop click and focus.
 
-- [x] D1 **Esc.** Open each and press Esc: Settings, About (the avatar menu), What's New and The Problem (both from About), the Download confirm box, the collage window (On This Day), Reset records and Sign out (avatar menu, album menu). Each closes. Open What's New from About and press Esc once: only What's New closes and About stays; press Esc again: About closes. In History (the clock) Esc closes the panel too.
+- [x] D1 **Esc.** Open each and press Esc: Settings, About (the Mac menu bar: FlickrFetch > About FlickrFetch), What's New and The Problem (both from About), the Download confirm box, the collage window (On This Day), Reset records and Sign out (avatar menu, album menu). Each closes. Open What's New from About and press Esc once: only What's New closes and About stays; press Esc again: About closes. In History (the clock) Esc closes the panel too.
 - [x] D2 **Backdrop click.** Click the dimmed area outside each dialog: it closes. Drag to select text inside Settings and let go outside the card: it does not close.
 - [x] D3 **One look.** All the dialogs have the same rounded corners and shadow; the close mark is the same drawn cross in the top right everywhere (including the collage window, which used a text cross); the What's New backdrop is the same shade as the others.
 - [x] D4 **Sizes.** The Download confirm box is a little wider than before (480). Settings and The Problem are 640 wide; About 720; the Reset and Sign out questions are 360. Nothing is cut off in a narrow window.
