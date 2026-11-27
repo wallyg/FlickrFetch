@@ -316,7 +316,7 @@ export function detectFindings(tags: TagRecord[], genericWords: string[] = DEFAU
 
 // ── State kept between runs ──────────────────────────────────────────────────
 
-interface StateRow { tag_name: string; category: AuditCategory; status: 'plan' | 'fine' | 'fixed'; replacement: string | null; display: string | null; photo_count: number | null }
+interface StateRow { tag_name: string; category: AuditCategory; status: 'plan' | 'fine'; replacement: string | null; display: string | null; photo_count: number | null }
 
 let ready: Database.Database | null = null
 function auditDb(): Database.Database {
@@ -335,12 +335,13 @@ function auditDb(): Database.Database {
         PRIMARY KEY (tag_name, category)
       );
     `)
+    db.prepare("DELETE FROM tag_audit_state WHERE status = 'fixed'").run()   // "fixed" is not a state any more (#220): those rows were finished plan items
     ready = db
   }
   return db
 }
 
-// Checks whose answer depends on a rule or a list you can edit (or on other tags), so a plan item for one is fixed only when the tag itself is gone
+// Checks whose answer depends on a rule or a list you can edit (or on other tags), so a plan item for one drops off the plan only when the tag itself is gone
 export const RULE_DEPENDENT: ReadonlySet<AuditCategory> = new Set<AuditCategory>(['glued', 'runon', 'plural', 'possessive', 'generic'])
 
 let cache: { builtFor: number; words: string; computedAt: number; findings: Finding[]; ids: Map<string, number>; missingIds: Map<string, string[]>; missingSuggestions: number } | null = null
@@ -389,17 +390,17 @@ function currentFindings(db: Database.Database): Finding[] | null {
   const missing = missingCache.result
   const findings: Finding[] = [...drafts, ...missing.drafts].map(d => {
     const s = states.get(`${d.tag}|${d.category}`)
-    return { ...d, status: (s && s.status !== 'fixed' ? s.status : 'open') as AuditStatus, replacement: s?.replacement || d.replacement }
+    return { ...d, status: (s ? s.status : 'open') as AuditStatus, replacement: s?.replacement || d.replacement }
   })
-  // A plan item whose problem no longer shows up has been fixed
+  // A plan item whose problem no longer shows up is done, so it drops off the plan (nothing is counted as fixed)
   const live = new Set(findings.map(f => `${f.tag}|${f.category}`))
-  const markFixed = db.prepare("UPDATE tag_audit_state SET status = 'fixed', updated_at = ? WHERE tag_name = ? AND category = ?")
-  // These checks depend on rules and on other tags, so they are fixed only when the tag itself is gone; a rule that merely stops flagging a tag is not a fix
+  const drop = db.prepare('DELETE FROM tag_audit_state WHERE tag_name = ? AND category = ?')
+  // These checks depend on rules and on other tags, so they drop off only when the tag itself is gone; a rule that merely stops flagging a tag is not a fix
   const names = new Set(records.map(r => r.name))
   for (const s of states.values()) {
     if (s.status !== 'plan' || live.has(`${s.tag_name}|${s.category}`)) continue
     if (RULE_DEPENDENT.has(s.category) && names.has(s.tag_name)) continue
-    markFixed.run(Date.now(), s.tag_name, s.category)
+    drop.run(s.tag_name, s.category)
   }
   cache = { builtFor: stamp, words: fullKey, computedAt: Date.now(), findings, ids: new Map(records.map(r => [r.name, r.id])), missingIds: missing.photoIds, missingSuggestions: missing.suggestions }
   return findings
@@ -415,16 +416,13 @@ export function auditSummary(): AuditSummary {
   const db = auditDb()
   const findings = currentFindings(db)
   if (!findings) return { computedAt: 0, hasIndex: false, rows: [] }
-  const fixed = new Map<string, number>()
-  for (const r of db.prepare("SELECT category, COUNT(*) AS n FROM tag_audit_state WHERE status = 'fixed' GROUP BY category").all() as { category: string; n: number }[]) fixed.set(r.category, r.n)
   const rows = AUDIT_CATEGORIES.map(category => {
     const mine = findings.filter(f => f.category === category)
     return {
       category,
       open: mine.filter(f => f.status === 'open').length,
       plan: mine.filter(f => f.status === 'plan').length,
-      fine: mine.filter(f => f.status === 'fine').length,
-      fixed: fixed.get(category) ?? 0
+      fine: mine.filter(f => f.status === 'fine').length
     }
   })
   return { computedAt: cache?.computedAt ?? 0, hasIndex: true, rows }
@@ -438,15 +436,7 @@ function matchingRows(q: AuditExportQuery): Finding[] {
   const match = (f: { display: string; replacement: string; evidence?: string }): boolean =>
     !needle || f.display.toLowerCase().includes(needle) || f.replacement.toLowerCase().includes(needle) || (f.evidence ?? '').toLowerCase().includes(needle)
   let rows: Finding[]
-  if (q.status === 'fixed') {
-    const saved = db.prepare("SELECT * FROM tag_audit_state WHERE category = ? AND status = 'fixed' ORDER BY photo_count DESC").all(q.category) as StateRow[]
-    rows = saved.map(s => ({
-      category: q.category, tag: s.tag_name, display: s.display ?? s.tag_name, count: s.photo_count ?? 0, confidence: 'medium' as AuditConfidence,
-      replacement: s.replacement ?? '', evidence: 'no longer found in your tag list', spellings: [], status: 'fixed' as AuditStatus
-    })).filter(match)
-  } else {
-    rows = findings.filter(f => f.category === q.category && f.status === q.status && match(f))
-  }
+  rows = findings.filter(f => f.category === q.category && f.status === q.status && match(f))
   if (q.reason && q.category === 'junk') rows = rows.filter(f => f.evidence === q.reason)   // Odd characters, one kind of problem
   // Suggested keeps the order the detection gave (strongest suspicion first); the others reorder the whole list,
   // so paging and the export follow it too. Ties fall back to A to Z.
@@ -466,7 +456,7 @@ const DASHBOARD_CATEGORIES: AuditCategory[] = ['notwin', 'noaccent', 'typo', 'gl
 export function auditOverview(): AuditOverview {
   const db = auditDb()
   const findings = currentFindings(db)
-  const empty: AuditOverview = { hasIndex: false, totalTags: 0, totalPhotos: 0, flaggedTags: 0, flaggedPhotos: 0, optionalTags: 0, optionalPhotos: 0, plan: 0, fine: 0, fixed: 0, byType: [], biggest: [], biggestWarnings: [] }
+  const empty: AuditOverview = { hasIndex: false, totalTags: 0, totalPhotos: 0, flaggedTags: 0, flaggedPhotos: 0, optionalTags: 0, optionalPhotos: 0, plan: 0, fine: 0, byType: [] }
   if (!findings) return empty
   const totalTags = (db.prepare('SELECT COUNT(*) AS n FROM tag_names WHERE photo_count > 0').get() as { n: number }).n
   const totalPhotos = (db.prepare('SELECT COUNT(*) AS n FROM tag_indexed_photo').get() as { n: number }).n
@@ -479,6 +469,15 @@ export function auditOverview(): AuditOverview {
     db.exec('DELETE FROM audit_pick')
     db.transaction(() => { for (const n of tagNames) { const id = ids.get(n); if (id !== undefined) fillPick.run(id) } })()
     return (db.prepare('SELECT COUNT(DISTINCT tp.photo_id) AS n FROM tag_photo tp JOIN audit_pick k ON k.tag_id = tp.tag_id').get() as { n: number }).n
+  }
+  // Photos that carry one of `tagNames` and none of `exceptNames`: a photo with an Issue tag and a Warning tag is counted once, under the Issue
+  db.exec('CREATE TEMP TABLE IF NOT EXISTS audit_except (tag_id INTEGER PRIMARY KEY)')
+  const photosOnlyFor = (tagNames: string[], exceptNames: string[]): number => {
+    photosFor(tagNames)   // fills audit_pick
+    db.exec('DELETE FROM audit_except')
+    const fillExcept = db.prepare('INSERT OR IGNORE INTO audit_except (tag_id) VALUES (?)')
+    db.transaction(() => { for (const n of exceptNames) { const id = ids.get(n); if (id !== undefined) fillExcept.run(id) } })()
+    return (db.prepare('SELECT COUNT(DISTINCT tp.photo_id) AS n FROM tag_photo tp JOIN audit_pick k ON k.tag_id = tp.tag_id WHERE NOT EXISTS (SELECT 1 FROM tag_photo t2 JOIN audit_except x ON x.tag_id = t2.tag_id WHERE t2.photo_id = tp.photo_id)').get() as { n: number }).n
   }
   // Photos missing a tag count the photos that lack it, not the photos that carry it, so they are counted apart from the tag problems
   const photosMissing = (tagNames: string[]): number => new Set(tagNames.flatMap(n => cache?.missingIds.get(n) ?? [])).size
@@ -498,7 +497,6 @@ export function auditOverview(): AuditOverview {
       open: mine.filter(f => f.status === 'open').length,
       plan: stateCount(category, 'plan'),
       fine: stateCount(category, 'fine'),
-      fixed: stateCount(category, 'fixed'),
       photos: category === 'missing' ? photosMissing([...new Set(mine.map(f => f.tag))]) : photosFor([...new Set(mine.map(f => f.tag))])
     }
   })
@@ -512,13 +510,10 @@ export function auditOverview(): AuditOverview {
     flaggedTags: flaggedNames.length,
     flaggedPhotos: photosFor(flaggedNames),
     optionalTags: optionalNames.length,
-    optionalPhotos: photosFor(optionalNames),
+    optionalPhotos: photosOnlyFor(optionalNames, flaggedNames),
     plan: byType.reduce((n, r) => n + r.plan, 0),
     fine: byType.reduce((n, r) => n + r.fine, 0),
-    fixed: byType.reduce((n, r) => n + r.fixed, 0),
-    byType,
-    biggest: [...liveOn].filter(f => f.category !== 'missing').sort((a, b) => b.count - a.count).slice(0, 10).map(f => ({ display: f.display, category: f.category, count: f.count })),
-    biggestWarnings: live.filter(f => stateOf(f.category) === 'optional').sort((a, b) => b.count - a.count).slice(0, 10).map(f => ({ display: f.display, category: f.category, count: f.count }))
+    byType
   }
 }
 
@@ -579,11 +574,11 @@ export function missingStats(): MissingTagStats {
 
 export function auditPlan(): AuditPlanRow[] {
   const db = auditDb()
-  currentFindings(db)   // makes sure fixed items are noticed
-  const rows = db.prepare("SELECT * FROM tag_audit_state WHERE status IN ('plan', 'fixed') ORDER BY CASE status WHEN 'plan' THEN 0 ELSE 1 END, category, photo_count DESC").all() as StateRow[]
+  currentFindings(db)   // makes sure items whose problem is gone have dropped off
+  const rows = db.prepare("SELECT * FROM tag_audit_state WHERE status = 'plan' ORDER BY category, photo_count DESC").all() as StateRow[]
   return rows.map(s => ({
     category: s.category, tag: s.tag_name, display: s.display ?? s.tag_name, count: s.photo_count ?? 0,
-    replacement: s.replacement ?? '', status: s.status as 'plan' | 'fixed', flickrUrl: tagUrl(s.tag_name),
+    replacement: s.replacement ?? '', flickrUrl: tagUrl(s.tag_name),
     line: planLine(s.display ?? s.tag_name, s.replacement ?? '', s.photo_count ?? 0, s.category)
   }))
 }
@@ -591,14 +586,14 @@ export function auditPlan(): AuditPlanRow[] {
 function planText(): string {
   const rows = auditPlan()
   if (rows.length === 0) return 'No tag fixes planned.'
-  return ['Tag fixes to make on Flickr', ''].concat(rows.map(r => `${r.status === 'fixed' ? '[x]' : '[ ]'} ${r.line}${r.flickrUrl ? `\n      ${r.flickrUrl}` : ''}`)).join('\n')
+  return ['Tag fixes to make on Flickr', ''].concat(rows.map(r => `[ ] ${r.line}${r.flickrUrl ? `\n      ${r.flickrUrl}` : ''}`)).join('\n')
 }
 
 const PLAN_CSV_HEADER = ['Status', 'Type', 'Tag', 'Photos', 'Replace with', 'Flickr page']
 const LIST_CSV_HEADER = ['Confidence', 'Tag', 'Photos', 'Replace with', 'Why flagged', 'Flickr page']
 
 export function planCsvRows(): string[][] {
-  return auditPlan().map(r => [r.status === 'fixed' ? 'Fixed' : 'To do', r.category, csvCell(r.display), String(r.count), csvCell(r.replacement), csvCell(r.flickrUrl)])
+  return auditPlan().map(r => ['To do', r.category, csvCell(r.display), String(r.count), csvCell(r.replacement), csvCell(r.flickrUrl)])
 }
 
 export function listCsvRows(q: AuditExportQuery): string[][] {

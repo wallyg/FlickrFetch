@@ -6,10 +6,12 @@ import { asButton } from '../ui/a11y'
 
 export interface BarPart { value: number; color: string; title?: string }
 
-// One labelled row: name, a bar made of coloured parts (scaled against `max`), and a number
-export function BarRow({ name, parts, max, number, onClick }: { name: string; parts: BarPart[]; max: number; number: string; onClick?: () => void }): React.JSX.Element {
+// One labelled row: name, a bar made of coloured parts (scaled against `max`), and the figures. `squeeze` draws the bar on a square-root
+// scale, so a small row still shows next to a huge one; the figures carry the exact counts (#220).
+export function BarRow({ name, parts, max, number, onClick, squeeze }: { name: string; parts: BarPart[]; max: number; number: React.ReactNode; onClick?: () => void; squeeze?: boolean }): React.JSX.Element {
   const total = parts.reduce((n, p) => n + p.value, 0)
-  const width = max > 0 ? Math.max(total > 0 ? 1.5 : 0, (total / max) * 100) : 0
+  const share = max > 0 ? total / max : 0
+  const width = max > 0 ? Math.max(total > 0 ? 1.5 : 0, (squeeze ? Math.sqrt(share) : share) * 100) : 0
   return (
     <div style={{ ...styles.row, cursor: onClick ? 'pointer' : 'default' }} {...(onClick ? asButton(onClick) : {})}>
       <div style={styles.rowName}>{name}</div>
@@ -21,6 +23,35 @@ export function BarRow({ name, parts, max, number, onClick }: { name: string; pa
         </div>
       </div>
       <div style={styles.rowNum}>{number}</div>
+    </div>
+  )
+}
+
+// "786 tags · 2,140 photos": the figures of a row, tags first (a photos-only row passes no tags)
+export function Counts({ tags, photos }: { tags?: number; photos: number }): React.JSX.Element {
+  return <>{tags !== undefined && <><b>{tags.toLocaleString()}</b> {tags === 1 ? 'tag' : 'tags'} · </>}<b>{photos.toLocaleString()}</b> {photos === 1 ? 'photo' : 'photos'}</>
+}
+
+// The ring's key: label first, then tags, then photos, then the share of the whole (a photos-only report has no tags column)
+export interface StatusRow { color: string; label: string; tags?: number; photos: number; share: string; tip: string }
+export function StatusLegend({ rows, withTags }: { rows: StatusRow[]; withTags: boolean }): React.JSX.Element {
+  const cell: React.CSSProperties = { textAlign: 'right', fontVariantNumeric: 'tabular-nums' }
+  const head: React.CSSProperties = { ...cell, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ff-text-secondary)' }
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: `10px minmax(90px, auto) ${withTags ? 'minmax(70px, auto) ' : ''}minmax(70px, auto) auto`, columnGap: 8, rowGap: 2, alignItems: 'baseline', marginTop: 8, fontSize: 13, color: 'var(--ff-text)' }}>
+      <span /><span />
+      {withTags && <span style={head}>Tags</span>}
+      <span style={head}>Photos</span>
+      <span style={head}>Share</span>
+      {rows.map(r => (
+        <React.Fragment key={r.label}>
+          <i title={r.tip} style={{ ...dash.legendSwatch, background: r.color }} />
+          <span title={r.tip}>{r.label}</span>
+          {withTags && <b style={cell} title={r.tip}>{(r.tags ?? 0).toLocaleString()}</b>}
+          <b style={cell} title={r.tip}>{r.photos.toLocaleString()}</b>
+          <span style={{ ...cell, color: 'var(--ff-text-secondary)' }}>{r.share}</span>
+        </React.Fragment>
+      ))}
     </div>
   )
 }
@@ -91,9 +122,9 @@ export function pctLabel(fraction: number): string {
   return `${Math.round(p)}%`
 }
 
-// open = an Issue (red; pink is only for selection), warn = a Warning (amber), plan and neutral are blue, fixed is green
-// The Issue mark is the darker red ink, so it stays clear of amber and green for red-green colour-blind viewers (#238)
-export const COLORS = { open: 'var(--ff-error-ink)', warn: 'var(--ff-warning)', plan: 'var(--ff-blue)', fine: 'var(--ff-fine-fill)', fixed: 'var(--ff-success)', neutral: 'var(--ff-blue)' }
+// open = an Issue (red; pink is only for selection), warn = a Warning (amber), fine = No problems (grey). There is no green: nothing is "fixed" (#220)
+// The Issue mark is the darker red ink, so it stays clear of amber for red-green colour-blind viewers (#238)
+export const COLORS = { open: 'var(--ff-error-ink)', warn: 'var(--ff-warning)', fine: 'var(--ff-fine-fill)' }
 
 export const dash: Record<string, React.CSSProperties> = {
   wrap: { flex: 1, minHeight: 0, overflowY: 'auto', padding: '8px 24px 16px' },
@@ -116,10 +147,10 @@ export const dash: Record<string, React.CSSProperties> = {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  row: { display: 'grid', gridTemplateColumns: 'minmax(120px, 1.1fr) minmax(70px, 1fr) 64px', gap: 8, alignItems: 'center', padding: '6px 0', borderRadius: 6 },
+  row: { display: 'grid', gridTemplateColumns: 'minmax(120px, 1.1fr) minmax(70px, 1fr) auto', gap: 8, alignItems: 'center', padding: '6px 0', borderRadius: 6 },
   rowName: { fontSize: 13, color: 'var(--ff-text)' },
   barTrack: { height: 14, borderRadius: 6, background: 'var(--ff-warm)', overflow: 'hidden' },
-  rowNum: { textAlign: 'right', fontSize: 13, fontWeight: 700, color: 'var(--ff-text)' },
+  rowNum: { textAlign: 'right', fontSize: 13, color: 'var(--ff-text)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' },
   legend: { display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 8, fontSize: 12, color: 'var(--ff-text-secondary)' },
   swatch: { display: 'inline-block', width: 10, height: 10, borderRadius: 4, marginRight: 4, verticalAlign: -1, fontStyle: 'normal' }
 }

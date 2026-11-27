@@ -144,7 +144,7 @@ export default function AlbumsPanel({ refreshKey, onFullRescan, toolbarLeft, sta
                 const fineCount = Math.max(0, grp.g.total - grp.g.issue - grp.g.warning)
                 const share = (n: number): number => (grp.g.total > 0 ? n / grp.g.total : 0)
                 const parts: RingPart[] = [
-                  { fraction: share(fineCount), color: COLORS.fixed, n: fineCount, short: 'fine', title: `${fineCount.toLocaleString()} ${grp.unit} are fine` },
+                  { fraction: share(fineCount), color: COLORS.fine, n: fineCount, short: 'no problems', title: `${fineCount.toLocaleString()} ${grp.unit} have no problems` },
                   { fraction: share(grp.g.warning), color: COLORS.warn, n: grp.g.warning, short: 'warning', title: `${grp.g.warning.toLocaleString()} ${grp.unit} have a Warning` },
                   { fraction: share(grp.g.issue), color: COLORS.open, n: grp.g.issue, short: 'issue', title: `${grp.g.issue.toLocaleString()} ${grp.unit} have an Issue` }
                 ]
@@ -163,7 +163,7 @@ export default function AlbumsPanel({ refreshKey, onFullRescan, toolbarLeft, sta
                         <div style={styles.legendRow}>
                           <span><i style={{ ...styles.swatch, background: COLORS.open }} /><b>{grp.g.issue.toLocaleString()}</b> Issue</span>
                           <span><i style={{ ...styles.swatch, background: COLORS.warn }} /><b>{grp.g.warning.toLocaleString()}</b> Warning</span>
-                          <span><i style={{ ...styles.swatch, background: COLORS.fixed }} /><b>{fineCount.toLocaleString()}</b> Fine</span>
+                          <span><i style={{ ...styles.swatch, background: COLORS.fine }} /><b>{fineCount.toLocaleString()}</b> No problems</span>
                         </div>
                         {live.length === 0 ? <div style={dash.muted}>Every check in this group is switched off (Tune checks).</div> : live.map(c => (
                           <div key={c} style={styles.checkRow} {...asButton(() => open(c))} title="Open this list">

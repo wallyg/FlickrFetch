@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import type { HealthCondition, HealthOverview as Overview } from '../../shared/types'
-import { BarRow, RingParts, COLORS, dash, pctLabel } from './DashboardParts'
-import type { RingPart } from './DashboardParts'
+import { BarRow, Counts, RingParts, StatusLegend, COLORS, dash, pctLabel } from './DashboardParts'
+import type { RingPart, StatusRow } from './DashboardParts'
 import { asButton } from '../ui/a11y'
 import { selectedOn, chip as chipBase } from '../ui/kit'
 import { ruleById } from '../../shared/cleanupRules'
-import { HEALTH_CONDITIONS } from '../../shared/healthChecks'
 
 // The dashboard side of the metadata health report: how complete the library is, which gaps are
 // biggest, how they spread across the years, and where they bunch up.
@@ -13,10 +12,6 @@ import { HEALTH_CONDITIONS } from '../../shared/healthChecks'
 const NAMES = (c: HealthCondition): string => ruleById(`photos:${c}`)?.name ?? c
 const PHRASES = (c: HealthCondition): string => ruleById(`photos:${c}`)?.phrase ?? c
 type Metric = 'anyGap' | HealthCondition
-// One colour per check, the same everywhere on this page; the light version is for "also missing something else"
-// (the golden angle spreads the hues, so neighbouring checks never look alike and every check keeps its own colour)
-const colorOf = (c: HealthCondition): string => `hsl(${Math.round((HEALTH_CONDITIONS.indexOf(c) * 137.5 + 38) % 360)} 68% 46%)`
-const lightOf = (c: HealthCondition): string => `color-mix(in srgb, ${colorOf(c)} 45%, white)`
 
 export default function HealthOverview({ refreshKey, onOpenList }: { refreshKey: number; onOpenList: (condition: HealthCondition, year?: string) => void }): React.JSX.Element {
   const [data, setData] = useState<Overview | null>(null)
@@ -42,26 +37,28 @@ export default function HealthOverview({ refreshKey, onOpenList }: { refreshKey:
     ({ n, color, short, fraction: frac(n), title: `${fmt(n)} photos (${pct(n, data.photos)} of your library): ${legend.toLowerCase()}` })
   const fineN = Math.max(0, data.photos - data.withGap - data.warnOnly)
   const ringParts: RingPart[] = [
-    mk(fineN, COLORS.fixed, 'fine', 'Fine'),
+    mk(data.withGap, COLORS.open, 'issue', 'An Issue gap'),
     mk(data.warnOnly, COLORS.warn, 'warning', 'Only a Warning gap'),
-    mk(data.withGap, COLORS.open, 'issue', 'An issue gap')
+    mk(fineN, COLORS.fine, 'no problems', 'No problems')
   ]
-  const legend: { color: string; n: number; label: string; detail: string; tip: string }[] = [
-    { color: COLORS.open, n: data.withGap, label: 'Issue', detail: pct(data.withGap, data.photos), tip: data.twoOrMore > 0 ? `${fmt(data.twoOrMore)} of these are missing more than one thing` : 'Photos with a gap from a check set to Issue' },
-    { color: COLORS.warn, n: data.warnOnly, label: 'Warning', detail: pct(data.warnOnly, data.photos), tip: 'Photos with no Issue, only a gap from a check set to Warning. Warnings never lower the score' },
-    { color: COLORS.fixed, n: fineN, label: 'Fine', detail: pct(fineN, data.photos), tip: 'Nothing missing' }
+  const legend: StatusRow[] = [
+    { color: COLORS.open, label: 'Issue', photos: data.withGap, share: pct(data.withGap, data.photos), tip: data.twoOrMore > 0 ? `${fmt(data.twoOrMore)} of these are missing more than one thing` : 'Photos with a gap from a check set to Issue' },
+    { color: COLORS.warn, label: 'Warning', photos: data.warnOnly, share: pct(data.warnOnly, data.photos), tip: 'Photos with no Issue, only a gap from a check set to Warning. Warnings never lower the score' },
+    { color: COLORS.fine, label: 'No problems', photos: fineN, share: pct(fineN, data.photos), tip: 'Nothing missing' }
   ]
-  const stacked = metric === 'anyGap'   // All gaps: dark = photos with an Issue gap, light = photos with only a Warning gap
+  const stacked = metric === 'anyGap'   // All gaps: red = photos with an Issue gap, amber = photos with only a Warning gap
+  const checkColor = (c: HealthCondition): string => (data.byType.find(t => t.condition === c)?.state === 'on' ? COLORS.open : COLORS.warn)   // one check: red when it is an Issue, amber when a Warning
   const share = (e: Overview['byYear'][number]): number => (e.total > 0 ? ((metric === 'anyGap' ? e.anyGap : e.by[metric]) + (stacked ? e.warnOnly : 0)) / e.total : 0)
   const reliable = data.byYear.filter(e => e.total >= 100)   // years with fewer photos are left out: their shares would jump around
   const topShare = Math.max(0.0001, ...reliable.map(share))
-  const sortedTypes = data.byType.filter(t => t.state === 'on').sort((a, b) => b.open - a.open)
-  const optionalTypes = data.byType.filter(t => t.state === 'optional').sort((a, b) => b.open - a.open)
+  const sortedTypes = data.byType.filter(t => t.state === 'on' && t.open > 0).sort((a, b) => b.open - a.open)
+  const optionalTypes = data.byType.filter(t => t.state === 'optional' && t.open > 0).sort((a, b) => b.open - a.open)
   // Buttons for the four biggest checks; the rest are in a list
   const byBiggest = [...data.byType].sort((a, b) => b.open - a.open).map(t => t.condition)
   const quick = byBiggest.slice(0, 4)
   const rest = byBiggest.slice(4)
-  const maxType = Math.max(1, ...data.byType.map(t => t.open))
+  const maxType = Math.max(1, ...sortedTypes.map(t => t.open))
+  const maxOptionalType = Math.max(1, ...optionalTypes.map(t => t.open))
 
   const clusters = more ? data.clusters : data.clusters.slice(0, 5)
 
@@ -73,14 +70,8 @@ export default function HealthOverview({ refreshKey, onOpenList }: { refreshKey:
           <RingParts label={pctLabel(data.photos > 0 ? data.complete / data.photos : 1)} parts={ringParts} active={hot} onActive={setHot} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={dash.big}><b style={{ ...dash.bigNum, display: 'inline', marginRight: 6 }}>{fmt(data.photos)}</b>photos in your library</div>
-            <div style={{ marginTop: 8 }}>
-              {legend.map(l => (
-                <div key={l.label} style={dash.legendRow} title={l.tip}>
-                  <i style={{ ...dash.legendSwatch, background: l.color }} />
-                  <b>{fmt(l.n)}</b><span>{l.label}</span><span style={dash.muted}>· {l.detail}</span>
-                </div>
-              ))}
-            </div>
+            <StatusLegend rows={legend} withTags={false} />
+            <div style={{ ...dash.muted, marginTop: 8 }}>Each photo is counted once, under its worst.</div>
           </div>
         </div>
       </div>
@@ -88,20 +79,24 @@ export default function HealthOverview({ refreshKey, onOpenList }: { refreshKey:
       <div style={{ ...dash.card, marginTop: 12 }}>
         <h3 style={dash.cardTitle}>Issues by type</h3>
         {sortedTypes.length === 0 && <span style={dash.muted}>No check is set to Issue (see Tune checks).</span>}
-        {sortedTypes.map(t => {
-          const only = data.onlyOne[t.condition]
-          return (
-            <BarRow key={t.condition} name={NAMES(t.condition)} max={data.photos} number={fmt(t.open)} onClick={() => onOpenList(t.condition)}
-              parts={[
-                { value: only, color: colorOf(t.condition), title: `${fmt(only)} photos have only this gap` },
-                { value: t.open - only, color: lightOf(t.condition), title: `${fmt(t.open - only)} photos have this and something else` }
-              ]} />
-          )
-        })}
+        {sortedTypes.map(t => (
+          <BarRow key={t.condition} name={NAMES(t.condition)} max={maxType} squeeze number={<Counts photos={t.open} />} onClick={() => onOpenList(t.condition)}
+            parts={[{ value: t.open, color: COLORS.open, title: `${fmt(t.open)} photos` }]} />
+        ))}
         {sortedTypes.length > 1 && <div style={{ ...dash.muted, marginTop: 8 }}>
-          Dark: photos missing only that. Light: photos also missing something else. Bar width is the share of your whole library.
+          Bar length is photos, on a squeezed scale so small rows stay visible. Compare the numbers, not the bars.
         </div>}
       </div>
+
+      {optionalTypes.length > 0 && (
+        <div style={{ ...dash.card, marginTop: 12 }}>
+          <h3 style={dash.cardTitle}>Warnings by type <span style={dash.hint}>(never lowers the score)</span></h3>
+          {optionalTypes.map(t => (
+            <BarRow key={t.condition} name={NAMES(t.condition)} max={maxOptionalType} squeeze number={<Counts photos={t.open} />} onClick={() => onOpenList(t.condition)}
+              parts={[{ value: t.open, color: COLORS.warn, title: `${fmt(t.open)} photos` }]} />
+          ))}
+        </div>
+      )}
 
       <div style={dash.grid}>
         <div style={dash.card}>
@@ -125,26 +120,23 @@ export default function HealthOverview({ refreshKey, onOpenList }: { refreshKey:
               if (!stacked) {
                 return (
                   <div key={e.year} title={`${e.year}: ${Math.round(share(e) * 100)}% (${fmt(e.by[metric])} of ${fmt(e.total)})`}
-                    style={{ ...styles.bar, height: `${tall}%`, background: share(e) === topShare ? 'var(--ff-pink)' : 'var(--ff-blue)' }} />
+                    style={{ ...styles.bar, height: `${tall}%`, background: checkColor(metric as HealthCondition) }} />
                 )
               }
-              const issueOnly = e.anyGap - e.both
-              const parts = issueOnly + e.both + e.warnOnly || 1
+              const parts = e.anyGap + e.warnOnly || 1
               return (
                 <div key={e.year} style={{ ...styles.bar, ...styles.stack, height: `${tall}%` }}
-                  title={`${e.year}: ${Math.round(share(e) * 100)}% have a gap (${fmt(issueOnly)} with an Issue only, ${fmt(e.both)} with an Issue and warnings, ${fmt(e.warnOnly)} with only warnings, of ${fmt(e.total)} photos)`}>
-                  <i style={{ flex: `${(e.warnOnly / parts) * 100} 0 0`, background: STACK.warn, display: 'block' }} />
-                  <i style={{ flex: `${(e.both / parts) * 100} 0 0`, background: STACK.both, display: 'block' }} />
-                  <i style={{ flex: `${(issueOnly / parts) * 100} 0 0`, background: STACK.issue, display: 'block' }} />
+                  title={`${e.year}: ${Math.round(share(e) * 100)}% have a gap (${fmt(e.anyGap)} with an Issue, ${fmt(e.warnOnly)} with only a Warning, of ${fmt(e.total)} photos)`}>
+                  <i style={{ flex: `${(e.warnOnly / parts) * 100} 0 0`, background: COLORS.warn, display: 'block' }} />
+                  <i style={{ flex: `${(e.anyGap / parts) * 100} 0 0`, background: COLORS.open, display: 'block' }} />
                 </div>
               )
             })}
           </div>
           {stacked && (
             <div style={styles.key}>
-              <span style={swatch(STACK.issue)} /> Issue only
-              <span style={{ ...swatch(STACK.both), marginLeft: 12 }} /> Issue and warnings
-              <span style={{ ...swatch(STACK.warn), marginLeft: 12 }} /> Only warnings
+              <span style={swatch(COLORS.open)} /> Has an Issue
+              <span style={{ ...swatch(COLORS.warn), marginLeft: 12 }} /> Only a Warning
             </div>
           )}
           <div style={styles.axis}>
@@ -154,7 +146,7 @@ export default function HealthOverview({ refreshKey, onOpenList }: { refreshKey:
           </div>
         </div>
         <div style={dash.card}>
-          <h3 style={dash.cardTitle}>Biggest issues to address <span style={dash.hint}>(years where one gap is unusually common)</span></h3>
+          <h3 style={dash.cardTitle}>Years that stand out <span style={dash.hint}>(a gap unusually common in one year)</span></h3>
           {data.clusters.length === 0 && <span style={dash.muted}>No year stands out.</span>}
           {clusters.map(c => (
             <div key={`${c.condition}|${c.year}`} style={dash.item} {...asButton(() => onOpenList(c.condition, c.year))}>
@@ -168,20 +160,10 @@ export default function HealthOverview({ refreshKey, onOpenList }: { refreshKey:
         </div>
       </div>
 
-      {optionalTypes.length > 0 && (
-        <div style={{ ...dash.card, marginTop: 12 }}>
-          <h3 style={dash.cardTitle}>Biggest warnings to heed <span style={dash.hint}>(by photos affected; never lowers the score)</span></h3>
-          {optionalTypes.map(t => (
-            <BarRow key={t.condition} name={NAMES(t.condition)} max={data.photos} number={fmt(t.open)} onClick={() => onOpenList(t.condition)}
-              parts={[{ value: t.open, color: 'var(--ff-slate)', title: `${fmt(t.open)} photos` }]} />
-          ))}
-        </div>
-      )}
     </div>
   )
 }
 
-const STACK = { issue: 'var(--ff-blue)', both: '#6a9be8', warn: '#bfd3f6' }   // darker = more serious
 const swatch = (c: string): React.CSSProperties => ({ width: 10, height: 10, borderRadius: 4, background: c, display: 'inline-block' })
 
 const styles: Record<string, React.CSSProperties> = {

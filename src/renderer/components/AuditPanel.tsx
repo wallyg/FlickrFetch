@@ -83,7 +83,7 @@ const TAG_GROUPS: { title: string; ids: string[] }[] = [
 ]
 const ALL_CATEGORIES: AuditCategory[] = ['glued', 'typo', 'junk', 'runon', 'notwin', 'noaccent', 'spelling', 'generic', 'numbers', 'filename', 'usedonce', 'plural', 'possessive', 'missing']
 const STATUS_LABELS: { key: AuditStatus; label: string }[] = [
-  { key: 'open', label: 'Open' }, { key: 'plan', label: 'In plan' }, { key: 'fine', label: 'Marked fine' }, { key: 'fixed', label: 'Fixed' }
+  { key: 'open', label: 'Open' }, { key: 'plan', label: 'In plan' }, { key: 'fine', label: 'Marked fine' }
 ]
 
 const GLUE_AT = new RegExp(GLUE_BOUNDARY_SOURCE)
@@ -268,19 +268,17 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
           {plan.length === 0 ? <div style={styles.muted}>Your plan is empty. Press Add to plan on a row to start it.</div> : (
             <>
               <div style={{ ...styles.muted, marginBottom: 6 }}>
-                Do these on Flickr (your Flickr page, Tags section, or the Organizr). After an Update, fixed ones tick themselves off.
+                Do these on Flickr (your Flickr page, Tags section, or the Organizr). After an Update, the ones you have done drop off this list by themselves.
               </div>
               {plan.map(p => (
                 <div key={`${p.category}|${p.tag}`} style={styles.planLine}>
-                  <span style={{ color: p.status === 'fixed' ? 'var(--ff-success)' : 'var(--ff-text-muted)' }}>{p.status === 'fixed' ? <Icon name="check" /> : '○'}</span>
-                  <span style={p.status === 'fixed' ? { textDecoration: 'line-through', color: 'var(--ff-text-muted)' } : undefined}>{p.line}</span>
+                  <span style={{ color: 'var(--ff-text-muted)' }}>○</span>
+                  <span>{p.line}</span>
                   <span style={styles.planType} title="The kind of problem this came from">{CATEGORY_INFO[p.category].name}</span>
                   {p.flickrUrl && <button style={styles.viewBtn} onClick={() => { setPlan(null); window.flickrAPI.openExternal(p.flickrUrl) }}>Open on Flickr <Icon name="external" /></button>}
                   <button style={{ ...styles.viewBtn, marginLeft: 0 }} onClick={() => { setPlan(null); onViewPhotos([p.display], 'any') }}>View photos</button>
-                  {p.status === 'plan' && <BatchEditButton inline key={`${p.category}|${p.tag}`} style={{ ...styles.viewBtn, marginLeft: 0 }} getIds={() => window.flickrAPI.getAuditPhotoIds(p.tag, p.category)} />}
-                  {p.status === 'plan'
-                    ? <button style={styles.planRemove} title="Remove from plan" aria-label="Remove from plan" onClick={() => void removeFromPlan(p)}><Icon name="close" /></button>
-                    : <span style={{ width: 18 }} />}
+                  <BatchEditButton inline key={`${p.category}|${p.tag}`} style={{ ...styles.viewBtn, marginLeft: 0 }} getIds={() => window.flickrAPI.getAuditPhotoIds(p.tag, p.category)} />
+                  <button style={styles.planRemove} title="Remove from plan" aria-label="Remove from plan" onClick={() => void removeFromPlan(p)}><Icon name="close" /></button>
                 </div>
               ))}
               <div style={styles.actions}>
@@ -366,9 +364,8 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
                   <div key={key} style={{ ...styles.card, ...(f.status === 'fine' ? { opacity: 0.6 } : {}) }}>
                     <div style={styles.l1}>
                       <span style={styles.tagName}>{category === 'glued' ? <GluedName text={f.display} /> : f.display}</span>
-                      {f.status !== 'fixed' && CONF_VARIES.includes(category) && <span title={CONFIDENCE_HINT[f.confidence]} style={{ ...styles.pill, ...(f.confidence === 'high' ? styles.confVery : f.confidence === 'low' ? styles.pillLow : styles.confPossible) }}>{CONF_LABEL[f.confidence]}</span>}
-                      {category === 'junk' && f.status !== 'fixed' && <span style={styles.reasonLabel}>{f.evidence}</span>}
-                      {f.status === 'fixed' && <span style={{ ...styles.pill, ...styles.pillHigh }}>Fixed</span>}
+                      {CONF_VARIES.includes(category) && <span title={CONFIDENCE_HINT[f.confidence]} style={{ ...styles.pill, ...(f.confidence === 'high' ? styles.confVery : f.confidence === 'low' ? styles.pillLow : styles.confPossible) }}>{CONF_LABEL[f.confidence]}</span>}
+                      {category === 'junk' && <span style={styles.reasonLabel}>{f.evidence}</span>}
                       <span style={styles.count}>{f.count.toLocaleString()} photo{f.count === 1 ? '' : 's'}</span>
                     </div>
                     <div style={styles.l2}>
@@ -376,14 +373,13 @@ export default function AuditPanel({ refreshKey, onViewPhotos, toolbarLeft, tool
                       <input
                         style={styles.input}
                         value={drafts[key] ?? f.replacement}
-                        disabled={f.status === 'fixed'}
                         placeholder={f.replacement === '' ? 'Leave empty to delete this tag' : undefined}
                         onChange={e => setDrafts(d => ({ ...d, [key]: e.target.value }))}
                         aria-label="Edit the replacement tags"
                       />
-                      {category === 'plural' && f.status !== 'fixed' && <span style={styles.muted}>{f.evidence}</span>}
+                      {category === 'plural' && <span style={styles.muted}>{f.evidence}</span>}
                     </div>
-                    {(SHOWS_EVIDENCE.includes(category) || f.status === 'fixed') && <div style={styles.ev}>{f.evidence}{f.spellings.length > 1 && category === 'spelling' ? ` · ${f.spellings.join(' · ')}` : ''}</div>}
+                    {SHOWS_EVIDENCE.includes(category) && <div style={styles.ev}>{f.evidence}{f.spellings.length > 1 && category === 'spelling' ? ` · ${f.spellings.join(' · ')}` : ''}</div>}
                     <div style={styles.actions}>
                       {f.status === 'open' && (
                         <>
@@ -430,7 +426,6 @@ const styles: Record<string, React.CSSProperties> = {
   tagName: { fontSize: 14, fontWeight: 700, color: 'var(--ff-text)', overflowWrap: 'anywhere' },
   glue: { display: 'inline-block', width: 2, height: 15, background: 'var(--ff-error)', verticalAlign: -3, margin: '0 0px' },
   pill: { fontSize: 11, borderRadius: 8, padding: '0px 8px' },
-  pillHigh: { background: 'var(--ff-success-bg)', color: 'var(--ff-success)' },   // Fixed
   confVery: { background: 'var(--ff-navy)', color: 'var(--ff-white)' },
   confPossible: { background: 'transparent', color: 'var(--ff-navy)', boxShadow: 'inset 0 0 0 1px var(--ff-navy)' },
   pillLow: { background: 'var(--ff-border)', color: 'var(--ff-text-secondary)' },

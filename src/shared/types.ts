@@ -345,7 +345,7 @@ export interface TagLetterGroup {
 
 // ── Tag audit (read-only report of likely tag problems) ──────────────────────
 export type AuditCategory = 'glued' | 'typo' | 'notwin' | 'noaccent' | 'junk' | 'runon' | 'spelling' | 'usedonce' | 'generic' | 'numbers' | 'filename' | 'missing' | 'plural' | 'possessive'   // missing: a tag that photos probably lack (the row is the tag to add; its photos are the ones missing it)
-export type AuditStatus = 'open' | 'plan' | 'fine' | 'fixed'
+export type AuditStatus = 'open' | 'plan' | 'fine'   // there is no 'fixed': a plan item whose problem is gone drops off the plan (#220)
 export type AuditConfidence = 'high' | 'medium' | 'low'
 
 export interface AuditFinding {
@@ -364,7 +364,7 @@ export interface AuditFinding {
 // habit: a tag it always travels with (top: the most common one); album; titlePlace: the place its title starts with; near: photos taken right beside it; titleName: the title contains the tag's name
 export interface AuditClue { key: 'habit' | 'album' | 'titlePlace' | 'near' | 'titleName'; n: number; top?: string }
 
-export interface AuditSummaryRow { category: AuditCategory; open: number; plan: number; fine: number; fixed: number }
+export interface AuditSummaryRow { category: AuditCategory; open: number; plan: number; fine: number }
 export interface AuditSummary { computedAt: number; hasIndex: boolean; rows: AuditSummaryRow[] }
 
 export type AuditSort = 'suggested' | 'most' | 'fewest' | 'alpha' | 'alphaDesc'   // suggested = strongest suspicion first (today's order)
@@ -395,7 +395,6 @@ export interface AuditPlanRow {
   display: string
   count: number
   replacement: string
-  status: 'plan' | 'fixed'
   flickrUrl: string
   line: string            // "Replace "Kantō" with Kantō, Kanto (1,133 photos)"
 }
@@ -574,13 +573,10 @@ export interface AuditOverview {
   flaggedTags: number          // tags with an open or planned finding from the checks that are On
   flaggedPhotos: number        // photos carrying at least one of those tags
   plan: number
-  fine: number
-  fixed: number
-  optionalTags: number         // tags flagged only by Optional checks
-  optionalPhotos: number
-  byType: { category: AuditCategory; state: 'optional' | 'on'; open: number; plan: number; fine: number; fixed: number; photos: number }[]   // checks that are Off are left out
-  biggest: { display: string; category: AuditCategory; count: number }[]
-  biggestWarnings: { display: string; category: AuditCategory; count: number }[]   // the same for checks set to Warning (at most 10)
+  fine: number                 // tags marked fine: they count as No problems
+  optionalTags: number         // tags flagged only by Optional checks (a Warning and no Issue)
+  optionalPhotos: number       // photos carrying one of those tags and no tag with an Issue: each photo is counted once, under its worst
+  byType: { category: AuditCategory; state: 'optional' | 'on'; open: number; plan: number; fine: number; photos: number }[]   // checks that are Off are left out
 }
 
 export interface HealthOverview {

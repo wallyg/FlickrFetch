@@ -1,0 +1,242 @@
+<title>Health Check Overview Mock-up</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap">
+<style>
+/* Layout: a notes strip on top, then the app's screen drawn in a plain white frame, one screen at a time. */
+/* Colours are the app's own tokens: red = Issue, amber = Warning, grey = No problems. Green is gone (#238). */
+:root {
+  --ff-blue: #0063DC; --ff-pink: #FF0084; --ff-pink-action: #D00069; --ff-navy: #1B2946; --ff-cream: #FCFAF6;
+  --ff-text: #111827; --ff-text-secondary: #667085; --ff-border: #E5E7EB; --ff-surface: #FFFFFF;
+  --ff-warm: #F7F5F1; --ff-tint: #FFF0F7; --ff-line-strong: #D4D4D8;
+  --issue: #B91C1C; --warn: #D97706; --fine: #CBD0D8; --fine-line: #8693A6; --info-bg: #EEF5FF; --info-line: #CFE0F7;
+  --page: #EEF0F4;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ff-text); font-family: 'Lato', -apple-system, BlinkMacSystemFont, sans-serif; font-size: 13px; line-height: 1.5;
+  padding-block: 24px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 980px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+h1 { font-size: 22px; margin: 0; color: var(--ff-navy); }
+h2 { font-size: 16px; margin: 0 0 8px; color: var(--ff-navy); }
+h3 { font-size: 14px; margin: 0 0 8px; color: var(--ff-navy); }
+p { margin: 0; }
+.notes { background: var(--ff-surface); border: 1px solid var(--ff-border); border-radius: 12px; padding: 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+.notes ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.notes .pick { background: var(--info-bg); border: 1px solid var(--info-line); border-radius: 8px; padding: 8px 12px; }
+.muted { color: var(--ff-text-secondary); }
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.tabs button, .seg button { font: inherit; border: 1px solid var(--ff-line-strong); background: var(--ff-surface); border-radius: 6px; padding: 4px 12px; cursor: pointer; color: var(--ff-text); }
+.tabs button[aria-pressed="true"], .seg button[aria-pressed="true"] { border-color: var(--ff-pink); background: var(--ff-tint); color: var(--ff-pink-action); font-weight: 700; }
+.seg { display: inline-flex; gap: 4px; }
+.frame { background: var(--ff-cream); border: 1px solid var(--ff-border); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.card { background: var(--ff-surface); border: 1px solid var(--ff-border); border-radius: 12px; padding: 12px 16px; min-width: 0; }
+.cards2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+.ringrow { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.big { font-size: 12px; color: var(--ff-text-secondary); }
+.big b { font-size: 18px; color: var(--ff-text); margin-right: 6px; }
+/* legend: label first, then tags, then photos, then share */
+.legend { display: grid; grid-template-columns: 10px minmax(90px, auto) minmax(90px, auto) minmax(100px, auto) auto; column-gap: 8px; row-gap: 2px; align-items: baseline; margin-top: 8px; font-size: 13px; }
+.legend i { width: 10px; height: 10px; border-radius: 4px; display: inline-block; transform: translateY(1px); }
+.legend .n { text-align: right; font-variant-numeric: tabular-nums; }
+.legend .n b { font-weight: 700; }
+.legend .hd { font-size: 11px; color: var(--ff-text-secondary); text-transform: uppercase; letter-spacing: .06em; }
+/* one row format for every list */
+.row { display: grid; grid-template-columns: minmax(130px, 1.2fr) minmax(80px, 1fr) minmax(150px, auto); gap: 8px; align-items: center; padding: 6px 0; border-top: 1px solid var(--ff-warm); }
+.row:first-of-type { border-top: 0; }
+.row .track { height: 14px; border-radius: 6px; background: var(--ff-warm); overflow: hidden; }
+.row .track i { display: block; height: 100%; }
+.row .nums { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.row .nums b { font-weight: 700; }
+.pill { font-size: 11px; border-radius: 8px; padding: 0 8px; background: var(--ff-warm); color: var(--ff-text-secondary); margin-left: 6px; }
+.row.start { grid-template-columns: minmax(130px, 1fr) auto; cursor: pointer; }
+.chip { font: inherit; font-size: 12px; border: 1px solid var(--ff-border); background: var(--ff-surface); border-radius: 12px; padding: 2px 8px; cursor: pointer; }
+.chip[aria-pressed="true"] { border-color: var(--ff-pink); background: var(--ff-tint); color: var(--ff-pink-action); font-weight: 700; }
+.head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.years { display: flex; align-items: flex-end; gap: 2px; height: 130px; margin-top: 8px; }
+.years div { flex: 1; min-width: 4px; border-radius: 3px 3px 0 0; display: flex; flex-direction: column; overflow: hidden; }
+.axis { display: flex; justify-content: space-between; font-size: 11px; color: var(--ff-text-secondary); margin-top: 4px; }
+.key { display: flex; gap: 12px; align-items: center; font-size: 12px; color: var(--ff-text-secondary); margin-top: 8px; flex-wrap: wrap; }
+.key i { width: 10px; height: 10px; border-radius: 4px; display: inline-block; margin-right: 4px; }
+.tune { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 12px; color: var(--ff-text-secondary); margin-top: 8px; }
+.tune button { font: inherit; border: 1px solid var(--ff-line-strong); background: var(--ff-surface); border-radius: 6px; padding: 4px 12px; }
+.cap { font-size: 12px; color: var(--ff-text-secondary); margin-top: 8px; }
+@media (max-width: 520px) { .row { grid-template-columns: 1fr auto; } .row .track { grid-column: 1 / -1; order: 3; } .legend { grid-template-columns: 10px auto auto; } }
+</style>
+
+<div class="wrap">
+  <div>
+    <h1>Health Check overview</h1>
+    <p class="muted">Mock-up for #220. The numbers are made up, to show the layout. Click through the three screens.</p>
+  </div>
+
+  <div class="notes">
+    <div>
+      <h2>What changes</h2>
+      <ul>
+        <li><b>No "Fixed".</b> A problem that is gone drops off your plan. Nothing counts as fixed.</li>
+        <li><b>"Dealt with" is gone.</b> Tags you marked fine count under "No problems".</li>
+        <li><b>"Fine" is now "No problems".</b></li>
+        <li><b>No green.</b> The ring is red (Issue), amber (Warning) and grey (No problems), so it reads for red-green colour-blind viewers.</li>
+        <li><b>One row everywhere:</b> name, bar, then tags, then photos.</li>
+        <li><b>The two "Biggest" cards are gone</b> from the Tags and Photos screens. They repeated the top of "by type". Issues and Warnings now use the same list.</li>
+        <li><b>One year chart,</b> red and amber stacked, for Issues and Warnings together.</li>
+      </ul>
+    </div>
+    <div class="pick">
+      <h2>Two things for you to pick</h2>
+      <p><b>1. The bar scale</b> on the Tags screen. Flip between A and B there.</p>
+      <p style="margin-top:8px"><b>2. The front page's "Where to start" list.</b> It is the only place that mixes tags and photos, so I kept it, in the same row format, with "Show all".</p>
+    </div>
+  </div>
+
+  <div class="tabs" role="group" aria-label="Screen">
+    <button id="t-front" aria-pressed="true">Front page</button>
+    <button id="t-tags" aria-pressed="false">Tags summary</button>
+    <button id="t-photos" aria-pressed="false">Photos summary</button>
+  </div>
+
+  <div class="frame" id="screen"></div>
+</div>
+
+<script>
+(function () {
+  var fmt = function (n) { return n.toLocaleString('en-US'); };
+  var C = { issue: 'var(--issue)', warn: 'var(--warn)', fine: 'var(--fine)' };
+
+  // ---- made-up numbers --------------------------------------------------------------------------------
+  var TAGS = { total: 9812, photos: 71154,
+    issue: { tags: 1204, photos: 3310 }, warn: { tags: 632, photos: 1890 }, fine: { tags: 7976, photos: 65954 }, markedFine: 212,
+    issues: [['Odd characters', 786, 2140], ['Names stuck together', 212, 640], ['Possible typos', 96, 410], ['Plain tags that may need accents', 58, 133], ['Run-ons', 33, 90], ['Accented tags with no plain twin', 19, 41]],
+    warns: [['Tags used only once', 402, 402], ['Generic tags', 148, 2600], ['Singular and plural', 82, 620]] };
+  var PH = { total: 71154, issue: 8420, warn: 5100, fine: 57634,
+    issues: [['No location', 5900], ['No title', 2310], ['No tags', 940]], warns: [['No description', 4300], ['Not in any album', 1800]] };
+  var YEARS = [2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025,2026]
+    .map(function (y, i) { var k = Math.abs(Math.sin(i * 1.7 + 1)); return { y: y, issue: 6 + Math.round(k * 24) + (y === 2013 ? 18 : 0), warn: 4 + Math.round(Math.abs(Math.cos(i * 1.1)) * 14) }; });
+
+  // ---- pieces -----------------------------------------------------------------------------------------
+  function ring(parts, label) {
+    var off = 25, s = '<svg width="130" height="130" viewBox="0 0 42 42" role="img" aria-label="' + label + '" style="flex-shrink:0">' +
+      '<circle cx="21" cy="21" r="15.9" fill="none" stroke="var(--ff-warm)" stroke-width="6"/>';
+    parts.forEach(function (p) {
+      var len = p.f * 100;
+      s += '<circle cx="21" cy="21" r="15.9" fill="none" stroke="' + p.c + '" stroke-width="6" stroke-dasharray="' + len + ' ' + (100 - len) + '" stroke-dashoffset="' + off + '"/>';
+      off -= len;
+    });
+    return s + '<text x="21" y="22.5" text-anchor="middle" font-size="7" font-weight="700" fill="var(--ff-navy)">' + label + '</text></svg>';
+  }
+  function pct(a, b) { return (Math.round(a / b * 1000) / 10) + '%'; }
+  function legend(rows, withPhotos) {
+    var h = '<div class="legend"><span></span><span class="hd"></span><span class="hd n">' + (withPhotos ? 'Tags' : 'Photos') + '</span>' + (withPhotos ? '<span class="hd n">Photos</span>' : '<span></span>') + '<span class="hd n">Share</span>';
+    rows.forEach(function (r) {
+      h += '<i style="background:' + r.c + '"></i><span>' + r.label + '</span><span class="n"><b>' + fmt(r.a) + '</b></span>' +
+        (withPhotos ? '<span class="n"><b>' + fmt(r.b) + '</b></span>' : '<span></span>') + '<span class="n muted">' + r.share + '</span>';
+    });
+    return h + '</div>';
+  }
+  function bar(name, width, color, nums, pill) {
+    return '<div class="row"><div>' + name + (pill ? '<span class="pill">' + pill + '</span>' : '') + '</div><div class="track"><i style="width:' + Math.max(1.5, width).toFixed(1) + '%;background:' + color + '"></i></div><div class="nums">' + nums + '</div></div>';
+  }
+  function card(title, body, extra) { return '<div class="card"><div class="head"><h3>' + title + '</h3>' + (extra || '') + '</div>' + body + '</div>'; }
+  function tune() { return '<div class="tune">2 checks are switched off. <button type="button">Tune checks…</button></div>'; }
+
+  // ---- Front page -------------------------------------------------------------------------------------
+  var showAll = false;
+  function front() {
+    var tr = ring([{ f: TAGS.issue.tags / TAGS.total, c: C.issue }, { f: TAGS.warn.tags / TAGS.total, c: C.warn }, { f: TAGS.fine.tags / TAGS.total, c: C.fine }], pct(TAGS.total - TAGS.issue.tags, TAGS.total));
+    var pr = ring([{ f: PH.issue / PH.total, c: C.issue }, { f: PH.warn / PH.total, c: C.warn }, { f: PH.fine / PH.total, c: C.fine }], pct(PH.total - PH.issue, PH.total));
+    var scores = '<div class="cards2">' +
+      '<div class="card">' + '<h3>Tags</h3><div class="ringrow">' + tr + '<div class="big"><b>' + fmt(TAGS.issue.tags) + '</b>of ' + fmt(TAGS.total) + ' tags have an Issue<br>' + fmt(TAGS.warn.tags) + ' more have a Warning</div></div></div>' +
+      '<div class="card">' + '<h3>Photos</h3><div class="ringrow">' + pr + '<div class="big"><b>' + fmt(PH.issue) + '</b>of ' + fmt(PH.total) + ' photos have an Issue<br>' + fmt(PH.warn) + ' more have a Warning</div></div></div></div>';
+    var start = [];
+    TAGS.issues.forEach(function (r) { start.push({ n: r[0], k: 'tags', t: r[1], p: r[2], by: r[2] }); });
+    PH.issues.forEach(function (r) { start.push({ n: r[0], k: 'photos', t: null, p: r[1], by: r[1] }); });
+    start.sort(function (a, b) { return b.by - a.by; });
+    var shown = showAll ? start : start.slice(0, 5);
+    var list = shown.map(function (s) {
+      var nums = s.t === null ? '<b>' + fmt(s.p) + '</b> photos' : '<b>' + fmt(s.t) + '</b> tags · <b>' + fmt(s.p) + '</b> photos';
+      return '<div class="row start"><div>' + s.n + '<span class="pill">' + s.k + '</span></div><div class="nums">' + nums + '</div></div>';
+    }).join('');
+    var more = start.length > 5 ? '<button class="chip" id="more" style="margin-top:8px">' + (showAll ? 'Show fewer' : 'Show all ' + start.length) + '</button>' : '';
+    var warns = [];
+    TAGS.warns.forEach(function (r) { warns.push({ n: r[0], k: 'tags', t: r[1], p: r[2] }); });
+    PH.warns.forEach(function (r) { warns.push({ n: r[0], k: 'photos', t: null, p: r[1] }); });
+    warns.sort(function (a, b) { return b.p - a.p; });
+    var wl = warns.map(function (s) {
+      var nums = s.t === null ? '<b>' + fmt(s.p) + '</b> photos' : '<b>' + fmt(s.t) + '</b> tags · <b>' + fmt(s.p) + '</b> photos';
+      return '<div class="row start"><div>' + s.n + '<span class="pill">' + s.k + '</span></div><div class="nums">' + nums + '</div></div>';
+    }).join('');
+    return scores +
+      card('Where to start <span class="muted" style="font-weight:400">(Issues, by photos affected, tags and photos together)</span>', list + more) +
+      card('Warnings to review <span class="muted" style="font-weight:400">(never lower the scores)</span>', wl + tune());
+  }
+
+  // ---- Tags summary -----------------------------------------------------------------------------------
+  var scale = 'B';
+  function scaled(v, max) { return scale === 'A' ? v / max * 100 : Math.sqrt(v / max) * 100; }
+  function tagsScreen() {
+    var t = TAGS;
+    var rg = ring([{ f: t.issue.tags / t.total, c: C.issue }, { f: t.warn.tags / t.total, c: C.warn }, { f: t.fine.tags / t.total, c: C.fine }], pct(t.total - t.issue.tags, t.total));
+    var rows = [
+      { c: C.issue, label: 'Issue', a: t.issue.tags, b: t.issue.photos, share: pct(t.issue.tags, t.total) },
+      { c: C.warn, label: 'Warning', a: t.warn.tags, b: t.warn.photos, share: pct(t.warn.tags, t.total) },
+      { c: C.fine, label: 'No problems', a: t.fine.tags, b: t.fine.photos, share: pct(t.fine.tags, t.total) }
+    ];
+    var top = card('How clean is your tag list?', '<div class="ringrow">' + rg + '<div style="flex:1;min-width:0"><div class="big"><b>' + fmt(t.total) + '</b>tags in your library</div>' + legend(rows, true) +
+      '<p class="cap">Each photo is counted once, under its worst. "No problems" includes ' + fmt(t.markedFine) + ' tags you marked fine.</p></div></div>');
+    var maxI = t.issues[0][1], maxW = t.warns[0][1];
+    var iss = card('Issues by type',
+      t.issues.map(function (r) { return bar(r[0], scaled(r[1], maxI), C.issue, '<b>' + fmt(r[1]) + '</b> tags · <b>' + fmt(r[2]) + '</b> photos'); }).join('') +
+      '<p class="cap">' + (scale === 'A' ? 'Bar length: tags, against the biggest row.' : 'Bar length: tags, on a squeezed scale so small rows stay visible. Compare the numbers, not the bars.') + '</p>',
+      '<div class="seg" role="group" aria-label="Bar scale"><button id="sA" aria-pressed="' + (scale === 'A') + '">A: to the biggest row</button><button id="sB" aria-pressed="' + (scale === 'B') + '">B: squeezed</button></div>');
+    var wrn = card('Warnings by type <span class="muted" style="font-weight:400">(never lower the score)</span>',
+      t.warns.map(function (r) { return bar(r[0], scaled(r[1], maxW), C.warn, '<b>' + fmt(r[1]) + '</b> tags · <b>' + fmt(r[2]) + '</b> photos'); }).join(''));
+    return top + iss + wrn;
+  }
+
+  // ---- Photos summary ---------------------------------------------------------------------------------
+  var metric = 'all';
+  function photosScreen() {
+    var p = PH;
+    var rg = ring([{ f: p.issue / p.total, c: C.issue }, { f: p.warn / p.total, c: C.warn }, { f: p.fine / p.total, c: C.fine }], pct(p.total - p.issue, p.total));
+    var rows = [
+      { c: C.issue, label: 'Issue', a: p.issue, share: pct(p.issue, p.total) },
+      { c: C.warn, label: 'Warning', a: p.warn, share: pct(p.warn, p.total) },
+      { c: C.fine, label: 'No problems', a: p.fine, share: pct(p.fine, p.total) }
+    ];
+    var top = card('How complete is your library?', '<div class="ringrow">' + rg + '<div style="flex:1;min-width:0"><div class="big"><b>' + fmt(p.total) + '</b>photos in your library</div>' + legend(rows, false) +
+      '<p class="cap">Each photo is counted once, under its worst.</p></div></div>');
+    var maxI = p.issues[0][1], maxW = p.warns[0][1];
+    var iss = card('Issues by type', p.issues.map(function (r) { return bar(r[0], Math.sqrt(r[1] / maxI) * 100, C.issue, '<b>' + fmt(r[1]) + '</b> photos'); }).join(''));
+    var wrn = card('Warnings by type <span class="muted" style="font-weight:400">(never lower the score)</span>', p.warns.map(function (r) { return bar(r[0], Math.sqrt(r[1] / maxW) * 100, C.warn, '<b>' + fmt(r[1]) + '</b> photos'); }).join(''));
+    var chips = [['all', 'All gaps']].concat(p.issues.map(function (r) { return [r[0], r[0]]; })).concat(p.warns.map(function (r) { return [r[0], r[0]]; }));
+    var top1 = Math.max.apply(null, YEARS.map(function (e) { return e.issue + e.warn; }));
+    var bars = YEARS.map(function (e) {
+      var h = (e.issue + e.warn) / top1 * 100;
+      return '<div style="height:' + h.toFixed(1) + '%" title="' + e.y + '"><i style="flex:' + e.warn + ' 0 0;background:' + C.warn + ';display:block"></i><i style="flex:' + e.issue + ' 0 0;background:' + C.issue + ';display:block"></i></div>';
+    }).join('');
+    var yr = card('Gaps by year taken <span class="muted" style="font-weight:400">(share of that year\'s photos; years under 100 photos left out)</span>',
+      '<div style="display:flex;gap:6px;flex-wrap:wrap">' + chips.map(function (c) { return '<button class="chip" aria-pressed="' + (c[0] === 'all') + '" type="button">' + c[1] + '</button>'; }).join('') + '</div>' +
+      '<div class="years" role="img" aria-label="Bars by year, red for Issues and amber for Warnings">' + bars + '</div>' +
+      '<div class="key"><span><i style="background:' + C.issue + '"></i>Has an Issue</span><span><i style="background:' + C.warn + '"></i>Only a Warning</span></div>' +
+      '<div class="axis"><span>2008</span><span>2017</span><span>2026</span></div>');
+    var stand = card('Years that stand out <span class="muted" style="font-weight:400">(a gap unusually common in one year)</span>',
+      [['2013: no location', 1240, '38% of that year\'s photos'], ['2016: no title', 610, '31% of that year\'s photos'], ['2010: no tags', 205, '27% of that year\'s photos']].map(function (r) {
+        return '<div class="row start"><div>' + r[0] + '<div class="muted" style="font-size:12px">' + r[2] + '</div></div><div class="nums"><b>' + fmt(r[1]) + '</b> photos</div></div>';
+      }).join(''));
+    return top + iss + wrn + '<div class="cards2" style="grid-template-columns:repeat(auto-fit,minmax(340px,1fr))">' + yr + stand + '</div>';
+  }
+
+  // ---- wiring -----------------------------------------------------------------------------------------
+  var current = 'front';
+  function draw() {
+    var el = document.getElementById('screen');
+    el.innerHTML = current === 'front' ? front() : current === 'tags' ? tagsScreen() : photosScreen();
+    ['front', 'tags', 'photos'].forEach(function (k) { document.getElementById('t-' + k).setAttribute('aria-pressed', String(k === current)); });
+    var more = document.getElementById('more'); if (more) more.onclick = function () { showAll = !showAll; draw(); };
+    var a = document.getElementById('sA'), b = document.getElementById('sB');
+    if (a) a.onclick = function () { scale = 'A'; draw(); };
+    if (b) b.onclick = function () { scale = 'B'; draw(); };
+  }
+  ['front', 'tags', 'photos'].forEach(function (k) { document.getElementById('t-' + k).onclick = function () { current = k; draw(); }; });
+  draw();
+})();
+</script>
