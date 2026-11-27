@@ -4,7 +4,7 @@ import type { TodaySummary } from '../../shared/types'
 import { itemsLabel } from '../../shared/counts'
 import { linkBtn } from '../ui/kit'
 
-// How On This Day tells you there is something today (#301): a count on its tab, and a small note the first time you
+// How On This Day tells you there is something today (#300): a count on its tab, and a small note the first time you
 // look each day. Neither takes any room on the screen: the count sits in the tab bar and the note floats over the
 // content, then fades by itself. Both can be switched off in Settings.
 
