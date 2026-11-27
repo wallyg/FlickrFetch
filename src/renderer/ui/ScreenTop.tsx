@@ -4,7 +4,7 @@ import React from 'react'
 //   Row 1  where you are (the title, the date, the count)  ...  one main action and a More menu. Left out when a screen has nothing to say there.
 //   Row 2  the media switch and the Filters button on the left; the count, sort and photo size on the right.
 // A screen fills the slots; it does not lay these rows out itself, so the four cannot drift apart again.
-export default function ScreenTop({ context, actions, filters, info }: { context?: React.ReactNode; actions?: React.ReactNode; filters: React.ReactNode; info?: React.ReactNode }): React.JSX.Element {
+export default function ScreenTop({ context, actions, filters, info }: { context?: React.ReactNode; actions?: React.ReactNode; filters?: React.ReactNode; info?: React.ReactNode }): React.JSX.Element {
   return (
     <div style={styles.top}>
       {(context || actions) && (
@@ -13,10 +13,12 @@ export default function ScreenTop({ context, actions, filters, info }: { context
           {actions && <div style={styles.actions}>{actions}</div>}
         </div>
       )}
-      <div style={styles.row2}>
-        <div style={styles.filters}>{filters}</div>
-        {info && <div style={styles.info}>{info}</div>}
-      </div>
+      {(filters || info) && (
+        <div style={styles.row2}>
+          <div style={styles.filters}>{filters}</div>
+          {info && <div style={styles.info}>{info}</div>}
+        </div>
+      )}
     </div>
   )
 }

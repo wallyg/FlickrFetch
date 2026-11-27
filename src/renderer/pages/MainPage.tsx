@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import ErrorBoundary from '../ui/ErrorBoundary'
 import Dialog from '../ui/Dialog'
+import ScreenTop from '../ui/ScreenTop'
+import MoreMenu from '../ui/MoreMenu'
 import { tabMark, linkBtn, primaryBtn, quietBtn, headingCard, headingDialog } from '../ui/kit'
 import Icon from '../ui/Icon'
 import { useRememberScroll } from '../hooks/useRememberScroll'
@@ -633,23 +635,13 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             Health Check
           </button>
         </div>
-        {view === 'photostream' && !photostreamSelectMode && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <button
-              style={styles.refreshButton}
-              title="Refresh photostream"
-              onClick={() => {
-                exitPhotostreamSelect()
-                setLoadedPhotostreamPhotos([])
-                setPhotostreamRefreshKey(k => k + 1)
-              }}
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.77" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="23 4 23 10 17 10"/>
-                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
-              </svg>
-            </button>
-            {photostreamFiltersActive ? (
+      </div>}
+      {appMode === 'you' && view === 'photostream' && !photostreamSelectMode && (
+        <div style={{ padding: '8px 16px 0' }}>
+          <ScreenTop
+            context={<span style={{ ...headingDialog }}>Photostream</span>}
+            actions={<>
+              {photostreamFiltersActive ? (
               <button
                 style={{ ...styles.selectButton, borderColor: 'var(--ff-pink)', color: 'var(--ff-pink-action)' }}
                 disabled={photostreamFilteredPhotos.length === 0}
@@ -678,15 +670,14 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
                 }}
               />
             )}
-            <button style={styles.selectButton} onClick={() => setPhotostreamSelectMode(true)}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                <rect x="2" y="3" width="7" height="7" rx="1"/><rect x="13" y="3" width="7" height="7" rx="1"/><rect x="2" y="14" width="7" height="7" rx="1"/><path d="M14 17l2 2 4-4"/>
-              </svg>
-              Select Photos
-            </button>
-          </div>
-        )}
-      </div>}
+              <MoreMenu items={[
+                { key: 'select', label: 'Select photos', onClick: () => setPhotostreamSelectMode(true) },
+                { key: 'refresh', label: 'Refresh photostream', onClick: () => { exitPhotostreamSelect(); setLoadedPhotostreamPhotos([]); setPhotostreamRefreshKey(k => k + 1) } }
+              ]} />
+            </>}
+          />
+        </div>
+      )}
       {appMode === 'you' && (view === 'photostream' || view === 'albums' || view === 'collections' || view === 'album-detail' || view === 'collection-detail') && (
         <OnThisDayCard refreshKey={dataKey} onOpen={() => { setOnThisDayVisited(true); setView('onthisday') }} />
       )}

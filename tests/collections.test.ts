@@ -196,3 +196,13 @@ test('the Issue mark is the darker red ink (red against amber was too close for 
   assert.ok(/export const COLORS = \{ open: 'var\(--ff-error-ink\)'/.test(read('src/renderer/components/DashboardParts.tsx')))
   assert.ok(/--ff-error-ink: *#B91C1C/.test(read('src/renderer/index.html')), 'the ink is the brand guide\'s #B91C1C')
 })
+
+test('the four photo screens use the one shared top (#257): Photostream, Timeline, On This Day and Map', () => {
+  for (const [file, what] of [['src/renderer/pages/MainPage.tsx', 'Photostream'], ['src/renderer/components/CameraRoll.tsx', 'Timeline day and month roll'], ['src/renderer/components/TimelinePanel.tsx', 'Timeline'], ['src/renderer/components/OnThisDayPanel.tsx', 'On This Day'], ['src/renderer/components/MapPanel.tsx', 'Map']] as const) {
+    assert.ok(/<ScreenTop/.test(read(file)), `${what} uses ScreenTop`)
+  }
+  assert.ok(/<MoreMenu/.test(read('src/renderer/components/CameraRoll.tsx')) && /<MoreMenu/.test(read('src/renderer/components/OnThisDayPanel.tsx')), 'the secondary actions are under More')
+  const camera = read('src/renderer/components/CameraRoll.tsx')
+  assert.ok(/from !== to && \(\s*<span style=\{\{ marginLeft: 'auto'/.test(camera) && /\{from !== to && <span style=\{styles\.muted\}>\{itemsLabel\(d\.count/.test(camera), 'a single day shows its date once, without the repeated count and buttons')
+  assert.ok(/export default function MoreMenu/.test(read('src/renderer/ui/MoreMenu.tsx')) && /Escape/.test(read('src/renderer/ui/MoreMenu.tsx')), 'More closes on Esc')
+})
