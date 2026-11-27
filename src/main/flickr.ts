@@ -761,7 +761,7 @@ export async function findDiscoverUser(query: string, tokenData: FlickrTokenData
     `&format=json&nojsoncallback=1`
   const authHeader2 = getOAuthHeader(infoUrl, 'GET', tokenData)
   const r2 = await http.get(infoUrl, { headers: { ...authHeader2, 'User-Agent': USER_AGENT } })
-  if (r2.data.stat !== 'ok') throw new Error(r2.data.message ?? 'Couldn\'t get your Flickr details.')
+  if (r2.data.stat !== 'ok') throw new Error(r2.data.message ?? 'Couldn\'t get that person\'s Flickr details.')
 
   const person = r2.data.person
   return {

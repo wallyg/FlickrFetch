@@ -59,3 +59,11 @@ test('the sequence, date and size settings still show up', () => {
   const n = name('Beach', { date: { position: 'prefix', format: 'yyyy-MM-dd' }, sequence: { position: 'prefix' }, sizeToken: { position: 'suffix' } })
   assert.equal(n, '2024-03-15.007.Beach.o')
 })
+
+test('every separator Settings offers is used as it is (the | stays |), and a / or : can never get into a name', () => {
+  for (const sep of ['.', '-', '_', ' ', '|'] as const) {
+    assert.equal(name('NYC Highline', { separator: sep, sequence: { position: 'prefix' } }), `007${sep}NYC Highline`, `separator "${sep}"`)
+  }
+  assert.equal(name('A', { separator: '/' as never, sequence: { position: 'prefix' } }), '007_A')
+  assert.equal(name('A', { separator: ':' as never, sequence: { position: 'prefix' } }), '007_A')
+})

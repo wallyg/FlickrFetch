@@ -324,7 +324,8 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
     setView('photostream')
   }
 
-  const startShownDownload = (shown: FlickrPhoto[], where: string, displayTitle: string): void => {
+  // isPhotostream says which it is: an album that happens to be called "Photostream" still gets its own folder
+  const startShownDownload = (shown: FlickrPhoto[], where: string, displayTitle: string, isPhotostream = false): void => {
     if (shown.length === 0) return
     const photoCount = shown.filter(p => p.media !== 'video').length
     const videoCount = shown.filter(p => p.media === 'video').length
@@ -335,7 +336,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
       videoCount,
       note: 'Only the photos matching your filters are downloaded',
       onConfirm: (track, exportFormat) => {
-        window.flickrAPI.startSelectedBatch(photos, `${displayTitle} (${photos.length} shown)`, track, exportFormat === 'zip', displayTitle === 'Photostream' ? '' : displayTitle)
+        window.flickrAPI.startSelectedBatch(photos, `${displayTitle} (${photos.length} shown)`, track, exportFormat === 'zip', isPhotostream ? '' : displayTitle)
       },
     })
   }
@@ -649,7 +650,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
                 style={{ ...styles.selectButton, borderColor: 'var(--ff-pink)', color: 'var(--ff-pink-action)' }}
                 disabled={photostreamFilteredPhotos.length === 0}
                 title={"Filters are on, so only the photos shown below are downloaded.\n\nClear the filters to download the whole photostream."}
-                onClick={() => startShownDownload(photostreamFilteredPhotos, 'Photostream', 'Photostream')}
+                onClick={() => startShownDownload(photostreamFilteredPhotos, 'Photostream', 'Photostream', true)}
               >
                 {`Download ${photostreamFilteredPhotos.length.toLocaleString()} shown`}
               </button>

@@ -25,9 +25,19 @@ function tipOf(target: EventTarget | null): Element | null {
 // It only counts when it is really under the pointer: not covered by a dialog that opened over its screen, and not scrolled out of view inside a box that clips it.
 let candidates: Element[] = []
 let candidatesAt = 0
+// A pop-up menu (a fixed or layered box that does not hold the control) drawn over the control: the pointer is on the menu, not on the control, and the menu's clicks must go through
+function coveredByLayer(el: Element, top: Element): boolean {
+  if (top === el || top.contains(el)) return false
+  for (let a: Element | null = top; a && a !== document.body && !a.contains(el); a = a.parentElement) {
+    const cs = getComputedStyle(a)
+    if (cs.position === 'fixed' || (cs.position === 'absolute' && cs.zIndex !== 'auto')) return true
+  }
+  return false
+}
 function reachable(el: Element, x: number, y: number): boolean {
   const top = document.elementFromPoint(x, y)
   if (!top) return false
+  if (coveredByLayer(el, top)) return false
   if ((el.closest('[data-dialog]') ?? null) !== (top.closest('[data-dialog]') ?? null)) return false   // a dialog is over it (or it is in one and the pointer is outside)
   for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) {
     const cs = getComputedStyle(a)

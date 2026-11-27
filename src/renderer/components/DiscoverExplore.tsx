@@ -5,7 +5,7 @@ import type { FlickrPhoto, PhotoPage } from '../../shared/types'
 import PhotoDetail from './PhotoDetail'
 import { GridIcon, ListIcon, JustifiedIcon, sharedStyles as ss, type PhotoViewMode, PhotoListRow, loadPhotoViewMode, savePhotoViewMode, loadRowHeight, saveRowHeight, computeJustifiedRows } from './PhotoGridShared'
 import EmptyState from './EmptyState'
-import { DISCOVER_GUTTER } from './WaveHeader'
+import WaveHeader, { DISCOVER_GUTTER } from './WaveHeader'
 
 interface Props {
   onDownload?: (photo: FlickrPhoto) => void
@@ -136,7 +136,7 @@ export default function DiscoverExplore({ onDownload }: Props): React.JSX.Elemen
 
   return (
     <div style={s.container}>
-      <div style={s.stickyHeader}>
+      <WaveHeader>
         <div style={s.headerRow}>
           <div>
             <h2 style={s.heading}>Explore</h2>
@@ -146,6 +146,8 @@ export default function DiscoverExplore({ onDownload }: Props): React.JSX.Elemen
             <button style={s.selectToggleBtn} onClick={() => setSelectMode(true)}>Select</button>
           )}
         </div>
+      </WaveHeader>
+      <div style={s.stickyHeader}>
         {selectMode && (
           <DiscoverSelectBar
             count={selectedIds.size}

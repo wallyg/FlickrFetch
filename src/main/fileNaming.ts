@@ -42,7 +42,8 @@ export function buildFilename(
   seqNum?: number,
   downloadSize?: string
 ): string {
-  const s = cleanForFileName(config.separator)
+  // Only "/" and ":" cannot be in a Mac file name, so the separator keeps everything else (the "|" choice has to stay "|": Settings shows it that way, and earlier versions saved it that way)
+  const s = config.separator.replace(/[/:\u0000-\u001f]/g, '_')
   let titleStr = title || photoId
   if (config.subStripParens) titleStr = titleStr.replace(/[()]/g, '')
   if (config.subStripBrackets) titleStr = titleStr.replace(/[\[\]]/g, '')

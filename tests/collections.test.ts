@@ -153,3 +153,12 @@ test('the Settings wording (#268 C and H): our own words are out of the descript
   assert.ok(/Leave GPS out of private photos/.test(settings) && />Clean-up</.test(settings))
   assert.ok(!/wraps around the core|resets at the start of each batch/.test(settings))
 })
+
+test('the review fixes: a menu over a disabled control keeps its clicks, an album called Photostream keeps its folder, Explore has the wave banner', () => {
+  const host = read('src/renderer/ui/HoverCardHost.tsx')
+  assert.ok(/function coveredByLayer/.test(host) && /if \(coveredByLayer\(el, top\)\) return false/.test(host), 'a layer over the control means the pointer is not on the control')
+  const main = read('src/renderer/pages/MainPage.tsx')
+  assert.ok(/isPhotostream \? '' : displayTitle/.test(main) && /'Photostream', 'Photostream', true\)/.test(main) && !/displayTitle === 'Photostream'/.test(main))
+  assert.ok(/<WaveHeader>/.test(read('src/renderer/components/DiscoverExplore.tsx')), 'Explore uses the same banner as the other Discover screens')
+  assert.ok(!/get your Flickr details/.test(read('src/main/flickr.ts')))
+})
