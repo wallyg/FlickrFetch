@@ -159,9 +159,30 @@ const NUMBER_WORDS: Record<number, string> = { 5: 'five', 10: 'ten' }
 const countWord = (n: number): string => NUMBER_WORDS[n] ?? String(n)
 const sum = (list: Named[], n: number): number => list.slice(0, n).reduce((a, b) => a + b.items, 0)
 
+const WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve']
+const words = (n: number): string => WORDS[n] ?? String(n)
+const joined = (names: string[]): string => (names.length <= 2 ? names.join(' and ') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`)
+
+/** Tags among the first `n` that sit on nearly the same photos: "Four of your top five are on nearly the same photos: ...". Empty when there are none. */
+export function sameTagsInsight(tags: Named[], n: number): string {
+  const shown = tags.slice(0, Math.min(n, tags.length))
+  const groups = new Map<number, string[]>()
+  for (const t of shown) if (t.group !== undefined) groups.set(t.group, [...(groups.get(t.group) ?? []), t.name])
+  const real = [...groups.values()].filter(g => g.length > 1).sort((a, b) => b.length - a.length)
+  if (real.length === 0) return ''
+  const inGroups = real.reduce((a, g) => a + g.length, 0)
+  const top = `of your top ${countWord(shown.length)} tags`
+  const lead = real.length === 1
+    ? `${words(inGroups)[0].toUpperCase()}${words(inGroups).slice(1)} ${top} are on nearly the same photos: ${joined(real[0])}.`
+    : `${words(inGroups)[0].toUpperCase()}${words(inGroups).slice(1)} ${top} fall into ${words(real.length)} groups that are on nearly the same photos, the biggest being ${joined(real[0])}.`
+  return `${lead} They may be one thing spelled several ways.`
+}
+
 export function tagsInsight(stats: LibraryStats, n: number): string {
   const tags = stats.topTags
   if (tags.length < 2 || stats.items === 0 || stats.tagUses === 0) return ''
+  const same = sameTagsInsight(tags, n)
+  if (same) return same
   const k = Math.min(n, tags.length)
   return `The most-used tag, ${tags[0].name}, is on ${percent(tags[0].items, stats.items)} of your items. Your top ${countWord(k)} tags make up ${percent(sum(tags, k), stats.tagUses)} of every tag you have used.`
 }

@@ -3,6 +3,7 @@ import type { HealthCondition, LibraryStats, Named } from '../../shared/types'
 import type { PrivacyFilter } from './PhotoGridShared'
 import { BarRow, COLORS, dash } from './DashboardParts'
 import { asButton } from '../ui/a11y'
+import InfoTip from '../ui/InfoTip'
 import { ruleById } from '../../shared/cleanupRules'
 import { linkBtn, segGroup, segBtn, selectedOn } from '../ui/kit'
 import {
@@ -235,12 +236,22 @@ export function PartsCards({ stats }: { stats: LibraryStats }): React.JSX.Elemen
   )
 }
 
+const GUESSED_HELP = [
+  '# What a guessed date is',
+  "- A photo's date taken normally comes from the camera's clock, stored in the file. When a file has no date (a scan, a screenshot, an edited copy), Flickr fills one in and marks it as a guess.",
+  '- A placeholder is a stand-in date such as 1 January 1970 or 1 January 2000.',
+  '# Why they are left out',
+  '- They would put bars in the wrong places. Many guesses are simply the day the photo was uploaded.',
+  '# What you can do',
+  '- The Placeholder date check lists them, so you can set the real dates on Flickr.'
+].join('\n')
+
 export function GuessedNote({ stats, go }: { stats: LibraryStats; go: Go }): React.JSX.Element | null {
   const g = stats.guessed
   if (g.items === 0) return null
   return (
     <div style={{ ...styles.insight, marginTop: 12 }}>
-      <b>{fmt(g.items)} {g.items === 1 ? 'item has' : 'items have'} a guessed or placeholder date</b>, so these date charts leave {g.items === 1 ? 'it' : 'them'} out. {g.items === 1 ? 'It is' : 'They are'} still counted everywhere else.{' '}
+      <b>{fmt(g.items)} {g.items === 1 ? 'item has' : 'items have'} a guessed or placeholder date</b>, so these date charts leave {g.items === 1 ? 'it' : 'them'} out. {g.items === 1 ? 'It is' : 'They are'} still counted everywhere else. <InfoTip text={GUESSED_HELP} />{' '}
       <button style={styles.link} onClick={() => go.list('datePlaceholder')}>Open the Placeholder date check</button>
     </div>
   )

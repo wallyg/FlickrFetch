@@ -1,7 +1,7 @@
 import test, { before } from 'node:test'
 import assert from 'node:assert/strict'
 import { openDatabase, getDb } from '../src/main/database'
-import { computeLibraryStats } from '../src/main/libraryStats'
+import { computeLibraryStats, topTagsWithGroups } from '../src/main/libraryStats'
 import { makeLookup, type Topo } from '../src/main/placeLookup'
 import countriesTopo from '../src/renderer/assets/countries-50m.json'
 import statesTopo from '../src/renderer/assets/states-us.json'
@@ -103,4 +103,15 @@ test('what is filled in, and the most-used tags and albums', () => {
   assert.deepEqual(s.topTags.map(t => [t.name, t.items]), [['New York', 2], ['Paris', 1]])
   assert.deepEqual(s.topAlbums.map(t => [t.name, t.items]), [['Trip', 3], ['Small', 1]])
   assert.deepEqual(s.topAlbums.map(t => t.id), ['al1', 'al2'])
+})
+
+test('tags on nearly the same photos share a group; a tag on a few of the same photos does not', () => {
+  const db = getDb()!
+  const ids = (p: string, n: number): string[] => Array.from({ length: n }, (_, i) => `${p}${i}`)
+  addTag(db, 'Big Apple', ids('g', 100)); addTag(db, 'The Big Apple', [...ids('g', 96), 'h1'])     // nearly the same photos
+  addTag(db, 'Borough', ids('g', 30))                                                      // some of them: a part of a place, not the same thing
+  const top = topTagsWithGroups(db)
+  const group = (name: string): number | undefined => top.find(t => t.name === name)?.group
+  assert.ok(group('Big Apple') !== undefined && group('Big Apple') === group('The Big Apple'))
+  assert.equal(group('Borough'), undefined)
 })

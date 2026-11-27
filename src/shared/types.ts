@@ -581,7 +581,7 @@ export interface AuditOverview {
 
 // ── The library dashboard (Health Check front page): totals, patterns, where, what is in it, records. Worked out from the local library list. ──
 export interface Ranked { label: string; items: number }
-export interface Named { name: string; items: number; id?: string; lat?: number; lon?: number }   // id: an album's id; lat and lon: where most of a place's items were taken (for the Map)
+export interface Named { name: string; items: number; id?: string; lat?: number; lon?: number; group?: number }   // group: tags with the same number sit on nearly the same photos   // id: an album's id; lat and lon: where most of a place's items were taken (for the Map)
 export interface LibraryStats {
   hasData: boolean
   items: number; photos: number; videos: number; albums: number; tags: number; tagUses: number

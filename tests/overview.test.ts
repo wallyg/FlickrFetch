@@ -75,6 +75,12 @@ test('many decades get short labels so none is cut off', () => {
   assert.match(read('src/renderer/components/DashboardCards.tsx'), /decades\.length > 6 \? d\.decade\.slice\(2\) : d\.decade/)
 })
 
+test('the guessed-dates note has an (i) that explains what a guessed date is and why it is left out', () => {
+  const cards = read('src/renderer/components/DashboardCards.tsx')
+  assert.match(cards, /<InfoTip text=\{GUESSED_HELP\} \/>/)
+  assert.match(cards, /What a guessed date is/); assert.match(cards, /Why they are left out/); assert.match(cards, /What you can do/)
+})
+
 test('the guessed-dates note says what it is and what it does, with no example date to puzzle over', () => {
   const cards = read('src/renderer/components/DashboardCards.tsx')
   assert.match(cards, /a guessed or placeholder date<\/b>, so these date charts leave/)

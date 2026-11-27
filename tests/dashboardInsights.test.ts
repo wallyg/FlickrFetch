@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { formatDay, formatMonth, formatHour, formatRange, addDays, lastDayOfMonth, partsCaptions, percent, busiestRun, yearInsight, decadeInsight, visibilityInsight, filledInsight, placesInsight, exactInsight, tagsInsight, albumsInsight, sizeChoices, shownCount } from '../src/shared/dashboardInsights'
+import { sameTagsInsight, formatDay, formatMonth, formatHour, formatRange, addDays, lastDayOfMonth, partsCaptions, percent, busiestRun, yearInsight, decadeInsight, visibilityInsight, filledInsight, placesInsight, exactInsight, tagsInsight, albumsInsight, sizeChoices, shownCount } from '../src/shared/dashboardInsights'
 import type { LibraryStats } from '../src/shared/types'
 
 // The sentences under the dashboard's cards are worked out from the numbers (#220). These use the owner's real shape, so a change that breaks one is seen.
@@ -87,4 +87,15 @@ test('the captions under the month, day and time charts name the peak', () => {
   assert.deepEqual(partsCaptions(stats({ months, weekdays, hours })), { month: 'May is your busiest month, then April.', day: 'Saturday is your day, by a long way.', hour: 'Most are taken around 3 pm.' })
   assert.equal(partsCaptions(stats({ months: Array(12).fill(0), weekdays: [10, 11, 12, 11, 10, 11, 12], hours: Array(24).fill(0) })).day, 'Tuesday is your busiest day.')   // a tie goes to the first
   assert.deepEqual(partsCaptions(stats({ months: [], weekdays: [], hours: [] })), { month: '', day: '', hour: '' })
+})
+
+test('tags on nearly the same photos are called out for the size chosen, in plain words', () => {
+  const t = (name: string, items: number, group?: number) => ({ name, items, ...(group ? { group } : {}) })
+  const tags = [t('New York', 16529, 1), t('NY', 16009, 1), t('NYC', 14770, 1), t('New York City', 14666, 1), t('Sculpture', 9264), t('Landmark', 9184), t('Manhattan', 8860), t('National Register of Historic Places', 8848, 2), t('NRHP', 8796, 2), t('U.S. National Register of Historic Places', 8341, 2)]
+  assert.equal(sameTagsInsight(tags, 5), 'Four of your top five tags are on nearly the same photos: New York, NY, NYC and New York City. They may be one thing spelled several ways.')
+  assert.equal(sameTagsInsight(tags, 10), 'Seven of your top ten tags fall into two groups that are on nearly the same photos, the biggest being New York, NY, NYC and New York City. They may be one thing spelled several ways.')
+  assert.equal(sameTagsInsight([t('A', 5), t('B', 4)], 5), '')                                   // nothing alike: nothing said
+  assert.equal(sameTagsInsight([t('A', 5, 1), t('B', 4), t('C', 3)], 5), '')                      // a group of one is not a group
+  assert.equal(tagsInsight(stats({ topTags: tags, tagUses: 1210050 }), 5), sameTagsInsight(tags, 5))   // the footer leads with it
+  assert.match(tagsInsight(stats({ topTags: [t('A', 5), t('B', 4)], tagUses: 100 }), 5), /^The most-used tag, A, is on/)   // otherwise the share of the library
 })

@@ -42,6 +42,35 @@ function ranked(db: Database.Database, sql: string, limit: number): Ranked[] {
   return (db.prepare(`${sql} LIMIT ${limit}`).all() as { k: string; n: number }[]).map(r => ({ label: r.k, items: r.n }))
 }
 
+/** How alike two tags' photos must be (shared photos over all photos of either) for them to count as "on nearly the same photos". */
+export const SAME_PHOTOS = 0.8
+
+/**
+ * The 25 most-used tags. Tags that sit on nearly the same photos get the same `group` number (NY, NYC, New York and New York City, for example): the app
+ * cannot know they mean the same, but photos that always carry all of them say so. Only the top 25 are compared, so this stays quick.
+ */
+export function topTagsWithGroups(db: Database.Database): Named[] {
+  const top = db.prepare('SELECT id, COALESCE(display, name) AS name, photo_count AS n FROM tag_names WHERE photo_count > 0 ORDER BY photo_count DESC, name LIMIT 25').all() as { id: number; name: string; n: number }[]
+  const photos = top.map(t => new Set((db.prepare('SELECT photo_id FROM tag_photo WHERE tag_id = ?').pluck().all(t.id) as string[])))
+  const parent = top.map((_, i) => i)
+  const root = (i: number): number => { while (parent[i] !== i) { parent[i] = parent[parent[i]]; i = parent[i] } return i }
+  for (let a = 0; a < top.length; a++) {
+    for (let b = a + 1; b < top.length; b++) {
+      const [small, big] = photos[a].size <= photos[b].size ? [photos[a], photos[b]] : [photos[b], photos[a]]
+      if (small.size === 0) continue
+      let shared = 0
+      for (const p of small) if (big.has(p)) shared++
+      if (shared / (photos[a].size + photos[b].size - shared) >= SAME_PHOTOS) parent[root(b)] = root(a)
+    }
+  }
+  const members = new Map<number, number[]>()
+  top.forEach((_, i) => members.set(root(i), [...(members.get(root(i)) ?? []), i]))
+  let next = 0
+  const groupOf = new Map<number, number>()
+  top.forEach((_, i) => { const m = members.get(root(i)) as number[]; if (m.length > 1 && !groupOf.has(root(i))) groupOf.set(root(i), ++next) })
+  return top.map((t, i) => ({ name: t.name, items: t.n, ...(groupOf.has(root(i)) ? { group: groupOf.get(root(i)) } : {}) }))
+}
+
 export function computeLibraryStats(db: Database.Database): LibraryStats {
   const one = (sql: string, ...params: unknown[]): number => (db.prepare(sql).get(...params) as { n: number | null }).n ?? 0
   const items = one('SELECT COUNT(*) AS n FROM photo_meta')
@@ -154,7 +183,7 @@ export function computeLibraryStats(db: Database.Database): LibraryStats {
       burst: burstRow && burstRow.n > 1 ? { hour: burstRow.k, items: burstRow.n } : null,
       oldest: bounds.lo ?? '', newest: bounds.hi ?? ''
     },
-    topTags: (db.prepare('SELECT COALESCE(display, name) AS name, photo_count AS n FROM tag_names WHERE photo_count > 0 ORDER BY photo_count DESC, name LIMIT 25').all() as { name: string; n: number }[]).map(r => ({ name: r.name, items: r.n })),
+    topTags: topTagsWithGroups(db),
     topAlbums: (db.prepare('SELECT id, title, photo_count AS n FROM album WHERE photo_count > 0 ORDER BY photo_count DESC, title LIMIT 25').all() as { id: string; title: string; n: number }[]).map(r => ({ name: r.title, items: r.n, id: r.id })),
     places: { countries: list(byCountry), states: list(byState), usItems, strayAt: stray && stray.n >= 20 ? { lat: stray.lat, lon: stray.lon, items: stray.n } : null },
     leastLocatedYear: least ? { year: least.year, percent: Math.round(least.percent * 10) / 10 } : null
