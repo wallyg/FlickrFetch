@@ -7,7 +7,7 @@ import { segGroup, segBtn, selectedOn, fieldBox, fieldCompact, putAsideBtn } fro
 import AlbumFitSettings from './AlbumFitSettings'
 import MissingTagSettings from './MissingTagSettings'
 import LocationHintSettings from './LocationHintSettings'
-import { LocationScope } from './HealthScopeSettings'
+import { LocationScope, VideoSwitch } from './HealthScopeSettings'
 import DuplicateSettings from './DuplicateSettings'
 import RichNote from '../ui/RichNote'
 
@@ -99,6 +99,7 @@ export default function TuneChecks({ stateOf, setState, onOpenAlbumTab }: Props)
   const group = (report: Report, title: string): React.JSX.Element => (
     <div>
       <div ref={el => { heads.current[report] = el }} style={styles.groupHead}>{title}</div>
+      {report === 'photos' && <div style={{ marginBottom: 12 }}><VideoSwitch /></div>}
       <div style={styles.rules}>
         {CLEANUP_RULES.filter(r => r.report === report).map(r => {
           const isOpen = open[r.id] === true

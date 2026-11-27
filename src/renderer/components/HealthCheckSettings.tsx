@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react'
 import TuneChecks from './TuneChecks'
-import { VideoSwitch } from './HealthScopeSettings'
 import { useCleanupRules } from '../hooks/useCleanupRules'
 import { segGroup, segBtn, selectedOn } from '../ui/kit'
 import InfoTip from '../ui/InfoTip'
@@ -49,7 +48,6 @@ export default function HealthCheckSettings({ reloadKey = 0, onOpenAlbumTab }: {
       <div>
         <div style={{ ...styles.head, display: 'flex', alignItems: 'center', gap: 7 }}>Tune checks <InfoTip text={TUNE_HELP} /></div>
         <div style={{ ...styles.desc, marginTop: 0, marginBottom: 12 }}>Choose how each check is treated. Changes apply at once.</div>
-        <div style={{ marginBottom: 18 }}><VideoSwitch /></div>
         <TuneChecks stateOf={rules.stateOf} setState={(id, st) => void rules.setState(id, st)} onOpenAlbumTab={onOpenAlbumTab} />
       </div>
     </div>

@@ -29,7 +29,7 @@
   "src/renderer/components/DuplicatesList.tsx": 6,
   "src/renderer/components/EmptyState.tsx": 1,
   "src/renderer/components/FineReasonHost.tsx": 3,
-  "src/renderer/components/HealthCheckSettings.tsx": 4,
+  "src/renderer/components/HealthCheckSettings.tsx": 3,
   "src/renderer/components/HealthOverview.tsx": 4,
   "src/renderer/components/HealthPanel.tsx": 8,
   "src/renderer/components/HealthScopeSettings.tsx": 1,
