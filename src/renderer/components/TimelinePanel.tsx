@@ -9,7 +9,9 @@ import type { PrivacyFilter } from './PhotoGridShared'
 import type { PickedAlbum } from './AlbumBox'
 import TimelineNav, { type Step } from './TimelineNav'
 import BackToTop from '../ui/BackToTop'
-import { OpenIcon, DownloadIcon, CameraRollIcon } from '../ui/icons'
+import { DownloadIcon } from '../ui/icons'
+import ScreenTop from '../ui/ScreenTop'
+import MoreMenu from '../ui/MoreMenu'
 import { quietBtn, primaryBtn, pillBtn, linkBtn } from '../ui/kit'
 import { asButton } from '../ui/a11y'
 import { itemsLabel } from '../../shared/counts'
@@ -184,14 +186,45 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
 
   const monthTitle = (y: number, m: number): string => `${MONTHS[m - 1]} ${y}`
 
+  // Row 2 of the shared top (#257): the media switch and Filters on the left, the count on the right. Every view of the Timeline uses it.
+  const filtersNode = (
+    <DateFilterBar media={media} onMedia={setMedia} privacy={privacy} onPrivacy={setPrivacy} albums={albums} onAlbums={setAlbums}
+      levels={data.levels} hasCatalog={data.hasCatalog} onOpenHealth={onFullRescan}
+      onClearAll={() => { setMedia('all'); setPrivacy('all'); setAlbums([]) }} />
+  )
+  const infoNode = <span>{data.total.toLocaleString()} photos{scopeNote} · by date taken</span>
+
   return (
     <div style={styles.wrap}>
-      <div style={styles.row}>
-        <DateFilterBar media={media} onMedia={setMedia} privacy={privacy} onPrivacy={setPrivacy} albums={albums} onAlbums={setAlbums}
-          levels={data.levels} hasCatalog={data.hasCatalog} onOpenHealth={onFullRescan}
-          onClearAll={() => { setMedia('all'); setPrivacy('all'); setAlbums([]) }} />
-        <span style={{ ...styles.muted, marginLeft: 'auto' }}>{data.total.toLocaleString()} photos{scopeNote} · by date taken</span>
-      </div>
+      {!roll && (
+        <ScreenTop
+          context={drill ? (
+            <>
+              <TimelineNav
+                backLabel="Timeline"
+                onBack={backToMonths}
+                title={monthTitle(drill.year, drill.month)}
+                prev={monthStep(drill.year, drill.month, -1)}
+                next={monthStep(drill.year, drill.month, 1)}
+              />
+              <span style={styles.muted}>{itemsLabel(monthCount(drill.year, drill.month), grid.vmap.get(`${drill.year}-${drill.month}`) ?? 0)}{scopeNote}</span>
+            </>
+          ) : undefined}
+          actions={drill ? (
+            <>
+              <button style={{ ...styles.pill, ...styles.primary }} onClick={() => void download(drill)}><DownloadIcon />Download these {monthCount(drill.year, drill.month).toLocaleString()}</button>
+              <MoreMenu items={[
+                { key: 'stream', label: 'Open in Photostream', title: openTitle(extra, 'that month'), onClick: () => onOpenRange(rangeOf(drill).from, rangeOf(drill).to, rangeOpts(extra)) },
+                { key: 'roll', label: 'Camera roll', title: "The month's photos in date order, grouped by day", onClick: () => setRoll({ year: drill.year, month: drill.month }) }
+              ]}>
+                <BatchEditButton style={styles.menuBtn} getIds={async () => { const r = rangeOf(drill); return (await window.flickrAPI.getDatePhotoIds({ kind: 'range', from: r.from, to: r.to, scope, ...extra })).map(p => p.id) }} />
+              </MoreMenu>
+            </>
+          ) : undefined}
+          filters={filtersNode}
+          info={infoNode}
+        />
+      )}
 
       {roll ? (
         <div style={{ marginTop: 8 }}>
@@ -205,6 +238,8 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
             onOpenRange={onOpenRange}
             onDownload={onDownload}
             onSeeOnThisDay={roll.day && !isTodayThisYear(roll) ? () => onOpenDay(roll.month, roll.day as number, roll.year) : null}
+            filters={filtersNode}
+            info={infoNode}
             heading={
               <TimelineNav
                 backLabel={monthTitle(roll.year, roll.month)}
@@ -259,21 +294,6 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
         </>
       ) : (
         <div style={{ marginTop: 8 }}>
-          <div style={styles.bar}>
-            <TimelineNav
-              backLabel="Timeline"
-              onBack={backToMonths}
-              title={monthTitle(drill.year, drill.month)}
-              prev={monthStep(drill.year, drill.month, -1)}
-              next={monthStep(drill.year, drill.month, 1)}
-            />
-            <span style={styles.muted}>{itemsLabel(monthCount(drill.year, drill.month), grid.vmap.get(`${drill.year}-${drill.month}`) ?? 0)}{scopeNote}</span>
-            <div style={{ flex: 1 }} />
-            <button style={styles.pill} title={openTitle(extra, 'that month')} onClick={() => onOpenRange(rangeOf(drill).from, rangeOf(drill).to, rangeOpts(extra))}><span style={styles.icon}><OpenIcon /></span>Open in Photostream</button>
-            <button style={styles.pill} onClick={() => setRoll({ year: drill.year, month: drill.month })} title="The month's photos in date order, grouped by day"><span style={styles.icon}><CameraRollIcon /></span>Camera roll</button>
-            <BatchEditButton inline style={styles.pill} getIds={async () => { const r = rangeOf(drill); return (await window.flickrAPI.getDatePhotoIds({ kind: 'range', from: r.from, to: r.to, scope, ...extra })).map(p => p.id) }} />
-            <button style={{ ...styles.pill, ...styles.primary }} onClick={() => void download(drill)}><DownloadIcon />Download these {monthCount(drill.year, drill.month).toLocaleString()}</button>
-          </div>
           {daysFailed && <LoadFailed what="this month" onRetry={() => setDaysTry(n => n + 1)} />}
           <div style={styles.card}>
             <div style={styles.cal}>
@@ -307,6 +327,7 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
 const styles: Record<string, React.CSSProperties> = {
   wrap: { height: '100%', boxSizing: 'border-box', overflowY: 'auto', padding: '8px 24px 24px' },   // the tab pane is a fixed box, so this panel scrolls inside it
   pad: { padding: '40px 24px' },
+  menuBtn: { background: 'none', border: 'none', padding: '6px 8px', fontSize: 13, color: 'var(--ff-text)', cursor: 'pointer', textAlign: 'left', width: '100%' },
   muted: { fontSize: 12, color: 'var(--ff-text-secondary)' },
   row: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   link: { ...linkBtn, fontSize: 13 },

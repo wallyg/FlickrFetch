@@ -6,6 +6,8 @@ import { PhotoTile } from './DateViewParts'
 import LoadFailed from './LoadFailed'
 import { itemsLabel } from '../../shared/counts'
 import { quietBtn, primaryBtn, linkBtn, segGroup, selectedOn, segBtn as segBtnBase } from '../ui/kit'
+import ScreenTop from '../ui/ScreenTop'
+import MoreMenu from '../ui/MoreMenu'
 
 // Camera roll: the photos of one month or one day in calendar order, grouped by day, like the camera roll in
 // the Photos app. Built from the local photo list, so it opens instantly. Shown inside the Timeline.
@@ -21,6 +23,8 @@ interface Props {
   onDownload: (photos: { id: string; title: string }[], title: string, note: string) => void
   onSeeOnThisDay: (() => void) | null   // for a single day: the same date across the years
   heading?: React.ReactNode             // replaces the plain title (the Timeline puts its back button and arrows here)
+  filters: React.ReactNode              // the media switch and Filters button (row 2 of the shared top)
+  info?: React.ReactNode                // the count line on the right of row 2
 }
 
 const PAGE_DAYS = 14
@@ -30,7 +34,7 @@ function dayHeading(date: string): string {
   return new Date(y, m - 1, d).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
 }
 
-export default function CameraRoll({ from, to, title, scope, extra, extraText, onOpenRange, onDownload, onSeeOnThisDay, heading }: Props): React.JSX.Element {
+export default function CameraRoll({ from, to, title, scope, extra, extraText, onOpenRange, onDownload, onSeeOnThisDay, heading, filters, info }: Props): React.JSX.Element {
   const [order, setOrder] = useState<'asc' | 'desc'>('asc')
   const xk = JSON.stringify(extra ?? null)   // a stable key, so a new but equal choice does not reload the roll
   const extraOf = (): DateExtra => (JSON.parse(xk) as DateExtra | null) ?? {}
@@ -74,20 +78,31 @@ export default function CameraRoll({ from, to, title, scope, extra, extraText, o
 
   return (
     <div>
-      <div style={styles.bar}>
-        {heading ?? <b style={{ color: 'var(--ff-navy)', fontSize: 14 }}>{title}</b>}
-        <span style={styles.muted}>{itemsLabel(totalPhotos, totalVideos)} on {totalDays.toLocaleString()} day{totalDays === 1 ? '' : 's'}{scopeNote}</span>
-        <div style={{ flex: 1 }} />
-        <div style={styles.seg}>
-          {(['asc', 'desc'] as const).map(o => (
-            <button key={o} style={{ ...styles.segBtn, ...(order === o ? styles.segOn : {}) }} onClick={() => setOrder(o)}>{o === 'asc' ? 'Oldest first' : 'Newest first'}</button>
-          ))}
-        </div>
-        {onSeeOnThisDay && <button style={styles.btn} onClick={onSeeOnThisDay} title="This date in every year">See in On This Day</button>}
-        <button style={styles.btn} title={extra?.albumIds?.length ? openTitle(extra, 'that period') : undefined} onClick={() => onOpenRange(from, to, rangeOpts(extra))}>Open in Photostream</button>
-        <BatchEditButton inline style={styles.btn} getIds={async () => (await window.flickrAPI.getDatePhotoIds({ kind: 'range', from, to, scope, ...extraOf() })).map(p => p.id)} />
-        <button style={{ ...styles.btn, ...styles.primary }} disabled={totalPhotos === 0} onClick={() => void downloadAll()}>Download all {totalPhotos.toLocaleString()}</button>
-      </div>
+      <ScreenTop
+        context={<>
+          {heading ?? <b style={{ color: 'var(--ff-navy)', fontSize: 14 }}>{title}</b>}
+          <span style={styles.muted}>{itemsLabel(totalPhotos, totalVideos)} on {totalDays.toLocaleString()} day{totalDays === 1 ? '' : 's'}{scopeNote}</span>
+        </>}
+        actions={<>
+          <button style={styles.primary} disabled={totalPhotos === 0} onClick={() => void downloadAll()}>Download all {totalPhotos.toLocaleString()}</button>
+          <MoreMenu items={[
+            ...(onSeeOnThisDay ? [{ key: 'otd', label: 'See in On This Day', title: 'This date in every year', onClick: onSeeOnThisDay }] : []),
+            { key: 'stream', label: 'Open in Photostream', title: extra?.albumIds?.length ? openTitle(extra, 'that period') : undefined, onClick: () => onOpenRange(from, to, rangeOpts(extra)) }
+          ]}>
+            <BatchEditButton style={styles.menuBtn} getIds={async () => (await window.flickrAPI.getDatePhotoIds({ kind: 'range', from, to, scope, ...extraOf() })).map(p => p.id)} />
+          </MoreMenu>
+        </>}
+        filters={filters}
+        info={<>
+          {info}
+          <div style={styles.seg}>
+            {(['asc', 'desc'] as const).map(o => (
+              <button key={o} style={{ ...styles.segBtn, ...(order === o ? styles.segOn : {}) }} onClick={() => setOrder(o)}>{o === 'asc' ? 'Oldest first' : 'Newest first'}</button>
+            ))}
+          </div>
+        </>}
+      />
+      <div style={{ height: 8 }} />
 
       {selected.size > 0 && (
         <div style={{ ...styles.bar, background: 'var(--ff-tint)', border: '1px solid #ffc2de', borderRadius: 8, padding: '6px 8px' }}>
@@ -105,11 +120,13 @@ export default function CameraRoll({ from, to, title, scope, extra, extraText, o
           <div key={d.date} style={{ margin: '12px 0 4px' }}>
             <div style={styles.dayHead}>
               <b style={{ fontSize: 14, color: 'var(--ff-navy)' }}>{dayHeading(d.date)}</b>
-              <span style={styles.muted}>{itemsLabel(d.count, d.videos)}</span>
-              <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: 12 }}>
-                <button style={styles.link} onClick={() => onOpenRange(d.date, d.date, rangeOpts(extra))}>Open in Photostream</button>
-                <button style={styles.link} onClick={() => void downloadDay(d.date, dayHeading(d.date))}>Download this day</button>
-              </span>
+              {from !== to && <span style={styles.muted}>{itemsLabel(d.count, d.videos)}</span>}
+              {from !== to && (
+                <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: 12 }}>
+                  <button style={styles.link} onClick={() => onOpenRange(d.date, d.date, rangeOpts(extra))}>Open in Photostream</button>
+                  <button style={styles.link} onClick={() => void downloadDay(d.date, dayHeading(d.date))}>Download this day</button>
+                </span>
+              )}
             </div>
             <div style={styles.tiles}>{d.photos.map(p => <PhotoTile key={p.id} photo={p} selected={selected.has(p.id)} onClick={() => toggle(p)} />)}</div>
             {d.count > d.photos.length && <div style={styles.muted}>Showing the first {d.photos.length} of {d.count.toLocaleString()}. Open in Photostream or Download this day for all of them.</div>}
@@ -133,6 +150,7 @@ const styles: Record<string, React.CSSProperties> = {
   btn: { ...quietBtn },
   primary: { ...primaryBtn },
   link: { ...linkBtn },
+  menuBtn: { background: 'none', border: 'none', padding: '6px 8px', fontSize: 13, color: 'var(--ff-text)', cursor: 'pointer', textAlign: 'left', width: '100%' },
   dayHead: { display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6 },
   tiles: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8 },
   more: { width: '100%', margin: '16px 0 8px', padding: 8, background: 'none', border: '1px dashed var(--ff-line-strong)', borderRadius: 8, color: 'var(--ff-text-secondary)', fontSize: 13, cursor: 'pointer' }
