@@ -347,8 +347,8 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
                   <Toggle
                     value={onThisDayCard}
                     onChange={v => { setOnThisDayCard(v) }}
-                    label="Show today's count"
-                    desc="A number on the On This Day tab, and a short note the first time you look each day, when you have photos from today's date in earlier years"
+                    label="Show the On This Day card"
+                    desc="A small card in the corner of My Flickr when you have photos from today's date in earlier years"
                   />
                   <Toggle
                     value={onThisDayNotify}

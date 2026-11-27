@@ -207,20 +207,12 @@ test('the four photo screens use the one shared top (#257): Photostream, Timelin
   assert.ok(/export default function MoreMenu/.test(read('src/renderer/ui/MoreMenu.tsx')) && /Escape/.test(read('src/renderer/ui/MoreMenu.tsx')), 'More closes on Esc')
 })
 
-test('On This Day is announced by a dot on its tab and a once-a-day note, not a banner above the content (#300)', () => {
+test('the On This Day card floats in the corner over the content: it sits between no bars and shifts nothing (#300)', () => {
   const main = read('src/renderer/pages/MainPage.tsx')
-  assert.ok(!/OnThisDayCard/.test(main), 'the banner is gone from every screen')
-  assert.match(main, /On This Day<TabCount summary=\{todaySummary\} \/>/)
-  assert.match(main, /<OnThisDayNote summary=\{todaySummary\}/)
-  const hint = read('src/renderer/components/OnThisDayHint.tsx')
-  assert.match(hint, /position: 'absolute'/)                       // the note floats, so the content never jumps when it goes
-  assert.match(hint, /hideOnThisDayCardToday\(\)/)                 // once a day
-  assert.match(hint, /setInterval\(load, LOOK_AGAIN_MS\)/)         // a window left open overnight changes to the new day by itself
-  assert.match(hint, /addEventListener\('focus', load\)/)
-})
-
-test('the On This Day note only counts down while the window is in front of you, so it is not missed while you are away (#300)', () => {
-  const hint = read('src/renderer/components/OnThisDayHint.tsx')
-  assert.match(hint, /document\.hasFocus\(\) && document\.visibilityState === 'visible'/)
-  assert.match(hint, /if \(!due \|\| held \|\| !watching\) return/)
+  assert.match(main, /<OnThisDayCard /)
+  assert.ok(!/OnThisDayNote|TabCount/.test(main), 'no dot or fading note')
+  const card = read('src/renderer/components/OnThisDayCard.tsx')
+  assert.match(card, /card: \{ position: 'fixed', right: 16, bottom: 16/)
+  assert.match(card, /setInterval\(load, /)                         // a window left open overnight changes to the new day by itself
+  assert.match(card, /hideOnThisDayCardToday\(\)/)                   // it stays until you hide it for the day
 })
