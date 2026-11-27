@@ -20,7 +20,7 @@ export default function AboutModal({ version, onClose }: AboutModalProps): React
 
   return (
     <>
-      <Dialog label="About FlickrFetch" size="large" onClose={onClose} cardStyle={{ background: 'var(--ff-warning-bg)', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <Dialog label="About FlickrFetch" size="large" onClose={onClose} cardStyle={{ background: 'var(--ff-cream)', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           <CloseButton onClick={onClose} style={{ position: 'absolute', top: 14, right: 14, zIndex: 1 }} />
 
           <div style={styles.body}>
@@ -234,11 +234,11 @@ const styles: Record<string, React.CSSProperties> = {
   footer: {
     borderTop: '1px solid var(--ff-shadow-soft)',
     padding: '12px 24px',
-    backgroundColor: 'var(--ff-warning-bg)'
+    backgroundColor: 'var(--ff-cream)'
   },
   copyright: {
     fontSize: '11px',
-    color: 'var(--ff-text)',   // the grey is 4.47:1 on this amber; the dark text is well over 4.5
+    color: 'var(--ff-text-secondary)',
     margin: 0,
     textAlign: 'center' as const
   }
