@@ -88,8 +88,8 @@ export default function AboutModal({ version, onClose }: AboutModalProps): React
                   <span style={{ ...styles.linkIcon, fontSize: '14px', letterSpacing: '-1px', lineHeight: 1 }}>
                     <span style={{ color: 'var(--ff-blue)' }}>●</span><span style={{ color: 'var(--ff-pink)' }}>●</span>
                   </span>
-                  <span style={styles.linkLabel}>Author's Flickr</span>
-                  <span style={styles.linkSub}>Photos by the author</span>
+                  <span style={styles.linkLabel}>Photos by Wally</span>
+                  <span style={styles.linkSub}>On Flickr</span>
                 </a>
                 <a href="#" style={styles.linkItem}
                   onClick={(e) => { e.preventDefault(); window.flickrAPI.openExternal('https://github.com/wallyg/FlickrFetch') }}>
