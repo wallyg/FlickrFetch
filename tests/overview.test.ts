@@ -94,3 +94,13 @@ test('Save as PDF is in the Health Check toolbar with a download icon, and "ever
   assert.match(grid, /dateSearchRequest\.from === ALL_TIME\.from && dateSearchRequest\.to === ALL_TIME\.to/)   // no date filter, so no "01/01/00 – 12/31/99" chip
   assert.match(grid, /setDateMode\(everyDate \? 'all' : 'between'\)/)
 })
+
+test('every dashboard shortcut has a way back to Health Check: the Photostream, a tag, an album and the Map', () => {
+  const main = read('src/renderer/pages/MainPage.tsx')
+  assert.match(main, /openDateRange\(from, to, opts \?\? \{\}, 'cleanup'\)/)                 // the Photostream: "Back to Health Check"
+  assert.match(main, /albumDetailOrigin === 'cleanup' \? 'Health Check' : 'Albums'/)          // an album: its back button says where it goes
+  assert.match(main, /else if \(albumDetailOrigin === 'cleanup'\) \{\s*setCleanupVisited\(true\); setView\('cleanup'\)/)
+  assert.match(main, /backTo=\{mapBack \? \{ label: 'Health Check'/)                           // the Map
+  assert.match(main, /if \(view !== 'map'\) setMapBack\(false\)/)                              // and the link goes when you leave the Map
+  assert.match(read('src/renderer/components/MapPanel.tsx'), /Back to \{backTo\.label\}/)
+})

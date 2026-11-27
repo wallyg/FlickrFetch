@@ -4,7 +4,7 @@ import type { AlbumFitPhoto, MapAccuracy, MapCluster, MapFilter, MapView } from 
 import { anchorAfterResize, limitCentre, minZoomFor, placeAt, usableSize, visibleTiles, wheelIntent, worldCopies, worldPixel, wrapLon } from '../../shared/mapGeo'
 import { loadOutline } from '../ui/mapOutline'
 import { mapColours } from '../ui/mapColours'
-import { quietBtn, primaryBtn, selectBox, headingCard, headingDialog } from '../ui/kit'
+import { quietBtn, primaryBtn, selectBox, headingCard, headingDialog, linkBtn } from '../ui/kit'
 import { dash } from './DashboardParts'
 import AlbumBox from './AlbumBox'
 import ScreenTop from '../ui/ScreenTop'
@@ -24,6 +24,7 @@ interface Props {
   refreshKey: number
   settingsKey: number   // goes up when the Settings window closes, so a change made there is read again
   target?: { lat: number; lon: number; nonce: number } | null   // Health Check's "Show on the map": open on this place and mark it
+  backTo?: { label: string; onClick: () => void } | null         // a way back to where the Map was opened from
 }
 
 const MIN_ZOOM = 1, MAX_ZOOM = 18
@@ -42,7 +43,7 @@ const MAX_TILES = 400
 const radius = (count: number): number => (count <= 1 ? 5 : 11 + 5 * Math.log10(count))
 const shortCount = (n: number): string => (n >= 10000 ? `${Math.round(n / 1000)}k` : n >= 1000 ? `${(n / 1000).toFixed(1).replace(/\.0$/, '')}k` : String(n))
 
-export default function MapPanel({ active, onDownload, onFullRescan, refreshKey, settingsKey, target }: Props): React.JSX.Element {
+export default function MapPanel({ active, onDownload, onFullRescan, refreshKey, settingsKey, target, backTo }: Props): React.JSX.Element {
   const box = useRef<HTMLDivElement | null>(null)
   const canvas = useRef<HTMLCanvasElement | null>(null)
   const [size, setSize] = useState({ w: 800, h: 520 })
@@ -416,6 +417,7 @@ export default function MapPanel({ active, onDownload, onFullRescan, refreshKey,
       <div style={{ padding: '8px 24px' }}>
       <ScreenTop
         context={<>
+          {backTo ? <button style={styles.backLink} onClick={backTo.onClick}><Icon name="arrowLeft" /> Back to {backTo.label}</button> : null}
           <span style={{ ...headingDialog }}>Map</span>
         <span style={styles.count}>
           {data ? <><b>{n(data.located)}</b> of {n(data.photos)} photos have a location · {hasFilter && <><b>{n(data.matching)}</b> match · </>}<b>{n(data.inView)}</b> in view</> : 'Reading your photos…'}
@@ -582,6 +584,7 @@ export default function MapPanel({ active, onDownload, onFullRescan, refreshKey,
 }
 
 const styles: Record<string, React.CSSProperties> = {
+  backLink: { ...linkBtn, fontSize: 13, flexShrink: 0 },
   // Fills the tab exactly (its parent is a fixed-size pane, not a flex box, so `flex: 1` did nothing and the map was only as tall as its content:
   // about 300 px, or as tall as the photo tray when that was open)
   wrap: { height: '100%', minHeight: 0, flexDirection: 'column', overflow: 'hidden' },

@@ -97,7 +97,10 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
   const [timelineVisited, setTimelineVisited] = useState(false)
   const [mapVisited, setMapVisited] = useState(false)
   const [mapTarget, setMapTarget] = useState<{ lat: number; lon: number; nonce: number } | null>(null)   // Health Check's "Show on the map"
-  const showOnMap = (lat: number, lon: number): void => { setMapTarget({ lat, lon, nonce: Date.now() }); setMapVisited(true); setView('map') }
+  // Only Health Check opens the Map on a place, so the Map offers a way back there until you leave it
+  const [mapBack, setMapBack] = useState(false)
+  const showOnMap = (lat: number, lon: number): void => { setMapTarget({ lat, lon, nonce: Date.now() }); setMapVisited(true); setMapBack(true); setView('map') }
+  useEffect(() => { if (view !== 'map') setMapBack(false) }, [view])
   // A finished download that came down smaller than the Original: open Health Check > Backup > Saved smaller than the original (#126)
   const [backupRequest, setBackupRequest] = useState<{ list: 'smaller'; nonce: number } | null>(null)
   const showSmaller = (): void => { setBackupRequest({ list: 'smaller', nonce: Date.now() }); setCleanupVisited(true); setView('cleanup') }
@@ -126,7 +129,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
   // Set when 'View photos' is pressed in the Tags tab; the photostream applies it as a tag search
   const [tagSearchRequest, setTagSearchRequest] = useState<{ tags: string[]; mode: TagMode; nonce: number } | null>(null)
   const [collectionPath, setCollectionPath] = useState<FlickrCollection[]>([])
-  const [albumDetailOrigin, setAlbumDetailOrigin] = useState<'albums' | 'collections'>('albums')
+  const [albumDetailOrigin, setAlbumDetailOrigin] = useState<'albums' | 'collections' | 'cleanup'>('albums')
   const [batchProgress, setBatchProgress] = useState<BatchProgress | null>(null)
   const [completedBatches, setCompletedBatches] = useState<BatchProgress[]>([])
   const prevProgressRef = useRef<BatchProgress | null>(null)
@@ -486,6 +489,8 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
     setSelectedAlbum(null)
     if (albumDetailOrigin === 'collections') {
       setView('collection-detail')
+    } else if (albumDetailOrigin === 'cleanup') {
+      setCleanupVisited(true); setView('cleanup')   // opened from the Health Check dashboard: back goes there
     } else {
       setView('albums')
     }
@@ -629,7 +634,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
           </button>
           <span style={styles.tabDivider} aria-hidden="true" />   {/* views on the left, tools on the right */}
           <button
-            style={{ ...tabStyle, ...(view === 'cleanup' ? styles.tabActive : {}) }}
+            style={{ ...tabStyle, ...(view === 'cleanup' || view === 'album-detail' && albumDetailOrigin === 'cleanup' ? styles.tabActive : {}) }}
             onClick={() => { setCleanupVisited(true); setView('cleanup') }}
           >
             Health Check
@@ -683,7 +688,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
       {appMode === 'you' && view === 'album-detail' && selectedAlbum && (
         <div style={styles.albumHeader}>
           <button style={styles.backButton} onClick={handleBackFromAlbumDetail}>
-            <Icon name="arrowLeft" /> {albumDetailOrigin === 'collections' ? (currentCollection?.title ?? 'Collection') : 'Albums'}
+            <Icon name="arrowLeft" /> {albumDetailOrigin === 'collections' ? (currentCollection?.title ?? 'Collection') : albumDetailOrigin === 'cleanup' ? 'Health Check' : 'Albums'}
           </button>
           <span style={styles.albumTitle}>{selectedAlbum.title}</span>
           {!albumSelectMode && selectedAlbum.photoCount > 0 && (
@@ -890,6 +895,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
               refreshKey={dataKey}
               settingsKey={settingsKey}
               target={mapTarget}
+              backTo={mapBack ? { label: 'Health Check', onClick: () => { setCleanupVisited(true); setView('cleanup') } } : null}
               onDownload={startDateDownload}
               onFullRescan={() => { setCleanupVisited(true); setView('cleanup') }}
             />
@@ -902,7 +908,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
               onOpenSettings={() => openSettings('health')}
               onShowOnMap={showOnMap}
               onOpenRange={(from, to, opts) => openDateRange(from, to, opts ?? {}, 'cleanup')}
-              onOpenAlbum={(id, title, items) => { exitPhotostreamSelect(); setLoadedAlbumPhotos([]); setSelectedAlbum({ id, title, description: '', photoCount: items, videoCount: 0, coverPhotoUrl: '' }); setAlbumDetailOrigin('albums'); setAlbumsVisited(true); setView('album-detail') }}
+              onOpenAlbum={(id, title, items) => { exitPhotostreamSelect(); setLoadedAlbumPhotos([]); setSelectedAlbum({ id, title, description: '', photoCount: items, videoCount: 0, coverPhotoUrl: '' }); setAlbumDetailOrigin('cleanup'); setAlbumsVisited(true); setView('album-detail') }}
               onGoTab={v => { if (v === 'albums') { setAlbumsVisited(true); setSelectedAlbum(null); setView('albums') } else { setTagsVisited(true); setView('tags') } }}
               backupRequest={backupRequest}
               onDownload={startDateDownload}
