@@ -4,7 +4,7 @@ import Dialog from '../ui/Dialog'
 import Icon from '../ui/Icon'
 import type { AppSettings, MetadataSettings } from '../../shared/types'
 import { isFreeAccount, limitNotice } from '../../shared/downloadLimits'
-import { primaryBtn, quietBtn, linkBtn, segGroup, segBtn, selectedOn, headingCard, headingDialog } from '../ui/kit'
+import { primaryBtn, quietBtn, linkBtn, segGroup, segBtn, selectedOn, headingScreen } from '../ui/kit'
 
 const SIZE_LABELS: Record<string, string> = {
   original: 'Original',
@@ -17,16 +17,18 @@ const SIZE_LABELS: Record<string, string> = {
 
 // Fields in Settings → Metadata tab order
 const META_FIELDS: { key: keyof MetadataSettings; label: string }[] = [
-  { key: 'embedTitle',       label: 'Title' },
-  { key: 'embedDescription', label: 'Description' },
-  { key: 'embedTags',        label: 'Tags' },
-  { key: 'embedDateTaken',   label: 'Date taken' },
-  { key: 'embedCreator',     label: 'Creator' },
-  { key: 'embedGps',         label: 'GPS location' },
-  { key: 'embedLicense',     label: 'CC license' },
-  { key: 'embedPhotoUrl',    label: 'Photo page URL' },
-  { key: 'embedPhotoId',     label: 'Flickr photo ID' },
+  { key: 'embedTitle',       label: 'title' },
+  { key: 'embedDescription', label: 'description' },
+  { key: 'embedTags',        label: 'tags' },
+  { key: 'embedDateTaken',   label: 'date taken' },
+  { key: 'embedCreator',     label: 'creator' },
+  { key: 'embedGps',         label: 'location' },
+  { key: 'embedLicense',     label: 'license' },
+  { key: 'embedPhotoUrl',    label: 'photo page' },
+  { key: 'embedPhotoId',     label: 'photo ID' },
 ]
+/** "title, tags and photo ID" */
+const listOf = (items: string[]): string => items.length <= 1 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`
 
 export interface PendingDownload {
   title: string
@@ -74,9 +76,9 @@ export default function DownloadConfirmModal({ pending, settingsKey, isPro, onCa
         </div>
 
         <div style={s.body}>
-          <p style={s.batchTitle}>{pending.title}</p>
-
-          <p style={s.countLine}>
+          <p style={s.subject}>
+            {pending.title}
+            {' · '}
             {pending.photoCount > 0 && `${pending.photoCount.toLocaleString()} photo${pending.photoCount !== 1 ? 's' : ''}`}
             {pending.photoCount > 0 && pending.videoCount > 0 && ' · '}
             {pending.videoCount > 0 && `${pending.videoCount.toLocaleString()} video${pending.videoCount !== 1 ? 's' : ''}`}
@@ -88,11 +90,13 @@ export default function DownloadConfirmModal({ pending, settingsKey, isPro, onCa
             <div style={s.settingsRow}>
               <span style={s.settingLabel}>Quality</span>
               <span style={s.settingValue}>{quality}</span>
+              <button style={s.changeLink} onClick={onOpenSettings}>Change</button>
             </div>
             {folderDisplay && (
               <div style={{ ...s.settingsRow, marginBottom: 0 }}>
                 <span style={s.settingLabel}>Save to</span>
                 <span style={s.settingValue} title={folder}>{folderDisplay}</span>
+                <button style={s.changeLink} onClick={onOpenSettings}>Change</button>
               </div>
             )}
           </div>
@@ -102,26 +106,13 @@ export default function DownloadConfirmModal({ pending, settingsKey, isPro, onCa
           <div style={s.metaSection}>
             <p style={s.metaHeading}>Metadata embedding</p>
             {meta ? (() => {
-              const onFields = META_FIELDS.filter(f => meta[f.key] as boolean)
-              const offFields = META_FIELDS.filter(f => !(meta[f.key] as boolean))
+              const onFields = META_FIELDS.filter(f => meta[f.key] as boolean).map(f => f.label)
+              const offFields = META_FIELDS.filter(f => !(meta[f.key] as boolean)).map(f => f.label)
               return (
                 <>
-                  {onFields.length > 0 ? (
-                    <div style={s.metaGrid}>
-                      {onFields.map(({ key, label }) => (
-                        <div key={key} style={s.metaItem}>
-                          <span style={{ ...s.metaCheck, color: 'var(--ff-success)' }}><Icon name="check" /></span>
-                          <span style={{ ...s.metaLabel, color: 'var(--ff-text)' }}>{label}</span>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p style={{ fontSize: '12px', color: 'var(--ff-text-secondary)', margin: '0 0 4px' }}>None</p>
-                  )}
-                  {offFields.length > 0 && (
-                    <p style={s.offFields}>
-                      Not embedding: {offFields.map(f => f.label).join(', ')}
-                    </p>
+                  <p style={s.metaLine}>{onFields.length > 0 ? `Saved in each file: ${listOf(onFields)}.` : 'Nothing is saved in the files.'}</p>
+                  {offFields.length > 0 && onFields.length > 0 && (
+                    <p style={s.offFields}>Not saved: {listOf(offFields)}. <button style={s.changeLink} onClick={onOpenSettings}>Change</button></p>
                   )}
                 </>
               )
@@ -131,6 +122,7 @@ export default function DownloadConfirmModal({ pending, settingsKey, isPro, onCa
           </div>
         </div>
 
+        <p style={{ ...s.metaHeading, padding: '16px 16px 0', margin: 0 }}>Options</p>
         <div style={s.formatRow}>
           <span style={s.formatLabel}>Export as</span>
           <div style={segGroup} role="radiogroup" aria-label="Export as">
@@ -152,7 +144,6 @@ export default function DownloadConfirmModal({ pending, settingsKey, isPro, onCa
         </div>
 
         <div style={s.footer}>
-          <button style={s.settingsLink} onClick={onOpenSettings}>Change settings</button>
           <div style={s.footerBtns}>
             <button style={s.cancelBtn} onClick={onCancel}>Cancel</button>
             <button style={s.confirmBtn} onClick={handleConfirm}>
@@ -169,11 +160,13 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     padding: '16px 16px 0',
   },
-  title: { ...headingDialog },
+  title: { ...headingScreen },
   body: {
     padding: '16px 16px 0',
   },
-  batchTitle: { ...headingCard, margin: '0 0 4px' },
+  subject: { margin: 0, fontSize: 13, color: 'var(--ff-text-secondary)' },
+  changeLink: { ...linkBtn, fontSize: 12, flexShrink: 0 },
+  metaLine: { margin: '0 0 4px', fontSize: 13, color: 'var(--ff-text)', lineHeight: 1.5 },
   countLine: {
     margin: '0 0 4px', fontSize: '13px', color: 'var(--ff-text-secondary)',
   },
@@ -218,7 +211,7 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: '12px',
   },
   offFields: {
-    margin: '0', fontSize: '11px', color: 'var(--ff-text-secondary)', lineHeight: '1.4',
+    margin: 0, fontSize: 12, color: 'var(--ff-text-secondary)', lineHeight: 1.4,
   },
   formatRow: {
     display: 'flex', alignItems: 'center', gap: '12px',
@@ -231,17 +224,16 @@ const s: Record<string, React.CSSProperties> = {
     padding: '12px 16px 0',
   },
   trackLabel: {
-    display: 'flex', alignItems: 'center', fontSize: 13, color: 'var(--ff-text-secondary)',
+    display: 'flex', alignItems: 'center', fontSize: 13, color: 'var(--ff-text)',
     cursor: 'pointer', fontWeight: '400',
   },
   footer: {
-    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
     padding: '12px 16px 16px', borderTop: '1px solid var(--ff-border)', marginTop: '12px',
   },
   footerBtns: {
     display: 'flex', gap: '8px',
   },
-  settingsLink: { ...linkBtn, fontSize: '13px' },
   cancelBtn: { ...quietBtn },
   confirmBtn: { ...primaryBtn },
 }

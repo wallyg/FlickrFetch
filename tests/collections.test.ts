@@ -162,3 +162,12 @@ test('the review fixes: a menu over a disabled control keeps its clicks, an albu
   assert.ok(/<WaveHeader>/.test(read('src/renderer/components/DiscoverExplore.tsx')), 'Explore uses the same banner as the other Discover screens')
   assert.ok(!/get your Flickr details/.test(read('src/main/flickr.ts')))
 })
+
+test('3.14 design passes: About says whose Flickr the link opens, and the Confirm download box shows what is left out', () => {
+  const about = read('src/renderer/components/AboutModal.tsx')
+  assert.ok(!/My Flickr<\/span>/.test(about) && /Author's Flickr/.test(about), 'the link opens the author\'s page, so it says so')
+  assert.ok(/This product uses the Flickr API but is not endorsed or certified by SmugMug, Inc\./.test(about), 'Flickr\'s own attribution words stay as they are')
+  const confirm = read('src/renderer/components/DownloadConfirmModal.tsx')
+  assert.ok(/Saved in each file:/.test(confirm) && /Not saved:/.test(confirm), 'one line for what is saved, one for what is left out')
+  assert.ok(!/>Change settings</.test(confirm) && (confirm.match(/>Change</g) ?? []).length >= 3, 'each thing you can change has its own Change link')
+})
