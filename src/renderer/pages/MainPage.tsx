@@ -24,7 +24,7 @@ import TagsPanel from '../components/TagsPanel'
 import CleanupPanel from '../components/CleanupPanel'
 import OnThisDayPanel from '../components/OnThisDayPanel'
 import TimelinePanel from '../components/TimelinePanel'
-import OnThisDayCard from '../components/OnThisDayCard'
+import { useTodaySummary, TabCount, OnThisDayNote } from '../components/OnThisDayHint'
 import DownloadQueueBar from '../components/DownloadQueueBar'
 import AboutModal from '../components/AboutModal'
 import FreeAccountBanner from '../components/FreeAccountBanner'
@@ -117,7 +117,8 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
     return () => window.removeEventListener('resize', watch)
   }, [])
   const tabStyle: React.CSSProperties = tight ? { ...styles.tab, padding: '8px 8px', fontSize: '13px' } : styles.tab
-  const [dataKey, setDataKey] = useState(0)   // changes when a scan finishes, so On This Day, the Timeline and the card look again
+  const [dataKey, setDataKey] = useState(0)   // changes when a scan finishes, so On This Day, the Timeline and the tab count look again
+  const todaySummary = useTodaySummary(dataKey)
   // Set when a tag is clicked in the photo detail while viewing an album; the album grid filters itself to it
   const [albumTagRequest, setAlbumTagRequest] = useState<{ tag: string; nonce: number } | null>(null)
   // Which of those requests the grids have already applied (a grid that remounts must not replay an old one)
@@ -619,7 +620,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             style={{ ...tabStyle, ...(view === 'onthisday' ? styles.tabActive : {}) }}
             onClick={() => { setOnThisDayVisited(true); setView('onthisday') }}
           >
-            On This Day
+            On This Day<TabCount summary={todaySummary} />
           </button>
           <button
             style={{ ...tabStyle, ...(view === 'map' ? styles.tabActive : {}) }}
@@ -636,6 +637,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
           </button>
         </div>
       </div>}
+      {appMode === 'you' && <OnThisDayNote summary={todaySummary} onOpen={() => { setOnThisDayVisited(true); setView('onthisday') }} />}
       {appMode === 'you' && view === 'photostream' && !photostreamSelectMode && (
         <div style={{ padding: '8px 16px 0' }}>
           <ScreenTop
@@ -677,9 +679,6 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             </>}
           />
         </div>
-      )}
-      {appMode === 'you' && (view === 'photostream' || view === 'albums' || view === 'collections' || view === 'album-detail' || view === 'collection-detail') && (
-        <OnThisDayCard refreshKey={dataKey} onOpen={() => { setOnThisDayVisited(true); setView('onthisday') }} />
       )}
 
       {appMode === 'you' && view === 'album-detail' && selectedAlbum && (

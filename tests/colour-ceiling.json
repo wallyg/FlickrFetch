@@ -2,7 +2,6 @@
   "src/renderer/components/CameraRoll.tsx": 1,
   "src/renderer/components/DiscoverExplore.tsx": 1,
   "src/renderer/components/HealthOverview.tsx": 3,
-  "src/renderer/components/OnThisDayCard.tsx": 1,
   "src/renderer/components/OnThisDayPanel.tsx": 4,
   "src/renderer/components/PhotoDetail.tsx": 6,
   "src/renderer/components/SettingsModal.tsx": 1,

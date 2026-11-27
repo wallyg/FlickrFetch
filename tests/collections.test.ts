@@ -206,3 +206,15 @@ test('the four photo screens use the one shared top (#257): Photostream, Timelin
   assert.ok(/from !== to && \(\s*<span style=\{\{ marginLeft: 'auto'/.test(camera) && /\{from !== to && <span style=\{styles\.muted\}>\{itemsLabel\(d\.count/.test(camera), 'a single day shows its date once, without the repeated count and buttons')
   assert.ok(/export default function MoreMenu/.test(read('src/renderer/ui/MoreMenu.tsx')) && /Escape/.test(read('src/renderer/ui/MoreMenu.tsx')), 'More closes on Esc')
 })
+
+test('On This Day is announced by a count on its tab and a once-a-day note, not a banner above the content (#301)', () => {
+  const main = read('src/renderer/pages/MainPage.tsx')
+  assert.ok(!/OnThisDayCard/.test(main), 'the banner is gone from every screen')
+  assert.match(main, /On This Day<TabCount summary=\{todaySummary\} \/>/)
+  assert.match(main, /<OnThisDayNote summary=\{todaySummary\}/)
+  const hint = read('src/renderer/components/OnThisDayHint.tsx')
+  assert.match(hint, /position: 'absolute'/)                       // the note floats, so the content never jumps when it goes
+  assert.match(hint, /hideOnThisDayCardToday\(\)/)                 // once a day
+  assert.match(hint, /setInterval\(load, LOOK_AGAIN_MS\)/)         // a window left open overnight changes to the new day by itself
+  assert.match(hint, /addEventListener\('focus', load\)/)
+})
