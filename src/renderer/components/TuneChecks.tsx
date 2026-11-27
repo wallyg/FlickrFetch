@@ -3,7 +3,7 @@ import Icon from '../ui/Icon'
 import type { FineReasonSummaryRow } from '../../shared/types'
 import { CLEANUP_RULES, DEFAULT_GENERIC_WORDS, logicOf } from '../../shared/cleanupRules'
 import type { CleanupRuleState } from '../../shared/cleanupRules'
-import { segGroup, segBtn, selectedOn, fieldBox, fieldCompact, putAsideBtn, chip as kitChip, chipCount as chipCountLook } from '../ui/kit'
+import { segGroup, segBtn, selectedOn, fieldBox, fieldCompact, putAsideBtn, chip as kitChip, chipCount as chipCountLook, headingCard } from '../ui/kit'
 import AlbumFitSettings from './AlbumFitSettings'
 import MissingTagSettings from './MissingTagSettings'
 import LocationHintSettings from './LocationHintSettings'
@@ -190,7 +190,7 @@ export default function TuneChecks({ stateOf, setState, onOpenAlbumTab }: Props)
 
 const styles: Record<string, React.CSSProperties> = {
   body: { display: 'flex', flexDirection: 'column', gap: 24 },
-  groupHead: { fontSize: 14, fontWeight: 700, color: 'var(--ff-text)', margin: '2px 0 4px', scrollMarginTop: 48 },
+  groupHead: { ...headingCard, margin: '2px 0 4px', scrollMarginTop: 48 },
   rules: { display: 'flex', flexDirection: 'column', gap: 8 },
   rule: { padding: '8px 12px', border: '1px solid var(--ff-border)', borderRadius: 8, background: 'var(--ff-cream)', fontSize: 13 },
   ruleTop: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 },

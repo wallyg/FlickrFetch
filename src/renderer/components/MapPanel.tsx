@@ -4,7 +4,7 @@ import type { AlbumFitPhoto, MapAccuracy, MapCluster, MapFilter, MapView } from 
 import { anchorAfterResize, limitCentre, minZoomFor, placeAt, usableSize, visibleTiles, wheelIntent, worldCopies, worldPixel, wrapLon } from '../../shared/mapGeo'
 import { loadOutline } from '../ui/mapOutline'
 import { mapColours } from '../ui/mapColours'
-import { quietBtn, primaryBtn, selectBox } from '../ui/kit'
+import { quietBtn, primaryBtn, selectBox, headingCard } from '../ui/kit'
 import { dash } from './DashboardParts'
 import AlbumBox from './AlbumBox'
 import PhotoPeek from './PhotoPeek'
@@ -583,5 +583,5 @@ const styles: Record<string, React.CSSProperties> = {
   tile: { display: 'block', width: '100%', aspectRatio: '1 / 1', padding: 0, border: '1px solid var(--ff-border)', borderRadius: 6, overflow: 'hidden', background: 'var(--ff-grey-100)', cursor: 'pointer' },
   thumb: { width: '100%', height: '100%', objectFit: 'cover', display: 'block' },
   empty: { padding: '60px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, textAlign: 'center', maxWidth: 520, margin: '0 auto' },
-  emptyTitle: { fontSize: 14, fontWeight: 700, color: 'var(--ff-navy)' }
+  emptyTitle: { ...headingCard }
 }

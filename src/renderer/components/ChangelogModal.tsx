@@ -1,4 +1,5 @@
 import React from 'react'
+import { headingDialog } from '../ui/kit'
 import CloseButton from '../ui/CloseButton'
 import Dialog from '../ui/Dialog'
 import Icon from '../ui/Icon'
@@ -62,12 +63,7 @@ const styles: Record<string, React.CSSProperties> = {
     borderBottom: '1px solid var(--ff-border)',
     flexShrink: 0
   },
-  title: {
-    fontSize: '16px',
-    fontWeight: '700',
-    color: 'var(--ff-text)',
-    margin: 0
-  },
+  title: { ...headingDialog },
   content: {
     overflowY: 'auto' as const,
     padding: '0 24px 16px'

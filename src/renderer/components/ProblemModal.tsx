@@ -1,4 +1,5 @@
 import React from 'react'
+import { headingScreen } from '../ui/kit'
 import CloseButton from '../ui/CloseButton'
 import Dialog from '../ui/Dialog'
 import Icon from '../ui/Icon'
@@ -51,15 +52,7 @@ export default function ProblemModal({ onClose }: ProblemModalProps): React.JSX.
 }
 
 const s: Record<string, React.CSSProperties> = {
-  heading: {
-    fontSize: '18px',
-    fontWeight: '700',
-    color: 'var(--ff-navy)',
-    margin: '0 0 16px',
-    lineHeight: 1.25,
-    fontFamily: "'Lato', -apple-system, sans-serif",
-    paddingRight: '24px',
-  },
+  heading: { ...headingScreen, margin: '0 0 16px', lineHeight: 1.25, fontFamily: "'Lato', -apple-system, sans-serif", paddingRight: '24px' },
   body: {
     display: 'flex',
     flexDirection: 'column',

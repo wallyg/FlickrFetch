@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import Icon from '../ui/Icon'
 import type { AlbumFitPhoto, AlbumItem, AlbumKind } from '../../shared/types'
 import BatchEditButton from './BatchEditButton'
-import { quietBtn, selectCompact, linkBtn, putAsideBtn } from '../ui/kit'
+import { quietBtn, selectCompact, linkBtn, putAsideBtn, headingCard } from '../ui/kit'
 import PhotoStrip from './PhotoStrip'
 
 // The rows of the album fit lists. A May be missing row is quiet until you open it: the album, how many photos may belong,
@@ -97,7 +97,7 @@ const styles: Record<string, React.CSSProperties> = {
   card: { display: 'flex', gap: 12, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 8, padding: 8, marginBottom: 8 },
   thumb: { width: 76, height: 76, borderRadius: 6, objectFit: 'cover', background: 'var(--ff-border)', flexShrink: 0 },
   body: { flex: 1, minWidth: 0 },
-  title: { fontSize: 14, fontWeight: 700, color: 'var(--ff-text)', overflowWrap: 'anywhere' },
+  title: { ...headingCard, overflowWrap: 'anywhere' },
   muted: { fontSize: 13, color: 'var(--ff-text-secondary)' },
   description: { fontSize: 13, color: 'var(--ff-text-secondary)', marginTop: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
   judged: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 8, fontSize: 12, color: 'var(--ff-text-secondary)' },

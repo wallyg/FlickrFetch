@@ -4,7 +4,7 @@ import Dialog from '../ui/Dialog'
 import Icon from '../ui/Icon'
 import type { AppSettings, MetadataSettings } from '../../shared/types'
 import { isFreeAccount, limitNotice } from '../../shared/downloadLimits'
-import { primaryBtn, quietBtn, linkBtn, segGroup, segBtn, selectedOn } from '../ui/kit'
+import { primaryBtn, quietBtn, linkBtn, segGroup, segBtn, selectedOn, headingCard, headingDialog } from '../ui/kit'
 
 const SIZE_LABELS: Record<string, string> = {
   original: 'Original',
@@ -169,15 +169,11 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     padding: '16px 16px 0',
   },
-  title: {
-    margin: 0, fontSize: '16px', fontWeight: '700', color: 'var(--ff-navy)',
-  },
+  title: { ...headingDialog },
   body: {
     padding: '16px 16px 0',
   },
-  batchTitle: {
-    margin: '0 0 4px', fontSize: '14px', fontWeight: '700', color: 'var(--ff-text)',
-  },
+  batchTitle: { ...headingCard, margin: '0 0 4px' },
   countLine: {
     margin: '0 0 4px', fontSize: '13px', color: 'var(--ff-text-secondary)',
   },

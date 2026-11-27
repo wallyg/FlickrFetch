@@ -7,7 +7,7 @@ import HealthOverview from './HealthOverview'
 import { dash, SectionSwitch } from './DashboardParts'
 import RuleRail, { RailHead, RailRow, ListHead, SortBox } from './RuleRail'
 import { forgetOverview } from './LibraryOverview'
-import { quietBtn, primaryBtn, selectedOn, filterInput, doThisBtn, linkBtn, chip as kitChip } from '../ui/kit'
+import { quietBtn, primaryBtn, selectedOn, filterInput, doThisBtn, linkBtn, chip as kitChip, headingCard } from '../ui/kit'
 import BatchEditButton from './BatchEditButton'
 import BackToTop from '../ui/BackToTop'
 import LoadFailed from './LoadFailed'
@@ -240,7 +240,7 @@ const styles: Record<string, React.CSSProperties> = {
   top: { display: 'flex', alignItems: 'center', padding: '6px 24px' },
   muted: { fontSize: 13, color: 'var(--ff-text-secondary)' },
   empty: { padding: '60px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, textAlign: 'center', maxWidth: 520, margin: '0 auto' },
-  emptyTitle: { fontSize: 14, fontWeight: 700, color: 'var(--ff-navy)' },
+  emptyTitle: { ...headingCard },
   body: { flex: 1, minHeight: 0, display: 'flex', gap: 16, padding: '4px 24px 12px' },
   railCol: { width: 230, flexShrink: 0, alignSelf: 'flex-start', maxHeight: '100%', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12 },   // long lists of checks scroll inside this column
   rail: { flexShrink: 0, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 8, padding: 6 },
@@ -254,7 +254,7 @@ const styles: Record<string, React.CSSProperties> = {
   thumb: { width: 76, height: 76, borderRadius: 6, objectFit: 'cover', background: 'var(--ff-border)', flexShrink: 0 },
   cardBody: { flex: 1, minWidth: 0 },
   l1: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  title: { fontSize: 14, fontWeight: 700, color: 'var(--ff-text)', overflowWrap: 'anywhere' },
+  title: { ...headingCard, overflowWrap: 'anywhere' },
   pill: { fontSize: 11, borderRadius: 8, padding: '0px 8px', background: 'var(--ff-warning-bg)', color: 'var(--ff-warning-text)' },
   actions: { display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, flexWrap: 'wrap' },
   primaryBtn: { ...primaryBtn },

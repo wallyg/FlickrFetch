@@ -11,7 +11,7 @@ import { dash, SectionSwitch, RingParts, pctLabel, COLORS } from './DashboardPar
 import type { RingPart } from './DashboardParts'
 import { MissingRow, JudgedBy, actionStyles } from './AlbumFitRows'
 import RuleRail, { RailHead, RailRow, ListHead, SortBox } from './RuleRail'
-import { quietBtn, primaryBtn, filterInput, doThisBtn, selectBox, linkBtn } from '../ui/kit'
+import { quietBtn, primaryBtn, filterInput, doThisBtn, selectBox, linkBtn, headingCard } from '../ui/kit'
 import { asButton } from '../ui/a11y'
 import BatchEditButton from './BatchEditButton'
 import BackToTop from '../ui/BackToTop'
@@ -278,7 +278,7 @@ const styles: Record<string, React.CSSProperties> = {
   wrap: { flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' },
   muted: { fontSize: 13, color: 'var(--ff-text-secondary)' },
   empty: { padding: '60px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, textAlign: 'center', maxWidth: 520, margin: '0 auto' },
-  emptyTitle: { fontSize: 14, fontWeight: 700, color: 'var(--ff-navy)' },
+  emptyTitle: { ...headingCard },
   body: { flex: 1, minHeight: 0, display: 'flex', gap: 16, padding: '4px 24px 12px' },
   railCol: { width: 230, flexShrink: 0, alignSelf: 'flex-start', maxHeight: '100%', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12 },
   rail: { flexShrink: 0, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 8, padding: 6 },
@@ -289,7 +289,7 @@ const styles: Record<string, React.CSSProperties> = {
   quietAction: { ...quietBtn },
   thumb: { width: 76, height: 76, borderRadius: 6, objectFit: 'cover', background: 'var(--ff-border)', flexShrink: 0 },
   cardBody: { flex: 1, minWidth: 0 },
-  title: { fontSize: 14, fontWeight: 700, color: 'var(--ff-text)', overflowWrap: 'anywhere' },
+  title: { ...headingCard, overflowWrap: 'anywhere' },
   actions: { display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, flexWrap: 'wrap' },
   mainActionBtn: { ...doThisBtn },
   linkBtn: { ...linkBtn },

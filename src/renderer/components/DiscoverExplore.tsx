@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo } from 'react'
-import { primaryBtn, quietBtn } from '../ui/kit'
+import { primaryBtn, quietBtn, headingScreen } from '../ui/kit'
 import Icon from '../ui/Icon'
 import type { FlickrPhoto, PhotoPage } from '../../shared/types'
 import PhotoDetail from './PhotoDetail'
@@ -386,7 +386,7 @@ const s: Record<string, React.CSSProperties> = {
   container: { display: 'flex', flexDirection: 'column', gap: '16px', padding: `0 ${DISCOVER_GUTTER}px 32px` },
   stickyHeader: { position: 'sticky' as const, top: 0, zIndex: 'var(--ff-z-sticky)', background: 'var(--ff-surface)', paddingBottom: '8px' },
   headerRow: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', paddingTop: '16px' },
-  heading: { margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--ff-text)' },
+  heading: { ...headingScreen },
   subheading: { margin: '4px 0 0', fontSize: '13px', color: 'var(--ff-text-secondary)' },
   attrNotice: {
     display: 'flex', alignItems: 'flex-start', gap: '8px',

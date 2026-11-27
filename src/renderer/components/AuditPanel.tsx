@@ -11,7 +11,7 @@ import { GLUE_BOUNDARY_SOURCE } from '../../shared/tags'
 import { logicOf, ruleById } from '../../shared/cleanupRules'
 import type { CleanupRuleState } from '../../shared/cleanupRules'
 import type { AlbumFitPhoto, AuditCategory, AuditClue, AuditFinding, AuditPlanRow, AuditSort, AuditStatus, AuditSummary, TagMode } from '../../shared/types'
-import { quietBtn, primaryBtn, selectedOn, filterInput, fieldBox, selectBox, linkBtn, chip as kitChip } from '../ui/kit'
+import { quietBtn, primaryBtn, selectedOn, filterInput, fieldBox, selectBox, linkBtn, chip as kitChip, headingCard } from '../ui/kit'
 import BatchEditButton from './BatchEditButton'
 import PhotoStrip from './PhotoStrip'
 import HoverNote from '../ui/HoverNote'
@@ -449,7 +449,7 @@ const styles: Record<string, React.CSSProperties> = {
   moreBtn: { width: '100%', padding: 8, background: 'none', border: '1px dashed var(--ff-line-strong)', borderRadius: 8, color: 'var(--ff-text-secondary)', fontSize: 13, cursor: 'pointer', marginBottom: 12 },
   planPop: { position: 'absolute', top: 'calc(100% + 6px)', right: 0, width: 600, maxWidth: 'calc(100vw - 48px)', maxHeight: '62vh', overflowY: 'auto', background: 'var(--ff-surface)', border: '1px solid var(--ff-line-strong)', borderRadius: 12, boxShadow: '0 10px 30px var(--ff-shadow-mid)', padding: '12px 16px', zIndex: 'var(--ff-z-menu)' },
   planBadge: { background: 'var(--ff-pink-action)', color: 'var(--ff-white)', borderRadius: 8, padding: '0 6px', fontSize: 12, fontWeight: 700 },
-  planTitle: { fontSize: 14, fontWeight: 700, marginBottom: 4, color: 'var(--ff-text)' },
+  planTitle: { ...headingCard, marginBottom: 4 },
   planType: { fontSize: 11, borderRadius: 8, padding: '0px 8px', background: 'var(--ff-tint)', color: 'var(--ff-pink-action)', whiteSpace: 'nowrap', marginLeft: 'auto' },
   planRemove: { background: 'none', border: 'none', color: 'var(--ff-text-muted)', fontSize: 13, cursor: 'pointer', padding: '0 2px', width: 18 },
   planLine: { display: 'flex', alignItems: 'baseline', gap: 8, fontSize: 13, padding: '2px 0', color: 'var(--ff-text)' }

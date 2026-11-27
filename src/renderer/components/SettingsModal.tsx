@@ -3,7 +3,7 @@ import DateStampEditor from './DateStampEditor'
 import { DATE_EXAMPLE_TAKEN, DEFAULT_DATE_PATTERN, formatDateStamp } from '../../shared/dateStamp'
 import CloseButton from '../ui/CloseButton'
 import Dialog from '../ui/Dialog'
-import { fieldBox, tabMark, primaryBtn, putAsideBtn, quietBtn, smallBtn } from '../ui/kit'
+import { fieldBox, tabMark, primaryBtn, putAsideBtn, quietBtn, smallBtn, headingScreen } from '../ui/kit'
 import Icon from '../ui/Icon'
 import HealthCheckSettings from './HealthCheckSettings'
 import AlbumCheckSettings from './AlbumCheckSettings'
@@ -840,7 +840,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
 
 const s: Record<string, React.CSSProperties> = {
   header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px 0', flexShrink: 0 },
-  title: { fontSize: '18px', fontWeight: '700', color: 'var(--ff-text)', margin: 0 },
+  title: { ...headingScreen },
   updateBanner: { display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 24px', backgroundColor: 'var(--ff-info-bg)', borderBottom: '1px solid var(--ff-info-line)', flexShrink: 0 },
   updateText: { flex: 1, fontSize: '13px', color: 'var(--ff-blue)', fontWeight: '400' },
   updateBtn: { ...smallBtn, flexShrink: 0 },

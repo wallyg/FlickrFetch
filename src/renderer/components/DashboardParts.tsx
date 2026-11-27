@@ -1,5 +1,5 @@
 import React from 'react'
-import { segGroup, segBtn as segBtnBase, selectedOn } from '../ui/kit'
+import { segGroup, segBtn as segBtnBase, selectedOn, headingCard } from '../ui/kit'
 import { asButton } from '../ui/a11y'
 
 // Small building blocks shared by the Audit and Health dashboards: a bar row, rings.
@@ -98,7 +98,7 @@ export const dash: Record<string, React.CSSProperties> = {
   wrap: { flex: 1, minHeight: 0, overflowY: 'auto', padding: '8px 24px 16px' },
   grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 12, marginTop: 12 },
   card: { background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 12, padding: '12px 16px', minWidth: 0 },
-  cardTitle: { margin: '0 0 8px', fontSize: 14, fontWeight: 700, color: 'var(--ff-text)' },
+  cardTitle: { ...headingCard, margin: '0 0 8px' },
   hint: { fontWeight: 400, color: 'var(--ff-text-secondary)' },
   muted: { fontSize: 12, color: 'var(--ff-text-secondary)' },
   ringWrap: { display: 'flex', alignItems: 'center', gap: 16 },

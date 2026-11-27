@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
-import { primaryBtn, putAsideBtn, smallBtn } from '../ui/kit'
+import { primaryBtn, putAsideBtn, smallBtn, headingCard } from '../ui/kit'
 import Icon from '../ui/Icon'
 import type { FlickrPhoto, PhotoSize, PhotoInfo, DownloadSize, CameraExif } from '../../shared/types'
 import { descriptionToPlainText } from '../../shared/description'
@@ -838,13 +838,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '6px',
     marginBottom: '8px',
   },
-  photoTitle: {
-    fontSize: '14px',
-    fontWeight: '700',
-    color: 'var(--ff-text)',
-    margin: 0,
-    lineHeight: 1.3,
-  },
+  photoTitle: { ...headingCard, lineHeight: 1.3 },
   dateRow: {
     display: 'flex',
     alignItems: 'baseline',

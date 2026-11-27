@@ -3,7 +3,7 @@ import Icon from '../ui/Icon'
 import HoverCard from '../ui/HoverCard'
 import type { TodaySummary } from '../../shared/types'
 import { MONTHS } from './DateViewParts'
-import { quietBtn, doThisBtn, chipLabel } from '../ui/kit'
+import { quietBtn, doThisBtn, chipLabel, headingCard } from '../ui/kit'
 import { BarsIcon } from '../ui/icons'
 import { itemsLabel } from '../../shared/counts'
 
@@ -126,7 +126,7 @@ const styles: Record<string, React.CSSProperties> = {
   calendar: { width: 34, flexShrink: 0, borderRadius: 6, overflow: 'hidden', background: 'var(--ff-surface)', boxShadow: '0 1px 4px color-mix(in srgb, var(--ff-navy) 18%, transparent)', textAlign: 'center' },
   calMonth: { background: 'var(--ff-pink)', color: 'var(--ff-white)', fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', padding: '2px 0 0px' },
   calDay: { fontSize: 14, fontWeight: 700, color: 'var(--ff-navy)', lineHeight: '20px' },
-  title: { fontSize: 14, fontWeight: 700, color: 'var(--ff-navy)' },
+  title: { ...headingCard },
   cue: { marginLeft: 6, display: 'inline-flex', alignItems: 'center', verticalAlign: 'middle', background: 'none', border: 'none', padding: 4, borderRadius: 6, cursor: 'pointer' },
   seeBtn: { ...doThisBtn, whiteSpace: 'nowrap' },
   hideBtn: { ...quietBtn, color: 'var(--ff-text)', borderColor: 'var(--ff-line-strong)', whiteSpace: 'nowrap' },

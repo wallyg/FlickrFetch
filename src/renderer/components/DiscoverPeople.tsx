@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo } from 'react'
-import { tabMark, linkBtn, quietBtn, primaryBtn, chipLabel } from '../ui/kit'
+import { tabMark, linkBtn, quietBtn, primaryBtn, chipLabel, headingScreen } from '../ui/kit'
 import Icon from '../ui/Icon'
 import { allPages } from '../../shared/pages'
 import { useFindShortcut } from '../hooks/useFindShortcut'
@@ -1594,7 +1594,7 @@ const s: Record<string, React.CSSProperties> = {
   container: { display: 'flex', flexDirection: 'column', gap: '16px', padding: `0 ${DISCOVER_GUTTER}px 32px` },
   stickyHeader: { position: 'sticky' as const, top: 0, zIndex: 'var(--ff-z-sticky)', background: 'var(--ff-surface)', display: 'flex', flexDirection: 'column' as const },
   headerRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', paddingTop: '16px', paddingBottom: '8px' },
-  heading: { margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--ff-text)' },
+  heading: { ...headingScreen },
   subheading: { margin: '4px 0 0', fontSize: '13px', color: 'var(--ff-text-secondary)' },
   backBtn: { ...linkBtn, fontSize: '14px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '4px' },
   selectBtn: { ...quietBtn, flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px' },

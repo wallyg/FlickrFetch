@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import CloseButton from '../ui/CloseButton'
 import Dialog from '../ui/Dialog'
-import { linkBtn } from '../ui/kit'
+import { linkBtn, headingDialog } from '../ui/kit'
 import Icon from '../ui/Icon'
 import logoTrayImg from '../assets/logo-tray.png'
 import ChangelogModal from './ChangelogModal'
@@ -146,13 +146,7 @@ const styles: Record<string, React.CSSProperties> = {
     minWidth: 0,
     gap: '12px'
   },
-  heading: {
-    fontSize: '16px',
-    fontWeight: '700',
-    color: 'var(--ff-navy)',
-    margin: 0,
-    lineHeight: 1.3
-  },
+  heading: { ...headingDialog, lineHeight: 1.3 },
   subtext: {
     fontSize: '12px',
     color: 'var(--ff-text-secondary)',

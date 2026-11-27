@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import Icon from '../ui/Icon'
 import type { TagIndexStatus, TagScanProgress } from '../../shared/types'
-import { quietBtn, linkBtn, primaryBtn } from '../ui/kit'
+import { quietBtn, linkBtn, primaryBtn, headingCard } from '../ui/kit'
 import RichNote from '../ui/RichNote'
 
 // Pieces of the library scan shown in both the Tags tab and the Cleanup tab.
@@ -147,7 +147,7 @@ const styles: Record<string, React.CSSProperties> = {
   secondaryBtn: { ...quietBtn, padding: '4px 12px' },
   linkBtn: { ...linkBtn, fontSize: '13px' },
   progressCard: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', width: '360px', padding: '24px', background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: '12px' },
-  cardTitle: { fontSize: '14px', fontWeight: 700, color: 'var(--ff-navy)' },
+  cardTitle: { ...headingCard },
   barTrack: { width: '100%', height: '8px', background: 'var(--ff-border)', borderRadius: '4px', overflow: 'hidden' },
   barFill: { height: '100%', background: 'var(--ff-pink)', transition: 'width 0.3s' },
   updateBtn: { ...primaryBtn, whiteSpace: 'nowrap' },

@@ -74,3 +74,19 @@ test('no screen types out its own chip: they all spread a look from ui/kit.ts', 
   }
   assert.deepEqual(bad, [], 'Spread chip, chipLabel or chipRemovable from ui/kit.ts.')
 })
+
+// One heading style (#272): a title, heading or group head in bold 14, 16 or 18 px is spread from the kit (headingScreen 18, headingDialog 16,
+// headingCard 14; navy), with only what is its own added. Display sizes (24 and up) and labels (11 and 12 px) are their own.
+test('no screen types out its own heading: they spread headingScreen, headingDialog or headingCard from ui/kit.ts', () => {
+  const bad: string[] = []
+  for (const f of files(SRC)) {
+    if (/ui\/kit\.ts$/.test(f)) continue
+    const code = readFileSync(f, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1')
+    for (const m of code.matchAll(/^ {2,8}(\w*(?:[tT]itle|[hH]eading|[hH]ead|[hH]eader)\w*|h[123]): \{([^}]*)\}/gm)) {
+      const body = m[2]
+      if (/\.\.\.heading(?:Screen|Dialog|Card)\b/.test(body)) continue
+      if (/fontWeight: *'?(?:700)'?/.test(body) && /fontSize: *'?(?:14|16|18)(?:px)?'?/.test(body)) bad.push(`${relative(root, f)}: ${m[1]}`)
+    }
+  }
+  assert.deepEqual(bad, [], 'Spread headingScreen (18), headingDialog (16) or headingCard (14) from ui/kit.ts.')
+})

@@ -101,3 +101,9 @@ export const railSel: CSSProperties = { background: 'var(--ff-tint)', color: 'va
 
 // A small text box for filtering a list
 export const filterInput: CSSProperties = { ...fieldBox, width: '100%', boxSizing: 'border-box' }
+
+// The heading looks (#272): three levels, one colour. headingScreen titles a screen or a dialog (18); headingDialog titles a small question (16);
+// headingCard titles a card, a row or a group (14). Navy is the heading colour in the brand guide. A screen spreads one and adds only what is its own.
+export const headingScreen: CSSProperties = { margin: 0, fontSize: 18, fontWeight: 700, color: 'var(--ff-navy)' }
+export const headingDialog: CSSProperties = { margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--ff-navy)' }
+export const headingCard: CSSProperties = { margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--ff-navy)' }

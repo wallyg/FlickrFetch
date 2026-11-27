@@ -4,7 +4,7 @@ import type { TagRow, TagLetterGroup, TagListQuery, TagTextOperator, TagMode } f
 import EmptyState from './EmptyState'
 import { ScanLine, ScanProgressCard } from './TagScanParts'
 import { useTagScan } from '../hooks/useTagScan'
-import { quietBtn, selectedOn, segGroup, segBtn, primaryBtn as mainBtn, fieldBox, selectBox, linkBtn, chip as kitChip, chipLabel, chipRemovable, chipCount as chipCountLook } from '../ui/kit'
+import { quietBtn, selectedOn, segGroup, segBtn, primaryBtn as mainBtn, fieldBox, selectBox, linkBtn, chip as kitChip, chipLabel, chipRemovable, chipCount as chipCountLook, headingCard } from '../ui/kit'
 import BackToTop from '../ui/BackToTop'
 
 // The Tags tab: browse every tag you have used, narrow by letter or by typing, pick some,
@@ -409,7 +409,7 @@ const styles: Record<string, React.CSSProperties> = {
   secondaryBtn: { ...quietBtn, padding: '4px 12px' },
   linkBtn: { ...linkBtn, fontSize: '13px' },
   progressCard: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', width: '360px', padding: '24px', background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: '12px' },
-  cardTitle: { fontSize: '14px', fontWeight: 700, color: 'var(--ff-navy)' },
+  cardTitle: { ...headingCard },
   barTrack: { width: '100%', height: '8px', background: 'var(--ff-border)', borderRadius: '4px', overflow: 'hidden' },
   barFill: { height: '100%', background: 'var(--ff-pink)', transition: 'width 0.3s' }
 }

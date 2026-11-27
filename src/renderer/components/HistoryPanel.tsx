@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo, useRef } from 'react'
 import { useEscapeToClose } from '../ui/Dialog'
 import Icon from '../ui/Icon'
 import { useFindShortcut } from '../hooks/useFindShortcut'
-import { quietBtn, dangerBtn, putAsideBtn, smallBtn } from '../ui/kit'
+import { quietBtn, dangerBtn, putAsideBtn, smallBtn, headingDialog } from '../ui/kit'
 import type { BatchLogEntry, PhotoDownloadRecord, DiscoverDownloadRecord, FlickrAlbum } from '../../shared/types'
 import EmptyState from './EmptyState'
 import { sizeTag } from '../../shared/downloadLimits'
@@ -800,9 +800,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     padding: '16px 16px 0',
   },
-  title: {
-    margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--ff-navy)',
-  },
+  title: { ...headingDialog },
   closeBtn: {
     background: 'none', border: 'none', cursor: 'pointer',
     fontSize: 22, color: 'var(--ff-text-secondary)', lineHeight: 1, padding: '0 4px',

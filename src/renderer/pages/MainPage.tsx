@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import ErrorBoundary from '../ui/ErrorBoundary'
 import Dialog from '../ui/Dialog'
-import { tabMark, linkBtn, primaryBtn, quietBtn } from '../ui/kit'
+import { tabMark, linkBtn, primaryBtn, quietBtn, headingCard, headingDialog } from '../ui/kit'
 import Icon from '../ui/Icon'
 import { useRememberScroll } from '../hooks/useRememberScroll'
 import MapPanel from '../components/MapPanel'
@@ -1251,11 +1251,7 @@ const styles: Record<string, React.CSSProperties> = {
     borderBottom: '1px solid var(--ff-border)'
   },
   backButton: { ...linkBtn, fontSize: '13px', flexShrink: 0 },
-  albumTitle: {
-    fontSize: '14px',
-    fontWeight: '700',
-    color: 'var(--ff-text)'
-  },
+  albumTitle: { ...headingCard },
   albumCount: {
     fontSize: '13px',
     color: 'var(--ff-text-secondary)'
@@ -1381,7 +1377,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'block', width: '100%', textAlign: 'left' as const, background: 'none', border: 'none',
     padding: '8px 12px', fontSize: '13px', color: 'var(--ff-error)', cursor: 'pointer', borderRadius: '6px',
   },
-  confirmTitle: { fontSize: '16px', fontWeight: '700' as const, color: 'var(--ff-text)', margin: '0 0 8px' },
+  confirmTitle: { ...headingDialog, margin: '0 0 8px' },
   confirmBody: { fontSize: '13px', color: 'var(--ff-text-secondary)', lineHeight: '1.5', margin: '0 0 16px' },
   confirmActions: { display: 'flex', gap: '8px', justifyContent: 'flex-end' as const },
   confirmCancel: { ...quietBtn },

@@ -4,7 +4,7 @@ import SelectBar from './SelectBar'
 import BatchEditButton from './BatchEditButton'
 import { forgetOverview } from './LibraryOverview'
 import { askFineReason } from '../ui/fineReason'
-import { quietBtn, linkBtn } from '../ui/kit'
+import { quietBtn, linkBtn, headingCard } from '../ui/kit'
 import { DEBOUNCE, useDebouncedValue } from '../ui/useDebounce'
 import type { DuplicateGroup, DuplicatePhoto, DuplicateSort } from '../../shared/types'
 
@@ -154,7 +154,7 @@ const styles: Record<string, React.CSSProperties> = {
   list: { flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: 4 },
   group: { background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 8, padding: '8px 12px', marginBottom: 8 },
   ghead: { display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '4px 8px', marginBottom: 8 },
-  gtitle: { fontSize: 14, fontWeight: 700, color: 'var(--ff-text)' },
+  gtitle: { ...headingCard },
   gact: { marginLeft: 'auto', display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' },
   btn: { ...quietBtn },
   tiles: { display: 'grid', gap: 8, gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))' },

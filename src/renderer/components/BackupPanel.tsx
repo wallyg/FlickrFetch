@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom'
 import type { BackupList, BackupSort, BackupSummary, HealthPhoto } from '../../shared/types'
 import { dash, SectionSwitch } from './DashboardParts'
 import { RailHead, RailRow, ListHead, SortBox } from './RuleRail'
-import { quietBtn, primaryBtn, filterInput, doThisBtn } from '../ui/kit'
+import { quietBtn, primaryBtn, filterInput, doThisBtn, headingCard } from '../ui/kit'
 import { asButton } from '../ui/a11y'
 import BackToTop from '../ui/BackToTop'
 import { useFindShortcut } from '../hooks/useFindShortcut'
@@ -182,7 +182,7 @@ const styles: Record<string, React.CSSProperties> = {
   card: { display: 'flex', gap: 12, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 8, padding: 8, marginBottom: 8 },
   thumb: { width: 76, height: 76, borderRadius: 6, objectFit: 'cover', background: 'var(--ff-border)', flexShrink: 0 },
   l1: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  title: { fontSize: 14, fontWeight: 700, color: 'var(--ff-text)', overflowWrap: 'anywhere' },
+  title: { ...headingCard, overflowWrap: 'anywhere' },
   pill: { fontSize: 11, borderRadius: 8, padding: '0px 8px', background: 'var(--ff-warm)', color: 'var(--ff-text-secondary)' },
   actions: { display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, flexWrap: 'wrap' },
   mainActionBtn: { ...doThisBtn },
