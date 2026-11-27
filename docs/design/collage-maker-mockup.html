@@ -1,0 +1,203 @@
+<title>Collage Maker Mock-up</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap">
+<style>
+/* Layout: a row of states to click through at the top, the collage dialog as it would look, then the new arrangements, the photo-count rule and how sharing fits. The palette is the app's own. */
+:root {
+  --blue: #0063DC; --pink: #FF0084; --pink-action: #D00069; --navy: #1B2946; --cream: #FCFAF6; --surface: #FFFFFF;
+  --text: #111827; --muted: #667085; --border: #E5E7EB; --warm: #F7F5F1; --tint: #FFF0F7; --info-bg: #EEF5FF; --info-line: #CFE0F7; --page: #EEF0F4; --line: #D4D4D8;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --surface: #1F2937; --cream: #111827; --text: #F3F4F6; --muted: #9CA3AF; --border: #374151; --warm: #243041; --tint: #3A1B2E; --info-bg: #14263F; --info-line: #24456F; --page: #0B1220; --navy: #E5E7EB; --line: #4B5563; color-scheme: dark } }
+:root[data-theme="dark"] { --surface: #1F2937; --cream: #111827; --text: #F3F4F6; --muted: #9CA3AF; --border: #374151; --warm: #243041; --tint: #3A1B2E; --info-bg: #14263F; --info-line: #24456F; --page: #0B1220; --navy: #E5E7EB; --line: #4B5563; color-scheme: dark }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--text); font-family: 'Lato', -apple-system, BlinkMacSystemFont, sans-serif; font-size: 13px; line-height: 1.5;
+  padding-block: 24px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 1040px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+h1 { font-size: 22px; margin: 0; color: var(--navy); } h2 { font-size: 16px; margin: 0 0 8px; color: var(--navy); } h3 { font-size: 14px; margin: 0 0 4px; color: var(--navy); }
+p { margin: 0; } .muted { color: var(--muted); } .small { font-size: 12px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.tag { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.seg { display: inline-flex; gap: 2px; padding: 2px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); flex-wrap: wrap; }
+.seg button { font: inherit; border: none; border-radius: 6px; padding: 4px 12px; background: var(--surface); color: var(--muted); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--tint); color: var(--pink-action); font-weight: 700; }
+.states { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.dialog { background: var(--cream); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,.14); overflow: hidden; }
+.dhead { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); font-weight: 700; color: var(--navy); font-size: 16px; }
+.dbody { display: flex; gap: 16px; padding: 16px; flex-wrap: wrap; }
+.controls { width: 320px; max-width: 100%; display: flex; flex-direction: column; gap: 16px; }
+.preview { flex: 1; min-width: 280px; display: flex; align-items: center; justify-content: center; background: var(--warm); border-radius: 8px; padding: 16px; position: relative; min-height: 420px; }
+.step .lbl { font-weight: 700; color: var(--navy); margin-bottom: 4px; display: block; }
+.step .num { display: inline-block; width: 18px; height: 18px; border-radius: 50%; background: var(--navy); color: var(--surface); text-align: center; font-size: 11px; line-height: 18px; margin-right: 6px; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.chip { font: inherit; font-size: 12px; border: 1px solid var(--border); background: var(--surface); border-radius: 12px; padding: 2px 12px; color: var(--text); }
+.chip.on { border-color: var(--pink); background: var(--tint); color: var(--pink-action); font-weight: 700; }
+.chip.new::after { content: ' new'; font-size: 10px; color: var(--blue); font-weight: 700; }
+.btn { font: inherit; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 6px; padding: 4px 12px; }
+.btn.main { background: var(--pink-action); border-color: var(--pink-action); color: #fff; font-weight: 700; }
+.stepper { display: flex; align-items: center; gap: 8px; } .stepper .b { width: 26px; height: 26px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); text-align: center; line-height: 24px; }
+.strip { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+.th { width: 38px; height: 38px; border-radius: 4px; position: relative; border: 2px solid transparent; cursor: pointer; }
+.th.sel { border-color: var(--pink); }
+.th span, .tile span { position: absolute; left: 2px; bottom: 1px; font-size: 9px; color: #fff; text-shadow: 0 0 3px rgba(0,0,0,.7); font-weight: 700; }
+.canvas { background: #f4f1ea; border: 1px solid var(--border); box-shadow: 0 2px 12px rgba(0,0,0,.18); width: 100%; max-width: 440px; aspect-ratio: 1; padding: 14px; display: flex; flex-direction: column; gap: 8px; position: relative; }
+.canvas .ttl { font-size: 15px; font-weight: 700; color: var(--navy); } .canvas .sub { font-size: 11px; color: var(--muted); }
+.body { flex: 1; min-height: 0; display: grid; gap: 4px; position: relative; }
+.tile { position: relative; border-radius: 2px; overflow: hidden; min-height: 0; }
+.tile.sel { outline: 3px solid var(--pink); outline-offset: -3px; }
+.foot { font-size: 10px; color: var(--muted); display: flex; justify-content: space-between; }
+.pop { position: absolute; z-index: 5; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,.18); padding: 12px; width: min(100%, 340px); }
+.pop .g { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 8px; }
+.pop .g i { display: block; aspect-ratio: 1; border-radius: 3px; position: relative; }
+.pop .g i span { position: absolute; left: 2px; bottom: 1px; font-size: 9px; color: #fff; font-weight: 700; text-shadow: 0 0 3px rgba(0,0,0,.7); font-style: normal; }
+.tool { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,.18); padding: 8px 12px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: center; width: min(92%, 420px); z-index: 5; }
+.slider { width: 120px; height: 4px; background: var(--border); border-radius: 4px; position: relative; } .slider i { position: absolute; left: 30%; top: -5px; width: 14px; height: 14px; border-radius: 50%; background: var(--blue); }
+.note { background: var(--info-bg); border: 1px solid var(--info-line); border-radius: 8px; padding: 8px 12px; }
+.warn { background: var(--warm); border-radius: 8px; padding: 8px 12px; font-size: 12px; }
+.gal { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+.gal .it { background: var(--warm); border-radius: 8px; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+.mini { aspect-ratio: 1; background: #f4f1ea; border: 1px solid var(--border); padding: 6px; display: grid; gap: 2px; position: relative; }
+.mini i { display: block; border-radius: 1px; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; } th, td { text-align: left; padding: 6px 8px; border-top: 1px solid var(--border); vertical-align: top; } th { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); border-top: 0; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; } .two > div { background: var(--warm); border-radius: 8px; padding: 12px; }
+ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+pre { margin: 0; white-space: pre-wrap; font: inherit; font-size: 12px; }
+</style>
+
+<div class="wrap">
+  <div>
+    <h1>Collage maker, with more photos, patterns, swap and crop</h1>
+    <p class="muted">Mock-up for #294, #144, #143, #270, #164 and #267. Photos are stand-ins coloured by year, using your real November 27: 26 photos across 7 years. Click the states and the arrangement chips.</p>
+  </div>
+
+  <div class="card">
+    <div class="states"><b>Show</b>
+      <span class="seg" id="states" role="group" aria-label="State">
+        <button data-s="normal" aria-pressed="true">The maker</button>
+        <button data-s="replace" aria-pressed="false">Replace a photo (#143)</button>
+        <button data-s="crop" aria-pressed="false">Move and zoom (#270)</button>
+        <button data-s="year" aria-pressed="false">One year (#164)</button>
+      </span>
+    </div>
+    <div class="dialog" id="dialog"></div>
+    <p class="muted small" id="caption"></p>
+  </div>
+
+  <div class="card">
+    <span class="tag">#144 · New arrangements</span>
+    <p>Five arrangements exist today (Grid, Feature, Banner, Row, Column) plus the Polaroid frame's own scatter. Here are the new ones. I would build the first three, because they work for 1 to 8 photos in every shape, and keep the rest for later.</p>
+    <div class="gal" id="gal"></div>
+  </div>
+
+  <div class="card">
+    <span class="tag">#294 · How many photos</span>
+    <div class="two">
+      <div><h3>A rule, not a fixed number</h3><p>The app stops adding photos when one would come out smaller than about a fifth of the picture's width. The number shown, "up to N", is worked out from the shape and the look you chose.</p></div>
+      <div><h3>What that gives (proposal)</h3>
+        <table><tr><th>Look</th><th>Square</th><th>4:5</th><th>Story</th><th>Wide</th></tr>
+          <tr><td>Matched, Paper, Gallery, Film</td><td>8</td><td>8</td><td>8</td><td>8</td></tr>
+          <tr><td>Polaroid</td><td>6</td><td>6</td><td>6</td><td>6</td></tr></table>
+        <p class="muted small" style="margin-top:6px">Polaroids keep six because each one has a caption that stops being readable when it is smaller.</p></div>
+    </div>
+    <div class="note">Your 7 years of November 27 would fill 7 photos, one from each year. Pressing + for an eighth adds a second photo from the year with the most.</div>
+  </div>
+
+  <div class="card">
+    <span class="tag">#267 · Sharing, with links</span>
+    <div class="two">
+      <div><h3>Two kinds of links, kept apart</h3>
+        <ul><li><b>Short link under each photo.</b> Printed in the picture, as today.</li><li><b>Copy links.</b> Clickable links to the photos in this picture, as today.</li><li><b>Include links to each year on Flickr.</b> New: Share… sends the picture with one line per year of the day, each a link to that day (a single-photo year links to the photo itself).</li></ul></div>
+      <div><h3>What Share… sends</h3><pre>[the collage picture]
+
+On this day, November 27, in my photos:
+2025 · 7 photos
+https://www.flickr.com/photos/yourname/archives/date-taken/2025/11/27/
+2023 · 3 photos
+…one line for every year</pre></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var YEARS = [2025, 2023, 2021, 2018, 2017, 2015, 2014, 2025];
+  var HUES = [330, 210, 150, 30, 260, 180, 0, 300];
+  var color = function (i) { return 'linear-gradient(135deg, hsl(' + HUES[i % 8] + ' 55% 62%), hsl(' + ((HUES[i % 8] + 40) % 360) + ' 50% 42%))'; };
+  var st = { s: 'normal', layout: 'mosaic', frame: 'matched', n: 8 };
+
+  function tiles(n, sel) {
+    var out = '';
+    for (var i = 0; i < n; i++) out += '<div class="tile' + (sel === i ? ' sel' : '') + '" style="background:' + color(i) + ';%S"><span>' + YEARS[i] + '</span></div>';
+    return out;
+  }
+  function body(layout, n, sel, ys) {
+    var spans = [[2,2],[1,1],[1,2],[2,1],[1,1],[1,1],[2,1],[1,1]];
+    var t = [];
+    for (var i = 0; i < n; i++) t.push('<div class="tile' + (sel === i ? ' sel' : '') + '" style="background:' + color(i) + ';%S"><span>' + (ys ? ys[i] : YEARS[i]) + '</span></div>');
+    var style, spec;
+    if (layout === 'grid') { var c = n <= 1 ? 1 : n <= 4 ? 2 : n <= 6 ? 3 : 4; return '<div class="body" style="grid-template-columns:repeat(' + c + ',1fr);grid-auto-rows:1fr">' + t.map(function (x) { return x.replace('%S', ''); }).join('') + '</div>'; }
+    if (layout === 'feature') { return '<div class="body" style="grid-template-columns:repeat(4,1fr);grid-auto-rows:1fr">' + t.map(function (x, i) { return x.replace('%S', i === 0 && n > 2 ? 'grid-column:span 2;grid-row:span 2' : ''); }).join('') + '</div>'; }
+    if (layout === 'mosaic') { return '<div class="body" style="grid-template-columns:repeat(4,1fr);grid-auto-rows:1fr;grid-auto-flow:dense">' + t.map(function (x, i) { return x.replace('%S', 'grid-column:span ' + spans[i][0] + ';grid-row:span ' + spans[i][1]); }).join('') + '</div>'; }
+    if (layout === 'filmstrip') { var rest = t.slice(1).map(function (x) { return x.replace('%S', 'flex:1'); }).join(''); return '<div class="body" style="display:flex;gap:4px"><div style="flex:3;display:flex">' + t[0].replace('%S', 'flex:1') + '</div><div style="flex:1;display:flex;flex-direction:column;gap:4px">' + rest + '</div></div>'; }
+    if (layout === 'ladder') {
+      var by = {}; for (var k = 0; k < n; k++) { var y = ys ? ys[k] : YEARS[k]; (by[y] = by[y] || []).push(t[k].replace('%S', 'flex:1')); }
+      var yrs = Object.keys(by).sort().reverse();
+      return '<div class="body" style="display:flex;flex-direction:column;gap:4px;overflow:hidden">' + yrs.map(function (y) { return '<div style="display:flex;flex-direction:column;gap:2px;flex:' + by[y].length + '"><b style="font-size:11px;color:var(--navy)">' + y + '</b><div style="display:flex;gap:4px;flex:1">' + by[y].join('') + '</div></div>'; }).join('') + '</div>';
+    }
+    if (layout === 'banner') { return '<div class="body" style="grid-template-columns:repeat(4,1fr);grid-template-rows:2fr 1fr">' + t.map(function (x, i) { return x.replace('%S', i === 0 ? 'grid-column:span 4' : ''); }).join('') + '</div>'; }
+    return '<div class="body" style="grid-template-columns:repeat(' + n + ',1fr)">' + t.map(function (x) { return x.replace('%S', ''); }).join('') + '</div>';
+  }
+  function miniLayout(layout, n, ys) { return '<div class="mini" style="display:block">' + body(layout, n, -1, ys).replace('class="body"', 'class="body" data-m="1"').replace('style="', 'style="height:100%;') + '</div>'; }
+
+  function dialog() {
+    var year = st.s === 'year';
+    var n = year ? 6 : st.n;
+    var ys = year ? [2021, 2021, 2021, 2021, 2021, 2021] : null;
+    var layouts = [['grid', 'Grid'], ['feature', 'Feature'], ['banner', 'Banner'], ['row', 'Row'], ['column', 'Column'], ['mosaic', 'Mosaic', 1], ['filmstrip', 'Filmstrip', 1], ['ladder', 'Year ladder', 1]];
+    var thumbs = ''; for (var i = 0; i < n; i++) thumbs += '<div class="th' + (i === 2 && st.s !== 'normal' ? ' sel' : '') + '" draggable="true" style="background:' + color(i) + '" title="Click to replace, drag to swap places"><span>' + (ys ? ys[i] : YEARS[i]) + '</span></div>';
+    var head = year ? 'Collage or card · November 27, 2021 · 5 years ago' : 'Collage or card · November 27';
+    var photosStep = year
+      ? '<div class="muted">From 2021: 6 photos. (One year at a time, so there is no "one from each year".)</div><div class="stepper" style="margin-top:6px"><span class="b">−</span><b style="font-size:18px">6</b><span class="b">+</span><span class="muted small">up to 6 here, the photos there are</span></div>'
+      : '<div class="stepper"><span class="b">−</span><b style="font-size:18px">' + n + '</b><span class="b">+</span><span class="muted small">up to 8. One photo makes a single card.</span></div><div style="margin-top:6px"><span class="btn">Shuffle</span></div><div class="muted small" style="margin-top:6px">One photo from each year.</div>';
+    var strip = '<div class="small muted" style="margin-top:8px">Click a photo to replace it. Drag one onto another to swap places.</div><div class="strip">' + thumbs + '</div>';
+    var chips = layouts.map(function (l) {
+      var off = year && l[0] === 'ladder';
+      return '<button class="chip' + (st.layout === l[0] ? ' on' : '') + (l[2] ? ' new' : '') + '" data-l="' + l[0] + '"' + (off ? ' disabled style="opacity:.45" title="Year ladder needs more than one year"' : '') + '>' + l[1] + '</button>';
+    }).join('');
+    var pop = '', tool = '';
+    if (st.s === 'replace') {
+      var g = ''; var yrs = [2025, 2025, 2025, 2023, 2023, 2021, 2021, 2021, 2018, 2015, 2015, 2015, 2014, 2025, 2021]; for (var q = 0; q < 15; q++) g += '<i style="background:' + color(q + 3) + '"><span>' + yrs[q] + '</span></i>';
+      pop = '<div class="pop" style="left:16px;top:16px"><b>Replace photo 3 (2021)</b><div class="muted small">Other photos from November 27. The ones in the collage are not listed.</div><div class="g">' + g + '</div><div style="display:flex;gap:8px;margin-top:8px"><span class="btn main">Use this one</span><span class="btn">Cancel</span></div></div>';
+    }
+    if (st.s === 'crop') tool = '<div class="tool"><b>Move and zoom photo 3</b><span class="muted small">Drag the photo in the picture to move it.</span><span class="small">Zoom</span><span class="slider"><i></i></span><span class="small">130%</span><span class="btn">Reset</span><span class="btn main">Done</span></div>';
+    var sel = st.s === 'normal' ? -1 : 2;
+    var canvas = '<div class="canvas"><div><div class="ttl">' + (year ? 'November 27, 2021' : 'November 27') + '</div><div class="sub">' + (year ? '5 years ago · 6 photos' : 'Across 7 years · ' + n + ' photos') + '</div></div>' + body(st.layout, n, sel, ys) + '<div class="foot"><span>Created with FlickrFetch</span><span>flickr.com</span></div></div>';
+    return '<div class="dhead"><span>' + head + '</span><span class="muted">✕</span></div>' +
+      '<div class="dbody"><div class="controls">' +
+      '<div class="step"><span class="lbl"><span class="num">1</span>Photos</span>' + photosStep + strip + '<label class="small" style="display:block;margin-top:6px"><input type="checkbox" checked> Public photos only</label></div>' +
+      '<div class="step"><span class="lbl"><span class="num">2</span>Look</span><div class="chips"><button class="chip">Polaroid</button><button class="chip on">Matched</button><button class="chip">Paper</button><button class="chip">Gallery</button><button class="chip">Film</button></div><div class="small muted" style="margin:6px 0 2px">Arrangement</div><div class="chips" id="chips">' + chips + '</div></div>' +
+      '<div class="step"><span class="lbl"><span class="num">3</span>Shape and size</span><div class="chips"><button class="chip on">Auto</button><button class="chip">Square</button><button class="chip">4:5</button><button class="chip">Story</button><button class="chip">Wide</button></div></div>' +
+      '<div class="step"><span class="lbl"><span class="num">4</span>Extras</span><label class="small" style="display:block"><input type="checkbox" checked> Short Flickr link under each photo</label><label class="small" style="display:block;margin-top:4px"><input type="checkbox" checked> <b>Include links to ' + (year ? '2021' : 'each year') + ' on Flickr</b> when sharing</label></div>' +
+      '<div class="warn">🔒 2 of the ' + n + ' photos are not public. You will be asked before saving, copying or sharing.</div>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap"><span class="btn main">Save image…</span><span class="btn">Copy image</span><span class="btn">Share…</span><span class="btn">Copy links</span></div></div>' +
+      '<div class="preview">' + canvas + pop + tool + '</div></div>';
+  }
+  var captions = {
+    normal: 'The count goes to 8 (6 for Polaroid), the strip shows the photos in order, and Mosaic, Filmstrip and Year ladder join the arrangements. The Extras tick is the new #267 share option.',
+    replace: '#143: click a photo in the strip or on the picture and a picker opens with the day\'s other photos, ones not already in the collage. Dragging a photo onto another swaps their places. A photo you swap out loses its crop; one that only moves keeps it.',
+    crop: '#270: select a photo and drag it inside its slot, with a zoom bar that never goes below "fills the slot", and Reset. The crop is kept per photo and shows in Save, Copy and Share.',
+    year: '#164: a "Collage from these 6" action on a year\'s row opens the same maker for that year only. The header says the date and how long ago, the photo pool is that year, and Year ladder is greyed out because there is only one year.'
+  };
+  function draw() {
+    document.getElementById('dialog').innerHTML = dialog();
+    document.getElementById('caption').textContent = captions[st.s];
+    document.querySelectorAll('#chips .chip').forEach(function (b) { b.onclick = function () { st.layout = b.getAttribute('data-l'); draw(); }; });
+    document.querySelectorAll('#states button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-s') === st.s)); });
+  }
+  document.querySelectorAll('#states button').forEach(function (b) { b.onclick = function () { st.s = b.getAttribute('data-s'); if (st.s === 'year' && st.layout === 'ladder') st.layout = 'mosaic'; draw(); }; });
+
+  var gal = [['mosaic', 'Mosaic', 'Different-sized tiles that fit together. Looks lively, works for 3 to 8 photos.', 8], ['filmstrip', 'Filmstrip', 'One big photo with a strip of the others down the side.', 6], ['ladder', 'Year ladder', 'Photos grouped by year with the year as a heading. Made for On This Day.', 8], ['mosaic', 'Mosaic, 5 photos', 'The same pattern with fewer photos.', 5], ['filmstrip', 'Filmstrip, 3 photos', 'It works for small counts too.', 3], ['mosaic', 'Later: scatter, overlap, circle and heart cut-outs', 'Looks close to the Polaroid scatter, or only suits a single photo, so they wait.', 1]];
+  document.getElementById('gal').innerHTML = gal.map(function (g) { return '<div class="it">' + miniLayout(g[0] === 'ladder' ? 'ladder' : g[0], g[3]) + '<b>' + g[1] + '</b><span class="muted small">' + g[2] + '</span></div>'; }).join('');
+  draw();
+})();
+</script>

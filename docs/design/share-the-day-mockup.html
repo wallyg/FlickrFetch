@@ -1,0 +1,142 @@
+<title>Share the Day Mock-up</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap">
+<style>
+/* Layout: three steps in order (in the app, what the family receives, what a link opens), then the honest limits. Palette is the app's own. */
+:root {
+  --blue: #0063DC; --pink: #FF0084; --pink-action: #D00069; --navy: #1B2946; --cream: #FCFAF6; --surface: #FFFFFF;
+  --text: #111827; --muted: #667085; --border: #E5E7EB; --warm: #F7F5F1; --info-bg: #EEF5FF; --info-line: #CFE0F7; --page: #EEF0F4;
+  --bubble: #E9E9EB; --bubble-me: #0A84FF; --bubble-me-text: #FFFFFF;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --surface: #1F2937; --cream: #111827; --text: #F3F4F6; --muted: #9CA3AF; --border: #374151; --warm: #243041; --info-bg: #14263F; --info-line: #24456F; --page: #0B1220; --navy: #E5E7EB;
+  --bubble: #374151; color-scheme: dark } }
+:root[data-theme="dark"] { --surface: #1F2937; --cream: #111827; --text: #F3F4F6; --muted: #9CA3AF; --border: #374151; --warm: #243041; --info-bg: #14263F; --info-line: #24456F; --page: #0B1220; --navy: #E5E7EB; --bubble: #374151; color-scheme: dark }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--text); font-family: 'Lato', -apple-system, BlinkMacSystemFont, sans-serif; font-size: 14px; line-height: 1.5;
+  padding-block: 24px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 920px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+h1 { font-size: 22px; margin: 0; color: var(--navy); }
+h2 { font-size: 16px; margin: 0 0 8px; color: var(--navy); }
+p { margin: 0; }
+.muted { color: var(--muted); }
+.step { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.tag { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.app { background: var(--cream); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.top .t { font-size: 18px; font-weight: 700; color: var(--navy); }
+.btn { font: inherit; font-size: 13px; border: 1px solid #D4D4D8; background: var(--surface); color: var(--text); border-radius: 6px; padding: 4px 12px; }
+.btn.main { background: var(--pink-action); border-color: var(--pink-action); color: #fff; font-weight: 700; }
+.menu { border: 1px solid var(--border); background: var(--surface); border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,.14); width: min(100%, 460px); padding: 4px; }
+.menu div { padding: 8px 12px; border-radius: 6px; font-size: 13px; }
+.menu .on { background: var(--info-bg); }
+.menu small { display: block; color: var(--muted); font-size: 12px; }
+.preview { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px; width: min(100%, 560px); }
+.preview pre { margin: 0; white-space: pre-wrap; word-break: break-word; font: inherit; font-size: 13px; }
+.preview a, .bubble a, .bubble .link { color: var(--blue); }
+.row3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
+.phone { background: var(--warm); border: 1px solid var(--border); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.who { font-size: 12px; color: var(--muted); text-align: center; }
+.bubble { background: var(--bubble); border-radius: 16px; padding: 8px 12px; max-width: 92%; font-size: 13px; overflow-wrap: anywhere; }
+.bubble .link { display: block; }
+.card { border: 1px solid var(--border); background: var(--surface); border-radius: 12px; overflow: hidden; max-width: 92%; }
+.card .pic { height: 64px; background: linear-gradient(135deg, #cbd5e1, #94a3b8); }
+.card .cap { padding: 6px 12px; font-size: 12px; }
+.card .cap b { display: block; font-size: 13px; }
+.flickr { border: 1px solid var(--border); border-radius: 8px; background: var(--surface); overflow: hidden; }
+.flickr .bar { background: var(--navy); color: #fff; padding: 6px 12px; font-size: 12px; display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.flickr .body { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 4px; }
+.grid i { display: block; aspect-ratio: 1; background: linear-gradient(135deg, #cbd5e1, #94a3b8); border-radius: 2px; }
+.grid i.lock { background: repeating-linear-gradient(45deg, #e5e7eb, #e5e7eb 6px, #d1d5db 6px, #d1d5db 12px); }
+.note { background: var(--info-bg); border: 1px solid var(--info-line); border-radius: 8px; padding: 8px 12px; font-size: 13px; }
+ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.two > div { background: var(--warm); border-radius: 8px; padding: 12px; }
+</style>
+
+<div class="wrap">
+  <div>
+    <h1>Share the collage, with links to the day on Flickr</h1>
+    <p class="muted">Mock-up for #267. The collage Share you already have also sends one line per year, each a link to that day on Flickr. The numbers are your real ones for November 27: 26 photos across 7 years.</p>
+  </div>
+
+  <section class="step">
+    <span class="tag">Step 1 · In FlickrFetch: the collage window you already have</span>
+    <div class="app">
+      <div class="top"><span class="t">Collage for November 27</span><span style="flex:1"></span><span class="btn">Shuffle</span><span class="btn">Copy image</span><span class="btn">Save…</span><span class="btn main">Share…</span></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;align-items:start">
+        <div class="grid" style="grid-template-columns:repeat(3,1fr);max-width:260px"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <label style="display:flex;gap:8px;align-items:flex-start;font-size:13px"><input type="checkbox" checked style="margin-top:3px"> <span><b>Include links to each year on Flickr</b><small style="display:block;color:var(--muted);font-size:12px">The picture is sent with one line per year. Each line links to that day on your Flickr page.</small></span></label>
+          <div class="preview" style="width:100%">
+            <p class="muted" style="font-size:12px;margin-bottom:6px">Sent with the picture, in the same share sheet (Messages, Mail, AirDrop, Notes):</p>
+<pre>On this day, November 27, in my photos:
+
+2025 · 7 photos
+https://www.flickr.com/photos/yourname/archives/date-taken/2025/11/27/
+2023 · 3 photos
+https://www.flickr.com/photos/yourname/archives/date-taken/2023/11/27/
+2021 · 6 photos
+https://www.flickr.com/photos/yourname/archives/date-taken/2021/11/27/
+2018 · 2 photos
+https://www.flickr.com/photos/yourname/archives/date-taken/2018/11/27/
+2017 · 1 photo
+https://www.flickr.com/photos/yourname/53456789012/
+2015 · 5 photos
+https://www.flickr.com/photos/yourname/archives/date-taken/2015/11/27/
+2014 · 2 photos
+https://www.flickr.com/photos/yourname/archives/date-taken/2014/11/27/
+
+Public photos open for anyone. Family and friends photos open when you are signed in to Flickr as my contact.</pre>
+          </div>
+          <p class="muted" style="font-size:12px">Every year has a link. A year with a single photo (2017 here) links straight to that photo's own page, not to a day page with one photo on it.</p>
+          <div><span class="btn">Copy the links</span> <span class="muted" style="font-size:12px">for places that take only a picture, such as AirDrop</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="step">
+    <span class="tag">Step 2 · What your family receives</span>
+    <div class="row3">
+      <div class="phone"><div class="who">Messages</div>
+        <div class="card" style="align-self:flex-end"><div class="pic" style="height:110px"></div><div class="cap"><b>The collage picture</b>sent first</div></div>
+        <div class="bubble">On this day, November 27, in my photos:</div>
+        <div class="bubble">2025 · 7 photos<span class="link">flickr.com/photos/yourname/archives/date-taken/2025/11/27/</span></div>
+        <div class="bubble">2023 · 3 photos<span class="link">flickr.com/photos/yourname/archives/date-taken/2023/11/27/</span></div>
+        <div class="bubble">2017 · 1 photo<span class="link">flickr.com/photos/yourname/53456789012/</span></div>
+        <div class="bubble">…and the other years, one line each</div>
+      </div>
+      <div class="phone"><div class="who">Mail</div>
+        <div class="card" style="max-width:100%"><div class="pic" style="height:110px"></div></div>
+        <div class="bubble" style="max-width:100%;border-radius:8px"><b>On this day, November 27</b><br>2025 · <span class="link" style="display:inline">7 photos</span><br>2023 · <span class="link" style="display:inline">3 photos</span><br>2021 · <span class="link" style="display:inline">6 photos</span><br><span class="muted">…</span><br><br><span class="muted">Public photos open for anyone. Family and friends photos open when you are signed in to Flickr as my contact.</span></div>
+        <p class="muted" style="font-size:12px">The picture sits in the email, with the list under it.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="step">
+    <span class="tag">Step 3 · What a link opens (Flickr's own page, drawn here as an illustration)</span>
+    <div class="row3">
+      <div class="flickr"><div class="bar"><span>Photos taken on November 27, 2025</span><span>7 items</span></div>
+        <div class="body"><p class="muted" style="font-size:12px">Someone not signed in, or not your contact, sees only the public ones:</p>
+          <div class="grid"><i></i><i></i></div>
+          <p class="muted" style="font-size:12px">2 of 7</p></div></div>
+      <div class="flickr"><div class="bar"><span>Photos taken on November 27, 2025</span><span>7 items</span></div>
+        <div class="body"><p class="muted" style="font-size:12px">A family member signed in as your contact sees all of them, and can open each one at full size:</p>
+          <div class="grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <p class="muted" style="font-size:12px">7 of 7</p></div></div>
+    </div>
+    <p class="muted">Flickr does the interactive part: tapping a photo opens it large, with the photo's own page, comments and full-size download where you allow it.</p>
+  </section>
+
+  <section class="step">
+    <span class="tag">What this is, and what it is not</span>
+    <div class="two">
+      <div><h2>Good at</h2><ul><li>Any size of day: 400 photos is still one collage and a few lines.</li><li>Full-size viewing and every Flickr feature, with nothing to open or install.</li><li>Privacy kept by Flickr itself, so there is nothing for FlickrFetch to warn about.</li><li>Works the same on a Mac, a PC, an iPad and a phone.</li></ul></div>
+      <div><h2>Not</h2><ul><li>The picture is what you see offline. The links need internet to open.</li><li>People who are not your Flickr contacts see only your public photos.</li><li>Some places take only the picture or only the text (AirDrop sends just the picture), so there is a Copy the links button too.</li><li>The day-page address pattern is checked on a real account before this is built.</li></ul></div>
+    </div>
+    <div class="note">If this turns out to feel thin once your family tries it, the richer file (a PDF or web page with the pictures inside) is a later extra, and the options for it are on #267.</div>
+  </section>
+</div>
