@@ -1,3 +1,4 @@
+import { ALL_TIME } from '../../shared/dashboardInsights'
 import React, { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import Icon from '../ui/Icon'
 import { useFindShortcut } from '../hooks/useFindShortcut'
@@ -173,8 +174,10 @@ export default function PhotoGrid({ onPhotoSelect, selectMode, selectedIds, onTo
     // A tag chosen on the On This Day page narrows the Photostream too (commas would split it into several tags)
     const tq = (dateSearchRequest.tag ?? '').replace(/,/g, ' ').trim()
     setSearchQuery(''); setTagQuery(tq)
-    setDateField('taken'); setDateMode('between'); setDateCustomMin(dateSearchRequest.from); setDateCustomMax(dateSearchRequest.to)
-    applySearch({ query: '', tagQuery: tq, tagMode: 'all', dateField: 'taken', dateMin: dateSearchRequest.from, dateMax: dateSearchRequest.to })
+    // The dashboard's "every date" range (only privacy or photo or video narrows) is no date filter at all, so there is no date chip to read
+    const everyDate = dateSearchRequest.from === ALL_TIME.from && dateSearchRequest.to === ALL_TIME.to
+    setDateField('taken'); setDateMode(everyDate ? 'all' : 'between'); setDateCustomMin(everyDate ? '' : dateSearchRequest.from); setDateCustomMax(everyDate ? '' : dateSearchRequest.to)
+    applySearch({ query: '', tagQuery: tq, tagMode: 'all', dateField: 'taken', ...(everyDate ? {} : { dateMin: dateSearchRequest.from, dateMax: dateSearchRequest.to }) })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateSearchRequest?.nonce])
 

@@ -21,6 +21,7 @@ const PATHS: Record<string, React.JSX.Element> = {
   chevronDown: <P d="M3.5 6l4.5 4.5L12.5 6" />,
   return: <P d="M4 2.5v6.5h8M9 6l3 3-3 3" />,
   refresh: <P d="M12.8 3v3.2H9.6M12.6 6.2A5 5 0 1 0 13 8.5" />,
+  download: <><P d="M8 2.5v7.2M4.8 6.8L8 10l3.2-3.2" /><P d="M3 12.6h10" /></>,
   warning: <><P d="M8 2.2l6.2 11H1.8z" /><P d="M8 6.5v3.2M8 11.6v.1" /></>,
   lock: <><B x={3.2} y={7} w={9.6} h={6.8} rx={1.6} /><P d="M5.3 7V5.2a2.7 2.7 0 0 1 5.4 0V7" /></>,
   calendar: <><B x={2.3} y={3.4} w={11.4} h={10.2} rx={1.6} /><P d="M2.3 6.6h11.4M5.4 2v2.6M10.6 2v2.6" /></>,

@@ -71,10 +71,26 @@ test('every bar on the dashboard has a hover that says its figure and share, and
   assert.match(read('src/renderer/components/DashboardParts.tsx'), /title=\{title\}/)   // a bar row carries its own hover
 })
 
+test('many decades get short labels so none is cut off', () => {
+  assert.match(read('src/renderer/components/DashboardCards.tsx'), /decades\.length > 6 \? d\.decade\.slice\(2\) : d\.decade/)
+})
+
 test('the "numbers differ" notice has an alert icon and a dismiss button, and comes back only when a number changes', () => {
   const code = read('src/renderer/components/TagScanParts.tsx')
   assert.match(code, /<Icon name="warning" size=\{18\} \/>/)
   assert.match(code, /aria-label="Dismiss this notice"/)
   assert.match(code, /gapDismissed !== pair/)                                          // dismissed for this pair of numbers only
   assert.match(code, /const pair = `\$\{status\.flickrTotal\}\|\$\{status\.indexedPhotos\}`/)
+})
+
+test('Save as PDF is in the Health Check toolbar with a download icon, and "every date" shortcuts show no date chip', () => {
+  const front = read('src/renderer/components/LibraryOverview.tsx')
+  assert.match(front, /createPortal\(pdfButton, toolbarRight\)/)
+  assert.match(front, /<Icon name="download" \/> PDF<\/button>/)                    // short, so it fits beside the other toolbar buttons
+  assert.match(front, /aria-label="Save as PDF"/)
+  for (const part of ['series={s} span={sp}', 'view="countries" n={10}', 'view="states" n={10}', 'mode="days"', 'mode="months"', 'n={25}']) assert.ok(front.includes(part), `the PDF has ${part}`)   // every view is printed, whatever is chosen on screen
+  assert.match(read('src/renderer/components/CleanupPanel.tsx'), /toolbarRight=\{rightSlot\}/)
+  const grid = read('src/renderer/components/PhotoGrid.tsx')
+  assert.match(grid, /dateSearchRequest\.from === ALL_TIME\.from && dateSearchRequest\.to === ALL_TIME\.to/)   // no date filter, so no "01/01/00 – 12/31/99" chip
+  assert.match(grid, /setDateMode\(everyDate \? 'all' : 'between'\)/)
 })

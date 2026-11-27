@@ -7,14 +7,14 @@ import { ruleById } from '../../shared/cleanupRules'
 import { linkBtn, segGroup, segBtn, selectedOn } from '../ui/kit'
 import {
   percent, yearInsight, decadeInsight, decadesOf, visibilityInsight, filledInsight, placesInsight, exactInsight, tagsInsight, albumsInsight,
-  partsCaptions, shownCount, formatDay, formatMonth, formatHour, formatRange, addDays, lastDayOfMonth, LONG_MONTH_NAMES, DAY_NAME_LIST, type FilledField
+  ALL_TIME, partsCaptions, shownCount, formatDay, formatMonth, formatHour, formatRange, addDays, lastDayOfMonth, LONG_MONTH_NAMES, DAY_NAME_LIST, type FilledField
 } from '../../shared/dashboardInsights'
 
 // The cards of the Health Check dashboard (#220). Each figure is a shortcut: it opens the screen that shows those photos (a view), and from there the
 // usual buttons on that screen (Open on Flickr, batch edit) are the way to change them. Cards with nothing to show say nothing.
 
 const fmt = (n: number): string => n.toLocaleString('en-US')
-const ALL_FROM = '1900-01-01', ALL_TO = '2999-12-31'
+const ALL_FROM = ALL_TIME.from, ALL_TO = ALL_TIME.to
 
 /** Where a click goes. The dashboard's owner (the Health Check panel) fills these in. */
 export interface Go {
@@ -143,7 +143,7 @@ export function FilledCard({ stats, go }: { stats: LibraryStats; go: Go }): Reac
 
 // ── When ──────────────────────────────────────────────────────────────────────────────────────────────────────
 
-export function YearCard({ stats, go, series, span, onSeries, onSpan, thisYear }: { stats: LibraryStats; go: Go; series: 'taken' | 'uploaded'; span: 'year' | 'decade'; onSeries: (s: 'taken' | 'uploaded') => void; onSpan: (s: 'year' | 'decade') => void; thisYear: number }): React.JSX.Element {
+export function YearCard({ stats, go, series, span, onSeries, onSpan, thisYear, compact }: { stats: LibraryStats; go: Go; series: 'taken' | 'uploaded'; span: 'year' | 'decade'; onSeries: (s: 'taken' | 'uploaded') => void; onSpan: (s: 'year' | 'decade') => void; thisYear: number; compact?: boolean }): React.JSX.Element {
   const linkable = series === 'taken'   // a photo's date taken is what the Photostream can search on
   const word = stats.videos > 0 ? 'Photos and videos' : 'Photos'
   const switches = (
@@ -164,7 +164,7 @@ export function YearCard({ stats, go, series, span, onSeries, onSpan, thisYear }
     const decades = series === 'taken' ? Array.from({ length: (last - first) / 10 + 1 }, (_, i) => { const d = `${first + i * 10}s`; return { decade: d, count: present.find(p => p.decade === d)?.count ?? 0 } }) : present
     const max = Math.max(1, ...decades.map(d => d.count))
     return (
-      <Card title={`${word} a decade`} wide right={switches}>
+      <Card title={`${word} a decade`} hint={series === 'taken' ? 'by date taken' : 'by date uploaded'} wide={!compact} right={switches}>
         <div style={styles.decades} role="img" aria-label={`Bars of ${word.toLowerCase()} per decade`}>
           {decades.map(d => (
             <div key={d.decade} style={styles.decadeCol} title={`${d.decade}: ${fmt(d.count)} ${unitWord(stats)}, ${percent(d.count, decades.reduce((a, x) => a + x.count, 0))} of the total${linkable && d.count > 0 ? '. Click to show them.' : ''}`}
@@ -174,7 +174,7 @@ export function YearCard({ stats, go, series, span, onSeries, onSpan, thisYear }
             </div>
           ))}
         </div>
-        <div style={styles.decadeLabels}>{decades.map(d => <span key={d.decade} style={{ flex: 1, textAlign: 'center' }}>{d.decade}</span>)}</div>
+        <div style={styles.decadeLabels}>{decades.map(d => <span key={d.decade} title={d.decade} style={{ flex: 1, minWidth: 0, textAlign: 'center' }}>{decades.length > 6 ? d.decade.slice(2) : d.decade}</span>)}</div>
         {note ? <Insight>{note}</Insight> : null}
       </Card>
     )
@@ -186,7 +186,7 @@ export function YearCard({ stats, go, series, span, onSeries, onSpan, thisYear }
   const max = Math.max(1, ...bars.map(b => b.n))
   const sumBars = bars.reduce((a, b) => a + b.n, 0)
   return (
-    <Card title={`${word} a year`} wide right={switches}>
+    <Card title={`${word} a year`} hint={series === 'taken' ? 'by date taken' : 'by date uploaded'} wide={!compact} right={switches}>
       <div style={styles.years} role="img" aria-label={`Bars of ${word.toLowerCase()} per year`}>
         {bars.map(b => (
           <div key={b.key} style={{ ...styles.yearBar, height: `${Math.max(2, (b.n / max) * 100)}%`, background: b.n === max ? 'var(--ff-navy)' : 'var(--ff-blue)' }} title={`${b.label}: ${fmt(b.n)} ${unitWord(stats)}, ${percent(b.n, sumBars)} of the total${linkable ? '. Click to show them.' : ''}`}
@@ -351,6 +351,7 @@ export function MoreRecordsCard({ stats, go }: { stats: LibraryStats; go: Go }):
   )
 }
 
+export const printGrid: React.CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12, marginTop: 12 }
 export const cardGrid: React.CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 12 }
 export const partsGrid: React.CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }
 

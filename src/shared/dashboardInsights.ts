@@ -3,6 +3,9 @@ import type { LibraryStats, Named } from './types'
 // The sentences under the dashboard's cards (the "insights") and the sizes of its Top 5 / Top 10 / Top 25 control. All of them are worked out from the
 // numbers, so they stay true when the library changes, and each one says nothing when there is nothing worth saying.
 
+/** A date range that stands for "every date" (a shortcut that only narrows by privacy or by photo or video). The Photostream treats it as no date filter. */
+export const ALL_TIME = { from: '1900-01-01', to: '2999-12-31' } as const
+
 const fmt = (n: number): string => n.toLocaleString('en-US')
 
 /** "46%", "99.9%", "under 1%": whole numbers, a decimal near the ends, never 100% while something is left. */

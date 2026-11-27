@@ -129,6 +129,7 @@ export default function CleanupPanel({ onViewPhotos, onDownload, settingsKey, on
           onGoAlbums={() => goTo('albums')}
           onOpenPhotos={(condition, year) => { setPhotoReq({ condition, year, nonce: Date.now() }); goTo('photos') }}
           onTune={onOpenSettings}
+          toolbarRight={rightSlot}
           go={{ range: onOpenRange, tab: onGoTab, album: onOpenAlbum, tagPhotos: tag => onViewPhotos([tag], 'any'), map: (lat, lon) => onShowOnMap?.(lat, lon) }}
         />
       )}
