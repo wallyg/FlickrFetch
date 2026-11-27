@@ -36,7 +36,7 @@ const unitOf = (id: string): string => id.startsWith('tags:') ? 'tags' : id.star
 const SELECTED: Record<CleanupRuleState, React.CSSProperties> = {
   off: { background: 'var(--ff-warm)', color: 'var(--ff-text)', fontWeight: 700, boxShadow: 'inset 0 0 0 1px var(--ff-slate)' },
   optional: { background: 'var(--ff-warning-bg)', color: 'var(--ff-warning-text)', fontWeight: 700, boxShadow: 'inset 0 0 0 1px var(--ff-warning)' },
-  on: { background: 'var(--ff-error-bg)', color: 'var(--ff-error)', fontWeight: 700, boxShadow: 'inset 0 0 0 1px var(--ff-error)' }
+  on: { background: 'var(--ff-error-bg)', color: 'var(--ff-error-ink)', fontWeight: 700, boxShadow: 'inset 0 0 0 1px var(--ff-error-ink)' }
 }
 
 // Settings closes and opens again as a new screen; this keeps which checks were unfolded and how far down you were

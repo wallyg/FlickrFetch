@@ -191,3 +191,8 @@ test('Cmd+F on the Map opens the Filters drawer and puts the cursor in the album
   assert.ok(/e\.key\.toLowerCase\(\) === 'f'[\s\S]{0,200}setDrawerOpen\(true\)[\s\S]{0,200}albumRef\.current\?\.focus\(\)/.test(map), 'Cmd+F opens the drawer then focuses the album box')
   assert.ok(/<AlbumBox inputRef=\{albumRef\}/.test(map) && /inputRef=\{inputRef\}|ref=\{inputRef\}/.test(read('src/renderer/components/AlbumBox.tsx')))
 })
+
+test('the Issue mark is the darker red ink (red against amber was too close for red-green colour blindness, #238)', () => {
+  assert.ok(/export const COLORS = \{ open: 'var\(--ff-error-ink\)'/.test(read('src/renderer/components/DashboardParts.tsx')))
+  assert.ok(/--ff-error-ink: *#B91C1C/.test(read('src/renderer/index.html')), 'the ink is the brand guide\'s #B91C1C')
+})

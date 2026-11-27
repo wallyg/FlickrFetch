@@ -92,7 +92,8 @@ export function pctLabel(fraction: number): string {
 }
 
 // open = an Issue (red; pink is only for selection), warn = a Warning (amber), plan and neutral are blue, fixed is green
-export const COLORS = { open: 'var(--ff-error)', warn: 'var(--ff-warning)', plan: 'var(--ff-blue)', fine: 'var(--ff-fine-fill)', fixed: 'var(--ff-success)', neutral: 'var(--ff-blue)' }
+// The Issue mark is the darker red ink, so it stays clear of amber and green for red-green colour-blind viewers (#238)
+export const COLORS = { open: 'var(--ff-error-ink)', warn: 'var(--ff-warning)', plan: 'var(--ff-blue)', fine: 'var(--ff-fine-fill)', fixed: 'var(--ff-success)', neutral: 'var(--ff-blue)' }
 
 export const dash: Record<string, React.CSSProperties> = {
   wrap: { flex: 1, minHeight: 0, overflowY: 'auto', padding: '8px 24px 16px' },
