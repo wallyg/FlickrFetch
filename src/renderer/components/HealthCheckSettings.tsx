@@ -14,11 +14,6 @@ const WHEN_OPTIONS: { key: When; label: string }[] = [
   { key: 'daily', label: 'Once a day' },
   { key: 'off', label: 'Off' }
 ]
-const WHEN_SHORT: Record<When, string> = {
-  open: 'Updates about 30 seconds after you open the app.',
-  daily: 'Updates when the list is over a day old, shortly after you open the app.',
-  off: 'Press Update on the Health Check tab when you want fresh results.'
-}
 const WHEN_HELP = [
   'Every time I open it: about 30 seconds after you open FlickrFetch it quietly looks for new and edited photos (usually a few seconds), and checks again once a day if you leave the app open.',
   'Once a day: while FlickrFetch is open it updates when the list is more than a day old. If it was closed for a while, it catches up shortly after you open it.',
@@ -50,7 +45,6 @@ export default function HealthCheckSettings({ reloadKey = 0, onOpenAlbumTab }: {
             <button key={o.key} role="radio" aria-checked={when === o.key} style={{ ...segBtn, ...(when === o.key ? selectedOn : {}) }} onClick={() => void change(o.key)}>{o.label}</button>
           ))}
         </div>
-        <span style={styles.desc}>{WHEN_SHORT[when]}</span>
       </div>
       <div>
         <div style={{ ...styles.head, display: 'flex', alignItems: 'center', gap: 7 }}>Tune checks <InfoTip text={TUNE_HELP} /></div>
