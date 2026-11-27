@@ -7,7 +7,7 @@ import HealthOverview from './HealthOverview'
 import { dash, SectionSwitch } from './DashboardParts'
 import RuleRail, { RailHead, RailRow, ListHead, SortBox } from './RuleRail'
 import { forgetOverview } from './LibraryOverview'
-import { quietBtn, primaryBtn, selectedOn, filterInput, doThisBtn, linkBtn } from '../ui/kit'
+import { quietBtn, primaryBtn, selectedOn, filterInput, doThisBtn, linkBtn, chip as kitChip } from '../ui/kit'
 import BatchEditButton from './BatchEditButton'
 import BackToTop from '../ui/BackToTop'
 import LoadFailed from './LoadFailed'
@@ -246,7 +246,7 @@ const styles: Record<string, React.CSSProperties> = {
   rail: { flexShrink: 0, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 8, padding: 6 },
   main: { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: 0 },
   statusRow: { display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, flexWrap: 'wrap' },
-  statusChip: { border: '1px solid var(--ff-border)', borderRadius: 12, padding: '2px 12px', fontSize: 13, background: 'var(--ff-surface)', color: 'var(--ff-text)', cursor: 'pointer' },
+  statusChip: { ...kitChip },
   statusChipOn: { ...selectedOn },
   list: { flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: 4 },
   card: { display: 'flex', gap: 12, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 8, padding: 8, marginBottom: 8 },

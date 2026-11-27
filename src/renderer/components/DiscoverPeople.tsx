@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo } from 'react'
-import { tabMark, linkBtn, quietBtn, primaryBtn } from '../ui/kit'
+import { tabMark, linkBtn, quietBtn, primaryBtn, chipLabel } from '../ui/kit'
 import Icon from '../ui/Icon'
 import { allPages } from '../../shared/pages'
 import { useFindShortcut } from '../hooks/useFindShortcut'
@@ -1682,7 +1682,7 @@ const s: Record<string, React.CSSProperties> = {
   collectionCardInfo: { padding: '8px 12px', display: 'flex', flexDirection: 'column' as const, gap: '4px' },
   collectionCardTitle: { fontSize: '13px', fontWeight: 700, color: 'var(--ff-text)', whiteSpace: 'nowrap' as const, overflow: 'hidden', textOverflow: 'ellipsis' },
   collectionChips: { display: 'flex', gap: '4px', flexWrap: 'wrap' as const },
-  collectionChip: { fontSize: '11px', color: 'var(--ff-text-secondary)', background: 'var(--ff-warm)', borderRadius: '4px', padding: '2px 6px' },
+  collectionChip: { ...chipLabel },
   collectionSectionLabel: { fontSize: '11px', fontWeight: 700, color: 'var(--ff-text-secondary)', textTransform: 'uppercase' as const, letterSpacing: '0.06em', margin: '0 0 12px 0' },
   collectionAlbumsHeader: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' },
   collectionSizerGroup: { display: 'flex', gap: '2px', marginLeft: 'auto' },

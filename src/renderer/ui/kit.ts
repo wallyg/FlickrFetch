@@ -67,10 +67,21 @@ export const selectCompact: CSSProperties = { ...fieldCompact, cursor: 'pointer'
 // Marks a tab button, so its keyboard focus ring sits inside the tab instead of against the bar around it (index.html). Spread it into a tab's style.
 export const tabMark = { '--ff-tab': '1' } as CSSProperties
 
+// The chip family (#272). One chip you can press; selected is `selectedOn` on top of it. Three more looks: the number inside a chip, a chip you can
+// remove (a tick-style filter with a cross), and a label that is not a control. Nothing types out its own pill.
 export const chip: CSSProperties = {
   ...BOXED,
   border: '1px solid var(--ff-border)', borderRadius: 12, padding: '2px 12px', fontSize: 13,
   background: 'var(--ff-surface)', color: 'var(--ff-text)', cursor: 'pointer'
+}
+export const chipCount: CSSProperties = { fontWeight: 400, color: 'var(--ff-text-secondary)' }
+export const chipRemovable: CSSProperties = {
+  ...chip, display: 'inline-flex', alignItems: 'center', gap: 6, padding: '2px 4px 2px 8px',
+  background: 'var(--ff-tint)', borderColor: 'var(--ff-pink)', color: 'var(--ff-pink-action)', cursor: 'default'
+}
+export const chipLabel: CSSProperties = {
+  border: '1px solid var(--ff-border)', borderRadius: 12, padding: '0 8px', fontSize: 12,
+  background: 'var(--ff-warm)', color: 'var(--ff-text-secondary)', whiteSpace: 'nowrap'
 }
 
 export const segGroup: CSSProperties = {

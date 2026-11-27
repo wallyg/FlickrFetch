@@ -99,7 +99,7 @@ const styles: Record<string, React.CSSProperties> = {
   body: { flex: 1, minWidth: 0 },
   title: { fontSize: 14, fontWeight: 700, color: 'var(--ff-text)', overflowWrap: 'anywhere' },
   muted: { fontSize: 13, color: 'var(--ff-text-secondary)' },
-  description: { fontSize: 13, fontStyle: 'italic', color: 'var(--ff-text-secondary)', marginTop: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  description: { fontSize: 13, color: 'var(--ff-text-secondary)', marginTop: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
   judged: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 8, fontSize: 12, color: 'var(--ff-text-secondary)' },
   select: { ...selectCompact, fontSize: 12 },
   small: { background: 'none', border: 'none', padding: 0, fontSize: 12, color: 'var(--ff-blue)', textDecoration: 'underline', cursor: 'pointer' },

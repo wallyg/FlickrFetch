@@ -93,7 +93,6 @@ const styles: Record<string, React.CSSProperties> = {
   milestone: {
     fontSize: '13px',
     color: 'var(--ff-text)',
-    fontStyle: 'italic',
     margin: 0,
     lineHeight: '1.5'
   },

@@ -3,7 +3,7 @@ import Icon from '../ui/Icon'
 import type { FineReasonSummaryRow } from '../../shared/types'
 import { CLEANUP_RULES, DEFAULT_GENERIC_WORDS, logicOf } from '../../shared/cleanupRules'
 import type { CleanupRuleState } from '../../shared/cleanupRules'
-import { segGroup, segBtn, selectedOn, fieldBox, fieldCompact, putAsideBtn } from '../ui/kit'
+import { segGroup, segBtn, selectedOn, fieldBox, fieldCompact, putAsideBtn, chip as kitChip, chipCount as chipCountLook } from '../ui/kit'
 import AlbumFitSettings from './AlbumFitSettings'
 import MissingTagSettings from './MissingTagSettings'
 import LocationHintSettings from './LocationHintSettings'
@@ -201,8 +201,8 @@ const styles: Record<string, React.CSSProperties> = {
   logic: { fontSize: 12, color: 'var(--ff-text)', lineHeight: 1.5 },
   small: { fontSize: 12, color: 'var(--ff-text-muted)' },
   chips: { position: 'sticky', top: 0, zIndex: 'var(--ff-z-sticky)', display: 'flex', gap: 8, padding: '6px 0 8px', background: 'var(--ff-white)' },
-  chip: { border: '1px solid var(--ff-line-strong)', background: 'var(--ff-white)', borderRadius: 12, padding: '2px 12px', fontSize: 13, color: 'var(--ff-text-secondary)', cursor: 'pointer' },
-  chipN: { color: 'var(--ff-text-muted)', fontWeight: 400 },
+  chip: { ...kitChip },
+  chipN: { ...chipCountLook },
   count: { fontWeight: 400, color: 'var(--ff-text-secondary)' },
   numberRow: { display: 'flex', alignItems: 'center', gap: 8, marginTop: 6, fontSize: 12, color: 'var(--ff-text)' },
   numberInput: { ...fieldCompact, width: 64 },

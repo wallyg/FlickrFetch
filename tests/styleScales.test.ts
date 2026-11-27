@@ -55,3 +55,22 @@ test('no emoji or symbol characters stand in for icons', () => {
   }
   assert.deepEqual(found, [], 'Use <Icon name="..." /> from src/renderer/ui/Icon.tsx.')
 })
+
+// No italics (#272): the app has no italic style of its own. A note is plain text in the secondary colour. (A Flickr description keeps the italics its
+// author wrote, drawn by DescriptionView with <em>, so the italic font file stays.)
+test('no style sets italic text', () => assert.deepEqual(matches(/\bfontStyle: *'italic'/g), [], 'Use plain text; say it in words, not in slant.'))
+
+// One chip family (#272): a pill (rounded 12 or less, named chip, selChip, variantChip ...) is spread from the kit looks in ui/kit.ts (chip, chipLabel,
+// chipRemovable, chipCount), never typed out again. A chip on a dark bar (FineReasonHost) is built from the quiet button and is allowed.
+test('no screen types out its own chip: they all spread a look from ui/kit.ts', () => {
+  const bad: string[] = []
+  for (const f of files(SRC)) {
+    if (/ui\/kit\.ts$/.test(f)) continue
+    const code = readFileSync(f, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1')
+    for (const m of code.matchAll(/^ {2,8}(\w*[cC]hip\w*): \{([^}]*)\}/gm)) {
+      if (/^(chipOn|chipActive|chipN|chipCount|chipRow|chipX|chips|trayChips)$/.test(m[1])) continue
+      if (/borderRadius/.test(m[2]) && !/\.\.\.(?:kitChip|chipLabel|chipRemovable|chip|chipBase|quietBtn)\b/.test(m[2])) bad.push(`${relative(root, f)}: ${m[1]}`)
+    }
+  }
+  assert.deepEqual(bad, [], 'Spread chip, chipLabel or chipRemovable from ui/kit.ts.')
+})

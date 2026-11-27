@@ -1,3 +1,4 @@
+import { chipLabel } from '../ui/kit'
 import React, { useState } from 'react'
 import type { FlickrCollection, FlickrSet } from '../../shared/types'
 import { GridIcon, ListIcon, loadAlbumViewMode, saveAlbumViewMode, type AlbumViewMode, type GridSize } from './PhotoGridShared'
@@ -246,13 +247,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '4px',
     flexWrap: 'wrap' as const
   },
-  chip: {
-    fontSize: '11px',
-    color: 'var(--ff-text-secondary)',
-    background: 'var(--ff-warm)',
-    borderRadius: '4px',
-    padding: '2px 6px'
-  },
+  chip: { ...chipLabel },
   albumsHeader: {
     display: 'flex',
     alignItems: 'center',

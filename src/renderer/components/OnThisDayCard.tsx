@@ -3,7 +3,7 @@ import Icon from '../ui/Icon'
 import HoverCard from '../ui/HoverCard'
 import type { TodaySummary } from '../../shared/types'
 import { MONTHS } from './DateViewParts'
-import { quietBtn, doThisBtn } from '../ui/kit'
+import { quietBtn, doThisBtn, chipLabel } from '../ui/kit'
 import { BarsIcon } from '../ui/icons'
 import { itemsLabel } from '../../shared/counts'
 
@@ -139,7 +139,7 @@ const styles: Record<string, React.CSSProperties> = {
   bar: { width: 14, display: 'block', borderRadius: '3px 3px 0 0' },
   barLabels: { display: 'flex', gap: 0, fontSize: 11, color: 'var(--ff-text-secondary)', marginTop: 2 },
   chips: { display: 'flex', flexWrap: 'wrap', gap: 4, margin: '8px 0 2px' },
-  chip: { background: 'var(--ff-warm)', border: '1px solid var(--ff-border)', borderRadius: 12, padding: '0px 8px', fontSize: 12 },
+  chip: { ...chipLabel },
   thumbs: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 8 },
   thumb: { width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: 6, background: 'var(--ff-line-strong)', display: 'block' },
   peekFoot: { fontSize: 12, color: 'var(--ff-text-secondary)', marginTop: 8 }

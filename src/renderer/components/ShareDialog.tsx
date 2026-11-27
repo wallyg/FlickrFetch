@@ -8,7 +8,7 @@ import type { DayPhoto } from '../../shared/types'
 import logoImg from '../assets/logo-tray.png'
 import { itemsLabel } from '../../shared/counts'
 import { MONTHS } from './DateViewParts'
-import { quietBtn, selectedOn, primaryBtn } from '../ui/kit'
+import { quietBtn, selectedOn, primaryBtn, chip as kitChip } from '../ui/kit'
 import { mapColours } from '../ui/mapColours'
 
 // Collage and card maker for On This Day: pick how many photos, a layout and a frame, then save or copy the
@@ -633,7 +633,7 @@ const styles: Record<string, React.CSSProperties> = {
   label: { fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ff-text-secondary)' },
   muted: { fontSize: 12, color: 'var(--ff-text-secondary)' },
   chips: { display: 'flex', gap: 6, flexWrap: 'wrap' },
-  chip: { border: '1px solid var(--ff-border)', borderRadius: 12, padding: '2px 12px', fontSize: 13, background: 'var(--ff-white)', color: 'var(--ff-text)', cursor: 'pointer' },
+  chip: { ...kitChip },
   chipOn: { ...selectedOn },
   step: { ...quietBtn, width: 28, height: 28, padding: 0, fontSize: 16 },
   check: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--ff-text)' },

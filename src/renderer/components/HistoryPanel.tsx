@@ -960,7 +960,7 @@ const styles: Record<string, React.CSSProperties> = {
     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
   },
   untitled: {
-    color: 'var(--ff-text-muted)', fontStyle: 'italic',
+    color: 'var(--ff-text-muted)',
   },
   photoSub: {
     display: 'flex', alignItems: 'center', gap: 6, marginTop: 2,

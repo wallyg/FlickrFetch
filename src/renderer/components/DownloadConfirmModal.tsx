@@ -182,7 +182,7 @@ const s: Record<string, React.CSSProperties> = {
     margin: '0 0 4px', fontSize: '13px', color: 'var(--ff-text-secondary)',
   },
   countNote: {
-    margin: '0 0 0', fontSize: '11px', color: 'var(--ff-text-secondary)', fontStyle: 'italic' as const,
+    margin: '0 0 0', fontSize: '11px', color: 'var(--ff-text-secondary)',
   },
   limitNote: {
     fontSize: '12px', lineHeight: 1.5, color: 'var(--ff-text-secondary)', backgroundColor: 'var(--ff-tint)', borderRadius: '8px', padding: '8px 12px', margin: '8px 0 0',

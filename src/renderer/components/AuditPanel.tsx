@@ -11,7 +11,7 @@ import { GLUE_BOUNDARY_SOURCE } from '../../shared/tags'
 import { logicOf, ruleById } from '../../shared/cleanupRules'
 import type { CleanupRuleState } from '../../shared/cleanupRules'
 import type { AlbumFitPhoto, AuditCategory, AuditClue, AuditFinding, AuditPlanRow, AuditSort, AuditStatus, AuditSummary, TagMode } from '../../shared/types'
-import { quietBtn, primaryBtn, selectedOn, filterInput, fieldBox, selectBox, linkBtn } from '../ui/kit'
+import { quietBtn, primaryBtn, selectedOn, filterInput, fieldBox, selectBox, linkBtn, chip as kitChip } from '../ui/kit'
 import BatchEditButton from './BatchEditButton'
 import PhotoStrip from './PhotoStrip'
 import HoverNote from '../ui/HoverNote'
@@ -422,7 +422,7 @@ const styles: Record<string, React.CSSProperties> = {
   rail: { flexShrink: 0, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 8, padding: 6 },
   main: { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: 0 },
   statusRow: { display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, flexWrap: 'wrap' },
-  statusChip: { border: '1px solid var(--ff-border)', borderRadius: 12, padding: '2px 12px', fontSize: 13, background: 'var(--ff-surface)', color: 'var(--ff-text)', cursor: 'pointer' },
+  statusChip: { ...kitChip },
   statusChipOn: { ...selectedOn },
   list: { flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: 4 },
   card: { background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 8, padding: '8px 12px', marginBottom: 8 },

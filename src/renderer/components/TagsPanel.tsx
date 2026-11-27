@@ -4,7 +4,7 @@ import type { TagRow, TagLetterGroup, TagListQuery, TagTextOperator, TagMode } f
 import EmptyState from './EmptyState'
 import { ScanLine, ScanProgressCard } from './TagScanParts'
 import { useTagScan } from '../hooks/useTagScan'
-import { quietBtn, selectedOn, segGroup, segBtn, primaryBtn as mainBtn, fieldBox, selectBox, linkBtn } from '../ui/kit'
+import { quietBtn, selectedOn, segGroup, segBtn, primaryBtn as mainBtn, fieldBox, selectBox, linkBtn, chip as kitChip, chipLabel, chipRemovable, chipCount as chipCountLook } from '../ui/kit'
 import BackToTop from '../ui/BackToTop'
 
 // The Tags tab: browse every tag you have used, narrow by letter or by typing, pick some,
@@ -385,9 +385,9 @@ const styles: Record<string, React.CSSProperties> = {
   checkLabel: { display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', color: 'var(--ff-text-secondary)', cursor: 'pointer' },
   strips: { display: 'flex', flexDirection: 'column', gap: '6px', padding: '4px 24px 2px' },
   stripRow: { display: 'flex', flexWrap: 'wrap', gap: '4px' },
-  chip: { display: 'inline-flex', alignItems: 'baseline', gap: '4px', border: '1px solid var(--ff-border)', borderRadius: '12px', padding: '2px 8px', fontSize: '13px', fontWeight: 700, background: 'var(--ff-surface)', color: 'var(--ff-text)', cursor: 'pointer' },
+  chip: { ...kitChip, display: 'inline-flex', alignItems: 'baseline', gap: 4, padding: '2px 8px', fontWeight: 700 },
   chipActive: { ...selectedOn },
-  chipCount: { fontSize: '11px', fontWeight: 400, opacity: 0.65 },
+  chipCount: { ...chipCountLook },
   listInfo: { padding: '8px 24px 4px', fontSize: '13px', color: 'var(--ff-text-secondary)' },
   list: { flex: 1, minHeight: 0, overflowY: 'auto', margin: '0 24px 12px', background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: '8px' },
   emptyList: { padding: '40px', textAlign: 'center', color: 'var(--ff-text-secondary)', fontSize: '13px' },
@@ -395,12 +395,12 @@ const styles: Record<string, React.CSSProperties> = {
   rowSelected: { background: 'var(--ff-tint)' },
   check: { margin: 0, pointerEvents: 'none' },
   tagName: { fontSize: '14px', fontWeight: 700, color: 'var(--ff-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '55%' },
-  variantChip: { fontSize: '11px', padding: '0px 6px', borderRadius: '8px', background: 'var(--ff-warning-bg)', color: 'var(--ff-warning-text)', whiteSpace: 'nowrap' },
+  variantChip: { ...chipLabel, background: 'var(--ff-warning-bg)', color: 'var(--ff-warning-text)', borderColor: 'transparent' },
   count: { fontSize: '13px', color: 'var(--ff-text-secondary)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' },
   tray: { display: 'flex', alignItems: 'center', gap: '16px', padding: '8px 24px', background: 'var(--ff-surface)', borderTop: '1px solid var(--ff-border)' },
   trayChips: { display: 'flex', flexWrap: 'wrap', gap: '6px', flex: 1, maxHeight: '64px', overflowY: 'auto' },
   trayActions: { display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 },
-  selChip: { display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'var(--ff-tint)', border: '1px solid var(--ff-pink)', borderRadius: '12px', padding: '2px 4px 2px 8px', fontSize: '13px', color: 'var(--ff-pink-action)' },
+  selChip: { ...chipRemovable },
   selChipX: { background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ff-pink-action)', fontSize: '11px' },
   segGroup: { ...segGroup },
   seg: { ...segBtn },

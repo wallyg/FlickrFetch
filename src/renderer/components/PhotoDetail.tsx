@@ -556,7 +556,7 @@ export default function PhotoDetail({
               </div>
               {info.description
                 ? <DescriptionView html={info.description} style={{ ...styles.fieldValue, margin: 0 }} />
-                : <p style={{ ...styles.fieldValue, margin: 0, color: 'var(--ff-text-secondary)', fontStyle: 'italic' as const }}>No description</p>
+                : <p style={{ ...styles.fieldValue, margin: 0, color: 'var(--ff-text-secondary)' }}>No description</p>
               }
             </div>
           )}
@@ -572,7 +572,7 @@ export default function PhotoDetail({
                     ? <button key={tag} style={styles.tagButton} title={`Show photos tagged "${tag}"`} onClick={() => onTagClick(tag)}>{tag}</button>
                     : <span key={tag} style={styles.tag}>{tag}</span>
                   )}</div>
-                : <p style={{ ...styles.fieldValue, margin: 0, color: 'var(--ff-text-secondary)', fontStyle: 'italic' as const }}>No tags</p>
+                : <p style={{ ...styles.fieldValue, margin: 0, color: 'var(--ff-text-secondary)' }}>No tags</p>
               }
             </div>
           )}
@@ -1098,7 +1098,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '12px',
     color: 'var(--ff-text-secondary)',
     margin: 0,
-    fontStyle: 'italic' as const,
   },
   exifGrid: {
     display: 'grid',

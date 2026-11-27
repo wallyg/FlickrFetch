@@ -590,7 +590,6 @@ const styles: Record<string, React.CSSProperties> = {
   activeTicker: {
     fontSize: '11px',
     color: 'var(--ff-text-secondary)',
-    fontStyle: 'italic',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap'

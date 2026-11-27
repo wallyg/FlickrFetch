@@ -8,7 +8,7 @@ import LoadFailed from './LoadFailed'
 import DateFilterBar, { dateExtra, extraNote, openTitle, rangeOpts, type MediaChoice, type RangeOpts } from './DateFilterBar'
 import type { PrivacyFilter } from './PhotoGridShared'
 import type { PickedAlbum } from './AlbumBox'
-import { primaryBtn, quietBtn, linkBtn, pillBtn, selectedOn } from '../ui/kit'
+import { primaryBtn, quietBtn, linkBtn, pillBtn, selectedOn, chip as kitChip, chipCount as chipCountLook } from '../ui/kit'
 import BackToTop from '../ui/BackToTop'
 import { asButton } from '../ui/a11y'
 import { itemsLabel } from '../../shared/counts'
@@ -44,6 +44,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
   const [data, setData] = useState<DayView | null>(null)
   const [failed, setFailed] = useState(false)
   const [expanded, setExpanded] = useState<Record<string, DayPhoto[]>>({})
+  const [allYears, setAllYears] = useState(false)   // Across the years: the five biggest years, or every year
   const [selected, setSelected] = useState<Map<string, DayPhoto>>(new Map())
   const [share, setShare] = useState<{ photos: DayPhoto[]; userPicked: boolean } | null>(null)
   const reqRef = useRef(0)
@@ -66,6 +67,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
 
   useEffect(() => { void load() }, [load, refreshKey])
   useEffect(() => { viewRef.current++; setExpanded({}); setSelected(new Map()) }, [month, day, scope, tag, extra])
+  useEffect(() => { setAllYears(false) }, [month, day])   // a new day starts on its top five years
 
   // See in On This Day (from a Timeline day) lands here on that date
   useEffect(() => {
@@ -125,6 +127,10 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
   const isToday = month === now.getMonth() + 1 && day === now.getDate()
   const byCount = [...data.years].sort((a, b) => b.count - a.count)
   const topYear = byCount[0]
+  const TOP_YEARS = 5
+  const manyYears = data.years.length > TOP_YEARS
+  // The five years with the most photos (still shown newest first), or every year once asked
+  const yearRows = manyYears && !allYears ? byCount.slice(0, TOP_YEARS).sort((a, b) => Number(b.year) - Number(a.year)) : data.years
   const maxHour = Math.max(1, ...ins.hourCounts)
   const peakHour = ins.hourCounts.indexOf(maxHour)
   const hasHours = ins.hourCounts.some(n => n > 0)
@@ -212,7 +218,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
           <div style={styles.insights}>
             <Insight icon={<Icon name="calendar" />} title="Across the years">
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {data.years.map(g => (
+                {yearRows.map(g => (
                   <div key={g.year} style={styles.yearBar} {...asButton(() => document.getElementById(`otd-year-${g.year}`)?.scrollIntoView({ block: 'start', behavior: 'smooth' }))} title={`${g.count.toLocaleString()} photo${g.count === 1 ? '' : 's'} in ${g.year}. Click to jump there.`}>
                     <span style={{ width: 34, color: 'var(--ff-text)' }}>{g.year}</span>
                     <span style={{ flex: 1, minWidth: 0 }}><i style={{ display: 'block', height: 9, borderRadius: 6, width: `${Math.max(3, (g.count / (topYear?.count || 1)) * 100)}%`, background: g === topYear ? 'var(--ff-pink)' : '#e6b0cb' }} /></span>
@@ -220,6 +226,9 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
                   </div>
                 ))}
               </div>
+              {manyYears && (
+                <button style={{ ...linkBtn, marginTop: 6 }} onClick={() => setAllYears(a => !a)}>{allYears ? `Show only the top ${TOP_YEARS} years` : `Show all ${data.years.length} years`}</button>
+              )}
             </Insight>
             {ins.topTags.length > 0 && (
               <Insight icon={<Icon name="tag" />} title="Most-used tags">
@@ -323,9 +332,9 @@ const styles: Record<string, React.CSSProperties> = {
   row: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', margin: '12px 0 8px' },
   insights: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 8, margin: '4px 0' },
   yearBar: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, cursor: 'pointer' },
-  tagCount: { marginLeft: 4, fontWeight: 400, fontSize: 12, color: 'var(--ff-text-secondary)', whiteSpace: 'nowrap' },
+  tagCount: { ...chipCountLook, marginLeft: 4, fontSize: 12, whiteSpace: 'nowrap' },
   chips: { display: 'flex', gap: 4, flexWrap: 'wrap' },
-  tagChip: { background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 12, padding: '2px 8px', fontSize: 12, color: 'var(--ff-text)', cursor: 'pointer', textAlign: 'left', maxWidth: '100%' },
+  tagChip: { ...kitChip, padding: '2px 8px', fontSize: 12, textAlign: 'left', maxWidth: '100%' },
   sectionRule: { display: 'flex', alignItems: 'center', gap: 8, margin: '24px 0 2px', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ff-text-secondary)' },
   yearHead: { display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6 },
   

@@ -323,7 +323,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '13px',
     color: 'var(--ff-blue)',
     margin: '0',
-    fontStyle: 'italic'
   },
   outlinedBtn: {
     alignSelf: 'flex-start' as const,
