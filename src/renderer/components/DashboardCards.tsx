@@ -238,10 +238,9 @@ export function PartsCards({ stats }: { stats: LibraryStats }): React.JSX.Elemen
 export function GuessedNote({ stats, go }: { stats: LibraryStats; go: Go }): React.JSX.Element | null {
   const g = stats.guessed
   if (g.items === 0) return null
-  const day = g.biggestDay ? `, such as ${fmt(g.biggestDay.items)} on ${formatDay(g.biggestDay.day)}` : ''
   return (
     <div style={{ ...styles.insight, marginTop: 12 }}>
-      <b>{fmt(g.items)} {g.items === 1 ? 'item has' : 'items have'} a guessed or placeholder date</b> and {g.items === 1 ? 'is' : 'are'} left out of these date charts{day}. They are still counted everywhere else.{' '}
+      <b>{fmt(g.items)} {g.items === 1 ? 'item has' : 'items have'} a guessed or placeholder date</b>, so these date charts leave {g.items === 1 ? 'it' : 'them'} out. {g.items === 1 ? 'It is' : 'They are'} still counted everywhere else.{' '}
       <button style={styles.link} onClick={() => go.list('datePlaceholder')}>Open the Placeholder date check</button>
     </div>
   )
