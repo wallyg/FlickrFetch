@@ -90,7 +90,7 @@ export default function CameraRoll({ from, to, title, scope, extra, extraText, o
       </div>
 
       {selected.size > 0 && (
-        <div style={{ ...styles.bar, background: 'var(--ff-tint)', border: '1px solid #ffc2de', borderRadius: 8, padding: '6px 10px' }}>
+        <div style={{ ...styles.bar, background: 'var(--ff-tint)', border: '1px solid #ffc2de', borderRadius: 8, padding: '6px 8px' }}>
           <span style={styles.muted}>{selected.size} selected</span>
           <button style={styles.btn} onClick={() => onDownload([...selected.values()].map(p => ({ id: p.id, title: p.title })), `Camera roll, ${title} (selected)`, 'Only the photos you selected')}>Download selected</button>
           <BatchEditButton inline style={styles.btn} getIds={async () => [...selected.values()].map(p => p.id)} />
@@ -102,7 +102,7 @@ export default function CameraRoll({ from, to, title, scope, extra, extraText, o
         : loading && days.length === 0 ? <div style={styles.muted}>Loading your photos…</div>
         : days.length === 0 ? <div style={styles.muted}>No photos here{scopeNote}.</div>
         : days.map(d => (
-          <div key={d.date} style={{ margin: '14px 0 4px' }}>
+          <div key={d.date} style={{ margin: '12px 0 4px' }}>
             <div style={styles.dayHead}>
               <b style={{ fontSize: 14, color: 'var(--ff-navy)' }}>{dayHeading(d.date)}</b>
               <span style={styles.muted}>{itemsLabel(d.count, d.videos)}</span>
@@ -125,7 +125,7 @@ export default function CameraRoll({ from, to, title, scope, extra, extraText, o
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  bar: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', margin: '0 0 8px' },
+  bar: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', margin: '0 0 8px' },
   muted: { fontSize: 12, color: 'var(--ff-text-secondary)' },
   seg: { ...segGroup },
   segBtn: { ...segBtnBase },
@@ -133,7 +133,7 @@ const styles: Record<string, React.CSSProperties> = {
   btn: { ...quietBtn },
   primary: { ...primaryBtn },
   link: { ...linkBtn },
-  dayHead: { display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 6 },
+  dayHead: { display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6 },
   tiles: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8 },
-  more: { width: '100%', margin: '16px 0 8px', padding: 10, background: 'none', border: '1px dashed var(--ff-line-strong)', borderRadius: 8, color: 'var(--ff-text-secondary)', fontSize: 13, cursor: 'pointer' }
+  more: { width: '100%', margin: '16px 0 8px', padding: 8, background: 'none', border: '1px dashed var(--ff-line-strong)', borderRadius: 8, color: 'var(--ff-text-secondary)', fontSize: 13, cursor: 'pointer' }
 }

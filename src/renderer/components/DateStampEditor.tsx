@@ -75,7 +75,7 @@ export default function DateStampEditor({ value, onChange, position }: { value: 
 
 const styles: Record<string, React.CSSProperties> = {
   box: { display: 'flex', flexDirection: 'column', gap: 8 },
-  line: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
+  line: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   label: { fontSize: 12, color: 'var(--ff-text-secondary)', display: 'inline-flex', alignItems: 'center', gap: 4 },
   input: { flex: 1, minWidth: 180, fontFamily: 'monospace' },
   example: { fontSize: 12, fontFamily: 'monospace', color: 'var(--ff-text)' },

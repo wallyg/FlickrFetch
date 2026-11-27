@@ -406,7 +406,7 @@ export default function PhotoDetail({
       {/* Left: dark image panel */}
       <div style={styles.imagePanel}>
         <button style={styles.backBtnOverlay} onClick={onClose}>
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '5px', flexShrink: 0 }}><path d="M7.5 1.5L3 6l4.5 4.5"/></svg>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px', flexShrink: 0 }}><path d="M7.5 1.5L3 6l4.5 4.5"/></svg>
           {sourceName}
         </button>
 
@@ -655,7 +655,7 @@ export default function PhotoDetail({
                 type="checkbox"
                 checked={trackDownload}
                 onChange={e => setTrackDownload(e.target.checked)}
-                style={{ marginRight: 5, cursor: 'pointer' }}
+                style={{ marginRight: 4, cursor: 'pointer' }}
               />
               Track this download
             </label>
@@ -666,7 +666,7 @@ export default function PhotoDetail({
           )}
 
           {lastDownloadedAt != null && downloadState === 'idle' && (
-            <div style={{ marginTop: '10px' }}>
+            <div style={{ marginTop: '8px' }}>
               {photo.lastUpdate != null && photo.lastUpdate > 0 && photo.lastUpdate * 1000 > lastDownloadedAt && (
                 <div style={styles.stalenessWarning}>
                   <span style={styles.stalenessIcon}><Icon name="warning" /></span>
@@ -738,7 +738,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
-    padding: '20px',
+    padding: '16px',
   },
   photo: {
     maxWidth: '100%',
@@ -788,7 +788,7 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundColor: 'var(--ff-scrim)',
     color: 'var(--ff-text-muted)',
     fontSize: '11px',
-    padding: '3px 8px',
+    padding: '2px 8px',
     borderRadius: '8px',
     userSelect: 'none',
   },
@@ -821,7 +821,7 @@ const styles: Record<string, React.CSSProperties> = {
     color: 'var(--ff-white)',
     borderRadius: '50px',
     fontSize: '13px',
-    padding: '7px 13px',
+    padding: '6px 12px',
     cursor: 'pointer',
     zIndex: 2,
     display: 'flex',
@@ -872,7 +872,7 @@ const styles: Record<string, React.CSSProperties> = {
   badge: {
     fontSize: '11px',
     fontWeight: '400',
-    padding: '2px 7px',
+    padding: '2px 6px',
     borderRadius: '50px',
   },
   metaDim: {
@@ -881,8 +881,8 @@ const styles: Record<string, React.CSSProperties> = {
     margin: '0 0 4px',
   },
   section: {
-    marginTop: '18px',
-    paddingTop: '18px',
+    marginTop: '16px',
+    paddingTop: '16px',
     borderTop: '1px solid var(--ff-border)',
   },
   fieldLabel: {
@@ -941,7 +941,7 @@ const styles: Record<string, React.CSSProperties> = {
     background: 'none',
     border: '1px solid var(--ff-line-strong)',
     borderRadius: '4px',
-    padding: '2px 5px',
+    padding: '2px 4px',
     color: 'var(--ff-text-secondary)',
     cursor: 'pointer',
     flexShrink: 0,
@@ -952,7 +952,7 @@ const styles: Record<string, React.CSSProperties> = {
     height: '22px',
   },
   downloadArea: {
-    padding: '12px 16px 14px',
+    padding: '12px 16px 12px',
     borderTop: '1px solid var(--ff-border)',
     flexShrink: 0,
     backgroundColor: 'var(--ff-cream)',
@@ -963,7 +963,7 @@ const styles: Record<string, React.CSSProperties> = {
     border: '1px solid var(--ff-line-strong)',
     borderRadius: '6px',
     fontSize: '12px',
-    marginBottom: '10px',
+    marginBottom: '8px',
     backgroundColor: 'var(--ff-surface)',
     color: 'var(--ff-text)',
   },
@@ -973,7 +973,7 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundColor: 'var(--ff-border)',
     borderRadius: '4px',
     overflow: 'hidden',
-    marginBottom: '5px',
+    marginBottom: '4px',
   },
   progressFill: {
     height: '100%',
@@ -1011,8 +1011,8 @@ const styles: Record<string, React.CSSProperties> = {
   dragGrip: {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
-    gap: '3px',
-    padding: '1px',
+    gap: '2px',
+    padding: '0px',
   },
   dragDot: {
     width: '3px',
@@ -1036,7 +1036,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingLeft: '3px',
+    paddingLeft: '2px',
   },
   lastDownloadedRow: {
     display: 'flex',
@@ -1050,7 +1050,7 @@ const styles: Record<string, React.CSSProperties> = {
     textTransform: 'uppercase' as const,
     letterSpacing: '0.06em',
     fontWeight: '700',
-    margin: '0 0 3px',
+    margin: '0 0 2px',
   },
   lastDownloadedDate: {
     fontSize: '12px',
@@ -1073,7 +1073,7 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundColor: 'var(--ff-warning-bg)',
     border: '1px solid var(--ff-warning)',
     borderRadius: '6px',
-    padding: '6px 10px',
+    padding: '6px 8px',
     fontSize: '12px',
     fontWeight: 700,
     color: 'var(--ff-warning-text)',
@@ -1091,7 +1091,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '12px',
     color: 'var(--ff-text-muted)',
     marginTop: '6px',
-    marginBottom: '10px',
+    marginBottom: '8px',
     cursor: 'pointer',
   },
   noGeoText: {
@@ -1103,7 +1103,7 @@ const styles: Record<string, React.CSSProperties> = {
   exifGrid: {
     display: 'grid',
     gridTemplateColumns: 'auto 1fr',
-    gap: '3px 10px',
+    gap: '2px 8px',
     marginTop: '2px',
   },
   exifLabel: {
@@ -1126,14 +1126,14 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'flex-end',
     justifyContent: 'center',
-    paddingBottom: '5px',
+    paddingBottom: '4px',
   },
   scrollChevron: {
     fontSize: '11px',
     color: 'var(--ff-text-secondary)',
     background: 'var(--ff-shadow-soft)',
     borderRadius: '8px',
-    padding: '2px 9px',
+    padding: '2px 8px',
     lineHeight: 1,
   },
 }

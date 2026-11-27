@@ -171,14 +171,14 @@ const styles: Record<string, React.CSSProperties> = {
     background: 'var(--ff-warm)',
     border: '1px solid var(--ff-line-strong)',
     borderRadius: '6px',
-    padding: '5px 8px',
+    padding: '4px 8px',
     cursor: 'pointer',
     flexShrink: 0
   },
   searchInput: {
     flex: 1,
     fontSize: '13px',
-    padding: '5px 10px',
+    padding: '4px 8px',
     border: '1px solid var(--ff-line-strong)',
     borderRadius: '6px',
     background: 'var(--ff-surface)',
@@ -256,7 +256,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'block'
   },
   info: {
-    padding: '10px 12px',
+    padding: '8px 12px',
     display: 'flex',
     flexDirection: 'column',
     gap: '5px'
@@ -271,7 +271,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   chips: {
     display: 'flex',
-    gap: '5px',
+    gap: '4px',
     flexWrap: 'wrap' as const
   },
   chip: {

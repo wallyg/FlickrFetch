@@ -114,7 +114,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
     window.addEventListener('resize', watch)
     return () => window.removeEventListener('resize', watch)
   }, [])
-  const tabStyle: React.CSSProperties = tight ? { ...styles.tab, padding: '10px 9px', fontSize: '13px' } : styles.tab
+  const tabStyle: React.CSSProperties = tight ? { ...styles.tab, padding: '8px 8px', fontSize: '13px' } : styles.tab
   const [dataKey, setDataKey] = useState(0)   // changes when a scan finishes, so On This Day, the Timeline and the card look again
   // Set when a tag is clicked in the photo detail while viewing an album; the album grid filters itself to it
   const [albumTagRequest, setAlbumTagRequest] = useState<{ tag: string; nonce: number } | null>(null)
@@ -1081,7 +1081,7 @@ const styles: Record<string, React.CSSProperties> = {
     flexShrink: 0,
     display: 'flex',
     alignItems: 'center',
-    padding: '0 20px',
+    padding: '0 16px',
   },
   headerDivider: {
     width: '1px',
@@ -1096,7 +1096,7 @@ const styles: Record<string, React.CSSProperties> = {
     background: 'none',
     border: 'none',
     borderBottom: '3px solid transparent',
-    padding: '0 20px',
+    padding: '0 16px',
     fontSize: '14px',
     fontWeight: '700',
     color: 'var(--ff-text-secondary)',
@@ -1117,20 +1117,20 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundColor: 'color-mix(in srgb, var(--ff-pink) 10%, transparent)',
     border: '1px solid color-mix(in srgb, var(--ff-pink) 30%, transparent)',
     borderRadius: '4px',
-    padding: '1px 5px',
+    padding: '0px 4px',
     letterSpacing: '0.06em',
     lineHeight: '1.4'
   },
   avatarBtn: {
     display: 'flex',
     alignItems: 'center',
-    gap: '5px',
+    gap: '4px',
     borderRadius: '50px',
     overflow: 'visible',
     cursor: 'pointer',
     border: '1px solid var(--ff-line-strong)',
     background: 'none',
-    padding: '3px 8px 3px 3px',
+    padding: '2px 8px 2px 2px',
     flexShrink: 0,
   },
   avatarBtnImg: {
@@ -1151,11 +1151,11 @@ const styles: Record<string, React.CSSProperties> = {
     boxShadow: '0 4px 20px var(--ff-shadow-mid)',
     zIndex: 'var(--ff-z-menu)',
     minWidth: '220px',
-    padding: '14px',
+    padding: '12px',
   },
   avatarPopoverUser: {
     display: 'flex',
-    gap: '10px',
+    gap: '8px',
     alignItems: 'flex-start',
   },
   avatarPopoverImg: {
@@ -1172,7 +1172,7 @@ const styles: Record<string, React.CSSProperties> = {
     color: 'var(--ff-text)',
     display: 'flex',
     alignItems: 'center',
-    gap: '5px',
+    gap: '4px',
     marginBottom: '2px',
   },
   avatarPopoverHandle: {
@@ -1187,7 +1187,7 @@ const styles: Record<string, React.CSSProperties> = {
   avatarPopoverDivider: {
     height: '1px',
     backgroundColor: 'var(--ff-grey-100)',
-    margin: '10px 0',
+    margin: '8px 0',
   },
   avatarPopoverSignOut: {
     background: 'none',
@@ -1220,7 +1220,7 @@ const styles: Record<string, React.CSSProperties> = {
     width: '1px',
     height: '18px',
     background: 'var(--ff-border)',
-    margin: '0 10px',
+    margin: '0 8px',
     alignSelf: 'center',
     flexShrink: 0
   },
@@ -1229,12 +1229,12 @@ const styles: Record<string, React.CSSProperties> = {
     background: 'none',
     border: 'none',
     borderBottom: '2px solid transparent',
-    padding: '10px 16px',
+    padding: '8px 16px',
     fontSize: '14px',
     fontWeight: '400',
     color: 'var(--ff-text-secondary)',
     cursor: 'pointer',
-    marginBottom: '-1px',
+    marginBottom: '0px',
     whiteSpace: 'nowrap',       // "On This Day" and "Health Check" used to fold onto two or three lines in a narrow window
     flexShrink: 0
   },
@@ -1246,7 +1246,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
-    padding: '10px 24px',
+    padding: '8px 24px',
     backgroundColor: 'var(--ff-surface)',
     borderBottom: '1px solid var(--ff-border)'
   },
@@ -1280,8 +1280,8 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'center',
   },
   iconButtonLabeled: {
-    gap: '5px',
-    padding: '6px 10px',
+    gap: '4px',
+    padding: '6px 8px',
   },
   iconButtonLabel: {
     fontSize: '12px',
@@ -1319,7 +1319,7 @@ const styles: Record<string, React.CSSProperties> = {
     background: 'none',
     border: '1px solid var(--ff-line-strong)',
     borderRadius: '6px',
-    padding: '5px 8px',
+    padding: '4px 8px',
     color: 'var(--ff-text-secondary)',
     cursor: 'pointer',
     display: 'flex',
@@ -1331,7 +1331,7 @@ const styles: Record<string, React.CSSProperties> = {
   doneButton: {
     background: 'none',
     border: 'none',
-    padding: '5px 8px',
+    padding: '4px 8px',
     fontSize: '13px',
     fontWeight: '700',
     color: 'var(--ff-text-secondary)',
@@ -1341,7 +1341,7 @@ const styles: Record<string, React.CSSProperties> = {
   photostreamToolbar: {
     display: 'flex',
     alignItems: 'center',
-    gap: '10px',
+    gap: '8px',
     padding: '8px 24px',
     backgroundColor: 'var(--ff-surface)',
     borderBottom: '1px solid var(--ff-border)',
@@ -1369,7 +1369,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   overflowBtn: {
     background: 'none', border: '1px solid var(--ff-line-strong)', borderRadius: '6px',
-    padding: '5px 10px', fontSize: '16px', color: 'var(--ff-text-secondary)', cursor: 'pointer',
+    padding: '4px 8px', fontSize: '16px', color: 'var(--ff-text-secondary)', cursor: 'pointer',
     flexShrink: 0, lineHeight: 1,
   },
   overflowMenu: {
@@ -1382,11 +1382,11 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '8px 12px', fontSize: '13px', color: 'var(--ff-error)', cursor: 'pointer', borderRadius: '6px',
   },
   confirmTitle: { fontSize: '16px', fontWeight: '700' as const, color: 'var(--ff-text)', margin: '0 0 8px' },
-  confirmBody: { fontSize: '13px', color: 'var(--ff-text-secondary)', lineHeight: '1.5', margin: '0 0 20px' },
-  confirmActions: { display: 'flex', gap: '10px', justifyContent: 'flex-end' as const },
+  confirmBody: { fontSize: '13px', color: 'var(--ff-text-secondary)', lineHeight: '1.5', margin: '0 0 16px' },
+  confirmActions: { display: 'flex', gap: '8px', justifyContent: 'flex-end' as const },
   confirmCancel: { ...quietBtn },
   confirmDestructive: {
     background: 'var(--ff-error)', border: 'none', borderRadius: '8px',
-    padding: '8px 18px', fontSize: '14px', fontWeight: '700' as const, color: 'var(--ff-white)', cursor: 'pointer',
+    padding: '8px 16px', fontSize: '14px', fontWeight: '700' as const, color: 'var(--ff-white)', cursor: 'pointer',
   },
 }

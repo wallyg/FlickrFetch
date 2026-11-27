@@ -146,7 +146,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
             <span style={styles.title}>On This Day</span>
             <span style={styles.count} title="Uses the date each photo was taken">{itemsLabel(data.total, data.videos)}<span style={styles.countNote}>{scopeNote}</span></span>
           </div>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 8, position: 'relative', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 8, position: 'relative', flexWrap: 'wrap' }}>
             <div style={styles.navSeg}>
               <button style={styles.navBtn} onClick={() => step(data.prev)}>‹ {isToday ? 'Yesterday' : 'Previous day'} <span style={styles.muted}>({data.prev.count.toLocaleString()})</span></button>
               <button style={styles.navBtn} onClick={openPicker} title="Pick any date; only the month and day are used"><Icon name="calendar" /> Jump to date…</button>
@@ -211,7 +211,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
         <>
           <div style={styles.insights}>
             <Insight icon={<Icon name="calendar" />} title="Across the years">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {data.years.map(g => (
                   <div key={g.year} style={styles.yearBar} {...asButton(() => document.getElementById(`otd-year-${g.year}`)?.scrollIntoView({ block: 'start', behavior: 'smooth' }))} title={`${g.count.toLocaleString()} photo${g.count === 1 ? '' : 's'} in ${g.year}. Click to jump there.`}>
                     <span style={{ width: 34, color: 'var(--ff-text)' }}>{g.year}</span>
@@ -254,7 +254,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
             const shown = expanded[g.year] ?? g.photos.slice(0, PREVIEW)
             const ago = new Date().getFullYear() - Number(g.year)
             return (
-              <div key={g.year} id={`otd-year-${g.year}`} style={yi === 0 ? { margin: '16px 0 4px' } : { margin: '24px 0 4px', paddingTop: 18, borderTop: '1px solid var(--ff-line-strong)' }}>
+              <div key={g.year} id={`otd-year-${g.year}`} style={yi === 0 ? { margin: '16px 0 4px' } : { margin: '24px 0 4px', paddingTop: 16, borderTop: '1px solid var(--ff-line-strong)' }}>
                 <div style={styles.yearHead}>
                   <b style={{ fontSize: 16 }}>{g.year}</b>
                   <span style={styles.muted}>{ago === 0 ? 'this year' : `${ago} year${ago === 1 ? '' : 's'} ago`} · {itemsLabel(g.count, g.videos)}</span>
@@ -295,7 +295,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
 
 function Insight({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }): React.JSX.Element {
   return (
-    <div style={{ background: 'var(--ff-warm)', borderRadius: 8, padding: '10px 12px', fontSize: 12, color: 'var(--ff-text)' }}>
+    <div style={{ background: 'var(--ff-warm)', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: 'var(--ff-text)' }}>
       <b style={{ display: 'block', fontSize: 11, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--ff-text-secondary)', marginBottom: 8 }}>{icon} {title}</b>
       {children}
     </div>
@@ -303,31 +303,31 @@ function Insight({ icon, title, children }: { icon: React.ReactNode; title: stri
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  wrap: { height: '100%', boxSizing: 'border-box', overflowY: 'auto', padding: '10px 24px 24px' },   // the tab pane is a fixed box, so this panel scrolls inside it
+  wrap: { height: '100%', boxSizing: 'border-box', overflowY: 'auto', padding: '8px 24px 24px' },   // the tab pane is a fixed box, so this panel scrolls inside it
   pad: { padding: '40px 24px' },
   muted: { fontSize: 12, color: 'var(--ff-text-secondary)' },
-  hero: { display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', padding: '4px 0 14px', borderBottom: '1px solid var(--ff-line-strong)' },
+  hero: { display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', padding: '4px 0 12px', borderBottom: '1px solid var(--ff-line-strong)' },
   bigTile: { width: 72, flexShrink: 0, borderRadius: 12, overflow: 'hidden', background: 'var(--ff-surface)', boxShadow: '0 3px 12px color-mix(in srgb, var(--ff-navy) 22%, transparent)', textAlign: 'center', border: 'none', padding: 0, cursor: 'pointer' },
-  bigMonth: { background: 'var(--ff-pink)', color: 'var(--ff-white)', fontSize: 12, fontWeight: 700, letterSpacing: '0.2em', padding: '5px 0 4px' },
+  bigMonth: { background: 'var(--ff-pink)', color: 'var(--ff-white)', fontSize: 12, fontWeight: 700, letterSpacing: '0.2em', padding: '4px 0 4px' },
   bigDay: { fontSize: 38, fontWeight: 700, color: 'var(--ff-navy)', lineHeight: '48px' },
   headText: { flex: '1 1 320px', minWidth: 0 },
   title: { fontSize: 24, fontWeight: 700, letterSpacing: '-0.5px', color: 'var(--ff-navy)', lineHeight: 1.1 },
   count: { fontSize: 16, fontWeight: 700, color: 'var(--ff-text)' },
   countNote: { fontSize: 13, fontWeight: 400, color: 'var(--ff-text-secondary)', marginLeft: 6 },
-  actions: { display: 'flex', flexDirection: 'row', gap: 10, alignItems: 'center', flexWrap: 'wrap' },
+  actions: { display: 'flex', flexDirection: 'row', gap: 8, alignItems: 'center', flexWrap: 'wrap' },
   navSeg: { display: 'inline-flex', border: '1px solid var(--ff-line-strong)', borderRadius: 8, background: 'var(--ff-surface)', overflow: 'hidden' },
-  navBtn: { background: 'var(--ff-surface)', border: 'none', borderRight: '1px solid var(--ff-border)', padding: '5px 13px', fontSize: 13, color: 'var(--ff-text)', cursor: 'pointer', whiteSpace: 'nowrap' },
-  cta: { ...primaryBtn, display: 'inline-flex', alignItems: 'center', gap: 9, padding: '4px 13px 4px 13px' },   // the Main button, the same size as the buttons beside it, with a small picture as its icon (#251)
+  navBtn: { background: 'var(--ff-surface)', border: 'none', borderRight: '1px solid var(--ff-border)', padding: '4px 12px', fontSize: 13, color: 'var(--ff-text)', cursor: 'pointer', whiteSpace: 'nowrap' },
+  cta: { ...primaryBtn, display: 'inline-flex', alignItems: 'center', gap: 8, padding: '4px 12px 4px 12px' },   // the Main button, the same size as the buttons beside it, with a small picture as its icon (#251)
   stack: { position: 'relative', width: 26, height: 16, flexShrink: 0, display: 'block', marginLeft: 2 },   // room for the tilted left card, so it never touches the button's edge
   stackCard: { position: 'absolute', width: 13, height: 15, background: 'linear-gradient(135deg, #f0b15a, #6f93b8)', border: '1px solid var(--ff-white)', borderBottomWidth: 3, borderRadius: 4, boxShadow: '0 1px 2px var(--ff-shadow-strong)', display: 'block' },
-  row: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', margin: '12px 0 10px' },
-  insights: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10, margin: '4px 0' },
+  row: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', margin: '12px 0 8px' },
+  insights: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 8, margin: '4px 0' },
   yearBar: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, cursor: 'pointer' },
-  tagCount: { marginLeft: 5, fontWeight: 400, fontSize: 12, color: 'var(--ff-text-secondary)', whiteSpace: 'nowrap' },
-  chips: { display: 'flex', gap: 5, flexWrap: 'wrap' },
-  tagChip: { background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 12, padding: '2px 9px', fontSize: 12, color: 'var(--ff-text)', cursor: 'pointer', textAlign: 'left', maxWidth: '100%' },
-  sectionRule: { display: 'flex', alignItems: 'center', gap: 10, margin: '26px 0 2px', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ff-text-secondary)' },
-  yearHead: { display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 6 },
+  tagCount: { marginLeft: 4, fontWeight: 400, fontSize: 12, color: 'var(--ff-text-secondary)', whiteSpace: 'nowrap' },
+  chips: { display: 'flex', gap: 4, flexWrap: 'wrap' },
+  tagChip: { background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 12, padding: '2px 8px', fontSize: 12, color: 'var(--ff-text)', cursor: 'pointer', textAlign: 'left', maxWidth: '100%' },
+  sectionRule: { display: 'flex', alignItems: 'center', gap: 8, margin: '24px 0 2px', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ff-text-secondary)' },
+  yearHead: { display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6 },
   
   more: { display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed var(--ff-line-strong)', borderRadius: 8, color: 'var(--ff-text-secondary)', fontSize: 12, minHeight: 120, background: 'transparent', cursor: 'pointer' }
 }

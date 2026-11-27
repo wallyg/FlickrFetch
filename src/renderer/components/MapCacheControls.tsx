@@ -57,7 +57,7 @@ export default function MapCacheControls({ limitMb, onLimit, reloadKey }: { limi
 
 const styles: Record<string, React.CSSProperties> = {
   box: { display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 },
-  row: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
+  row: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   label: { fontSize: 13, color: 'var(--ff-text)', minWidth: 110 },
   input: { ...fieldBox, width: 80 },
   bad: { borderColor: 'var(--ff-error)' },

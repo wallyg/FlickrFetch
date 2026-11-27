@@ -898,7 +898,7 @@ const styles: Record<string, React.CSSProperties> = {
   errorText: { color: 'var(--ff-error-ink)', fontSize: '14px', margin: 0 },
   retryButton: { ...primaryBtn },
   loadMoreRow: { display: 'flex', justifyContent: 'center', padding: '24px 16px' },
-  loadMoreButton: { backgroundColor: 'var(--ff-surface)', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '10px 28px', fontSize: '14px', color: 'var(--ff-text)', cursor: 'pointer' },
+  loadMoreButton: { backgroundColor: 'var(--ff-surface)', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', padding: '8px 24px', fontSize: '14px', color: 'var(--ff-text)', cursor: 'pointer' },
   disabled: { opacity: 0.6, cursor: 'not-allowed' },
   keepSearchingBtn: { ...quietBtn, padding: '6px 16px' },
   scanProgressBar: { height: '3px', background: 'var(--ff-border)', borderRadius: '4px', overflow: 'hidden', margin: '4px 0 2px' },

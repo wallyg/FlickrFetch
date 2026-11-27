@@ -228,7 +228,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'block'
   },
   cardInfo: {
-    padding: '10px 12px',
+    padding: '8px 12px',
     display: 'flex',
     flexDirection: 'column',
     gap: '5px'
@@ -243,7 +243,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   chips: {
     display: 'flex',
-    gap: '5px',
+    gap: '4px',
     flexWrap: 'wrap' as const
   },
   chip: {
@@ -267,7 +267,7 @@ const styles: Record<string, React.CSSProperties> = {
   densityBtn: {
     background: 'none',
     border: 'none',
-    padding: '4px 5px',
+    padding: '4px 4px',
     cursor: 'pointer',
     borderRadius: '6px',
     display: 'flex',
@@ -310,7 +310,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'block',
   },
   albumCardInfo: {
-    padding: '8px 10px',
+    padding: '8px 8px',
   },
   albumCardTitle: {
     fontSize: '12px',
@@ -330,7 +330,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
-    padding: '8px 14px',
+    padding: '8px 12px',
     background: 'var(--ff-surface)',
     border: '1px solid var(--ff-border)',
     borderRadius: '8px',

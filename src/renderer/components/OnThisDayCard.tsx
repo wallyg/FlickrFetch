@@ -98,7 +98,7 @@ export default function OnThisDayCard({ refreshKey, onOpen }: { refreshKey: numb
             )}
             {s.topTags.length > 0 && (
               <div style={styles.chips}>
-                {s.topTags.map(t => <span key={t.key} style={styles.chip}>{t.name}<span style={{ marginLeft: 5, fontSize: 12, color: 'var(--ff-text-secondary)' }}>({t.count.toLocaleString()})</span></span>)}
+                {s.topTags.map(t => <span key={t.key} style={styles.chip}>{t.name}<span style={{ marginLeft: 4, fontSize: 12, color: 'var(--ff-text-secondary)' }}>({t.count.toLocaleString()})</span></span>)}
               </div>
             )}
             {s.thumbs.length > 0 && (
@@ -122,9 +122,9 @@ export default function OnThisDayCard({ refreshKey, onOpen }: { refreshKey: numb
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  card: { display: 'flex', alignItems: 'center', gap: 12, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderLeft: '4px solid var(--ff-blue)', borderRadius: 6, padding: '7px 10px 7px 12px', margin: '10px 24px 8px', position: 'relative' },
+  card: { display: 'flex', alignItems: 'center', gap: 12, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderLeft: '4px solid var(--ff-blue)', borderRadius: 6, padding: '6px 8px 6px 12px', margin: '8px 24px 8px', position: 'relative' },
   calendar: { width: 34, flexShrink: 0, borderRadius: 6, overflow: 'hidden', background: 'var(--ff-surface)', boxShadow: '0 1px 4px color-mix(in srgb, var(--ff-navy) 18%, transparent)', textAlign: 'center' },
-  calMonth: { background: 'var(--ff-pink)', color: 'var(--ff-white)', fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', padding: '2px 0 1px' },
+  calMonth: { background: 'var(--ff-pink)', color: 'var(--ff-white)', fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', padding: '2px 0 0px' },
   calDay: { fontSize: 14, fontWeight: 700, color: 'var(--ff-navy)', lineHeight: '20px' },
   title: { fontSize: 14, fontWeight: 700, color: 'var(--ff-navy)' },
   cue: { marginLeft: 6, display: 'inline-flex', alignItems: 'center', verticalAlign: 'middle', background: 'none', border: 'none', padding: 4, borderRadius: 6, cursor: 'pointer' },
@@ -132,15 +132,15 @@ const styles: Record<string, React.CSSProperties> = {
   hideBtn: { ...quietBtn, color: 'var(--ff-text)', borderColor: 'var(--ff-line-strong)', whiteSpace: 'nowrap' },
   bell: { background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, padding: 2, lineHeight: 1, opacity: 0.7 },
   confirmed: { fontSize: 12, color: 'var(--ff-success)', whiteSpace: 'nowrap' },
-  peek: { width: 470, maxWidth: 'min(470px, calc(100vw - 16px))', borderRadius: 12, padding: '12px 14px', cursor: 'default' },
+  peek: { width: 470, maxWidth: 'min(470px, calc(100vw - 16px))', borderRadius: 12, padding: '12px 12px', cursor: 'default' },
   peekHead: { fontSize: 13, fontWeight: 700, color: 'var(--ff-navy)' },
   peekLine: { fontSize: 12, color: 'var(--ff-text-secondary)', marginTop: 2 },
   bars: { display: 'flex', alignItems: 'flex-end', gap: 4, height: 40 },
   bar: { width: 14, display: 'block', borderRadius: '3px 3px 0 0' },
   barLabels: { display: 'flex', gap: 0, fontSize: 11, color: 'var(--ff-text-secondary)', marginTop: 2 },
-  chips: { display: 'flex', flexWrap: 'wrap', gap: 5, margin: '10px 0 2px' },
-  chip: { background: 'var(--ff-warm)', border: '1px solid var(--ff-border)', borderRadius: 12, padding: '1px 9px', fontSize: 12 },
-  thumbs: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 10 },
+  chips: { display: 'flex', flexWrap: 'wrap', gap: 4, margin: '8px 0 2px' },
+  chip: { background: 'var(--ff-warm)', border: '1px solid var(--ff-border)', borderRadius: 12, padding: '0px 8px', fontSize: 12 },
+  thumbs: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 8 },
   thumb: { width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: 6, background: 'var(--ff-line-strong)', display: 'block' },
   peekFoot: { fontSize: 12, color: 'var(--ff-text-secondary)', marginTop: 8 }
 }

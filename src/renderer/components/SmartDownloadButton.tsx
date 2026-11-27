@@ -75,7 +75,7 @@ const styles: Record<string, React.CSSProperties> = {
   mainBtn: {
     background: BTN_BG, color: 'var(--ff-white)',
     border: 'none', borderRadius: '6px 0 0 6px',
-    padding: '7px 14px', fontSize: 13, fontWeight: 400,
+    padding: '6px 12px', fontSize: 13, fontWeight: 400,
     cursor: 'pointer',
     lineHeight: 1,
   },
@@ -83,7 +83,7 @@ const styles: Record<string, React.CSSProperties> = {
     background: BTN_BG, color: 'var(--ff-white)',
     border: 'none', borderLeft: '1px solid color-mix(in srgb, var(--ff-white) 25%, transparent)',
     borderRadius: '0 6px 6px 0',
-    padding: '7px 8px', fontSize: 11,
+    padding: '6px 8px', fontSize: 11,
     cursor: 'pointer',
     lineHeight: 1,
   },
@@ -102,7 +102,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   item: {
     display: 'flex', flexDirection: 'column', gap: 2,
-    width: '100%', padding: '10px 14px',
+    width: '100%', padding: '8px 12px',
     background: 'none', border: 'none', textAlign: 'left',
     cursor: 'pointer',
   },

@@ -10,7 +10,7 @@ export default function SelectBar({ count, shown, onSelectAll, onClear, ids }: {
 }): React.JSX.Element | null {
   if (count === 0) return null
   return (
-    <div role="status" style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', padding: '6px 10px', margin: '0 0 8px', background: 'var(--ff-tint)', border: '1px solid var(--ff-border)', borderRadius: 8, fontSize: 13, color: 'var(--ff-text)' }}>
+    <div role="status" style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', padding: '6px 8px', margin: '0 0 8px', background: 'var(--ff-tint)', border: '1px solid var(--ff-border)', borderRadius: 8, fontSize: 13, color: 'var(--ff-text)' }}>
       <b>{count.toLocaleString()} selected</b>
       <BatchEditButton inline key={count} style={{ ...quietBtn, borderColor: 'var(--ff-blue)', color: 'var(--ff-blue)', fontWeight: 700 }} label="Open selected in Flickr's organizer" getIds={async () => ids()} />
       {count < shown && <button style={link} onClick={onSelectAll}>Select all {shown.toLocaleString()} showing</button>}

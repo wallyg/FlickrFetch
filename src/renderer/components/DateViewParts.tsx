@@ -33,7 +33,7 @@ export function ScopeToggle({ scope, counts, enabled, onChange }: {
         <button
           key={i.key}
           disabled={!enabled && i.key !== 'all'}
-          style={{ ...segBtn, padding: '5px 12px', cursor: enabled || i.key === 'all' ? 'pointer' : 'default', ...(scope === i.key ? selectedOn : {}) }}
+          style={{ ...segBtn, padding: '4px 12px', cursor: enabled || i.key === 'all' ? 'pointer' : 'default', ...(scope === i.key ? selectedOn : {}) }}
           onClick={() => onChange(i.key)}
         >
           {i.label}{enabled ? ` (${i.n.toLocaleString()})` : ''}
@@ -55,16 +55,16 @@ export function PhotoTile({ photo, selected, onClick }: { photo: DayPhoto; selec
         outline: selected ? '3px solid var(--ff-pink)' : 'none', outlineOffset: -3 }}
     >
       {photo.privacy > 0 && (
-        <span style={{ position: 'absolute', left: 5, top: 5, zIndex: 2, fontSize: 11, background: 'var(--ff-glass)', borderRadius: 8, padding: '0 5px' }} title="Not public"><Icon name="lock" /></span>
+        <span style={{ position: 'absolute', left: 5, top: 5, zIndex: 2, fontSize: 11, background: 'var(--ff-glass)', borderRadius: 8, padding: '0 4px' }} title="Not public"><Icon name="lock" /></span>
       )}
       {photo.media === 'video' && (
-        <span style={{ position: 'absolute', right: 5, bottom: 26, zIndex: 2, fontSize: 11, background: 'var(--ff-scrim-strong)', color: 'var(--ff-white)', borderRadius: 8, padding: '1px 7px' }} title="Video"><Icon name="play" /> Video</span>
+        <span style={{ position: 'absolute', right: 5, bottom: 26, zIndex: 2, fontSize: 11, background: 'var(--ff-scrim-strong)', color: 'var(--ff-white)', borderRadius: 8, padding: '0px 6px' }} title="Video"><Icon name="play" /> Video</span>
       )}
       {selected && (
         <span style={{ position: 'absolute', right: 5, top: 5, zIndex: 2, fontSize: 11, background: 'var(--ff-pink)', color: 'var(--ff-white)', borderRadius: 8, padding: '0 6px' }}><Icon name="check" /></span>
       )}
       <img src={photo.thumbUrl} alt="" loading="lazy" style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', display: 'block' }} />
-      <span style={{ display: 'block', fontSize: 11, padding: '3px 5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', background: 'var(--ff-surface)', color: 'var(--ff-text)' }}>
+      <span style={{ display: 'block', fontSize: 11, padding: '2px 4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', background: 'var(--ff-surface)', color: 'var(--ff-text)' }}>
         {photo.title || '(no title)'}
       </span>
     </div>

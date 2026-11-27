@@ -194,7 +194,7 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
       </div>
 
       {roll ? (
-        <div style={{ marginTop: 10 }}>
+        <div style={{ marginTop: 8 }}>
           <CameraRoll
             from={rangeOf(roll).from}
             to={rangeOf(roll).to}
@@ -218,7 +218,7 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
         </div>
       ) : !drill ? (
         <>
-          <div style={{ ...styles.muted, margin: '10px 0 6px', minHeight: 18, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <div style={{ ...styles.muted, margin: '8px 0 6px', minHeight: 18, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span>{hover ? <><b style={{ color: 'var(--ff-navy)' }}>{monthTitle(hover.year, hover.month)}</b>: {itemsLabel(hover.n, hover.v)}</> : 'Click a month to see it day by day.'}</span>
             <div style={{ ...styles.key, marginTop: 0, marginLeft: 'auto' }}>
               <span>Fewer</span>
@@ -258,7 +258,7 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
           </div>
         </>
       ) : (
-        <div style={{ marginTop: 10 }}>
+        <div style={{ marginTop: 8 }}>
           <div style={styles.bar}>
             <TimelineNav
               backLabel="Timeline"
@@ -285,7 +285,7 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
                   <div
                     key={d}
                     title={`${n.toLocaleString()} photo${n === 1 ? '' : 's'}, ${MONTHS[drill.month - 1]} ${d}, ${drill.year}`}
-                    style={{ height: 46, borderRadius: 6, background: shade(n, dayMax), position: 'relative', padding: '3px 5px', fontSize: 11, color: strength(n, dayMax) > 0.55 ? 'var(--ff-white)' : 'var(--ff-navy)', cursor: n ? 'pointer' : 'default' }}
+                    style={{ height: 46, borderRadius: 6, background: shade(n, dayMax), position: 'relative', padding: '2px 4px', fontSize: 11, color: strength(n, dayMax) > 0.55 ? 'var(--ff-white)' : 'var(--ff-navy)', cursor: n ? 'pointer' : 'default' }}
                     {...(n ? asButton(() => setRoll({ year: drill.year, month: drill.month, day: d })) : {})}
                   >
                     {d}
@@ -305,10 +305,10 @@ export default function TimelinePanel({ active, refreshKey, onOpenRange, onDownl
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  wrap: { height: '100%', boxSizing: 'border-box', overflowY: 'auto', padding: '10px 24px 24px' },   // the tab pane is a fixed box, so this panel scrolls inside it
+  wrap: { height: '100%', boxSizing: 'border-box', overflowY: 'auto', padding: '8px 24px 24px' },   // the tab pane is a fixed box, so this panel scrolls inside it
   pad: { padding: '40px 24px' },
   muted: { fontSize: 12, color: 'var(--ff-text-secondary)' },
-  row: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
+  row: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   link: { ...linkBtn, fontSize: 13 },
   card: { background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 12, padding: `14px ${CARD_PAD}px` },
   hm: { display: 'grid', gridTemplateColumns: `${LABEL_W}px repeat(12, 1fr)`, gap: GAP, marginBottom: GAP, alignItems: 'center' },
@@ -319,6 +319,6 @@ const styles: Record<string, React.CSSProperties> = {
   pill: { ...pillBtn },
   icon: { color: 'var(--ff-blue)', display: 'inline-flex' },
   primary: { ...primaryBtn, padding: '4px 12px', fontSize: 12 },
-  bar: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', margin: '0 0 10px' },
-  key: { display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--ff-text-secondary)', marginTop: 10 }
+  bar: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', margin: '0 0 8px' },
+  key: { display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--ff-text-secondary)', marginTop: 8 }
 }

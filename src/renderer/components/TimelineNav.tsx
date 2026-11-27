@@ -26,6 +26,6 @@ export default function TimelineNav({ backLabel, onBack, title, prev, next }: Pr
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  btn: { ...quietBtn, padding: '3px 10px', fontSize: 12, whiteSpace: 'nowrap' },
+  btn: { ...quietBtn, padding: '2px 8px', fontSize: 12, whiteSpace: 'nowrap' },
   off: { opacity: 0.4, cursor: 'default' }
 }

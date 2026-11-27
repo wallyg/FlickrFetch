@@ -80,7 +80,7 @@ export default function DateFilterBar({ media, onMedia, privacy, onPrivacy, albu
       {open && (
         <div style={{ flexBasis: '100%' }}>
           <div style={sharedStyles.drawer}>
-            <div style={{ ...sharedStyles.drawerRow, padding: '7px 12px' }}>
+            <div style={{ ...sharedStyles.drawerRow, padding: '6px 12px' }}>
               <span style={sharedStyles.drawerLabel}>Privacy</span>
               <div style={{ ...sharedStyles.segGroup, opacity: hasCatalog ? 1 : 0.55 }}>
                 {PRIVACY_OPTIONS.map(v => (
@@ -91,7 +91,7 @@ export default function DateFilterBar({ media, onMedia, privacy, onPrivacy, albu
               </div>
               {!hasCatalog && <span style={{ fontSize: 12, color: 'var(--ff-text-secondary)' }}>Needs one Rebuild of your library list. <button style={linkBtn} onClick={onOpenHealth}>Open Health Check</button></span>}
             </div>
-            <div style={{ ...sharedStyles.drawerRow, padding: '7px 12px' }}>
+            <div style={{ ...sharedStyles.drawerRow, padding: '6px 12px' }}>
               <span style={sharedStyles.drawerLabel}>Album</span>
               <AlbumBox chosen={albums} onToggle={toggleAlbum} />
               <span style={{ fontSize: 12, color: 'var(--ff-text-secondary)' }}>Pick one or more; photos in any of them show.</span>

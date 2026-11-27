@@ -178,7 +178,7 @@ export default function AlbumsPanel({ refreshKey, onFullRescan, toolbarLeft, sta
                 )
               })}
               {([['Biggest issues to address', summary.issues], ['Biggest warnings to heed', summary.warnings]] as const).map(([title, list]) => list.length === 0 ? null : (
-                <div key={title} style={{ ...dash.card, marginTop: 14 }}>
+                <div key={title} style={{ ...dash.card, marginTop: 12 }}>
                   <h3 style={dash.cardTitle}>{title} <span style={dash.hint}>(albums with the most photos flagged; click for the list)</span></h3>
                   {list.map(b => (
                     <div key={`${b.condition}|${b.albumId}`} style={dash.item} {...asButton(() => { setCondition(b.condition); setStatus('open'); setSearch(b.title); setSection('lists') })}>
@@ -217,7 +217,7 @@ export default function AlbumsPanel({ refreshKey, onFullRescan, toolbarLeft, sta
                     getIds={() => window.flickrAPI.getAlbumPhotoIds({ condition, status, search, sort })} />
                 </div>
               )}
-              {saved && <div style={{ ...styles.muted, padding: '6px 9px 2px' }}>Saved to {saved.split('/').pop()} <button style={styles.linkBtn} onClick={() => window.flickrAPI.showInFinder(saved)}>Show in Finder</button></div>}
+              {saved && <div style={{ ...styles.muted, padding: '6px 8px 2px' }}>Saved to {saved.split('/').pop()} <button style={styles.linkBtn} onClick={() => window.flickrAPI.showInFinder(saved)}>Show in Finder</button></div>}
             </div>
           </div>
 
@@ -250,7 +250,7 @@ export default function AlbumsPanel({ refreshKey, onFullRescan, toolbarLeft, sta
                     <div style={styles.cardBody}>
                       <div style={styles.title}>{item.title || '(no title)'}</div>
                       <div style={styles.muted}>{item.detail}</div>
-                      {item.why && <div style={{ ...styles.muted, marginTop: 3 }}>{item.why}</div>}
+                      {item.why && <div style={{ ...styles.muted, marginTop: 2 }}>{item.why}</div>}
                       <JudgedBy item={item} onChange={kind => void changeKind(item.albumId, kind)} />
                       <div style={styles.actions}>
                         <button style={actionStyles.link} onClick={() => window.flickrAPI.openExternal(item.flickrUrl)}>{condition === 'misfit' ? <>Open photo <Icon name="external" /></> : <>Open on Flickr <Icon name="external" /></>}</button>
@@ -277,14 +277,14 @@ export default function AlbumsPanel({ refreshKey, onFullRescan, toolbarLeft, sta
 const styles: Record<string, React.CSSProperties> = {
   wrap: { flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' },
   muted: { fontSize: 13, color: 'var(--ff-text-secondary)' },
-  empty: { padding: '60px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, textAlign: 'center', maxWidth: 520, margin: '0 auto' },
+  empty: { padding: '60px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, textAlign: 'center', maxWidth: 520, margin: '0 auto' },
   emptyTitle: { fontSize: 14, fontWeight: 700, color: 'var(--ff-navy)' },
   body: { flex: 1, minHeight: 0, display: 'flex', gap: 16, padding: '4px 24px 12px' },
   railCol: { width: 230, flexShrink: 0, alignSelf: 'flex-start', maxHeight: '100%', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12 },
   rail: { flexShrink: 0, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 8, padding: 6 },
   main: { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: 0 },
   list: { flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: 4 },
-  card: { display: 'flex', gap: 12, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 8, padding: 10, marginBottom: 8 },
+  card: { display: 'flex', gap: 12, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 8, padding: 8, marginBottom: 8 },
   tick: { alignSelf: 'flex-start', marginTop: 4, flexShrink: 0, cursor: 'pointer' },
   quietAction: { ...quietBtn },
   thumb: { width: 76, height: 76, borderRadius: 6, objectFit: 'cover', background: 'var(--ff-border)', flexShrink: 0 },

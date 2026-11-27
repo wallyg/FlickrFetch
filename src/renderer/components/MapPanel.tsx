@@ -420,7 +420,7 @@ export default function MapPanel({ active, onDownload, onFullRescan, refreshKey,
 
       {drawerOpen && (
         <div style={sharedStyles.drawer}>
-          <div style={{ ...sharedStyles.drawerRow, padding: '7px 24px' }}>
+          <div style={{ ...sharedStyles.drawerRow, padding: '6px 24px' }}>
             <span style={sharedStyles.drawerLabel}>Privacy</span>
             <div style={sharedStyles.segGroup}>
               {PRIVACY_OPTIONS.map(v => (
@@ -429,7 +429,7 @@ export default function MapPanel({ active, onDownload, onFullRescan, refreshKey,
             </div>
           </div>
 
-          <div style={{ ...sharedStyles.drawerRow, padding: '7px 24px' }}>
+          <div style={{ ...sharedStyles.drawerRow, padding: '6px 24px' }}>
             <span style={sharedStyles.drawerLabel}>Tags</span>
             <div style={sharedStyles.searchGroup}>
               <input style={{ ...sharedStyles.searchInput, minWidth: 160 }} type="text" placeholder="paris, travel…" value={tagText} aria-label="Tags"
@@ -444,13 +444,13 @@ export default function MapPanel({ active, onDownload, onFullRescan, refreshKey,
             <InfoTip text={"Type tags, separated by commas, then press Enter.\n\nAny: photos with at least one of the tags.\nAll: photos with every tag."} />
           </div>
 
-          <div style={{ ...sharedStyles.drawerRow, padding: '7px 24px' }}>
+          <div style={{ ...sharedStyles.drawerRow, padding: '6px 24px' }}>
             <span style={sharedStyles.drawerLabel}>Album</span>
             <AlbumBox chosen={albums} onToggle={a => setAlbums(list => (list.some(x => x.id === a.id) ? list.filter(x => x.id !== a.id) : [...list, a]))} />
             <span style={styles.hint}>Pick one or more; photos in any of them show.</span>
           </div>
 
-          <div style={{ ...sharedStyles.drawerRow, padding: '7px 24px' }}>
+          <div style={{ ...sharedStyles.drawerRow, padding: '6px 24px' }}>
             <span style={sharedStyles.drawerLabel}>Date</span>
             <div style={sharedStyles.segGroup}>
               {(['taken', 'posted'] as const).map(v => (
@@ -478,7 +478,7 @@ export default function MapPanel({ active, onDownload, onFullRescan, refreshKey,
             )}
           </div>
 
-          <div style={{ ...sharedStyles.drawerRow, padding: '7px 24px' }}>
+          <div style={{ ...sharedStyles.drawerRow, padding: '6px 24px' }}>
             <span style={sharedStyles.drawerLabel}>Located</span>
             <div style={sharedStyles.segGroup}>
               {(['any', 'street', 'town', 'vague'] as AccuracyChoice[]).map(v => (
@@ -491,7 +491,7 @@ export default function MapPanel({ active, onDownload, onFullRescan, refreshKey,
       )}
 
       {hasFilter && (
-        <div style={{ ...sharedStyles.chipRow, padding: '5px 24px 6px' }}>
+        <div style={{ ...sharedStyles.chipRow, padding: '4px 24px 6px' }}>
           {media !== 'all' && <Chip label={media === 'photo' ? 'Photos only' : 'Videos only'} onDismiss={() => setMedia('all')} />}
           {privacy !== 'all' && <Chip label={`Privacy: ${PRIVACY_LABELS[privacy]}`} onDismiss={() => setPrivacy('all')} />}
           {f.tags && <Chip label={`Tags (${tagMode}): ${tagsApplied}`} onDismiss={() => { setTagText(''); setTagsApplied('') }} />}
@@ -562,7 +562,7 @@ const styles: Record<string, React.CSSProperties> = {
   // Fills the tab exactly (its parent is a fixed-size pane, not a flex box, so `flex: 1` did nothing and the map was only as tall as its content:
   // about 300 px, or as tall as the photo tray when that was open)
   wrap: { height: '100%', minHeight: 0, flexDirection: 'column', overflow: 'hidden' },
-  bar: { display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', padding: '8px 24px', fontSize: 13, color: 'var(--ff-text-secondary)' },
+  bar: { display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', padding: '8px 24px', fontSize: 13, color: 'var(--ff-text-secondary)' },
   count: { color: 'var(--ff-text-secondary)' },
   xBtn: { border: 'none', background: 'none', padding: '0 8px', fontSize: 12, color: 'var(--ff-text-muted)', cursor: 'pointer' },
   hint: { fontSize: 12, color: 'var(--ff-text-secondary)' },
@@ -571,10 +571,10 @@ const styles: Record<string, React.CSSProperties> = {
   body: { flex: 1, minHeight: 0, display: 'flex', gap: 12, padding: '0 24px 12px' },
   mapBox: { position: 'relative', flex: 1, minWidth: 0, minHeight: 300, borderRadius: 8, overflow: 'hidden', border: '1px solid var(--ff-border)' },
   credit: { position: 'absolute', right: 0, bottom: 0, background: 'color-mix(in srgb, var(--ff-surface) 85%, transparent)', border: 'none', borderTopLeftRadius: 6, padding: '2px 8px', fontSize: 11, color: 'var(--ff-text-secondary)', cursor: 'pointer', textDecoration: 'underline' },
-  explain: { position: 'absolute', top: 10, left: 54, maxWidth: 380, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 8, padding: 14, fontSize: 13, color: 'var(--ff-text)', display: 'flex', flexDirection: 'column', gap: 8, boxShadow: 'var(--ff-shadow-menu)' },
+  explain: { position: 'absolute', top: 10, left: 54, maxWidth: 380, background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 8, padding: 12, fontSize: 13, color: 'var(--ff-text)', display: 'flex', flexDirection: 'column', gap: 8, boxShadow: 'var(--ff-shadow-menu)' },
   zoom: { position: 'absolute', top: 10, left: 10, display: 'flex', flexDirection: 'column', gap: 4 },
   zoomBtn: { width: 32, height: 32, border: '1px solid var(--ff-line-strong)', borderRadius: 8, background: 'var(--ff-surface)', fontSize: 18, lineHeight: 1, color: 'var(--ff-text)', cursor: 'pointer' },
-  note: { position: 'absolute', left: 10, bottom: 10, background: 'color-mix(in srgb, var(--ff-surface) 92%, transparent)', border: '1px solid var(--ff-border)', borderRadius: 6, padding: '4px 10px', fontSize: 12, color: 'var(--ff-text-secondary)' },
+  note: { position: 'absolute', left: 10, bottom: 10, background: 'color-mix(in srgb, var(--ff-surface) 92%, transparent)', border: '1px solid var(--ff-border)', borderRadius: 6, padding: '4px 8px', fontSize: 12, color: 'var(--ff-text-secondary)' },
   side: { width: 300, flex: 'none', overflowY: 'auto', background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 8, padding: 12, display: 'flex', flexDirection: 'column', gap: 8 },
   sideHead: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 14, color: 'var(--ff-text)' },
   close: { border: 'none', background: 'none', fontSize: 14, color: 'var(--ff-text-muted)', cursor: 'pointer' },
@@ -582,6 +582,6 @@ const styles: Record<string, React.CSSProperties> = {
   grid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 },
   tile: { display: 'block', width: '100%', aspectRatio: '1 / 1', padding: 0, border: '1px solid var(--ff-border)', borderRadius: 6, overflow: 'hidden', background: 'var(--ff-grey-100)', cursor: 'pointer' },
   thumb: { width: '100%', height: '100%', objectFit: 'cover', display: 'block' },
-  empty: { padding: '60px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, textAlign: 'center', maxWidth: 520, margin: '0 auto' },
+  empty: { padding: '60px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, textAlign: 'center', maxWidth: 520, margin: '0 auto' },
   emptyTitle: { fontSize: 14, fontWeight: 700, color: 'var(--ff-navy)' }
 }

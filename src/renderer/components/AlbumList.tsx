@@ -96,7 +96,7 @@ export default function AlbumList({ onAlbumSelect, active = true }: AlbumListPro
           {Array.from({ length: 18 }, (_, i) => (
             <div key={i} style={{ borderRadius: '8px', overflow: 'hidden', animation: `ff-al-shimmer 1.4s ease-in-out infinite`, animationDelay: `${(i % 6) * 0.08}s` }}>
               <div style={{ height: '180px', background: 'var(--ff-border)' }} />
-              <div style={{ padding: '10px 12px', background: 'var(--ff-grey-100)' }}>
+              <div style={{ padding: '8px 12px', background: 'var(--ff-grey-100)' }}>
                 <div style={{ height: '12px', background: 'var(--ff-border)', borderRadius: '4px', marginBottom: '6px', width: '75%' }} />
                 <div style={{ height: '10px', background: 'var(--ff-border)', borderRadius: '4px', width: '45%' }} />
               </div>
@@ -225,7 +225,7 @@ export default function AlbumList({ onAlbumSelect, active = true }: AlbumListPro
         </div>
       )}
       {tooltip && (
-        <div style={{ position: 'fixed', left: tooltip.x, top: tooltip.y - 4, transform: 'translateY(-100%)', background: 'color-mix(in srgb, var(--ff-text) 92%, transparent)', color: 'var(--ff-white)', padding: '4px 9px', borderRadius: '6px', fontSize: '12px', whiteSpace: 'nowrap', pointerEvents: 'none', zIndex: 'var(--ff-z-hover)', maxWidth: '320px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <div style={{ position: 'fixed', left: tooltip.x, top: tooltip.y - 4, transform: 'translateY(-100%)', background: 'color-mix(in srgb, var(--ff-text) 92%, transparent)', color: 'var(--ff-white)', padding: '4px 8px', borderRadius: '6px', fontSize: '12px', whiteSpace: 'nowrap', pointerEvents: 'none', zIndex: 'var(--ff-z-hover)', maxWidth: '320px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {tooltip.title}
         </div>
       )}
@@ -277,7 +277,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
-    padding: '10px 16px 8px',
+    padding: '8px 16px 8px',
     position: 'sticky' as const,
     top: 0,
     zIndex: 'var(--ff-z-sticky)',
@@ -302,11 +302,11 @@ const styles: Record<string, React.CSSProperties> = {
   },
   operatorSelect: {
     background: 'var(--ff-grey-100)', border: 'none', borderRight: '1px solid var(--ff-line-strong)',
-    padding: '5px 6px', fontSize: '11px', color: 'var(--ff-text-secondary)', cursor: 'pointer',
+    padding: '4px 6px', fontSize: '11px', color: 'var(--ff-text-secondary)', cursor: 'pointer',
     outline: 'none'
   },
   searchInput: {
-    border: 'none', outline: 'none', padding: '5px 8px',
+    border: 'none', outline: 'none', padding: '4px 8px',
     fontSize: '12px', color: 'var(--ff-text)', minWidth: '160px', background: 'transparent'
   },
   searchClearBtn: {
@@ -314,7 +314,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '11px', color: 'var(--ff-text-secondary)', cursor: 'pointer'
   },
   segGroupDensity: { display: 'flex', gap: '2px' },
-  densityBtn: { background: 'none', border: 'none', padding: '4px 5px', cursor: 'pointer', borderRadius: '6px', display: 'flex', alignItems: 'center', color: 'var(--ff-text-secondary)' },
+  densityBtn: { background: 'none', border: 'none', padding: '4px 4px', cursor: 'pointer', borderRadius: '6px', display: 'flex', alignItems: 'center', color: 'var(--ff-text-secondary)' },
   densityBtnActive: { backgroundColor: 'var(--ff-border)', color: 'var(--ff-text)' },
   grid: {
     display: 'grid',
@@ -346,7 +346,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'block'
   },
   info: {
-    padding: '10px 12px',
+    padding: '8px 12px',
     display: 'flex',
     flexDirection: 'column',
     gap: '3px'

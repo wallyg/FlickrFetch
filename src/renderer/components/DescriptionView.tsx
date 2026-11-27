@@ -25,7 +25,7 @@ function renderNodes(nodes: DescNode[]): React.ReactNode[] {
       }
       case 'b': return <strong key={i}>{kids}</strong>
       case 'i': return <em key={i}>{kids}</em>
-      case 'ul': return <ul key={i} style={{ margin: '4px 0', paddingLeft: '18px' }}>{kids}</ul>
+      case 'ul': return <ul key={i} style={{ margin: '4px 0', paddingLeft: '16px' }}>{kids}</ul>
       case 'li': return <li key={i}>{kids}</li>
       case 'p': return <div key={i} style={{ margin: '0 0 6px' }}>{kids}</div>
     }

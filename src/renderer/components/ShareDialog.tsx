@@ -552,7 +552,7 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
                     title={canShuffle(mode, poolPhotos, tickedPhotos, shownCount) ? 'Pick a different set of photos for this day' : 'There is nothing else to pick from'}><Icon name="shuffle" /> Shuffle</button>
                 </div>
                 {userPicked ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 3, marginTop: 2 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 2 }}>
                     <label style={styles.check}><input type="radio" name="otd-source" checked={source === 'ticked'} onChange={() => setSource('ticked')} /> The {photos.length} photo{photos.length === 1 ? '' : 's'} I ticked</label>
                     <label style={styles.check}><input type="radio" name="otd-source" checked={source === 'years'} onChange={() => setSource('years')} /> One photo from each year</label>
                   </div>
@@ -600,7 +600,7 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
           <div style={styles.preview}>
             {loading ? <span style={styles.muted}>Loading bigger pictures…{progress.total > 0 ? ` ${Math.min(progress.done, progress.total)} of ${progress.total}` : ''}</span>
               : basePicks.length === 0 ? <span style={styles.muted}>{publicOnly ? 'None of this day\'s photos are public. Untick "Use public photos only" to include them.' : 'No photos to use.'}</span>
-              : ready.length === 0 ? <span style={{ ...styles.muted, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>Couldn't load these pictures. Check your connection and try again.<button style={styles.btn} onClick={() => { setLoading(true); setAttempt(a => a + 1) }}>Try again</button></span>
+              : ready.length === 0 ? <span style={{ ...styles.muted, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>Couldn't load these pictures. Check your connection and try again.<button style={styles.btn} onClick={() => { setLoading(true); setAttempt(a => a + 1) }}>Try again</button></span>
               : <canvas ref={canvasRef} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', boxShadow: '0 2px 12px var(--ff-shadow-mid)' }} />}
           </div>
         </div>
@@ -610,7 +610,7 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
 
 function Step({ n, label, children }: { n: number; label: string; children: React.ReactNode }): React.JSX.Element {
   return (
-    <div style={{ display: 'flex', gap: 9 }}>
+    <div style={{ display: 'flex', gap: 8 }}>
       <div style={styles.num}>{n}</div>
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
         <div style={styles.label}>{label}</div>
@@ -621,23 +621,23 @@ function Step({ n, label, children }: { n: number; label: string; children: Reac
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  head: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 18px', borderBottom: '1px solid var(--ff-border)' },
+  head: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: '1px solid var(--ff-border)' },
   x: { background: 'none', border: 'none', fontSize: 16, cursor: 'pointer', color: 'var(--ff-text-secondary)' },
-  body: { flex: 1, minHeight: 0, display: 'flex', gap: 18, padding: 16 },
+  body: { flex: 1, minHeight: 0, display: 'flex', gap: 16, padding: 16 },
   controls: { width: 316, flexShrink: 0, display: 'flex', flexDirection: 'column', minHeight: 0 },
   scroll: { flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16, paddingRight: 6, paddingBottom: 8 },
-  dock: { flexShrink: 0, borderTop: '1px solid var(--ff-border)', paddingTop: 10, display: 'flex', flexDirection: 'column', gap: 8 },
-  num: { flexShrink: 0, width: 20, height: 20, borderRadius: '50%', background: 'var(--ff-navy)', color: 'var(--ff-white)', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 1 },
-  preview: { flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ece8e1', borderRadius: 8, padding: 14, overflow: 'hidden' },
+  dock: { flexShrink: 0, borderTop: '1px solid var(--ff-border)', paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 8 },
+  num: { flexShrink: 0, width: 20, height: 20, borderRadius: '50%', background: 'var(--ff-navy)', color: 'var(--ff-white)', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 0 },
+  preview: { flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ece8e1', borderRadius: 8, padding: 12, overflow: 'hidden' },
   group: { display: 'flex', flexDirection: 'column', gap: 6 },
   label: { fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ff-text-secondary)' },
   muted: { fontSize: 12, color: 'var(--ff-text-secondary)' },
   chips: { display: 'flex', gap: 6, flexWrap: 'wrap' },
-  chip: { border: '1px solid var(--ff-border)', borderRadius: 12, padding: '3px 11px', fontSize: 13, background: 'var(--ff-white)', color: 'var(--ff-text)', cursor: 'pointer' },
+  chip: { border: '1px solid var(--ff-border)', borderRadius: 12, padding: '2px 12px', fontSize: 13, background: 'var(--ff-white)', color: 'var(--ff-text)', cursor: 'pointer' },
   chipOn: { ...selectedOn },
   step: { ...quietBtn, width: 28, height: 28, padding: 0, fontSize: 16 },
   check: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--ff-text)' },
-  warn: { background: '#fff7e6', border: '1px solid #f5d28b', borderRadius: 8, padding: '8px 10px', fontSize: 12 },
+  warn: { background: '#fff7e6', border: '1px solid #f5d28b', borderRadius: 8, padding: '8px 8px', fontSize: 12 },
   primary: { ...primaryBtn },
   btn: { ...quietBtn, padding: '6px 12px' }
 }

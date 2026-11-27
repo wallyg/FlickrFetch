@@ -21,5 +21,5 @@ const styles: Record<string, React.CSSProperties> = {
   wrap: { display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '6px', padding: '56px 24px' },
   title: { fontSize: '14px', fontWeight: 700, color: 'var(--ff-navy)' },
   body: { fontSize: '13px', lineHeight: 1.5, color: 'var(--ff-text-secondary)', maxWidth: '360px', whiteSpace: 'pre-line' },
-  actions: { display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', marginTop: '10px' }
+  actions: { display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', marginTop: '8px' }
 }
