@@ -155,7 +155,7 @@ export default function LoginPage({ onAuthSuccess }: LoginPageProps): React.JSX.
                     Reopen Flickr
                   </button>
 
-                  <p style={{ ...styles.stepLabel, marginTop: '20px' }}>2. Enter the code from Flickr</p>
+                  <p style={{ ...styles.stepLabel, marginTop: '16px' }}>2. Enter the code from Flickr</p>
                   <input
                     id="verifier-input"
                     style={styles.input}
@@ -291,7 +291,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: '700',
     lineHeight: '30px',
     color: 'var(--ff-navy)',
-    margin: '0 0 10px',
+    margin: '0 0 8px',
     fontFamily: "'Lato', -apple-system, sans-serif"
   },
   intro: {
@@ -386,7 +386,7 @@ const styles: Record<string, React.CSSProperties> = {
 
   // ── Intro / marketing view ──
   tagline: {
-    margin: '0 0 20px',
+    margin: '0 0 16px',
     fontSize: '34px',
     fontWeight: '700',
     lineHeight: 1.18,
@@ -403,19 +403,19 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '14px',
     lineHeight: '1.65',
     color: 'var(--ff-text-secondary)',
-    margin: '0 0 28px',
+    margin: '0 0 24px',
     maxWidth: '420px',
   },
   introCta: {
     display: 'flex',
     flexDirection: 'column' as const,
-    gap: '10px',
+    gap: '8px',
   },
   connectBtn: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: '10px',
+    gap: '8px',
     height: '48px',
     fontSize: '14px',
     letterSpacing: '0.01em',

@@ -127,9 +127,9 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: '24px 20px 70px',
+    padding: '24px 16px 70px',
     borderRight: '1px solid var(--ff-shadow-soft)',
-    gap: '14px',
+    gap: '12px',
     position: 'relative',
     overflow: 'hidden'
   },
@@ -142,7 +142,7 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundColor: 'var(--ff-surface)',
     display: 'flex',
     flexDirection: 'column',
-    padding: '28px 28px 20px',
+    padding: '24px 24px 16px',
     minWidth: 0,
     gap: '14px'
   },
@@ -198,7 +198,7 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundColor: 'var(--ff-surface)',
     border: 'none',
     borderRadius: '50px',
-    padding: '5px 14px',
+    padding: '4px 12px',
     fontSize: '12px',
     fontWeight: '700',
     color: 'var(--ff-blue)',
@@ -236,7 +236,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   footer: {
     borderTop: '1px solid var(--ff-shadow-soft)',
-    padding: '11px 24px',
+    padding: '12px 24px',
     backgroundColor: 'var(--ff-warning-bg)'
   },
   copyright: {

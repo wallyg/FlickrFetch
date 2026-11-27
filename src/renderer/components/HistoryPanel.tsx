@@ -798,7 +798,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   header: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '20px 20px 0',
+    padding: '16px 16px 0',
   },
   title: {
     margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--ff-navy)',
@@ -809,29 +809,29 @@ const styles: Record<string, React.CSSProperties> = {
   },
   tabs: {
     display: 'flex', gap: 0,
-    padding: '12px 20px 0',
+    padding: '12px 16px 0',
     borderBottom: '1px solid var(--ff-border)',
   },
   tab: {
     background: 'none', border: 'none', borderBottom: '2px solid transparent',
-    padding: '6px 12px 10px', fontSize: 13, color: 'var(--ff-text-secondary)',
+    padding: '6px 12px 8px', fontSize: 13, color: 'var(--ff-text-secondary)',
     cursor: 'pointer', fontWeight: 400,
   },
   tabActive: {
     background: 'none', border: 'none', borderBottom: '2px solid var(--ff-pink)',
-    padding: '6px 12px 10px', fontSize: 13, color: 'var(--ff-pink)',
+    padding: '6px 12px 8px', fontSize: 13, color: 'var(--ff-pink)',
     cursor: 'pointer', fontWeight: 700,
   },
   tabBody: {
     flex: 1, overflowY: 'auto',
   },
   empty: {
-    padding: '24px 20px', color: 'var(--ff-text-muted)', fontSize: 13, lineHeight: 1.5, margin: 0,
+    padding: '24px 16px', color: 'var(--ff-text-muted)', fontSize: 13, lineHeight: 1.5, margin: 0,
   },
   clearFiltersBtn: { ...quietBtn },
   // Batch tab rows
   row: {
-    padding: '10px 20px',
+    padding: '8px 16px',
     borderBottom: '1px solid var(--ff-grey-100)',
   },
   rowTop: {
@@ -845,15 +845,15 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 11, color: C.muted, flexShrink: 0,
   },
   rowCounts: {
-    display: 'flex', flexWrap: 'wrap' as const, gap: 6, paddingLeft: 18, marginTop: 4,
+    display: 'flex', flexWrap: 'wrap' as const, gap: 6, paddingLeft: 16, marginTop: 4,
   },
   pill: {
     display: 'inline-flex', alignItems: 'center',
     fontSize: 11, fontWeight: 400,
-    padding: '2px 7px', borderRadius: 50,
+    padding: '2px 6px', borderRadius: 50,
     border: '1px solid',
   },
-  expandableWrap: { marginTop: 6, paddingLeft: 18 },
+  expandableWrap: { marginTop: 6, paddingLeft: 16 },
   expandableToggle: {
     background: 'none', border: 'none', cursor: 'pointer',
     fontSize: 12, padding: 0,
@@ -863,10 +863,10 @@ const styles: Record<string, React.CSSProperties> = {
     margin: '2px 0 0 0', padding: 0,
     listStyle: 'disc', listStylePosition: 'inside' as const,
   },
-  expandableItem: { fontSize: 12, color: C.subtle, padding: '1px 0' },
+  expandableItem: { fontSize: 12, color: C.subtle, padding: '0px 0' },
   // Photos tab search bar
   photoSearchBar: {
-    padding: '12px 16px 10px',
+    padding: '12px 16px 8px',
     borderBottom: '1px solid var(--ff-border)',
     display: 'flex', flexDirection: 'column', gap: 8,
   },
@@ -875,11 +875,11 @@ const styles: Record<string, React.CSSProperties> = {
   },
   modeTab: {
     background: 'none', border: '1px solid var(--ff-line-strong)', borderRadius: 4,
-    padding: '3px 8px', fontSize: 11, color: 'var(--ff-text-secondary)', cursor: 'pointer',
+    padding: '2px 8px', fontSize: 11, color: 'var(--ff-text-secondary)', cursor: 'pointer',
   },
   modeTabActive: {
     background: 'var(--ff-info-bg)', border: '1px solid var(--ff-info-line)', borderRadius: 4,
-    padding: '3px 8px', fontSize: 11, color: 'var(--ff-blue)', cursor: 'pointer', fontWeight: 700,
+    padding: '2px 8px', fontSize: 11, color: 'var(--ff-blue)', cursor: 'pointer', fontWeight: 700,
   },
   searchInputWrap: {
     position: 'relative' as const, display: 'flex', alignItems: 'center',
@@ -887,7 +887,7 @@ const styles: Record<string, React.CSSProperties> = {
   searchInput: {
     flex: 1, width: '100%', boxSizing: 'border-box' as const,
     border: '1px solid var(--ff-line-strong)', borderRadius: 6,
-    padding: '6px 28px 6px 10px', fontSize: 13, outline: 'none',
+    padding: '6px 24px 6px 8px', fontSize: 13, outline: 'none',
   },
   searchClearBtn: {
     position: 'absolute' as const, right: 6,
@@ -917,20 +917,20 @@ const styles: Record<string, React.CSSProperties> = {
   },
   dateFieldClear: {
     background: 'none', border: 'none', cursor: 'pointer',
-    fontSize: 11, color: 'var(--ff-text-muted)', padding: '2px 3px', lineHeight: 1, flexShrink: 0,
+    fontSize: 11, color: 'var(--ff-text-muted)', padding: '2px 2px', lineHeight: 1, flexShrink: 0,
   },
   applyBtn: {
-    ...quietBtn, borderRadius: 6, padding: '4px 10px', fontSize: 11, flexShrink: 0,
+    ...quietBtn, borderRadius: 6, padding: '4px 8px', fontSize: 11, flexShrink: 0,
   },
   loadAlbumsBtn: {
-    ...quietBtn, borderRadius: 6, padding: '3px 8px', fontSize: 11,
+    ...quietBtn, borderRadius: 6, padding: '2px 8px', fontSize: 11,
   },
   resultCount: {
     margin: 0, fontSize: 11, color: 'var(--ff-text-muted)',
   },
   // Photo record rows
   photoRow: {
-    display: 'flex', alignItems: 'center', gap: 10,
+    display: 'flex', alignItems: 'center', gap: 8,
     padding: '8px 16px',
     borderBottom: '1px solid var(--ff-grey-100)',
   },
@@ -998,7 +998,7 @@ const styles: Record<string, React.CSSProperties> = {
   deleteConfirmNo: { ...smallBtn },
   // Footer
   footer: {
-    padding: '12px 20px', borderTop: '1px solid var(--ff-border)',
+    padding: '12px 16px', borderTop: '1px solid var(--ff-border)',
     display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap',
   },
   clearBtn: {
@@ -1017,10 +1017,10 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap',
   },
   clearChoiceBtn: {
-    ...quietBtn, padding: '5px 9px', fontSize: 11,
+    ...quietBtn, padding: '4px 8px', fontSize: 11,
   },
   clearChoiceBtnDanger: {
-    ...dangerBtn, padding: '5px 9px', fontSize: 11,
+    ...dangerBtn, padding: '4px 8px', fontSize: 11,
   },
   clearNote: { display: 'block', marginTop: 2, fontSize: 11, fontWeight: 400, color: 'var(--ff-text-secondary)' },
   clearWarning: {

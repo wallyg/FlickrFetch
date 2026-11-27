@@ -400,7 +400,7 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundColor: 'var(--ff-cream)'
   },
   toast: {
-    padding: '7px 20px',
+    padding: '6px 16px',
     fontSize: '12px',
     fontWeight: '400',
     color: 'var(--ff-text-secondary)',
@@ -411,13 +411,13 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '10px 20px',
+    padding: '8px 16px',
     gap: '12px'
   },
   left: {
     display: 'flex',
     alignItems: 'center',
-    gap: '10px',
+    gap: '8px',
     flex: 1,
     minWidth: 0
   },
@@ -428,7 +428,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '12px',
     color: 'var(--ff-text-secondary)',
     cursor: 'pointer',
-    padding: '3px 8px',
+    padding: '2px 8px',
     flexShrink: 0,
     fontWeight: '400'
   },
@@ -513,7 +513,7 @@ const styles: Record<string, React.CSSProperties> = {
   batchRow: {
     display: 'flex',
     alignItems: 'flex-start',
-    gap: '10px',
+    gap: '8px',
     padding: '11px 20px'
   },
   dotActive: {
@@ -556,7 +556,7 @@ const styles: Record<string, React.CSSProperties> = {
   batchInfo: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '3px',
+    gap: '2px',
     minWidth: 0,
     flex: 1
   },
@@ -603,7 +603,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '12px',
     color: 'var(--ff-text-secondary)',
     cursor: 'pointer',
-    padding: '5px 9px',
+    padding: '4px 8px',
     flexShrink: 0,
     lineHeight: 1,
     borderRadius: '4px',
@@ -640,7 +640,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '11px',
     color: 'var(--ff-warning-text)',
     cursor: 'pointer',
-    padding: '3px 8px',
+    padding: '2px 8px',
     marginTop: '4px',
     display: 'inline-block' as const
   }

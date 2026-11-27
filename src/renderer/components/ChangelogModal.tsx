@@ -58,7 +58,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '20px 24px 16px',
+    padding: '16px 24px 16px',
     borderBottom: '1px solid var(--ff-border)',
     flexShrink: 0
   },
@@ -117,7 +117,7 @@ const styles: Record<string, React.CSSProperties> = {
     color: 'var(--ff-pink)',
     backgroundColor: 'color-mix(in srgb, var(--ff-pink) 10%, transparent)',
     borderRadius: '4px',
-    padding: '1px 6px',
+    padding: '0px 6px',
     letterSpacing: '0.02em'
   },
   releaseDate: {

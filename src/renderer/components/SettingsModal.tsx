@@ -653,19 +653,19 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
 
                 {/* Char substitution presets */}
                 <div style={{ ...s.optRow, marginTop: '6px', flexDirection: 'column', alignItems: 'stretch', gap: '6px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <span style={s.optName}>Character substitutions</span>
                     <InfoTip text="Special characters are kept in file names by default. Turn these on to remove them." />
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '5px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '4px' }}>
                     {([
                       ['subStripParens',    subStripParens,    setSubStripParens,    'Strip parentheses',   'e.g. Title (2024) → Title 2024'],
                       ['subStripBrackets',  subStripBrackets,  setSubStripBrackets,  'Strip square brackets', 'e.g. Title [edit] → Title edit'],
                     ] as [string, boolean, (v: boolean) => void, string, string][]).map(([key, val, setter, label, example]) => (
-                      <div key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', padding: '7px 10px', borderRadius: '6px', background: 'var(--ff-cream)', border: '1px solid var(--ff-border)' }}>
+                      <div key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', padding: '6px 8px', borderRadius: '6px', background: 'var(--ff-cream)', border: '1px solid var(--ff-border)' }}>
                         <div>
                           <div style={{ fontSize: '12px', fontWeight: '400', color: 'var(--ff-text)' }}>{label}</div>
-                          <div style={{ fontSize: '11px', color: 'var(--ff-text-secondary)', fontFamily: 'monospace', marginTop: '1px' }}>{example}</div>
+                          <div style={{ fontSize: '11px', color: 'var(--ff-text-secondary)', fontFamily: 'monospace', marginTop: '0px' }}>{example}</div>
                         </div>
                         <div style={s.posGroup}>
                           <button style={{ ...s.posBtn, ...(!val ? s.posBtnActive : {}) }} onClick={() => { setter(false) }}>Off</button>
@@ -711,7 +711,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
                       </div>
                     </div>
                     {key === 'embedDescription' && embedDescription && (
-                      <div style={{ ...s.optRow, marginTop: '4px', marginLeft: '22px' }}>
+                      <div style={{ ...s.optRow, marginTop: '4px', marginLeft: '24px' }}>
                         <div style={s.optLabelGroup}>
                           <span style={s.optName}><span style={s.subArrow} aria-hidden="true"><Icon name="return" /></span>Keep Flickr's HTML</span>
                           <InfoTip text={"Off (recommended): saved as plain text. Line breaks are kept, list items start with a dash, and each link is written as “text (address)”.\n\nOn: saved exactly as Flickr stores it, including tags like <a href=...>.\n\nThe optional sidecar file always keeps the original."} />
@@ -740,7 +740,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
                   </div>
                 </div>
                 {embedGps && (
-                  <div style={{ ...s.optRow, marginTop: '4px', marginLeft: '22px' }}>
+                  <div style={{ ...s.optRow, marginTop: '4px', marginLeft: '24px' }}>
                     <div style={s.optLabelGroup}>
                       <span style={s.optName}><span style={s.subArrow} aria-hidden="true"><Icon name="return" /></span>Leave GPS out of private photos</span>
                       <InfoTip text="Private photos are saved without a location, even when GPS is on." />
@@ -839,36 +839,36 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
 }
 
 const s: Record<string, React.CSSProperties> = {
-  header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px 0', flexShrink: 0 },
+  header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px 0', flexShrink: 0 },
   title: { fontSize: '18px', fontWeight: '700', color: 'var(--ff-text)', margin: 0 },
-  updateBanner: { display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 24px', backgroundColor: 'var(--ff-info-bg)', borderBottom: '1px solid var(--ff-info-line)', flexShrink: 0 },
+  updateBanner: { display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 24px', backgroundColor: 'var(--ff-info-bg)', borderBottom: '1px solid var(--ff-info-line)', flexShrink: 0 },
   updateText: { flex: 1, fontSize: '13px', color: 'var(--ff-blue)', fontWeight: '400' },
   updateBtn: { ...smallBtn, flexShrink: 0 },
   tabBar: { display: 'flex', padding: '0 24px', marginTop: '16px', borderBottom: '1px solid var(--ff-border)', flexShrink: 0 },
-  tabBtn: { ...tabMark, background: 'none', border: 'none', borderBottom: '2px solid transparent', padding: '8px 12px', fontSize: '13px', fontWeight: '400', color: 'var(--ff-text-secondary)', cursor: 'pointer', marginBottom: '-1px', transition: 'color 0.15s' },
+  tabBtn: { ...tabMark, background: 'none', border: 'none', borderBottom: '2px solid transparent', padding: '8px 12px', fontSize: '13px', fontWeight: '400', color: 'var(--ff-text-secondary)', cursor: 'pointer', marginBottom: '0px', transition: 'color 0.15s' },
   tabBtnActive: { color: 'var(--ff-pink)', borderBottom: '2px solid var(--ff-pink)' },
   content: { overflowY: 'auto', flex: 1 },
-  section: { padding: '18px 24px' },
+  section: { padding: '16px 24px' },
   sectionRow: { display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' },
   sectionTitle: { fontSize: '11px', fontWeight: '700', color: 'var(--ff-text-secondary)', textTransform: 'uppercase' as const, letterSpacing: '0.07em', margin: 0 },
 
   // Tooltip
 
   // Download folder
-  folderRow: { display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--ff-border)', backgroundColor: 'var(--ff-cream)' },
+  folderRow: { display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--ff-border)', backgroundColor: 'var(--ff-cream)' },
   folderPath: { flex: 1, fontSize: '12px', color: 'var(--ff-text-secondary)', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const },
   changeBtn: { ...smallBtn, flexShrink: 0 },
 
   // Radio option list
   optionList: { display: 'flex', flexDirection: 'column' as const, gap: '6px' },
-  radioRow: { display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '9px 12px', borderRadius: '8px', boxShadow: 'inset 0 0 0 1.5px var(--ff-border)', background: 'var(--ff-cream)', cursor: 'pointer', outline: 'none' },
+  radioRow: { display: 'flex', alignItems: 'flex-start', gap: '8px', padding: '8px 12px', borderRadius: '8px', boxShadow: 'inset 0 0 0 1.5px var(--ff-border)', background: 'var(--ff-cream)', cursor: 'pointer', outline: 'none' },
   radioRowActive: { boxShadow: 'inset 0 0 0 2px var(--ff-pink)', background: 'color-mix(in srgb, var(--ff-pink) 4%, transparent)' },
   radioLabel: { fontSize: '13px', fontWeight: '400', color: 'var(--ff-text)' },
-  radioDesc: { fontSize: '11px', color: 'var(--ff-text-secondary)', marginTop: '1px' },
+  radioDesc: { fontSize: '11px', color: 'var(--ff-text-secondary)', marginTop: '0px' },
 
   // Toggles
   toggleList: { display: 'flex', flexDirection: 'column' as const, gap: '8px' },
-  toggleRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--ff-border)', backgroundColor: 'var(--ff-cream)', cursor: 'pointer' },
+  toggleRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--ff-border)', backgroundColor: 'var(--ff-cream)', cursor: 'pointer' },
   toggleInfo: { display: 'flex', flexDirection: 'column' as const, gap: '2px' },
   toggleLabel: { fontSize: '14px', fontWeight: '400', color: 'var(--ff-text)' },
   toggleDesc: { fontSize: '12px', color: 'var(--ff-text-secondary)' },
@@ -877,35 +877,35 @@ const s: Record<string, React.CSSProperties> = {
 
   // Core grid
   coreGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' },
-  coreOption: { display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 11px', borderRadius: '8px', boxShadow: 'inset 0 0 0 1.5px var(--ff-border)', background: 'var(--ff-cream)', cursor: 'pointer', outline: 'none' },
+  coreOption: { display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', borderRadius: '8px', boxShadow: 'inset 0 0 0 1.5px var(--ff-border)', background: 'var(--ff-cream)', cursor: 'pointer', outline: 'none' },
   coreOptionActive: { boxShadow: 'inset 0 0 0 2px var(--ff-pink)', background: 'color-mix(in srgb, var(--ff-pink) 5%, transparent)' },
   radioHidden: { display: 'none' as const },
-  radioCircle: { width: '16px', height: '16px', borderRadius: '50%', border: '1.5px solid var(--ff-line-strong)', flexShrink: 0, backgroundColor: 'var(--ff-surface)', transition: 'border-color 0.1s, box-shadow 0.1s', marginTop: '1px' },
+  radioCircle: { width: '16px', height: '16px', borderRadius: '50%', border: '1.5px solid var(--ff-line-strong)', flexShrink: 0, backgroundColor: 'var(--ff-surface)', transition: 'border-color 0.1s, box-shadow 0.1s', marginTop: '0px' },
   radioCircleSm: { width: '14px', height: '14px', borderRadius: '50%', border: '1.5px solid var(--ff-line-strong)', flexShrink: 0, backgroundColor: 'var(--ff-surface)', transition: 'border-color 0.1s, box-shadow 0.1s' },
   radioCircleActive: { borderColor: 'var(--ff-pink)', boxShadow: 'inset 0 0 0 4px var(--ff-pink)' },
   coreLabel: { fontSize: '13px', fontWeight: '400', color: 'var(--ff-text)' },
-  coreExample: { fontSize: '11px', color: 'var(--ff-text-secondary)', fontFamily: 'monospace', marginTop: '1px' },
+  coreExample: { fontSize: '11px', color: 'var(--ff-text-secondary)', fontFamily: 'monospace', marginTop: '0px' },
 
   // Separator
   sepRow: { display: 'flex', gap: '6px', flexWrap: 'wrap' as const },
-  sepPill: { padding: '5px 16px', borderRadius: '50px', border: '1.5px solid var(--ff-line-strong)', background: 'var(--ff-cream)', fontSize: '13px', fontFamily: 'monospace', color: 'var(--ff-text-secondary)', cursor: 'pointer' },
+  sepPill: { padding: '4px 16px', borderRadius: '50px', border: '1.5px solid var(--ff-line-strong)', background: 'var(--ff-cream)', fontSize: '13px', fontFamily: 'monospace', color: 'var(--ff-text-secondary)', cursor: 'pointer' },
   sepPillActive: { borderColor: 'var(--ff-pink)', background: 'color-mix(in srgb, var(--ff-pink) 6%, transparent)', color: 'var(--ff-pink)', fontWeight: '700' },
 
   // Optional parts
-  optRow: { display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 11px', borderRadius: '8px', border: '1px solid var(--ff-border)', background: 'var(--ff-cream)' },
-  optLabelGroup: { display: 'flex', alignItems: 'center', gap: '5px', flex: 1 },
-  subArrow: { color: 'var(--ff-text-secondary)', marginRight: '7px', fontWeight: '400' },
+  optRow: { display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--ff-border)', background: 'var(--ff-cream)' },
+  optLabelGroup: { display: 'flex', alignItems: 'center', gap: '4px', flex: 1 },
+  subArrow: { color: 'var(--ff-text-secondary)', marginRight: '6px', fontWeight: '400' },
   optName: { fontSize: '13px', fontWeight: '400', color: 'var(--ff-text)' },
   posGroup: { display: 'flex', border: '1px solid var(--ff-line-strong)', borderRadius: '6px', overflow: 'hidden', flexShrink: 0 },
-  posBtn: { background: 'var(--ff-surface)', border: 'none', borderRight: '1px solid var(--ff-line-strong)', padding: '4px 10px', fontSize: '12px', color: 'var(--ff-text)', cursor: 'pointer', whiteSpace: 'nowrap' as const },
+  posBtn: { background: 'var(--ff-surface)', border: 'none', borderRight: '1px solid var(--ff-line-strong)', padding: '4px 8px', fontSize: '12px', color: 'var(--ff-text)', cursor: 'pointer', whiteSpace: 'nowrap' as const },
   posBtnActive: { background: 'var(--ff-pink)', color: 'var(--ff-white)', fontWeight: '700' },
-  subOpts: { margin: '1px 0 0', padding: '10px 12px', background: 'color-mix(in srgb, var(--ff-pink) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--ff-pink) 12%, transparent)', borderTop: 'none', borderRadius: '0 0 8px 8px', display: 'flex', flexDirection: 'column' as const, gap: '7px' },
+  subOpts: { margin: '0px 0 0', padding: '8px 12px', background: 'color-mix(in srgb, var(--ff-pink) 4%, transparent)', border: '1px solid color-mix(in srgb, var(--ff-pink) 12%, transparent)', borderTop: 'none', borderRadius: '0 0 8px 8px', display: 'flex', flexDirection: 'column' as const, gap: '6px' },
   subOptRow: { display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' },
   textInput: { ...fieldBox, width: '100%', boxSizing: 'border-box' as const },
 
   // Scroll fade + chevron
   scrollFade: { height: '40px', background: 'linear-gradient(to top, var(--ff-white) 50%, transparent)', marginTop: '-40px', position: 'relative', zIndex: 1, pointerEvents: 'none', flexShrink: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: '6px' },
-  scrollChevron: { fontSize: '11px', color: 'var(--ff-text-secondary)', background: 'var(--ff-shadow-soft)', borderRadius: '8px', padding: '2px 9px', lineHeight: 1 },
+  scrollChevron: { fontSize: '11px', color: 'var(--ff-text-secondary)', background: 'var(--ff-shadow-soft)', borderRadius: '8px', padding: '2px 8px', lineHeight: 1 },
 
   // Preview (more prominent)
   previewBox: { margin: '0 24px 6px', padding: '12px 16px', background: 'var(--ff-warm)', border: '1.5px solid var(--ff-line-strong)', borderRadius: '8px', display: 'flex', flexDirection: 'column' as const, gap: '6px', flexShrink: 0 },
@@ -914,14 +914,14 @@ const s: Record<string, React.CSSProperties> = {
   previewValue: { fontSize: '13px', fontFamily: 'monospace', color: 'var(--ff-text)', wordBreak: 'break-all' as const, fontWeight: '400' },
 
   // Footer
-  footer: { padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', flexShrink: 0, borderTop: '1px solid var(--ff-border)' },
+  footer: { padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexShrink: 0, borderTop: '1px solid var(--ff-border)' },
   footerLeft: { display: 'flex', alignItems: 'center' },
-  footerRight: { display: 'flex', alignItems: 'center', gap: '10px' },
+  footerRight: { display: 'flex', alignItems: 'center', gap: '8px' },
   restoreDefaultsBtn: { ...putAsideBtn },
   resetConfirm: { display: 'flex', alignItems: 'center', gap: '8px' },
   resetConfirmText: { fontSize: '12px', color: 'var(--ff-text-secondary)' },
   resetCancelBtn: { ...smallBtn },
-  resetConfirmBtn: { background: 'var(--ff-error)', border: 'none', borderRadius: '6px', padding: '4px 10px', fontSize: '12px', fontWeight: '700', color: 'var(--ff-white)', cursor: 'pointer' },
+  resetConfirmBtn: { background: 'var(--ff-error)', border: 'none', borderRadius: '6px', padding: '4px 8px', fontSize: '12px', fontWeight: '700', color: 'var(--ff-white)', cursor: 'pointer' },
   resetDoneText: { fontSize: '12px', color: 'var(--ff-text-secondary)' },
   cancelBtn: { ...quietBtn },
   saveBtn: { ...primaryBtn },

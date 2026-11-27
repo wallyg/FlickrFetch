@@ -17,27 +17,27 @@ const BOXED = { '--ff-box': '1' } as CSSProperties
 export const primaryBtn: CSSProperties = {
   ...BOXED,
   background: 'var(--ff-pink-action)', color: 'var(--ff-white)', border: '1px solid var(--ff-pink-action)',
-  borderRadius: 6, padding: '5px 13px', fontSize: 13, fontWeight: 700, cursor: 'pointer'
+  borderRadius: 6, padding: '4px 12px', fontSize: 13, fontWeight: 700, cursor: 'pointer'
 }
 
 export const quietBtn: CSSProperties = {
   ...BOXED,
   background: 'var(--ff-surface)', color: 'var(--ff-text)', border: '1px solid var(--ff-line-strong)',
-  borderRadius: 6, padding: '4px 11px', fontSize: 13, cursor: 'pointer'
+  borderRadius: 6, padding: '4px 12px', fontSize: 13, cursor: 'pointer'
 }
 
 // A small quiet button with an icon in front (the icon takes the blue; the label stays dark)
 export const pillBtn: CSSProperties = {
-  ...quietBtn, display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 10px', fontSize: 12, whiteSpace: 'nowrap'
+  ...quietBtn, display: 'inline-flex', alignItems: 'center', gap: 6, padding: '2px 8px', fontSize: 12, whiteSpace: 'nowrap'
 }
 
 // The same, a size smaller, for a button that sits in a row of text or a narrow bar (the download bar, History, Settings lines)
-export const smallBtn: CSSProperties = { ...quietBtn, padding: '3px 10px', fontSize: 12 }
+export const smallBtn: CSSProperties = { ...quietBtn, padding: '2px 8px', fontSize: 12 }
 
 // The action on a row or card: outlined blue (Health Check rows, Backup, Album fit, the On This Day card)
 export const doThisBtn: CSSProperties = { ...quietBtn, borderColor: 'var(--ff-blue)', color: 'var(--ff-blue)', fontWeight: 700 }
 
-export const doThisSmallBtn: CSSProperties = { ...doThisBtn, padding: '3px 10px', fontSize: 12 }
+export const doThisSmallBtn: CSSProperties = { ...doThisBtn, padding: '2px 8px', fontSize: 12 }
 
 // Dismiss or defer ("This one is fine", "Not now", "Undo")
 export const putAsideBtn: CSSProperties = { background: 'none', border: 'none', padding: 0, fontSize: 12, color: 'var(--ff-text-secondary)', textDecoration: 'underline', cursor: 'pointer' }
@@ -58,9 +58,9 @@ export const selectedOn: CSSProperties = {
 // Text boxes, number boxes and selects: one look (#237). The edge is the quiet button's edge, the corner is the button's corner.
 // fieldBox is the standard size, fieldCompact sits inside a row of text or a settings line; selectBox and selectCompact add the pointer.
 export const fieldBox: CSSProperties = {
-  border: '1px solid var(--ff-line-strong)', borderRadius: 6, padding: '5px 8px', fontSize: 13, background: 'var(--ff-surface)', color: 'var(--ff-text)'
+  border: '1px solid var(--ff-line-strong)', borderRadius: 6, padding: '4px 8px', fontSize: 13, background: 'var(--ff-surface)', color: 'var(--ff-text)'
 }
-export const fieldCompact: CSSProperties = { ...fieldBox, padding: '3px 6px' }
+export const fieldCompact: CSSProperties = { ...fieldBox, padding: '2px 6px' }
 export const selectBox: CSSProperties = { ...fieldBox, cursor: 'pointer' }
 export const selectCompact: CSSProperties = { ...fieldCompact, cursor: 'pointer' }
 
@@ -69,7 +69,7 @@ export const tabMark = { '--ff-tab': '1' } as CSSProperties
 
 export const chip: CSSProperties = {
   ...BOXED,
-  border: '1px solid var(--ff-border)', borderRadius: 12, padding: '3px 11px', fontSize: 13,
+  border: '1px solid var(--ff-border)', borderRadius: 12, padding: '2px 12px', fontSize: 13,
   background: 'var(--ff-surface)', color: 'var(--ff-text)', cursor: 'pointer'
 }
 
@@ -82,7 +82,7 @@ export const segBtn: CSSProperties = {
 }
 
 export const railItem: CSSProperties = {
-  display: 'flex', justifyContent: 'space-between', gap: 8, padding: '7px 9px', borderRadius: 6, fontSize: 13, cursor: 'pointer', color: 'var(--ff-text)'
+  display: 'flex', justifyContent: 'space-between', gap: 8, padding: '6px 8px', borderRadius: 6, fontSize: 13, cursor: 'pointer', color: 'var(--ff-text)'
 }
 
 // The selected row changes colour and background only: a bolder weight made long names wrap onto a second line when selected

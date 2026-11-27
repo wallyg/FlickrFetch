@@ -40,7 +40,7 @@ export default class ErrorBoundary extends React.Component<Props, State> {
             <button style={primaryBtn} onClick={() => window.location.reload()}>Reload</button>
             {this.props.scope === 'tab' && <button style={quietBtn} onClick={() => this.setState({ error: null, stack: '', copied: false })}>Try again</button>}
           </div>
-          <details style={{ marginTop: 18 }}>
+          <details style={{ marginTop: 16 }}>
             <summary style={summary}>What happened</summary>
             <pre style={pre}>{details}</pre>
             <button style={quietBtn} onClick={this.copy}>{this.state.copied ? 'Copied' : 'Copy details'}</button>
@@ -52,9 +52,9 @@ export default class ErrorBoundary extends React.Component<Props, State> {
 }
 
 const box: React.CSSProperties = { display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, overflow: 'auto', background: 'var(--ff-cream)' }
-const card: React.CSSProperties = { width: 'min(560px, 100%)', background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 12, padding: '28px 32px', boxShadow: '0 12px 40px var(--ff-shadow-soft)' }
+const card: React.CSSProperties = { width: 'min(560px, 100%)', background: 'var(--ff-surface)', border: '1px solid var(--ff-border)', borderRadius: 12, padding: '24px 32px', boxShadow: '0 12px 40px var(--ff-shadow-soft)' }
 const title: React.CSSProperties = { margin: '0 0 8px', fontSize: 18, fontWeight: 700, color: 'var(--ff-navy)' }
-const text: React.CSSProperties = { margin: '0 0 18px', fontSize: 14, color: 'var(--ff-text-secondary)', lineHeight: 1.5 }
-const actions: React.CSSProperties = { display: 'flex', gap: 10 }
+const text: React.CSSProperties = { margin: '0 0 16px', fontSize: 14, color: 'var(--ff-text-secondary)', lineHeight: 1.5 }
+const actions: React.CSSProperties = { display: 'flex', gap: 8 }
 const summary: React.CSSProperties = { cursor: 'pointer', fontSize: 13, color: 'var(--ff-text-secondary)', marginBottom: 8 }
-const pre: React.CSSProperties = { margin: '0 0 10px', padding: 12, background: 'var(--ff-grey-100)', borderRadius: 6, fontSize: 12, lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word', maxHeight: 220, overflow: 'auto', userSelect: 'text' }
+const pre: React.CSSProperties = { margin: '0 0 8px', padding: 12, background: 'var(--ff-grey-100)', borderRadius: 6, fontSize: 12, lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word', maxHeight: 220, overflow: 'auto', userSelect: 'text' }

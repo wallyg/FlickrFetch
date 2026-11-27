@@ -167,13 +167,13 @@ export default function DownloadConfirmModal({ pending, settingsKey, isPro, onCa
 const s: Record<string, React.CSSProperties> = {
   header: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '20px 20px 0',
+    padding: '16px 16px 0',
   },
   title: {
     margin: 0, fontSize: '16px', fontWeight: '700', color: 'var(--ff-navy)',
   },
   body: {
-    padding: '16px 20px 0',
+    padding: '16px 16px 0',
   },
   batchTitle: {
     margin: '0 0 4px', fontSize: '14px', fontWeight: '700', color: 'var(--ff-text)',
@@ -185,14 +185,14 @@ const s: Record<string, React.CSSProperties> = {
     margin: '0 0 0', fontSize: '11px', color: 'var(--ff-text-secondary)', fontStyle: 'italic' as const,
   },
   limitNote: {
-    fontSize: '12px', lineHeight: 1.5, color: 'var(--ff-text-secondary)', backgroundColor: 'var(--ff-tint)', borderRadius: '8px', padding: '8px 12px', margin: '10px 0 0',
+    fontSize: '12px', lineHeight: 1.5, color: 'var(--ff-text-secondary)', backgroundColor: 'var(--ff-tint)', borderRadius: '8px', padding: '8px 12px', margin: '8px 0 0',
   },
   summaryCard: {
-    backgroundColor: 'var(--ff-cream)', borderRadius: '8px', padding: '10px 12px',
+    backgroundColor: 'var(--ff-cream)', borderRadius: '8px', padding: '8px 12px',
     marginTop: '12px',
   },
   settingsRow: {
-    display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '6px',
+    display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '6px',
   },
   settingLabel: {
     fontSize: '12px', color: 'var(--ff-text-secondary)', width: '52px', flexShrink: 0,
@@ -205,7 +205,7 @@ const s: Record<string, React.CSSProperties> = {
     marginTop: '16px', borderTop: '1px solid var(--ff-border)', paddingTop: '12px',
   },
   metaHeading: {
-    margin: '0 0 10px', fontSize: '11px', fontWeight: '700', color: 'var(--ff-text-secondary)',
+    margin: '0 0 8px', fontSize: '11px', fontWeight: '700', color: 'var(--ff-text-secondary)',
     textTransform: 'uppercase' as const, letterSpacing: '0.5px',
   },
   metaGrid: {
@@ -213,7 +213,7 @@ const s: Record<string, React.CSSProperties> = {
     gap: '6px 8px', marginBottom: '8px',
   },
   metaItem: {
-    display: 'flex', alignItems: 'center', gap: '5px',
+    display: 'flex', alignItems: 'center', gap: '4px',
   },
   metaCheck: {
     fontSize: '12px', fontWeight: '700', flexShrink: 0,
@@ -226,13 +226,13 @@ const s: Record<string, React.CSSProperties> = {
   },
   formatRow: {
     display: 'flex', alignItems: 'center', gap: '12px',
-    padding: '14px 20px 0',
+    padding: '12px 16px 0',
   },
   formatLabel: {
     fontSize: '13px', color: 'var(--ff-text-secondary)', fontWeight: '400', flexShrink: 0,
   },
   trackRow: {
-    padding: '12px 20px 0',
+    padding: '12px 16px 0',
   },
   trackLabel: {
     display: 'flex', alignItems: 'center', fontSize: 13, color: 'var(--ff-text-secondary)',
@@ -240,7 +240,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   footer: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '14px 20px 18px', borderTop: '1px solid var(--ff-border)', marginTop: '14px',
+    padding: '12px 16px 16px', borderTop: '1px solid var(--ff-border)', marginTop: '12px',
   },
   footerBtns: {
     display: 'flex', gap: '8px',

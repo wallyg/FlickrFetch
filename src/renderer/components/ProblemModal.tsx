@@ -55,7 +55,7 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: '18px',
     fontWeight: '700',
     color: 'var(--ff-navy)',
-    margin: '0 0 20px',
+    margin: '0 0 16px',
     lineHeight: 1.25,
     fontFamily: "'Lato', -apple-system, sans-serif",
     paddingRight: '24px',
@@ -63,7 +63,7 @@ const s: Record<string, React.CSSProperties> = {
   body: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '14px',
+    gap: '12px',
   },
   para: {
     fontSize: '14px',
