@@ -5,15 +5,19 @@ import { itemsLabel } from './counts'
 // email shows it, and the links are clickable wherever the text is.
 
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
-const pad = (n: number): string => String(n).padStart(2, '0')
 const part = (v: string): string => encodeURIComponent(v).replace(/%40/g, '@')   // an account id is like 12345678@N01: the @ stays
 
 
 export interface DayLinkYear { year: string; count: number; videos: number; photoId?: string }   // photoId: the one photo, when the year has only one
 
-/** The address of Flickr's page of everything taken on one date, for the owner `nsid` (the account's id works where a name would). */
+/**
+ * The address of a Flickr search for everything one account took on one date. It opens for anyone, signed in or not (they see the photos they are
+ * allowed to see). Flickr's own "archive" day pages are not used: they need a Flickr sign-in, and for the owner they redirect to the Camera Roll.
+ * The day runs from midnight to 23:59:59 on the date taken, as Flickr stores it. `nsid` must be the account id (12345678@N01), not a screen name.
+ */
 export function dayPageUrl(nsid: string, year: string, month: number, day: number): string {
-  return `https://www.flickr.com/photos/${part(nsid)}/archives/date-taken/${year}/${pad(month)}/${pad(day)}/`
+  const start = Math.floor(Date.UTC(Number(year), month - 1, day) / 1000)
+  return `https://www.flickr.com/search/?user_id=${encodeURIComponent(nsid)}&min_taken_date=${start}&max_taken_date=${start + 86399}&view_all=1`
 }
 export const photoPageUrl = (nsid: string, photoId: string): string => `https://www.flickr.com/photos/${part(nsid)}/${part(photoId)}/`
 

@@ -148,19 +148,20 @@ test('one year only: shuffle gives a different few of that year, each photo once
 test('the day links: one line per year with its count, each a link to that day on Flickr; a single photo links to the photo itself', () => {
   const years = [{ year: '2025', count: 7, videos: 0 }, { year: '2018', count: 1, videos: 0, photoId: '53456789012' }, { year: '2014', count: 3, videos: 1 }]
   const text = dayLinkText('12345@N01', years, 11, 27)
-  assert.match(text, /^On this day, November 27, in my photos:\n\n2025 · 7 photos\nhttps:\/\/www\.flickr\.com\/photos\/12345@N01\/archives\/date-taken\/2025\/11\/27\/\n/)
+  assert.match(text, /^On this day, November 27, in my photos:\n\n2025 · 7 photos\nhttps:\/\/www\.flickr\.com\/search\/\?user_id=12345%40N01&min_taken_date=1764201600&max_taken_date=1764287999&view_all=1\n/)
   assert.match(text, /2018 · 1 photo\nhttps:\/\/www\.flickr\.com\/photos\/12345@N01\/53456789012\/\n/)
   assert.match(text, /2014 · 2 photos and 1 video\n/)
   assert.match(text, /Public photos open for anyone/)
   assert.ok(!/Public photos open for anyone/.test(dayLinkText('12345@N01', years, 11, 27, { everyone: true })))
-  assert.equal(dayPageUrl('x', '2020', 3, 4), 'https://www.flickr.com/photos/x/archives/date-taken/2020/03/04/')
+  assert.equal(dayPageUrl('x', '2020', 3, 4), 'https://www.flickr.com/search/?user_id=x&min_taken_date=1583280000&max_taken_date=1583366399&view_all=1')
+  assert.ok(!/archives/.test(dayPageUrl('x', '2020', 3, 4)), 'the archive pages need a sign-in, so they are not used')
   assert.equal(yearLinkUrl('x', { year: '2020', count: 1, videos: 0 }, 3, 4), dayPageUrl('x', '2020', 3, 4))   // no photo to name: the day page
 })
 
 test('the day links for one year: a single line under a dated headline', () => {
   const years = [{ year: '2025', count: 7, videos: 0 }, { year: '2021', count: 6, videos: 0 }]
   const text = dayLinkText('x', years, 11, 27, { onlyYear: '2021', everyone: true })
-  assert.equal(text, 'On this day, November 27, 2021, in my photos:\n\n6 photos\nhttps://www.flickr.com/photos/x/archives/date-taken/2021/11/27/')
+  assert.equal(text, 'On this day, November 27, 2021, in my photos:\n\n6 photos\nhttps://www.flickr.com/search/?user_id=x&min_taken_date=1637971200&max_taken_date=1638057599&view_all=1')
   assert.equal(dayLinkText('', years, 11, 27), '')   // not signed in: nothing to link to
 })
 

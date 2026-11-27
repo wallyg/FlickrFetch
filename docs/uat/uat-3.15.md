@@ -33,7 +33,7 @@ How to run it: `npm run dev` from the project folder. Restart it once (stop it, 
 
 - [ ] E1 **The tick.** Extras has "Include links to each year on Flickr when sharing", on by default. With a tag filter showing on On This Day it is off, with a reason.
 - [ ] E2 **Share….** Share to Notes or Messages (to yourself): the picture and the text arrive together. The text has one line per year with its count and a link.
-- [ ] E3 **The links open.** Click the 2025 link: Flickr shows that day's photos. Click a year with a single photo: it opens the photo itself. Test one while signed out, or in a private window, to see what others see. **This is the one thing I could not check: Flickr's day-page address pattern.** If a link does not open the right page, tell me what you see.
+- [ ] E3 **The links open.** Click the 2025 link: Flickr's search page shows your photos taken that day. Click a year with a single photo: it opens the photo itself. Open one in a private window (signed out): it shows only the public photos, and does not ask to sign in. (Flickr's own archive day pages need a sign-in, and send you to the Camera Roll, so the links use Flickr's search page instead. I checked it signed out against a public account, with a date range, and it filtered correctly. One thing to look for: a photo taken near midnight can land on the day before or after, because the search counts the day in UTC.)
 - [ ] E4 **Copy links.** The clipboard has the photo links, a blank line, then the year lines.
 - [ ] E5 **Off.** Untick it: Share… sends only the picture.
 
