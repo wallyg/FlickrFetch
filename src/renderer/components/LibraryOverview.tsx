@@ -119,8 +119,8 @@ export default function LibraryOverview({ refreshKey, offCount, onGoTags, onGoPh
           </div></div>
           <div style={{ ...partsGrid, marginTop: 12 }}>
             <PartsCards stats={stats} />
-            <GuessedNote stats={stats} go={goAll} />
           </div>
+          <GuessedNote stats={stats} go={goAll} />
 
           {stats.located > 0 ? (
             <>

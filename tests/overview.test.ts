@@ -104,3 +104,8 @@ test('every dashboard shortcut has a way back to Health Check: the Photostream, 
   assert.match(main, /if \(view !== 'map'\) setMapBack\(false\)/)                              // and the link goes when you leave the Map
   assert.match(read('src/renderer/components/MapPanel.tsx'), /Back to \{backTo\.label\}/)
 })
+
+test('the month, day and time-of-day cards stretch across the row: the guessed-dates note is not inside their grid', () => {
+  assert.match(read('src/renderer/components/LibraryOverview.tsx'), /<PartsCards stats=\{stats\} \/>\s*<\/div>\s*<GuessedNote/)
+  assert.ok(!/gridColumn: '1 \/ -1' \}\}>\s*<b>\{fmt\(g\.items\)\}/.test(read('src/renderer/components/DashboardCards.tsx')))
+})
