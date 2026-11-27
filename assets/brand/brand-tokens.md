@@ -87,6 +87,7 @@ The rule: a dimmed backdrop (`--ff-scrim`) on the dialog layer; one card (`--ff-
 
 - **Text:** 11 (labels, the floor), 12, 13 (body), 14 (card titles), 16, 18, 22, 24 (headings).
 - **Corners:** 4, 6 (buttons, fields), 8, 12 (cards), 50 (pills, round).
+- **Headings** (3.14, #272): three looks in `ui/kit.ts`, all navy and bold: `headingScreen` 18 (a screen or a dialog), `headingDialog` 16 (a small question), `headingCard` 14 (a card, row or group). A screen spreads one and adds only what is its own. No italics anywhere; a note is plain text. Chips: `chip` (pressable; selected is `selectedOn`), `chipCount`, `chipRemovable`, `chipLabel` (a label, not a control). Guards in `tests/styleScales.test.ts`.
 - **Spacing** (padding, margin, gap; 3.14, #241): 0, 2, 4, 6, 8, 12, 16, 24, 32. Anything above 32 is a layout size, not a gap, and is free. A size between two steps goes to the nearest; a tie to the smaller. Main and Secondary buttons share one padding (4px 12px) so they are the same size side by side. `tests/spacingGuard.test.ts` fails on a size off the scale (ceilings in `tests/spacing-ceiling.json`, now empty). Measured in `docs/design/spacing-audit.md`.
 - **Light only.** The app has no dark mode and this pass does not add one; `--ff-surface` keeps it possible later.
 
