@@ -42,7 +42,7 @@ FlickrFetch 3.13 finishes the work of making the app's parts consistent, and add
 **Honest limits**
 - The app is not yet signed with an Apple Developer ID, so macOS may ask you to open it once from System Settings, Privacy & Security.
 - macOS asks for your Mac password about the keychain the first time you open an updated copy. Choose Always Allow.
-- Downloaded files that already carry location details keep them: "Strip GPS from private" only stops new location details being added.
+- Downloaded files that already carry location details keep them: "Leave GPS out of private photos" only stops new location details being added.
 
 **Installing**
 Open the .dmg and drag FlickrFetch onto Applications, replacing the old copy. Your sign-in and settings carry over.

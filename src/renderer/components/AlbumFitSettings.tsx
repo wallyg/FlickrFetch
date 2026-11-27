@@ -8,10 +8,10 @@ import type { AlbumFitSettings as Settings, AlbumFitStats } from '../../shared/t
 const DEFAULTS: Settings = { share: 95, gapDays: 45, isolated: 2, farTimes: 2.5, farKm: 0.5, titleShare: 75, titleMin: 5, nearShare: 80, nearMin: 3, nearMinutes: 30, nearMeters: 300, bothOnly: 0, titleMode: 1, titleAutoMin: 30, wrongOn: 1, doubleOn: 1, vouchShare: 50 }
 interface Field { key: keyof Settings; label: string; hint: string; min: number; max: number; step: number; toggle?: boolean }
 const NOT_FIT: Field[] = [
-  { key: 'share', label: 'Share of an album in its cluster (%)', hint: 'Outliers are called out only when at least this much of the album sits in its dates or tags. Higher is stricter: fewer albums are judged.', min: 70, max: 100, step: 1 },
+  { key: 'share', label: 'How tidy an album must be to be checked (%)', hint: 'An album is checked only if at least this many of its photos were taken together or share tags. The few outside that group are called out.', min: 70, max: 100, step: 1 },
   { key: 'gapDays', label: 'Days between photos of one visit', hint: 'Photos closer together than this belong to one visit. Higher merges visits, so fewer photos count as on their own.', min: 3, max: 365, step: 1 },
   { key: 'isolated', label: 'On its own: a run of this many photos or fewer', hint: 'A photo away from every visit, with this few neighbors, is flagged. Higher flags more.', min: 0, max: 20, step: 1 },
-  { key: 'farTimes', label: 'Out of place: times the album\'s own spread', hint: 'A photo further from the middle of its album than this many times the album\'s own spread is flagged. Lower flags more.', min: 1, max: 10, step: 0.1 },
+  { key: 'farTimes', label: 'Out of place: how far from the rest', hint: 'Flags a photo that is this many times farther from the album\'s middle than its typical photo. Lower flags more.', min: 1, max: 10, step: 0.1 },
   { key: 'farKm', label: '...and at least this many km beyond it', hint: 'Stops tiny differences in a very tight album from being flagged. Lower flags more.', min: 0, max: 20, step: 0.1 },
   { key: 'wrongOn', label: 'Flag a photo filed in another place\'s album', hint: 'The title (or the photos taken right beside it) says another place, in an album for a different place, and the two albums do not overlap. Needs titles that start with a place.', min: 0, max: 1, step: 1, toggle: true },
   { key: 'doubleOn', label: 'Flag a photo in two albums for different places', hint: 'A photo in two place albums whose areas do not overlap: one of them is probably wrong. Trip and theme albums are not judged this way.', min: 0, max: 1, step: 1, toggle: true },
@@ -24,8 +24,8 @@ const BELONG: Field[] = [
   { key: 'titleMin', label: '...and the place is used on at least this many photos', hint: 'A place used on fewer photos is too thin to go by. Higher is stricter.', min: 2, max: 50, step: 1 },
   { key: 'nearShare', label: 'Nearby photos: share of them in the album (%)', hint: 'A photo is suggested for the album that holds at least this share of the photos taken right beside it. Higher is stricter.', min: 50, max: 100, step: 5 },
   { key: 'nearMin', label: '...out of at least this many nearby photos', hint: 'Fewer nearby photos than this and the photo is not judged this way. Higher is stricter.', min: 1, max: 20, step: 1 },
-  { key: 'nearMinutes', label: 'Nearby means within this many minutes', hint: 'Shared with May not fit. Longer finds more neighbors.', min: 1, max: 240, step: 1 },
-  { key: 'nearMeters', label: '...and this many meters', hint: 'Shared with May not fit. Longer finds more neighbors.', min: 20, max: 2000, step: 10 },
+  { key: 'nearMinutes', label: 'Nearby means within this many minutes', hint: 'Used by May not fit too. A longer time finds more nearby photos.', min: 1, max: 240, step: 1 },
+  { key: 'nearMeters', label: '...and this many meters', hint: 'Used by May not fit too. A longer distance finds more nearby photos.', min: 20, max: 2000, step: 10 },
   { key: 'bothOnly', label: 'Only when the title and the nearby photos agree', hint: 'Suggest a photo only when both signals point to the same album. Far fewer suggestions, and almost always right.', min: 0, max: 1, step: 1, toggle: true }
 ]
 const ALL: Field[] = [...NOT_FIT, ...BELONG]

@@ -328,13 +328,13 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
                     value={showDockProgress}
                     onChange={v => { setShowDockProgress(v) }}
                     label="Show dock progress"
-                    desc="Animate the dock icon during downloads"
+                    desc="Show download progress on the Dock icon"
                   />
                   <Toggle
                     value={notifyOnComplete}
                     onChange={v => { setNotifyOnComplete(v) }}
                     label="Notify when complete"
-                    desc="macOS notification when a batch finishes"
+                    desc="A macOS notification when a download finishes"
                   />
                 </div>
               </div>
@@ -348,7 +348,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
                     value={onThisDayCard}
                     onChange={v => { setOnThisDayCard(v) }}
                     label="Show the On This Day card"
-                    desc="A small card at the top of My Flickr when photos were taken on today's date"
+                    desc="A small card at the top of My Flickr when you have photos from today's date in earlier years"
                   />
                   <Toggle
                     value={onThisDayNotify}
@@ -413,7 +413,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
               <div style={{ ...s.section, borderTop: '1px solid var(--ff-border)' }}>
                 <div style={s.sectionRow}>
                   <p style={s.sectionTitle}>Photo resolution</p>
-                  <InfoTip text={"Which image size to download.\n\nOriginal is recommended for archiving. Videos always download at the highest quality, whatever you choose here."} />
+                  <InfoTip text={"Which image size to download.\n\nVideos always download at their highest quality."} />
                 </div>
                 <div style={s.optionList}>
                   {([
@@ -457,7 +457,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
               <div style={{ ...s.section, borderTop: '1px solid var(--ff-border)' }}>
                 <div style={s.sectionRow}>
                   <p style={s.sectionTitle}>If file already exists</p>
-                  <InfoTip text="What to do when a downloaded file has the same name as one already in the folder." />
+                  <InfoTip text="What to do when a file with the same name is already in the folder." />
                 </div>
                 <div style={s.optionList}>
                   {([
@@ -527,11 +527,11 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
                 </div>
               </div>
 
-              {/* Part separator */}
+              {/* Separator */}
               <div style={{ ...s.section, borderTop: '1px solid var(--ff-border)' }}>
                 <div style={s.sectionRow}>
-                  <p style={s.sectionTitle}>Part separator</p>
-                  <InfoTip text={"Joins all parts together.\n\nExample: 2024-03-15·NYC - Highline.jpg (where · is your chosen separator)."} />
+                  <p style={s.sectionTitle}>Separator</p>
+                  <InfoTip text={"Goes between the parts of a file name.\n\nWith a dot: 2024-03-15.NYC - Highline.jpg."} />
                 </div>
                 <div style={s.sepRow}>
                   {(['.', '-', '_', ' ', '|'] as FileNamingSep[]).map(v => (
@@ -550,7 +550,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
               <div style={{ ...s.section, borderTop: '1px solid var(--ff-border)' }}>
                 <div style={s.sectionRow}>
                   <p style={s.sectionTitle}>Optional parts</p>
-                  <InfoTip text={"Each part wraps around the core using the separator.\n\nPrefix goes before it, suffix after."} />
+                  <InfoTip text="Each part goes before (prefix) or after (suffix) the core, joined by the separator." />
                 </div>
 
                 {/* Date stamp */}
@@ -570,7 +570,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
                 <div style={{ ...s.optRow, marginTop: '6px' }}>
                   <div style={s.optLabelGroup}>
                     <span style={s.optName}>Auto-number</span>
-                    <InfoTip text="A counter (001, 002, 003…) that resets at the start of each batch." />
+                    <InfoTip text="A counter (001, 002, 003…) that starts again at 001 for each download." />
                   </div>
                   <PosToggle value={seqPos} onChange={v => { setSeqPos(v) }} />
                 </div>
@@ -597,18 +597,18 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
                 {/* Size token */}
                 <div style={{ ...s.optRow, marginTop: '6px' }}>
                   <div style={s.optLabelGroup}>
-                    <span style={s.optName}>Size indicator</span>
+                    <span style={s.optName}>Size code</span>
                     <InfoTip text="Adds a short size code to the file name: o (original), xl, l, m, s or sq (square). Useful when downloading different sizes of the same photo." />
                   </div>
                   <PosToggle value={sizeTokenPos} onChange={v => { setSizeTokenPos(v) }} />
                 </div>
               </div>
 
-              {/* Title transform */}
+              {/* Tidy the file name */}
               <div style={{ ...s.section, borderTop: '1px solid var(--ff-border)' }}>
                 <div style={s.sectionRow}>
-                  <p style={s.sectionTitle}>Title transform</p>
-                  <InfoTip text="Changes the capital letters of the whole filename." />
+                  <p style={s.sectionTitle}>Tidy the file name</p>
+                  <InfoTip text="Changes how the file name is written: lowercase or uppercase for the whole name, and replacing spaces and removing brackets in the title." />
                 </div>
 
                 {/* Case */}
@@ -655,7 +655,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
                 <div style={{ ...s.optRow, marginTop: '6px', flexDirection: 'column', alignItems: 'stretch', gap: '6px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                     <span style={s.optName}>Character substitutions</span>
-                    <InfoTip text="Brackets are kept in filenames by default. Turn these on to remove them." />
+                    <InfoTip text="Parentheses ( ) and square brackets [ ] are kept in file names by default. Turn these on to remove them." />
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '5px' }}>
                     {([
@@ -731,7 +731,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
                 <div style={s.sectionLabel}>Location</div>
                 <div style={s.optRow}>
                   <div style={s.optLabelGroup}>
-                    <span style={s.optName}>GPS coordinates</span>
+                    <span style={s.optName}>Location (GPS)</span>
                     <InfoTip text="Saves the photo's location in the file, when Flickr has one." />
                   </div>
                   <div style={s.posGroup}>
@@ -742,8 +742,8 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
                 {embedGps && (
                   <div style={{ ...s.optRow, marginTop: '4px', marginLeft: '22px' }}>
                     <div style={s.optLabelGroup}>
-                      <span style={s.optName}><span style={s.subArrow} aria-hidden="true"><Icon name="return" /></span>Strip GPS from private</span>
-                      <InfoTip text={"When a photo is private, skip GPS even if GPS embedding is on.\n\nUseful for location privacy."} />
+                      <span style={s.optName}><span style={s.subArrow} aria-hidden="true"><Icon name="return" /></span>Leave GPS out of private photos</span>
+                      <InfoTip text="Private photos are saved without a location, even when GPS is on." />
                     </div>
                     <div style={s.posGroup}>
                       <button style={{ ...s.posBtn, ...(!stripGpsFromPrivate ? s.posBtnActive : {}) }} onClick={() => { setStripGpsFromPrivate(false) }}>Off</button>

@@ -141,3 +141,15 @@ test('the copy edit (#268): one spelling, plain headings, loading words, empty l
   assert.ok(!/Smart Sync/.test(readFileSync(join(process.cwd(), 'README.md'), 'utf8')))
   assert.ok(changelog[0].highlights.every(h => h.length < 700), 'no bullet in the newest changelog entry is a wall of text')
 })
+
+test('the Settings wording (#268 C and H): our own words are out of the descriptions, and the headings say what they hold', () => {
+  const settings = read('src/renderer/components/SettingsModal.tsx')
+  const fit = read('src/renderer/components/AlbumFitSettings.tsx')
+  assert.ok(!/cluster|outlier|spread/i.test(fit.slice(fit.indexOf('const NOT_FIT'), fit.indexOf('const BELONG'))), 'Album fit: no cluster, outliers or spread')
+  assert.ok(!/batch/i.test(settings.slice(settings.indexOf('Show download progress'), settings.indexOf('Show download progress') + 400)), 'no "batch" in the General descriptions')
+  assert.ok(/>Separator</.test(settings) && /Size code/.test(settings) && /Location \(GPS\)/.test(settings))
+  assert.ok(!/Part separator|Size indicator|GPS coordinates|Title transform|Strip GPS from private/.test(settings), 'the old headings are gone')
+  assert.ok(/Parentheses \( \) and square brackets \[ \]/.test(settings), 'the brackets tip names both kinds')
+  assert.ok(/Leave GPS out of private photos/.test(settings) && /Tidy the file name/.test(settings))
+  assert.ok(!/wraps around the core|resets at the start of each batch/.test(settings))
+})
