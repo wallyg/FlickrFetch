@@ -238,7 +238,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   copyright: {
     fontSize: '11px',
-    color: 'var(--ff-text-secondary)',
+    color: 'var(--ff-text)',   // the grey is 4.47:1 on this amber; the dark text is well over 4.5
     margin: 0,
     textAlign: 'center' as const
   }
