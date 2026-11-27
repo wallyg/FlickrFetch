@@ -59,6 +59,20 @@ export default function MapPanel({ active, onDownload, onFullRescan, refreshKey,
   const [dateMax, setDateMax] = useState('')
   const [accuracy, setAccuracy] = useState<AccuracyChoice>('any')
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const albumRef = useRef<HTMLInputElement | null>(null)
+  // Cmd+F on the Map: the album box is its only search box and it sits in the Filters drawer, so open the drawer and put the cursor there (#256)
+  useEffect(() => {
+    if (!active) return
+    const onKey = (e: KeyboardEvent): void => {
+      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'f') {
+        e.preventDefault()
+        setDrawerOpen(true)
+        window.requestAnimationFrame(() => { albumRef.current?.focus(); albumRef.current?.select() })
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [active])
   const [data, setData] = useState<MapView | null>(null)
   const [failed, setFailed] = useState(false)
   const [outline, setOutline] = useState<Float32Array[]>([])
@@ -446,7 +460,7 @@ export default function MapPanel({ active, onDownload, onFullRescan, refreshKey,
 
           <div style={{ ...sharedStyles.drawerRow, padding: '6px 24px' }}>
             <span style={sharedStyles.drawerLabel}>Album</span>
-            <AlbumBox chosen={albums} onToggle={a => setAlbums(list => (list.some(x => x.id === a.id) ? list.filter(x => x.id !== a.id) : [...list, a]))} />
+            <AlbumBox inputRef={albumRef} chosen={albums} onToggle={a => setAlbums(list => (list.some(x => x.id === a.id) ? list.filter(x => x.id !== a.id) : [...list, a]))} />
             <span style={styles.hint}>Pick one or more; photos in any of them show.</span>
           </div>
 

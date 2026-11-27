@@ -10,7 +10,7 @@ import { DEBOUNCE, useDebouncedValue } from '../ui/useDebounce'
 
 export interface PickedAlbum { id: string; title: string }
 
-export default function AlbumBox({ chosen, onToggle, minWidth = 200 }: { chosen: PickedAlbum[]; onToggle: (a: PickedAlbum) => void; minWidth?: number }): React.JSX.Element {
+export default function AlbumBox({ chosen, onToggle, minWidth = 200, inputRef }: { chosen: PickedAlbum[]; onToggle: (a: PickedAlbum) => void; minWidth?: number; inputRef?: React.Ref<HTMLInputElement> }): React.JSX.Element {
   const [text, setText] = useState('')
   const [hits, setHits] = useState<MapAlbumHit[]>([])
   const [focus, setFocus] = useState(false)
@@ -28,7 +28,7 @@ export default function AlbumBox({ chosen, onToggle, minWidth = 200 }: { chosen:
   return (
     <div style={{ position: 'relative' }}>
       <div style={sharedStyles.searchGroup}>
-        <input style={{ ...sharedStyles.searchInput, minWidth }} type="text" placeholder={chosen.length > 0 ? `${chosen.length} picked. Find another…` : 'Find an album…'} value={text} aria-label="Find an album"
+        <input ref={inputRef} style={{ ...sharedStyles.searchInput, minWidth }} type="text" placeholder={chosen.length > 0 ? `${chosen.length} picked. Find another…` : 'Find an album…'} value={text} aria-label="Find an album"
           onChange={e => setText(e.target.value)} onFocus={() => setFocus(true)} onBlur={() => setFocus(false)} />
       </div>
       {focus && hits.length > 0 && (

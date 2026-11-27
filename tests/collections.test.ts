@@ -185,3 +185,9 @@ test('On This Day: the day buttons are never squeezed by the action buttons in a
   assert.ok(/navSeg: \{[^}]*flexShrink: 0/.test(src), 'the Yesterday / Jump / Tomorrow group keeps its width')
   assert.ok(/headText: \{ flex: '1 1 auto'/.test(src), 'the heading block is as wide as its content, so the buttons wrap under it')
 })
+
+test('Cmd+F on the Map opens the Filters drawer and puts the cursor in the album box (#256)', () => {
+  const map = read('src/renderer/components/MapPanel.tsx')
+  assert.ok(/e\.key\.toLowerCase\(\) === 'f'[\s\S]{0,200}setDrawerOpen\(true\)[\s\S]{0,200}albumRef\.current\?\.focus\(\)/.test(map), 'Cmd+F opens the drawer then focuses the album box')
+  assert.ok(/<AlbumBox inputRef=\{albumRef\}/.test(map) && /inputRef=\{inputRef\}|ref=\{inputRef\}/.test(read('src/renderer/components/AlbumBox.tsx')))
+})
