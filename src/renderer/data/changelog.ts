@@ -7,6 +7,20 @@ export interface Release {
 
 const changelog: Release[] = [
   {
+    version: '3.14',
+    date: 'November 2026',
+    highlights: [
+      'A dashboard on the Health Check front page — your library in numbers: how healthy your tags, photos and albums are, how many of each you have, who can see them, what is filled in, when you took photos (by year, decade, month, day and time of day), where (by country and US state), your most-used tags, your biggest albums and a few records. Every figure opens the photos behind it, with a way back, and Save as PDF keeps a copy of the whole page',
+      'Health Check says it plainly — no more "Fixed" or "Dealt with": a tag problem that is gone simply drops off your plan, and everything without a problem is "No problems". The rings are red, amber and grey (no green, so they work for red-green colour-blind viewers), every row shows tags and then photos, and small rows still show a bar',
+      'One top for every screen — the Timeline, On This Day, the Map and the Photostream share one layout: the title and count on the left, the main button and a More menu on the right, the filters below',
+      'On This Day card in the corner — the card now floats at the bottom right instead of sitting between the bars, and stays until you hide it for the day; "Across the years" shows your top 5 years with a button for the rest',
+      'Confirm download looks different — it says what will be saved in each file and what will not, with a Change link beside each, and only Cancel and Start download at the bottom',
+      'About — About FlickrFetch is now in your avatar menu as well as the Mac menu; the About box has a calmer background, "Photos by Wally", and the Flickr attribution unchanged; Discover > Explore has the same header as the other Discover tabs',
+      'One spacing, one heading size and one chip look everywhere — gaps follow a single scale, screen, dialog and card titles use three sizes, and the one-off italics are gone',
+      'Smaller things — a darker red for Issues; Cmd+F on the Map opens Filters and the album box; the notice about different photo counts has an alert icon and a dismiss button; wording tidied in Settings'
+    ]
+  },
+  {
     version: '3.13',
     date: 'November 2026',
     highlights: [
