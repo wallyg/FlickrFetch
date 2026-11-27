@@ -604,11 +604,11 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
                 </div>
               </div>
 
-              {/* Tidy the file name */}
+              {/* Clean-up */}
               <div style={{ ...s.section, borderTop: '1px solid var(--ff-border)' }}>
                 <div style={s.sectionRow}>
-                  <p style={s.sectionTitle}>Tidy the file name</p>
-                  <InfoTip text="Changes how the file name is written: lowercase or uppercase for the whole name, and replacing spaces and removing brackets in the title." />
+                  <p style={s.sectionTitle}>Clean-up</p>
+                  <InfoTip text="Changes how the file name is written." />
                 </div>
 
                 {/* Case */}
@@ -655,7 +655,7 @@ export default function SettingsModal({ onClose, updateVersion, initialTab }: { 
                 <div style={{ ...s.optRow, marginTop: '6px', flexDirection: 'column', alignItems: 'stretch', gap: '6px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                     <span style={s.optName}>Character substitutions</span>
-                    <InfoTip text="Parentheses ( ) and square brackets [ ] are kept in file names by default. Turn these on to remove them." />
+                    <InfoTip text="Special characters are kept in file names by default. Turn these on to remove them." />
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '5px' }}>
                     {([

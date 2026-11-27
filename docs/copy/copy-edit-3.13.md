@@ -125,6 +125,6 @@ Settings and hover texts that are already short, plain and accurate (most of the
 
 ## Applied on 26 Nov (evening): the owner's choices on C and H
 
-- **H:** H3 (Separator), H5 (Size code), H9 (Location (GPS)) changed. H4: the section is now "Tidy the file name" (it holds Case, Replace spaces and Character substitutions; the owner asked for a new name, this was the assistant's pick and can be changed). H6: heading kept as "Character substitutions"; its hover text now names both parentheses and square brackets. H14: done through C13 and C14. H1, H2, H7, H8, H10, H11, H12, H13, H15 left as they were.
+- **H:** H3 (Separator), H5 (Size code), H9 (Location (GPS)) changed. H4: the section is now "Clean-up", hover text "Changes how the file name is written." (owner's choice; it holds Case, Replace spaces and Character substitutions). H6: heading kept as "Character substitutions"; hover text now "Special characters are kept in file names by default. Turn these on to remove them.". H14: done through C13 and C14. H1, H2, H7, H8, H10, H11, H12, H13, H15 left as they were.
 - **C:** C1, C2, C3, C6, C8, C10 as proposed. C5 shortened by the owner. C9 uses "core". C11 describes all three things the section does. C12 without the last line. C13 without "Higher judges fewer albums" (label now "How tidy an album must be to be checked (%)"). C14 shortened (label "Out of place: how far from the rest"). C15 as proposed (also on the meters field). C4 and C7 left as they were.
 - Not in the installed 3.13.0 build: these edits are in the code after the build was made.
