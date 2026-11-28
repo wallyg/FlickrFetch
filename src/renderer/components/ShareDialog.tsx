@@ -28,9 +28,9 @@ const LAYOUTS: { key: Layout; label: string; tip: string }[] = [
   { key: 'ladder', label: 'By year', tip: 'Grouped under a heading for each year, newest first' }
 ]
 const FRAMES: { key: Frame; label: string; tip: string }[] = [
-  { key: 'polaroid', label: 'Polaroid', tip: 'White instant-photo cards, slightly tilted, with colours from your photos' },
-  { key: 'matched', label: 'Tinted', tip: 'The background and year tabs take their colour from your photos' },
-  { key: 'paper', label: 'Paper', tip: 'A warm cream page' }, { key: 'gallery', label: 'Gallery', tip: 'Dark, with thin outlines and gold' }, { key: 'film', label: 'Film', tip: 'Black, with film sprocket holes down the sides' }
+  { key: 'polaroid', label: 'Polaroid', tip: 'White instant-photo cards on a background tinted from your photos' },
+  { key: 'matched', label: 'Tinted', tip: 'Page and year tabs in a color made from your photos' },
+  { key: 'paper', label: 'Paper', tip: 'A warm cream page with brown accents' }, { key: 'gallery', label: 'Gallery', tip: 'Near-black with thin outlines and gold accents' }, { key: 'film', label: 'Film', tip: 'Black with film sprocket holes and orange text' }
 ]
 
 const W = 1080

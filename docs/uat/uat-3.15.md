@@ -12,9 +12,9 @@ How to run it: `npm run dev` from the project folder. Restart it once (stop it, 
 ## New arrangements (#144)
 
 - [ ] B1 **Mosaic.** Tiles of different sizes that fill the picture with no gaps, for 2 to 8 photos. The big tile moves around (it is not always on the left), so it no longer looks like Feature.
-- [ ] B2 **By year.** Photos grouped under a heading for each year, newest first, with no year tabs on the photos. With photos from one year only, the chip is greyed and says why.
+- [ ] B2 **By year.** Photos grouped under a heading for each year, newest first, with no year tabs on the photos. With photos from one year only, the chip is grayed and says why.
 - [ ] B3 **The list.** Grid, Mosaic, Feature, Banner, Row, Column, By year, in three rows, each chip with a small drawing of the arrangement for your photos and shape. (Filmstrip is gone.) Point at a chip for one line about it. With one photo the list is hidden.
-- [ ] B4 **Greyed chips.** Feature and Banner are greyed below 3 photos. In Square and Wide, Column (same as Row) and Banner (same as Feature) are greyed; in Story, Row (same as Column). Each says why, under the chips and on hover. In Auto, none of those are greyed.
+- [ ] B4 **Grayed chips.** Feature and Banner are grayed below 3 photos. In Square and Wide, Column (same as Row) and Banner (same as Feature) are grayed; in Story, Row (same as Column). Each says why, under the chips and on hover. In Auto, none of those are grayed.
 
 ## Swap, replace, crop (#143, #270)
 
@@ -27,12 +27,12 @@ How to run it: `npm run dev` from the project folder. Restart it once (stop it, 
 ## One year (#164)
 
 - [ ] D1 **Button.** Each year row on On This Day has "Collage from these N" (not shown for a year with fewer than two photos).
-- [ ] D2 **The window.** The title names the date and how long ago. Photos are from that year only; Shuffle picks a different few; Year ladder is greyed.
+- [ ] D2 **The window.** The title names the date and how long ago. Photos are from that year only; Shuffle picks a different few; Year ladder is grayed.
 - [ ] D3 **The picture.** The header says "N photos · X years ago".
 
 ## Share with links (#267)
 
-- [ ] E1 **The Share menu.** Share ▾ offers "Picture with links" and "Picture only". With a tag filter showing on On This Day, "Picture with links" is greyed, with a reason.
+- [ ] E1 **The Share menu.** Share ▾ offers "Picture with links" and "Picture only". With a tag filter showing on On This Day, "Picture with links" is grayed, with a reason.
 - [ ] E2 **Picture with links.** Share to Notes or Messages (to yourself): the picture and the text arrive together. The text has one line per year with its count and a link.
 - [ ] E3 **The links open.** Click the 2025 link: Flickr's search page shows your photos taken that day. Click a year with a single photo: it opens the photo itself. Open one in a private window (signed out): it shows only the public photos, and does not ask to sign in. (Flickr's own archive day pages need a sign-in, and send you to the Camera Roll, so the links use Flickr's search page instead. I checked it signed out against a public account, with a date range, and it filtered correctly. A photo is matched on the date written in its own taken time, so a photo from Japan taken at 2 am local is on the Japan date, the same as On This Day shows. I tested this on a real photo: it was found only in the window that matches its written time, not in windows shifted by any timezone.)
 - [ ] E4 **Copy ▾ Copy links.** The clipboard has the photo links, a blank line, then the year lines.

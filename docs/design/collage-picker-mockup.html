@@ -73,12 +73,12 @@ section.block { background: var(--surface); border: 1px solid var(--border); bor
     <div class="grp"><b>Photo set</b>
       <button class="btn on" data-set="warm">Thanksgiving</button><button class="btn" data-set="blue">Beach</button><button class="btn" data-set="green">Park</button>
     </div>
-    <span class="muted small">The photo set only changes the colours of the Tinted look and the previews.</span>
+    <span class="muted small">The photo set only changes the colors of the Tinted look and the previews.</span>
   </div>
 
   <section class="block">
     <h2>Arrangements</h2>
-    <p class="muted">Seven arrangements: Filmstrip is gone, Year ladder sits last under "By year", and Mosaic has new patterns so it stops looking like Feature. Feature and Banner are greyed below 3 photos.</p>
+    <p class="muted">Seven arrangements: Filmstrip is gone, Year ladder sits last under "By year", and Mosaic has new patterns so it stops looking like Feature. Feature and Banner are grayed below 3 photos.</p>
     <div class="opts">
       <div class="opt"><b>A. Today: words only</b><div class="panel"><div class="label">Arrangement</div><div class="chips" id="arrA"></div></div></div>
       <div class="opt"><b>B. A small drawing on each chip</b><div class="panel"><div class="label">Arrangement</div><div class="chips" id="arrB"></div><div class="muted small" id="arrBnote"></div></div></div>
@@ -91,10 +91,10 @@ section.block { background: var(--surface); border: 1px solid var(--border); bor
 
   <section class="block">
     <h2>Looks</h2>
-    <p class="muted">Matched is renamed Tinted: the background and the year tabs take their colour from your photos, so switch the photo set above to see them change. Paper, Gallery and Film are fixed colours.</p>
+    <p class="muted">Matched is renamed Tinted: the background and the year tabs take their color from your photos, so switch the photo set above to see them change. Paper, Gallery and Film are fixed colors.</p>
     <div class="opts">
       <div class="opt"><b>A. Today: words only</b><div class="panel"><div class="label">Look</div><div class="chips" id="lookA"></div></div></div>
-      <div class="opt"><b>B. A colour dot on each chip</b><div class="panel"><div class="label">Look</div><div class="chips" id="lookB"></div></div></div>
+      <div class="opt"><b>B. A color dot on each chip</b><div class="panel"><div class="label">Look</div><div class="chips" id="lookB"></div></div></div>
       <div class="opt"><b>C. Small previews of each look</b><div class="panel"><div class="label">Look</div><div class="looks" id="lookC"></div></div></div>
     </div>
   </section>
@@ -140,7 +140,7 @@ var ARR = [
 ];
 var LOOKS = [
   { key: 'polaroid', name: 'Polaroid', desc: 'Instant-photo cards' },
-  { key: 'tinted', name: 'Tinted', desc: 'Colours from your photos' },
+  { key: 'tinted', name: 'Tinted', desc: 'Colors from your photos' },
   { key: 'paper', name: 'Paper', desc: 'Warm cream page' },
   { key: 'gallery', name: 'Gallery', desc: 'Dark with gold' },
   { key: 'film', name: 'Film', desc: 'Black film strip' }
@@ -204,7 +204,7 @@ function draw(layout, n, w, h, mos) {
   return s + '</svg>';
 }
 
-// Look previews, drawn with plain boxes in the colours each look really uses
+// Look previews, drawn with plain boxes in the colors each look really uses
 function preview(look) {
   var S = SETS[st.set], p = S.photos, bg, tab = '', frame = '', body = '', i, size = 92;
   var pos = [[10, 14], [50, 14], [10, 52], [50, 52]];
@@ -222,7 +222,7 @@ function preview(look) {
   if (look === 'polaroid') body += '<div style="position:absolute;left:10px;top:5px;width:72px;height:2px;background:' + S.tab + '"></div>';
   return '<div style="position:relative;width:' + size + 'px;height:' + size + 'px;background:' + bg + ';border-radius:6px;overflow:hidden">' + body + '</div>';
 }
-function dotColour(look) {
+function dotColor(look) {
   var S = SETS[st.set];
   return { polaroid: S.tint, tinted: S.tab, paper: '#faf6ee', gallery: '#17181b', film: '#f2a65a' }[look];
 }
@@ -252,7 +252,7 @@ function render() {
   LOOKS.forEach(function (x) {
     var on = st.look === x.key ? ' on' : '';
     LA += '<button class="chip' + on + '" data-look="' + x.key + '">' + x.name + '</button>';
-    LB += '<button class="chip' + on + '" data-look="' + x.key + '"><span class="dot" style="background:' + dotColour(x.key) + '"></span>' + x.name + '</button>';
+    LB += '<button class="chip' + on + '" data-look="' + x.key + '"><span class="dot" style="background:' + dotColor(x.key) + '"></span>' + x.name + '</button>';
     LC += '<button class="look' + on + '" data-look="' + x.key + '">' + preview(x.key) + '<b>' + x.name + '</b><small>' + x.desc + '</small></button>';
   });
   document.getElementById('lookA').innerHTML = LA; document.getElementById('lookB').innerHTML = LB; document.getElementById('lookC').innerHTML = LC;
