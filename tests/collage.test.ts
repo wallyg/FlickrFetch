@@ -167,8 +167,9 @@ test('the day links for one year: a single line under a dated headline', () => {
 
 test('the collage window wires the new pieces in', () => {
   const code = readFileSync('src/renderer/components/ShareDialog.tsx', 'utf8')
-  assert.match(code, /Include \{onlyYear/)                         // the share-links tick
-  assert.match(code, /shareImage\(await dataUrl\(\), fileName\(\), box\.left, box\.bottom \+ 4, yearLinks\)/)   // the words travel with the picture
+  assert.match(code, /Picture with link to \$\{onlyYear\}/)        // the Share menu's links choice
+  assert.match(code, /box\.bottom \+ 4, withLinks \? yearLinks : ''\)/)   // the words travel with the picture only when chosen
+  assert.match(code, /Made with/); assert.ok(!/CREATED WITH/.test(code), 'the brand moved to the footer')
   assert.match(code, /draggable/); assert.match(code, /swapPlaces/); assert.match(code, /replaceWith/)   // swap and replace
   assert.match(code, /panCrop/); assert.match(code, /zoomCrop/)                                      // move and zoom
   assert.match(code, /maxPhotos\(picks\.length/)                                                      // the count rule

@@ -15,7 +15,8 @@ const changelog: Release[] = [
       'Swap and replace — click a photo in the strip to pick a different one from that day, or drag one onto another to swap places',
       'Move and zoom — click a photo in the picture, drag it to move it inside its slot, and zoom in; Reset puts it back',
       'A collage of one year — "Collage from these N" on each year of On This Day makes a collage from that year alone',
-      'Share with links — Share… sends the picture together with one line for each year of the day, each a link to that day on your Flickr page (a year with a single photo links to the photo itself); Copy links includes those lines too'
+      'Share with links — Share ▾ sends the picture with or without one line for each year of the day, each a link to that day on your Flickr page (a year with a single photo links to the photo itself); Copy ▾ has Copy image and Copy links, which includes those lines too',
+      'A tidier collage window — bigger photo thumbnails that enlarge when you point at them, Save, Copy and Share in one row, and a footer on the picture with your Flickr address and "Made with FlickrFetch" instead of printed links under each photo'
     ]
   },
   {

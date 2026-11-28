@@ -5,7 +5,7 @@
   "src/renderer/components/OnThisDayPanel.tsx": 4,
   "src/renderer/components/PhotoDetail.tsx": 6,
   "src/renderer/components/SettingsModal.tsx": 1,
-  "src/renderer/components/ShareDialog.tsx": 23,
+  "src/renderer/components/ShareDialog.tsx": 22,
   "src/renderer/components/TimelinePanel.tsx": 1,
   "src/renderer/components/WaveBand.tsx": 2
 }

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import CloseButton from '../ui/CloseButton'
 import { polaroidLayout, captionPlan, type TextKind } from '../ui/polaroid'
 import { canShuffle, shufflePicks, withExtras, SHUFFLE_MAX, type ShuffleMode } from '../ui/shuffle'
@@ -29,6 +30,7 @@ const FRAMES: { key: Frame; label: string }[] = [
 
 const W = 1080
 const PAD = 56, HEADER_H = 282, BOTTOM = 40   // the picture's top margin, the header's height and the bottom margin
+const FOOTER_H = 54                           // the footer line: your Flickr address, and "Made with FlickrFetch"
 
 // Saved shapes (at standard size). 'auto' keeps the collage's own height; the others give the photos exactly the room
 // between the header and the footer, and the layout adapts to it.
@@ -137,10 +139,12 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
   const [frame, setFrame] = useState<Frame>('polaroid')
   const [shape, setShape] = useState<Shape>('auto')
   const [resolution, setResolution] = useState<Resolution>('standard')
-  const [showLinks, setShowLinks] = useState(true)
   const [source, setSource] = useState<'ticked' | 'years'>('ticked')   // when photos were ticked: use those, or one from each year
-  const [includeYearLinks, setIncludeYearLinks] = useState(true)       // Share sends a link to each year's day on Flickr (#267)
   const [nsid, setNsid] = useState('')
+  const [profile, setProfile] = useState('')                            // the name in the picture's footer address (flickr.com/photos/<name>)
+  const [hover, setHover] = useState<{ p: DayPhoto; left: number; top: number } | null>(null)   // the enlarged photo shown while you point at a small one
+  const [moreBelow, setMoreBelow] = useState(false)                    // the left panel scrolls: show a fade at the bottom while there is more
+  const scrollRef = useRef<HTMLDivElement>(null)
   const [crops, setCrops] = useState<Record<string, Crop>>({})          // how you moved and zoomed each photo (#270), by photo id
   const [selId, setSelId] = useState<string | null>(null)               // the photo being moved and zoomed
   const [picker, setPicker] = useState<{ index: number; candidate: DayPhoto | null } | null>(null)   // the "replace this photo" box (#143)
@@ -184,8 +188,7 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
   // The room the photos have for n of them: the picture's width inside its margins and, in a fixed shape, the height between the header and the footer
   function boxFor(n: number): { padX: number; cw: number; ch?: number; footerH: number } {
     const padX = frame === 'film' ? 92 : 56
-    const linkLines = showLinks && frame !== 'polaroid' ? Math.ceil(n / 3) : 0
-    const footerH = linkLines > 0 ? 54 + (linkLines - 1) * 30 : 14
+    const footerH = FOOTER_H
     return { padX, cw: pictureW - 2 * padX, ch: fixedShape ? Math.max(120, shapeInfo.h - PAD - HEADER_H - footerH - BOTTOM) : undefined, footerH }
   }
   const yearsOf = (n: number): string[] => picks.slice(0, n).map(p => p.dateTaken.slice(0, 4))
@@ -214,7 +217,9 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
   }, [month, day, publicOnly, tag])
 
   // Whose Flickr pages the year links point to
-  useEffect(() => { void window.flickrAPI.getAuthState().then(a => setNsid(a.user?.nsid ?? '')).catch(() => setNsid('')) }, [])
+  useEffect(() => {
+    void window.flickrAPI.getAuthState().then(a => { setNsid(a.user?.nsid ?? ''); setProfile(a.user?.username || a.user?.nsid || '') }).catch(() => { setNsid(''); setProfile('') })
+  }, [])
 
   // Load the bigger pictures (each one once) and the logo. The effect follows the list of photo ids, not the array
   // itself, so a redraw of the page behind the dialog never restarts the downloads.
@@ -267,7 +272,7 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
     const sel = selId ? hitRef.current.find(h => h.id === selId) : undefined
     if (vctx && sel) { vctx.strokeStyle = mapColours().pink; vctx.lineWidth = 8; vctx.strokeRect(sel.x + 4, sel.y + 4, sel.w - 8, sel.h - 8) }   // shows which photo is being moved; never saved
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready.map(p => p.id).join(','), layout, frame, shape, showLinks, palette, loading, facts, crops, selId, onlyYear])
+  }, [ready.map(p => p.id).join(','), layout, frame, shape, profile, palette, loading, facts, crops, selId, onlyYear])
 
   const outW = (SHAPES.find(x => x.key === shape)?.w || W) * (resolution === 'large' ? 2 : 1)
   const outH = shape === 'auto' ? null : (SHAPES.find(x => x.key === shape)?.h ?? 0) * (resolution === 'large' ? 2 : 1)
@@ -292,8 +297,6 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
     const n = ready.length
     const { padX, cw, footerH } = boxFor(n)
     const pad = PAD, headerH = HEADER_H, bottom = BOTTOM
-    const links = ready.map(p => shortLink(p.id))
-    const linkLines = showLinks && frame !== 'polaroid' ? Math.ceil(links.length / 3) : 0
 
     // Work out the sizes: a fixed shape gives the photos exactly the room between the header and the footer
     const bodyAvail = fixed ? Math.max(120, sh.h - pad - headerH - footerH - bottom) : undefined
@@ -334,7 +337,7 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
     let l1Size = 31
     ctx.font = `700 ${l1Size}px ${SANS}`
     while (l1Size > 22 && ctx.measureText(line1).width > hMax) { l1Size -= 1; ctx.font = `700 ${l1Size}px ${SANS}` }
-    ctx.globalAlpha = 0.95; ctx.fillText(line1, hx, ty + 118)   // room under the "Created with FlickrFetch" block at the right
+    ctx.globalAlpha = 0.95; ctx.fillText(line1, hx, ty + 118)
     if (n > 1 && !onlyYear && facts && facts.tags.length > 0) {
       // One row: up to five ordinary-length tags, spaced out; fewer only if the row would run out of room
       const iconW = 36
@@ -369,16 +372,15 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
         ctx.shadowColor = 'transparent'
         drawCover(ctx, src.get(p.id) as HTMLImageElement, { x: pol.pad, y: pol.pad, w: pol.photoW, h: pol.photoH }, crops[p.id])
         hits.push({ id: p.id, x: x + pol.pad, y: y + pol.pad, w: pol.photoW, h: pol.photoH })   // (the slight tilt is ignored for clicks)
-        // Caption: the year in big handwriting, how long ago, and the short Flickr link. Sized and placed by captionPlan so no text touches another.
+        // Caption: the year in big handwriting and how long ago. Sized and placed by captionPlan so no text touches another.
         const yr = p.dateTaken.slice(0, 4), yrsAgo = nowYear - Number(yr)
         const agoText = yrsAgo <= 0 ? 'this year' : `${yrsAgo} year${yrsAgo === 1 ? '' : 's'} ago`
         const fontOf = (kind: TextKind, size: number): string => kind === 'hand' ? `${size}px "Bradley Hand", "Segoe Print", "Comic Sans MS", cursive` : `${kind === 'sansBold' ? 600 : 500} ${size}px ${SANS}`
-        const cap = captionPlan(pol, yr, agoText, showLinks ? links[i] : null, (t, size, kind) => { ctx.font = fontOf(kind, size); return ctx.measureText(t).width })
+        const cap = captionPlan(pol, yr, agoText, null, (t, size, kind) => { ctx.font = fontOf(kind, size); return ctx.measureText(t).width })
         ctx.fillStyle = '#3a3a3a'; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'
         ctx.font = fontOf('hand', cap.yearSize); ctx.fillText(yr, cap.yearX, cap.yearBase)
         ctx.textAlign = 'right'
         ctx.font = fontOf('sansBold', cap.agoSize); ctx.fillStyle = '#666666'; ctx.fillText(agoText, cap.rightX, cap.agoBase)
-        if (showLinks) { ctx.font = fontOf('sans', cap.linkSize); ctx.fillStyle = '#7a7a7a'; ctx.fillText(links[i], cap.rightX, cap.linkBase) }
         ctx.restore()
       })
     } else {
@@ -406,40 +408,34 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
     }
     hitRef.current = hits
 
-    // "Created with FlickrFetch", top right of the header (always there)
+    // Footer: your Flickr address on the left, a quiet "Made with FlickrFetch" (the blue and pink name) on the right
     {
-      const right = OW - padX
-      ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'right'
-      ctx.font = `700 16px ${SANS}`; setSpacing('3px'); ctx.fillStyle = theme.fg; ctx.globalAlpha = 0.65
-      ctx.fillText('CREATED WITH', right + 1.5, ty + 18); setSpacing('0px'); ctx.globalAlpha = 1
-      ctx.font = `700 44px Lato, ${SANS}`
-      const fetchW = ctx.measureText('Fetch').width, flickrW = ctx.measureText('Flickr').width
-      const nameY = ty + 68
-      ctx.textAlign = 'left'
-      ctx.fillStyle = theme.dark ? brand.white : brand.blue; ctx.fillText('Flickr', right - fetchW - flickrW, nameY)
-      ctx.fillStyle = brand.pink; ctx.fillText('Fetch', right - fetchW, nameY)
-      const logo = logoRef.current
-      if (logo) {
-        const sz = 62, lx = right - fetchW - flickrW - sz - 14
-        ctx.save(); ctx.beginPath(); ctx.roundRect(lx, nameY - 46, sz, sz, 14); ctx.clip(); ctx.drawImage(logo, lx, nameY - 46, sz, sz); ctx.restore()
+      const fy = top + contentH + 40, left = padX, right = OW - padX
+      ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left'
+      ctx.font = `400 20px Lato, ${SANS}`
+      const madeW = ctx.measureText('Made with ').width
+      ctx.font = `700 26px Lato, ${SANS}`
+      const flickrW = ctx.measureText('Flickr').width, fetchW = ctx.measureText('Fetch').width
+      const brandX = right - madeW - flickrW - fetchW
+      ctx.font = `400 20px Lato, ${SANS}`; ctx.fillStyle = theme.fg; ctx.globalAlpha = 0.7
+      ctx.fillText('Made with ', brandX, fy); ctx.globalAlpha = 1
+      ctx.font = `700 26px Lato, ${SANS}`
+      ctx.fillStyle = theme.dark ? brand.white : brand.blue; ctx.fillText('Flickr', brandX + madeW, fy)
+      ctx.fillStyle = brand.pink; ctx.fillText('Fetch', brandX + madeW + flickrW, fy)
+      if (profile) {   // a long name is shortened so it never runs into the brand
+        const full = `flickr.com/photos/${profile}`, room = brandX - left - 24
+        ctx.font = `400 20px Lato, ${SANS}`; ctx.fillStyle = theme.fg; ctx.globalAlpha = 0.75
+        let k = full.length
+        while (k > 16 && ctx.measureText(k < full.length ? full.slice(0, k) + '…' : full).width > room) k--
+        ctx.fillText(k < full.length ? full.slice(0, k) + '…' : full, left, fy); ctx.globalAlpha = 1
       }
-    }
-
-    // Footer: the short links (when ticked, for the frames that have no captions)
-    const y = top + contentH + 40
-    ctx.textAlign = 'left'
-    let yy = y
-    if (showLinks && frame !== 'polaroid') {
-      ctx.font = `21px ${SANS}`; ctx.fillStyle = theme.fg; ctx.globalAlpha = 0.8
-      for (let l = 0; l < linkLines; l++) { ctx.fillText(links.slice(l * 3, l * 3 + 3).join('   ·   '), padX, yy); if (l < linkLines - 1) yy += 30 }
-      ctx.globalAlpha = 1
     }
     return { H, bg: theme.bg }
   }
 
   // The words Share sends with the picture: a link for each year of the day (#267). Not while one tag is showing: Flickr's day pages cannot filter by tag.
   const yearLinksAvailable = !tag && !!nsid && !!facts && facts.yearList.length > 0
-  const yearLinks = includeYearLinks && yearLinksAvailable ? dayLinkText(nsid, facts?.yearList ?? [], month, day, { onlyYear, everyone: publicOnly }) : ''
+  const yearLinks = yearLinksAvailable ? dayLinkText(nsid, facts?.yearList ?? [], month, day, { onlyYear, everyone: publicOnly }) : ''
 
   // Replace one photo with another from the day, or swap two places (#143). A photo that moves keeps its crop; a replaced one is simply a different photo.
   const edit = (list: DayPhoto[]): void => setOverride({ key: baseKey, list })
@@ -549,10 +545,9 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
     setNote((await window.flickrAPI.copyShareImage(await dataUrl())) ? 'Image copied. Paste it into a message or post.' : 'Couldn\'t copy the image.')
   }
   // The Mac share sheet opens under the button. The privacy question comes first, as for Save and Copy.
-  const share = async (button: HTMLElement): Promise<void> => {
+  const share = async (box: DOMRect, withLinks: boolean): Promise<void> => {
     if (!(await confirmPrivacy())) return
-    const box = button.getBoundingClientRect()
-    const ok = await window.flickrAPI.shareImage(await dataUrl(), fileName(), box.left, box.bottom + 4, yearLinks)
+    const ok = await window.flickrAPI.shareImage(await dataUrl(), fileName(), box.left, box.bottom + 4, withLinks ? yearLinks : '')
     if (!ok) setNote('Couldn\'t open sharing.')
   }
   const copyLinks = async (): Promise<void> => {
@@ -560,6 +555,13 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
     const text = ready.map(p => `${p.dateTaken.slice(0, 4)}  ${p.title || 'untitled'}  https://${shortLink(p.id)}`).join('\n') + (yearLinks ? `\n\n${yearLinks}` : '')
     try { await navigator.clipboard.writeText(text); setNote('Links copied. Paste them next to the image.') } catch { setNote('Couldn\'t copy the links.') }
   }
+
+  // A soft fade at the bottom of the left panel while there is more to scroll to
+  const checkScroll = (): void => {
+    const el = scrollRef.current
+    if (el) setMoreBelow(el.scrollHeight - el.scrollTop - el.clientHeight > 4)
+  }
+  useEffect(checkScroll)
 
   return (
     <Dialog label="Collage or card" width="min(1100px, 94vw)" onClose={onClose} cardStyle={{ background: 'var(--ff-cream)', height: 'min(760px, 92vh)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -569,7 +571,7 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
         </div>
         <div style={styles.body}>
           <div style={styles.controls}>
-            <div style={styles.scroll}>
+            <div ref={scrollRef} style={styles.scroll} onScroll={checkScroll}>
               <Step n={1} label="Photos">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <button style={styles.step} disabled={shownCount <= 1} onClick={() => setCount(Math.max(1, shownCount - 1))}>−</button>
@@ -583,7 +585,9 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
                     <button key={p.id} draggable style={{ ...styles.thumb, backgroundImage: `url(${p.thumbUrl})`, ...(picker?.index === i || selId === p.id ? styles.thumbOn : {}) }}
                       title={`${p.dateTaken.slice(0, 4)}. Click to replace, drag onto another to swap places.`} aria-label={`Photo ${i + 1}, ${p.dateTaken.slice(0, 4)}. Replace`}
                       onClick={() => { setSelId(null); setPicker(picker?.index === i ? null : { index: i, candidate: null }) }}
-                      onDragStart={e => { e.dataTransfer.setData('text/plain', String(i)); e.dataTransfer.effectAllowed = 'move' }}
+                      onMouseEnter={e => { const r = e.currentTarget.getBoundingClientRect(); setHover({ p, left: r.right + 12, top: r.top }) }}
+                      onMouseLeave={() => setHover(null)}
+                      onDragStart={e => { setHover(null); e.dataTransfer.setData('text/plain', String(i)); e.dataTransfer.effectAllowed = 'move' }}
                       onDragOver={e => e.preventDefault()}
                       onDrop={e => { e.preventDefault(); const from = Number(e.dataTransfer.getData('text/plain')); if (Number.isInteger(from)) swapPlaces(from, i) }}>
                       <span style={styles.thumbYear}>{p.dateTaken.slice(0, 4)}</span>
@@ -602,7 +606,7 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
                     <label style={styles.check}><input type="radio" name="otd-source" checked={source === 'years'} onChange={() => setSource('years')} /> One photo from each year</label>
                   </div>
                 ) : (
-                  <div style={styles.muted}>One photo from each year. (Tick photos on the page first to choose your own.)</div>
+                  <div style={styles.muted}>Shuffle picks one photo from each year. To choose your own, tick photos on the page first.</div>
                 )}
                 <label style={{ ...styles.check, marginTop: 2 }} title="Leaves out any photo that is private, friends only or family only">
                   <input type="checkbox" checked={publicOnly} onChange={e => setPublicOnly(e.target.checked)} /> Public photos only
@@ -631,23 +635,22 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
                 </div>
                 <div style={styles.muted}>Saves {outW.toLocaleString()}{outH ? ` × ${outH.toLocaleString()}` : ' pixels wide'}. The preview is always standard size.{resolution === 'large' ? ' Large fetches the sharper 2048-pixel pictures when Flickr has them.' : ''}</div>
               </Step>
-              <Step n={4} label="Extras">
-                <label style={styles.check}><input type="checkbox" checked={showLinks} onChange={e => setShowLinks(e.target.checked)} /> Short Flickr link under each photo</label>
-                <div style={styles.muted}>A saved picture can't hold a clickable link, so it is printed. "Created with FlickrFetch" is always included.</div>
-                <label style={{ ...styles.check, marginTop: 4, ...(yearLinksAvailable ? {} : { opacity: 0.55 }) }}
-                  title={tag ? 'Flickr\'s day pages cannot show one tag, so this is off while a tag is showing' : !nsid ? 'Sign in to Flickr to include links' : undefined}>
-                  <input type="checkbox" checked={includeYearLinks && yearLinksAvailable} disabled={!yearLinksAvailable} onChange={e => setIncludeYearLinks(e.target.checked)} /> Include {onlyYear ? `a link to ${onlyYear}` : 'links to each year'} on Flickr when sharing
-                </label>
-                <div style={styles.muted}>Share… sends the picture with {onlyYear ? 'a line' : 'one line per year'}, {onlyYear ? 'a link to that day' : 'each a link to that day'} on your Flickr page. A year with one photo links to that photo. "Copy links" gives clickable links for the photos here{yearLinksAvailable ? ' and those lines' : ''}.</div>
-              </Step>
             </div>
+            {moreBelow && <div style={styles.fade} aria-hidden="true" />}
             <div style={styles.dock}>
               {nonPublic > 0 && <div style={styles.warn}>🔒 {nonPublic} of the {chosen.length} photos are not public. You will be asked before saving, copying or sharing.</div>}
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <button style={styles.primary} disabled={loading || ready.length === 0} onClick={() => void save()}>Save image…</button>
-                <button style={styles.btn} disabled={loading || ready.length === 0} onClick={() => void copy()}>Copy image</button>
-                <button style={styles.btn} disabled={loading || ready.length === 0} onClick={e => void share(e.currentTarget)}>Share…</button>
-                <button style={styles.btn} disabled={ready.length === 0} onClick={() => void copyLinks()}>Copy links</button>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'nowrap' }}>
+                <button style={{ ...styles.primary, ...styles.dockBtn }} disabled={loading || ready.length === 0} title="Save the picture as a file" onClick={() => void save()}><Icon name="download" /> Save</button>
+                <DockMenu label="Copy" icon="copy" disabled={ready.length === 0} items={[
+                  { key: 'image', label: 'Copy image', disabled: loading, onClick: () => void copy() },
+                  { key: 'links', label: 'Copy links', title: 'The photos\' Flickr links as text, to paste next to the picture', onClick: () => void copyLinks() }
+                ]} />
+                <DockMenu label="Share" icon="share" disabled={loading || ready.length === 0} items={[
+                  { key: 'with', label: onlyYear ? `Picture with link to ${onlyYear}` : 'Picture with links', disabled: !yearLinksAvailable,
+                    title: yearLinksAvailable ? (onlyYear ? 'Sends the picture and a link to that day on your Flickr page' : 'Sends the picture and one line per year, each a link to that day on your Flickr page') : tag ? 'Flickr\'s day pages cannot show one tag, so there are no links while a tag is showing' : 'Sign in to Flickr to include links',
+                    onClick: box => void share(box, true) },
+                  { key: 'only', label: 'Picture only', onClick: box => void share(box, false) }
+                ]} />
               </div>
               {note && <div style={styles.muted}>{note}</div>}
             </div>
@@ -689,7 +692,44 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
             )}
           </div>
         </div>
+        {hover && createPortal(
+          <div style={{ ...styles.zoomCard, left: hover.left, top: Math.max(8, Math.min(hover.top, window.innerHeight - 320)) }} aria-hidden="true">
+            <img src={cache.current.get(hover.p.id)?.src ?? hover.p.thumbUrl} alt="" style={styles.zoomImg} />
+            <div style={styles.muted}>{hover.p.dateTaken.slice(0, 4)}{hover.p.title ? ` · ${hover.p.title}` : ''}</div>
+          </div>,
+          document.body
+        )}
 </Dialog>
+  )
+}
+
+// A button in the dock that opens a short menu upward (Copy, Share). Items get the button's box, so the Mac share sheet can open under it.
+interface DockItem { key: string; label: string; onClick: (box: DOMRect) => void; disabled?: boolean; title?: string }
+function DockMenu({ label, icon, items, disabled }: { label: string; icon: string; items: DockItem[]; disabled?: boolean }): React.JSX.Element {
+  const [open, setOpen] = useState(false)
+  const wrap = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent): void => { if (e.key === 'Escape') { e.stopPropagation(); setOpen(false) } }
+    const onDown = (e: MouseEvent): void => { if (wrap.current && !wrap.current.contains(e.target as Node)) setOpen(false) }
+    document.addEventListener('keydown', onKey, true)
+    document.addEventListener('mousedown', onDown)
+    return () => { document.removeEventListener('keydown', onKey, true); document.removeEventListener('mousedown', onDown) }
+  }, [open])
+  return (
+    <div ref={wrap} style={{ position: 'relative', flex: 1, minWidth: 0, display: 'flex' }}>
+      <button style={{ ...styles.btn, ...styles.dockBtn }} disabled={disabled} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(o => !o)}>
+        <Icon name={icon} /> {label} <Icon name="chevronDown" />
+      </button>
+      {open && (
+        <div role="menu" style={styles.dockMenu}>
+          {items.map(it => (
+            <button key={it.key} role="menuitem" style={{ ...styles.dockItem, ...(it.disabled ? { opacity: 0.5, cursor: 'default' } : {}) }} disabled={it.disabled} title={it.title}
+              onClick={() => { const box = wrap.current?.getBoundingClientRect(); setOpen(false); if (box) it.onClick(box) }}>{it.label}</button>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -712,11 +752,17 @@ const styles: Record<string, React.CSSProperties> = {
   controls: { width: 316, flexShrink: 0, display: 'flex', flexDirection: 'column', minHeight: 0 },
   scroll: { flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16, paddingRight: 6, paddingBottom: 8 },
   dock: { flexShrink: 0, borderTop: '1px solid var(--ff-border)', paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 8 },
+  fade: { flexShrink: 0, height: 24, marginTop: -24, marginRight: 6, pointerEvents: 'none', background: 'linear-gradient(to bottom, transparent, var(--ff-cream))' },
+  dockBtn: { flex: 1, minWidth: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, whiteSpace: 'nowrap', padding: '6px 8px' },
+  dockMenu: { position: 'absolute', bottom: 'calc(100% + 4px)', left: 0, zIndex: 'var(--ff-z-menu)', minWidth: 200, background: 'var(--ff-surface)', border: '1px solid var(--ff-line-strong)', borderRadius: 8, boxShadow: '0 4px 16px var(--ff-shadow-soft)', padding: 4, display: 'flex', flexDirection: 'column', gap: 2 },
+  dockItem: { display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', borderRadius: 6, padding: '6px 8px', fontSize: 13, color: 'var(--ff-text)', cursor: 'pointer' },
   num: { flexShrink: 0, width: 20, height: 20, borderRadius: '50%', background: 'var(--ff-navy)', color: 'var(--ff-white)', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 0 },
   preview: { flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ece8e1', borderRadius: 8, padding: 12, overflow: 'hidden', position: 'relative' },
   strip: { display: 'flex', gap: 4, flexWrap: 'wrap' },
-  thumb: { position: 'relative', width: 38, height: 38, padding: 0, border: '2px solid transparent', borderRadius: 4, cursor: 'pointer', backgroundSize: 'cover', backgroundPosition: 'center', backgroundColor: 'var(--ff-warm)' },
+  thumb: { position: 'relative', width: 60, height: 60, padding: 0, border: '2px solid transparent', borderRadius: 4, cursor: 'pointer', backgroundSize: 'cover', backgroundPosition: 'center', backgroundColor: 'var(--ff-warm)' },
   thumbOn: { borderColor: 'var(--ff-pink)' },
+  zoomCard: { position: 'fixed', zIndex: 'var(--ff-z-hover)', width: 'max-content', maxWidth: 280, pointerEvents: 'none', background: 'var(--ff-white)', border: '1px solid var(--ff-border)', borderRadius: 8, boxShadow: '0 6px 20px var(--ff-shadow-mid)', padding: 6, display: 'flex', flexDirection: 'column', gap: 4 },
+  zoomImg: { display: 'block', maxWidth: 268, maxHeight: 268, objectFit: 'contain', borderRadius: 4 },
   thumbYear: { position: 'absolute', left: 2, bottom: 0, fontSize: 11, fontWeight: 700, color: 'var(--ff-white)', textShadow: '0 0 3px var(--ff-shadow-mid)' },
   pop: { position: 'absolute', left: 12, top: 12, zIndex: 'var(--ff-z-sticky)', width: 'min(340px, calc(100% - 24px))', maxHeight: 'calc(100% - 24px)', overflowY: 'auto', background: 'var(--ff-white)', border: '1px solid var(--ff-border)', borderRadius: 12, boxShadow: '0 6px 20px var(--ff-shadow-mid)', padding: 12, display: 'flex', flexDirection: 'column', gap: 8 },
   popGrid: { display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 4 },

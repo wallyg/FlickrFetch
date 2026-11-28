@@ -31,11 +31,20 @@ How to run it: `npm run dev` from the project folder. Restart it once (stop it, 
 
 ## Share with links (#267)
 
-- [ ] E1 **The tick.** Extras has "Include links to each year on Flickr when sharing", on by default. With a tag filter showing on On This Day it is off, with a reason.
-- [ ] E2 **Share….** Share to Notes or Messages (to yourself): the picture and the text arrive together. The text has one line per year with its count and a link.
+- [ ] E1 **The Share menu.** Share ▾ offers "Picture with links" and "Picture only". With a tag filter showing on On This Day, "Picture with links" is greyed, with a reason.
+- [ ] E2 **Picture with links.** Share to Notes or Messages (to yourself): the picture and the text arrive together. The text has one line per year with its count and a link.
 - [ ] E3 **The links open.** Click the 2025 link: Flickr's search page shows your photos taken that day. Click a year with a single photo: it opens the photo itself. Open one in a private window (signed out): it shows only the public photos, and does not ask to sign in. (Flickr's own archive day pages need a sign-in, and send you to the Camera Roll, so the links use Flickr's search page instead. I checked it signed out against a public account, with a date range, and it filtered correctly. A photo is matched on the date written in its own taken time, so a photo from Japan taken at 2 am local is on the Japan date, the same as On This Day shows. I tested this on a real photo: it was found only in the window that matches its written time, not in windows shifted by any timezone.)
-- [ ] E4 **Copy links.** The clipboard has the photo links, a blank line, then the year lines.
-- [ ] E5 **Off.** Untick it: Share… sends only the picture.
+- [ ] E4 **Copy ▾ Copy links.** The clipboard has the photo links, a blank line, then the year lines.
+- [ ] E5 **Picture only.** Share ▾ Picture only sends just the picture.
+
+## Changes after the first test (fix pass)
+
+- [ ] F1 **Bigger thumbnails.** The small photos under Photos are about 60 px. Point at one: a larger picture with its year appears beside it. Dragging one onto another still swaps them.
+- [ ] F2 **One row of buttons.** At the bottom of the left panel: Save, Copy ▾ and Share ▾ in one row, each with a small icon. Copy ▾ has Copy image and Copy links. Save, Copy image and Share all still work, and the privacy question still comes first when a photo is not public.
+- [ ] F3 **Hint.** Under Shuffle: "Shuffle picks one photo from each year. To choose your own, tick photos on the page first." (shown when you have not ticked photos).
+- [ ] F4 **No links on the picture.** No short Flickr links under the photos in any look (Polaroid, Matched, Paper, Gallery, Film), and no Extras section.
+- [ ] F5 **Footer.** The bottom of every picture reads "flickr.com/photos/<your name>" on the left and "Made with FlickrFetch" (Flickr in blue, Fetch in pink; Flickr is white on Gallery and Film) on the right. The old "Created with" block at the top right is gone. Check the address opens your Flickr page. Try a tall shape (Story 9:16) and Large (2×).
+- [ ] F6 **Scroll hint.** A soft fade shows at the bottom of the left panel while there is more to scroll to, and goes away at the bottom.
 
 ## Not in 3.15
 
