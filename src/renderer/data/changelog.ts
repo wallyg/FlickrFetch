@@ -10,13 +10,15 @@ const changelog: Release[] = [
     version: '3.15',
     date: 'November 2026',
     highlights: [
-      'More photos in a collage — up to 8 (6 for Polaroid), with the limit worked out from your look, arrangement and shape so no photo shrinks to a sliver; with more photos than years, the busiest years give a second',
-      'New arrangements — Mosaic (tiles of different sizes, with the big tile in different places) and By year (photos grouped under a heading for each year); each arrangement chip has a small drawing, and the ones that would look the same as another in your chosen shape are grayed out with the reason; Matched is now called Tinted',
-      'Swap and replace — click a photo in the strip to pick a different one from that day, or drag one onto another to swap places',
+      'One door into the collage maker — one "Make a collage" button, and the maker itself asks where the photos come from: one from each year, one year only, or the photos you ticked; ticking photos gives a bar with Collage, Download and Open',
+      'Any number of photos, spread across the years — pick how many (up to 8, 6 for Polaroid); with fewer photos than years they are spread evenly so the newest and oldest always show, and every collage goes oldest first with photos from the same year together',
+      'Three steps instead of one long panel — Style (look and shape, with previews made from your own photos), Layout (arrangement cards with drawings) and Photos (replace, swap, shuffle), with the source and count always visible at the top',
+      'New arrangements — Mosaic (tiles of different sizes, with the big tile in different places) and By year (photos grouped under a heading for each year); arrangements that would look the same as another in your chosen shape are grayed out with the reason; Matched is now called Tinted',
+      'Swap and replace — click a photo on the Photos step to pick a different one from that day, or drag one onto another to swap places; point at a small photo to see it larger',
       'Move and zoom — click a photo in the picture, drag it to move it inside its slot, and zoom in; Reset puts it back',
-      'A collage of one year — "Collage from these N" on each year of On This Day makes a collage from that year alone',
-      'Share with links — Share ▾ sends the picture with or without one line for each year of the day, each a link to that day on your Flickr page (a year with a single photo links to the photo itself); Copy ▾ has Copy image and Copy links, which includes those lines too',
-      'A tidier collage window — bigger photo thumbnails that enlarge when you point at them, Save, Copy and Share in one row, and a footer on the picture with your Flickr address and "Made with FlickrFetch" instead of printed links under each photo'
+      'Share with links — Share ▾ sends the picture with or without one line for each year of the day, each a link to that day on your Flickr page (a year with a single photo links to the photo itself); Copy ▾ has Copy image and Copy links',
+      'A footer on every picture — your Flickr address and "Made with FlickrFetch", instead of printed links under each photo',
+      'Collage, Download and Open on every level of On This Day — the day, each year and your ticked photos each get the same three buttons, and Open offers In FlickrFetch, On Flickr and In Flickr\'s organizer; the insights fold into one line you can open'
     ]
   },
   {

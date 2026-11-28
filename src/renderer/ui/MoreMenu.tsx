@@ -5,7 +5,7 @@ import { quietBtn } from './kit'
 // The "More" button at the end of a screen's action group (#257): the one main action stays out front, everything else is one click away here.
 // An item that is plain (label and click) closes the menu; anything else you put inside (an item that has its own note, such as "Open in Flickr's organizer")
 // stays as you give it, and the menu stays open while its note is showing, until you click elsewhere or press Esc.
-export interface MoreItem { key: string; label: string; onClick: () => void; disabled?: boolean; title?: string }
+export interface MoreItem { key: string; label: string; onClick: () => void; disabled?: boolean; title?: string; hint?: string }   // hint: a few words in grey after the label, mostly to say why an item is off
 
 export default function MoreMenu({ items = [], children, label = 'More' }: { items?: MoreItem[]; children?: React.ReactNode; label?: string }): React.JSX.Element {
   const [open, setOpen] = useState(false)
@@ -26,7 +26,7 @@ export default function MoreMenu({ items = [], children, label = 'More' }: { ite
       {open && (
         <div role="menu" style={styles.menu}>
           {items.map(it => (
-            <button key={it.key} role="menuitem" style={styles.item} disabled={it.disabled} title={it.title} onClick={() => { setOpen(false); it.onClick() }}>{it.label}</button>
+            <button key={it.key} role="menuitem" style={styles.item} disabled={it.disabled} title={it.title} onClick={() => { setOpen(false); it.onClick() }}>{it.label}{it.hint && <span style={styles.hint}>{it.hint}</span>}</button>
           ))}
           {children && <div style={styles.custom}>{children}</div>}
         </div>
@@ -41,6 +41,7 @@ const styles: Record<string, React.CSSProperties> = {
     background: 'var(--ff-surface)', border: '1px solid var(--ff-line-strong)', borderRadius: 8, boxShadow: '0 4px 16px var(--ff-shadow-soft)', padding: 4,
     display: 'flex', flexDirection: 'column', gap: 2
   },
+  hint: { marginLeft: 8, fontSize: 12, color: 'var(--ff-text-secondary)' },
   item: { display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', borderRadius: 6, padding: '6px 8px', fontSize: 13, color: 'var(--ff-text)', cursor: 'pointer' },
   custom: { padding: '2px 4px' }
 }

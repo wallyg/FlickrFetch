@@ -128,21 +128,22 @@ test('more photos than years: the busiest years give a second, after the one-per
   assert.deepEqual(withExtras(firsts, pool, 4).map(p => p.id), ['a1', 'b1', 'c1', 'a2'])
   assert.equal(new Set(list.map(p => p.id)).size, list.length)
   assert.deepEqual(withExtras(firsts, pool, 2).map(p => p.id), ['a1', 'b1'])
-  assert.deepEqual(shufflePicks('years', pool, [], firsts, 3, dice).slice(0, 3).map(p => p.dateTaken.slice(0, 4)), ['2025', '2023', '2021'])
+  assert.deepEqual(shufflePicks('years', pool, firsts, 3, dice).map(p => p.dateTaken.slice(0, 4)), ['2021', '2023', '2025'])   // one a year, oldest first
 })
 
 test('one year only: shuffle gives a different few of that year, each photo once', () => {
   const pool = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7'].map(id => photo(id, 2021))
   let current = pool.slice(0, 4)
   for (let i = 0; i < 100; i++) {
-    const next = shufflePicks('year', pool, [], current, 4)
-    assert.notEqual(next.slice(0, 4).map(p => p.id).join(), current.map(p => p.id).join())
+    const next = shufflePicks('year', pool, current, 4)
+    assert.equal(next.length, 4)
+    assert.notEqual(next.map(p => p.id).join(), current.map(p => p.id).join())
     assert.equal(new Set(next.map(p => p.id)).size, next.length)
     assert.ok(next.every(p => pool.some(q => q.id === p.id)))
     current = next
   }
-  assert.equal(canShuffle('year', pool, [], 4), true)
-  assert.equal(canShuffle('year', pool.slice(0, 4), [], 4), false)
+  assert.equal(canShuffle('year', pool, 4), true)
+  assert.equal(canShuffle('year', pool.slice(0, 4), 4), false)
 })
 
 test('the day links: one line per year with its count, each a link to that day on Flickr; a single photo links to the photo itself', () => {
@@ -172,10 +173,11 @@ test('the collage window wires the new pieces in', () => {
   assert.match(code, /Made with/); assert.ok(!/CREATED WITH/.test(code), 'the brand moved to the footer')
   assert.match(code, /draggable/); assert.match(code, /swapPlaces/); assert.match(code, /replaceWith/)   // swap and replace
   assert.match(code, /panCrop/); assert.match(code, /zoomCrop/)                                      // move and zoom
-  assert.match(code, /maxPhotos\(picks\.length/)                                                      // the count rule
+  assert.match(code, /maxPhotos\(poolPhotos\.length/)                                                  // the count rule
   assert.ok(!/slice\(0, 6\)/.test(code), 'no hard limit of six left')
   const panel = readFileSync('src/renderer/components/OnThisDayPanel.tsx', 'utf8')
-  assert.match(panel, /Collage from these/); assert.match(panel, /onlyYear=\{share\.year\}/)
+  assert.match(panel, /startShare\('years'\)/); assert.match(panel, /startShare\('year', g\.year\)/); assert.match(panel, /startShare\('ticked'\)/)   // one door, three sources
+  assert.match(panel, /initialSource=\{share\.source\}/); assert.ok(!/Collage from these|Collage from selected|Make a shareable collage/.test(panel), 'the old buttons are gone')
   const share = readFileSync('src/main/share.ts', 'utf8')
   assert.match(share, /texts: \[words\]/)
 })

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import CloseButton from '../ui/CloseButton'
 import { polaroidLayout, captionPlan, type TextKind } from '../ui/polaroid'
-import { canShuffle, shufflePicks, withExtras, SHUFFLE_MAX, type ShuffleMode } from '../ui/shuffle'
+import { canShuffle, defaultCount, planPicks, shufflePicks, SHUFFLE_MAX, type ShuffleMode } from '../ui/shuffle'
 import { arrangementOff, cellsFor, cellsFit, maxPhotos, cropSource, panCrop, zoomCrop, hitTest, MAX_ZOOM, MIN_SIDE, type Layout, type Rect, type Crop } from '../ui/collage'
 import { dayLinkText, type DayLinkYear } from '../../shared/dayLinks'
 import Icon from '../ui/Icon'
@@ -11,7 +11,7 @@ import type { DayPhoto } from '../../shared/types'
 import logoImg from '../assets/logo-tray.png'
 import { itemsLabel } from '../../shared/counts'
 import { MONTHS } from './DateViewParts'
-import { quietBtn, pillBtn, selectedOn, primaryBtn, chip as kitChip } from '../ui/kit'
+import { quietBtn, pillBtn, selectedOn, primaryBtn, selectCompact, chip as kitChip } from '../ui/kit'
 import { mapColours } from '../ui/mapColours'
 
 // Collage and card maker for On This Day: pick how many photos, a layout and a frame, then save or copy the
@@ -21,11 +21,11 @@ type Frame = 'polaroid' | 'matched' | 'paper' | 'gallery' | 'film'
 type RGB = [number, number, number]
 
 // In pairs that go together: Grid and Mosaic, Feature and Banner, Row and Column; the one built on the years last
-const LAYOUTS: { key: Layout; label: string; tip: string }[] = [
-  { key: 'grid', label: 'Grid', tip: 'Equal photos in neat rows' }, { key: 'mosaic', label: 'Mosaic', tip: 'Tiles of different sizes, no gaps' },
-  { key: 'feature', label: 'Feature', tip: 'One big photo, the rest smaller beside it' }, { key: 'banner', label: 'Banner', tip: 'One wide photo on top, the rest in a row below' },
-  { key: 'row', label: 'Row', tip: 'All the photos side by side' }, { key: 'column', label: 'Column', tip: 'All the photos stacked, one under the next' },
-  { key: 'ladder', label: 'By year', tip: 'Grouped under a heading for each year, newest first' }
+const LAYOUTS: { key: Layout; label: string; tip: string; short: string }[] = [
+  { key: 'grid', label: 'Grid', tip: 'Equal photos in neat rows', short: 'Equal, in rows' }, { key: 'mosaic', label: 'Mosaic', tip: 'Tiles of different sizes, no gaps', short: 'Mixed sizes' },
+  { key: 'feature', label: 'Feature', tip: 'One big photo, the rest smaller beside it', short: 'One big, rest beside' }, { key: 'banner', label: 'Banner', tip: 'One wide photo on top, the rest in a row below', short: 'One wide on top' },
+  { key: 'row', label: 'Row', tip: 'All the photos side by side', short: 'Side by side' }, { key: 'column', label: 'Column', tip: 'All the photos stacked, one under the next', short: 'Stacked' },
+  { key: 'ladder', label: 'By year', tip: 'Grouped under a heading for each year, newest first', short: 'A heading per year' }
 ]
 const FRAMES: { key: Frame; label: string; tip: string }[] = [
   { key: 'polaroid', label: 'Polaroid', tip: 'White instant-photo cards on a background tinted from your photos' },
@@ -47,6 +47,18 @@ const SHAPES: { key: Shape; label: string; tip: string; w: number; h: number }[]
 type Resolution = 'standard' | 'large'   // 1080 pixels wide, or twice that
 
 // ── small helpers ────────────────────────────────────────────────────────────
+
+type LookPalette = { mat: RGB; text: RGB; accent: RGB }
+// The colors of each look: Polaroid and Tinted take theirs from the photos, the others are fixed. Used to draw the picture and the small previews.
+function lookTheme(frame: Frame, palette: LookPalette, brand: ReturnType<typeof mapColours>): { bg: string; fg: string; rule: string; tab: string; tabText: string; dark: boolean } {
+  return {
+    polaroid: { bg: css(palette.mat), fg: css(palette.text), rule: css(palette.accent), tab: css(palette.accent), tabText: brand.white, dark: false },
+    matched: { bg: css(palette.mat), fg: css(palette.text), rule: css(palette.accent), tab: css(palette.accent), tabText: brand.white, dark: false },
+    paper: { bg: '#faf6ee', fg: '#3b3a36', rule: '#8a7a5c', tab: '#8a7a5c', tabText: brand.white, dark: false },
+    gallery: { bg: '#17181b', fg: '#e8e8ea', rule: '#e0b84a', tab: '#e0b84a', tabText: '#1a1a1a', dark: true },
+    film: { bg: '#111111', fg: '#f2a65a', rule: '#f2a65a', tab: '#f2a65a', tabText: '#111111', dark: true }
+  }[frame]
+}
 
 const B58 = '123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ'
 // Flickr's short address for a photo: flic.kr/p/ plus the photo id written in base 58
@@ -126,29 +138,35 @@ function drawTagIcon(ctx: CanvasRenderingContext2D, x: number, y: number, size: 
 
 // ── component ────────────────────────────────────────────────────────────────
 
+type Source = 'years' | 'year' | 'ticked'   // one photo from each year, one year only, or the photos you ticked on the page
 interface ShareProps {
-  photos: DayPhoto[]          // the photos to start with: the ones you ticked, or one from each year
-  candidates: DayPhoto[]      // every photo of the day that is loaded, for re-picking
-  userPicked: boolean         // true when `photos` is your own selection (kept as is, apart from the public-only choice)
+  years: { year: string; count: number }[]   // the day's years and how many photos (stills) each has, newest first
+  candidates: DayPhoto[]      // every photo of the day that is loaded, for choosing and re-picking
+  ticked: DayPhoto[]          // the photos you ticked on the page (stills)
+  initialSource: Source
+  initialYear?: string
+  loadYear: (year: string) => Promise<DayPhoto[]>   // every still of one year
   defaultPublicOnly: boolean
   tag?: string                // set when the page is showing only photos with one tag
-  onlyYear?: string           // set for a collage of one year's photos (#164)
   month: number
   day: number
   onClose: () => void
 }
 
-export default function ShareDialog({ photos, candidates, userPicked, defaultPublicOnly, tag, onlyYear, month, day, onClose }: ShareProps): React.JSX.Element {
+export default function ShareDialog({ years, candidates, ticked, initialSource, initialYear, loadYear, defaultPublicOnly, tag, month, day, onClose }: ShareProps): React.JSX.Element {
   const [publicOnly, setPublicOnly] = useState(defaultPublicOnly)
   const [layout, setLayout] = useState<Layout>('feature')
   const [frame, setFrame] = useState<Frame>('polaroid')
   const [shape, setShape] = useState<Shape>('auto')
   const [resolution, setResolution] = useState<Resolution>('standard')
-  const [source, setSource] = useState<'ticked' | 'years'>('ticked')   // when photos were ticked: use those, or one from each year
+  const [source, setSource] = useState<Source>(initialSource)
+  const [year, setYear] = useState(initialYear ?? years[0]?.year ?? '')
+  const [yearPool, setYearPool] = useState<Record<string, DayPhoto[]>>({})   // every still of a year, loaded when that year is chosen
+  const [step, setStep] = useState(1)                                      // 1 Style, 2 Layout, 3 Photos
   const [nsid, setNsid] = useState('')
   const [profile, setProfile] = useState('')                            // the name in the picture's footer address (flickr.com/photos/<name>)
   const [hover, setHover] = useState<{ p: DayPhoto; left: number; top: number } | null>(null)   // the enlarged photo shown while you point at a small one
-  const [moreBelow, setMoreBelow] = useState(false)                    // the left panel scrolls: show a fade at the bottom while there is more
+  const [moreBelow, setMoreBelow] = useState(false)                    // the step scrolls: show a fade at the bottom while there is more
   const scrollRef = useRef<HTMLDivElement>(null)
   const [crops, setCrops] = useState<Record<string, Crop>>({})          // how you moved and zoomed each photo (#270), by photo id
   const [selId, setSelId] = useState<string | null>(null)               // the photo being moved and zoomed
@@ -162,29 +180,31 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
   const logoRef = useRef<HTMLImageElement | null>(null)
   const cache = useRef<Map<string, HTMLImageElement>>(new Map())   // bigger pictures already fetched, by photo id
 
-  // The photos to choose from: your ticks as they are, or one per year (newest year first); public ones only when asked
-  const mode: ShuffleMode = onlyYear ? 'year' : userPicked && source === 'ticked' ? 'ticked' : 'years'
+  // One year only (#164): that year's photos, all of them, fetched when the year is chosen
+  const onlyYear = source === 'year' ? year : undefined
+  useEffect(() => {
+    if (source !== 'year' || !year || yearPool[year]) return
+    let cancelled = false
+    void loadYear(year).then(list => { if (!cancelled) setYearPool(p => ({ ...p, [year]: list.filter(x => x.media !== 'video') })) }).catch(() => undefined)
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [source, year])
+
+  // The photos to choose from; public ones only when asked. For each count, the photos it opens with (oldest first, spread evenly across the years).
+  const mode: ShuffleMode = source
   const poolPhotos = useMemo(() => {
-    const all = onlyYear ? candidates.filter(p => p.dateTaken.slice(0, 4) === onlyYear) : candidates
+    const all = source === 'year' ? (yearPool[year] ?? candidates.filter(p => p.dateTaken.slice(0, 4) === year)) : source === 'ticked' ? ticked : candidates
     return publicOnly ? all.filter(p => p.privacy === 0) : all
-  }, [candidates, publicOnly, onlyYear])
-  const tickedPhotos = useMemo(() => (publicOnly ? photos.filter(p => p.privacy === 0) : photos), [photos, publicOnly])
-  const autoPicks = useMemo(() => {
-    if (mode === 'ticked') return tickedPhotos.slice(0, SHUFFLE_MAX)
-    if (mode === 'year') return poolPhotos.slice(0, SHUFFLE_MAX)
-    const byYear = new Map<string, DayPhoto>()
-    for (const p of poolPhotos) { const y = p.dateTaken.slice(0, 4); if (!byYear.has(y)) byYear.set(y, p) }
-    const firsts = [...byYear.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1)).map(e => e[1]).slice(0, SHUFFLE_MAX)
-    return withExtras(firsts, poolPhotos, SHUFFLE_MAX)   // more photos than years: the busiest years give a second
-  }, [mode, poolPhotos, tickedPhotos])
-  // Shuffle: a fresh set for the same choices above. A change to those choices (source, public only) goes back to the first set.
-  const [shuffled, setShuffled] = useState<{ key: string; list: DayPhoto[] } | null>(null)
-  const pickMode = `${mode}|${publicOnly}`
-  const basePicks = shuffled && shuffled.key === pickMode ? shuffled.list : autoPicks
-  // Replace and swap (#143) edit the list; a Shuffle or a change of source starts a fresh list
-  const baseKey = basePicks.map(p => p.id).join(',')
-  const [override, setOverride] = useState<{ key: string; list: DayPhoto[] } | null>(null)
-  const picks = override && override.key === baseKey ? override.list : basePicks
+  }, [source, year, yearPool, candidates, ticked, publicOnly])
+  const plans = useMemo(() => Array.from({ length: SHUFFLE_MAX + 1 }, (_, n) => planPicks(mode, poolPhotos, n)), [mode, poolPhotos])
+  const startCount = (src: Source, yr: string): number => defaultCount(src, years.length, src === 'year' ? (years.find(y => y.year === yr)?.count ?? 1) : ticked.length)
+  const [count, setCount] = useState(() => startCount(initialSource, initialYear ?? years[0]?.year ?? ''))
+  // Changing where the photos come from starts again from a sensible count for it
+  const chooseSource = (value: string): void => {
+    const next: Source = value === 'years' ? 'years' : value === 'ticked' ? 'ticked' : 'year'
+    const nextYear = value.startsWith('y:') ? value.slice(2) : year
+    setSource(next); setYear(nextYear); setCount(startCount(next, nextYear)); setSelId(null); setPicker(null)
+  }
 
   // How many photos fit: no more than 8 (6 for Polaroid), and none smaller than MIN_SIDE of the picture's width, for this look, arrangement and shape
   const shapeInfo = SHAPES.find(x => x.key === shape) ?? SHAPES[0]
@@ -196,7 +216,7 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
     const footerH = FOOTER_H
     return { padX, cw: pictureW - 2 * padX, ch: fixedShape ? Math.max(120, shapeInfo.h - PAD - HEADER_H - footerH - BOTTOM) : undefined, footerH }
   }
-  const yearsOf = (n: number): string[] => picks.slice(0, n).map(p => p.dateTaken.slice(0, 4))
+  const yearsOf = (n: number): string[] => plans[Math.min(Math.max(n, 0), SHUFFLE_MAX)].map(p => p.dateTaken.slice(0, 4))
   const aspectFor = (n: number): number | undefined => { const b = boxFor(n); return b.ch ? b.cw / b.ch : undefined }
   const layoutFor = (l: Layout, n: number): Layout => (arrangementOff(l, n, aspectFor(n), yearsOf(n)) ? 'grid' : l)   // a greyed arrangement draws as Grid
   const fitsCount = (n: number): boolean => {
@@ -206,11 +226,17 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
     if (l === 'column' && !fixedShape && n > 6) return false   // a tall stack of eight is more than a picture
     return cellsFit(cellsFor(l, n, b.cw, b.ch, yearsOf(n)), b.cw)
   }
-  const maxCount = maxPhotos(picks.length, frame === 'polaroid', fitsCount)
-  const [count, setCount] = useState(4)
-  const shownCount = Math.min(Math.max(count, 1), Math.max(maxCount, 1))
+  const maxCount = maxPhotos(poolPhotos.length, frame === 'polaroid', fitsCount)
+  const shownCount = Math.min(Math.max(count, 1), Math.max(maxCount, 1), SHUFFLE_MAX)
+  // Shuffle: a fresh set for the same choices. A change to those choices (source, year, public only, count) goes back to the first set.
+  const [shuffled, setShuffled] = useState<{ key: string; list: DayPhoto[] } | null>(null)
+  const pickMode = `${source}|${year}|${publicOnly}|${shownCount}`
+  const basePicks = shuffled && shuffled.key === pickMode ? shuffled.list : plans[shownCount]
+  // Replace and swap (#143) edit the list; a Shuffle or a change of source starts a fresh list
+  const baseKey = basePicks.map(p => p.id).join(',')
+  const [override, setOverride] = useState<{ key: string; list: DayPhoto[] } | null>(null)
+  const picks = override && override.key === baseKey ? override.list : basePicks
   const chosen = useMemo(() => picks.slice(0, shownCount), [picks, shownCount])
-  const chosenYears = new Set(chosen.map(p => p.dateTaken.slice(0, 4)))
   const dateLabel = onlyYear ? `${MONTHS[month - 1]} ${day}, ${onlyYear}` : `${MONTHS[month - 1]} ${day}`
   const nonPublic = chosen.filter(p => p.privacy > 0).length
 
@@ -293,13 +319,7 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
     const brand = mapColours()   // the brand colours and shadow, read from the page's tokens
     const OW = fixed ? sh.w : W   // canvas width at standard size
     const hits: typeof hitRef.current = []
-    const theme = {
-      polaroid: { bg: css(palette.mat), fg: css(palette.text), rule: css(palette.accent), tab: css(palette.accent), tabText: brand.white, dark: false },
-      matched: { bg: css(palette.mat), fg: css(palette.text), rule: css(palette.accent), tab: css(palette.accent), tabText: brand.white, dark: false },
-      paper: { bg: '#faf6ee', fg: '#3b3a36', rule: '#8a7a5c', tab: '#8a7a5c', tabText: brand.white, dark: false },
-      gallery: { bg: '#17181b', fg: '#e8e8ea', rule: '#e0b84a', tab: '#e0b84a', tabText: '#1a1a1a', dark: true },
-      film: { bg: '#111111', fg: '#f2a65a', rule: '#f2a65a', tab: '#f2a65a', tabText: '#111111', dark: true }
-    }[frame]
+    const theme = lookTheme(frame, palette, brand)
     const SANS = '-apple-system, "SF Pro Display", Helvetica, Arial, sans-serif'
     const setSpacing = (v: string): void => { (ctx as unknown as { letterSpacing: string }).letterSpacing = v }
     const n = ready.length
@@ -467,7 +487,11 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
     edit(list)
     setPicker(null); setNote(''); setSelId(null)
   }
-  const others = useMemo(() => poolPhotos.filter(p => !chosen.some(c => c.id === p.id)), [poolPhotos, chosen])
+  const replacePool = useMemo(() => {   // to replace a photo, any photo of the day (or of the year, in a one-year collage)
+    const all = source === 'year' ? poolPhotos : candidates
+    return publicOnly ? all.filter(p => p.privacy === 0) : all
+  }, [source, poolPhotos, candidates, publicOnly])
+  const others = useMemo(() => replacePool.filter(p => !chosen.some(c => c.id === p.id)), [replacePool, chosen])
 
   // Click a photo in the picture to select it; drag the selected photo to move it inside its slot (#270)
   const toPicture = (e: React.PointerEvent<HTMLCanvasElement>): { x: number; y: number; k: number } => {
@@ -543,7 +567,7 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
     return compose(1)?.toDataURL('image/png') ?? ''
   }
   const fileName = (): string => `on-this-day-${MONTHS[month - 1].slice(0, 3)}-${day}${shape === 'auto' ? '' : '-' + shape}${resolution === 'large' ? '-large' : ''}.png`
-  const shuffleNow = (): void => setShuffled({ key: pickMode, list: shufflePicks(mode, poolPhotos, tickedPhotos, chosen, shownCount) })
+  const shuffleNow = (): void => setShuffled({ key: pickMode, list: shufflePicks(mode, poolPhotos, chosen, shownCount) })
   const save = async (): Promise<void> => {
     if (!(await confirmPrivacy())) return
     const path = await window.flickrAPI.saveShareImage(await dataUrl(), fileName())
@@ -573,87 +597,130 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
   useEffect(checkScroll)
 
   return (
-    <Dialog label="Collage or card" width="min(1100px, 94vw)" onClose={onClose} cardStyle={{ background: 'var(--ff-cream)', height: 'min(760px, 92vh)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <Dialog label="Collage or card" width="min(1100px, 94vw)" onClose={onClose} cardStyle={{ background: 'var(--ff-cream)', height: 'min(840px, 94vh)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div style={styles.head}>
           <b style={{ fontSize: 16, color: 'var(--ff-navy)' }}>Collage or card · {dateLabel}{onlyYear ? ` · ${yearAgo(onlyYear)}` : ''}</b>
           <CloseButton onClick={onClose} />
         </div>
         <div style={styles.body}>
           <div style={styles.controls}>
+            <div style={styles.pinned}>
+              <div style={styles.pinRow}>
+                <span style={styles.label}>Photos from</span>
+                <select style={{ ...selectCompact, flex: 1, minWidth: 0 }} aria-label="Photos from" value={source === 'year' ? `y:${year}` : source} onChange={e => chooseSource(e.target.value)}>
+                  <option value="years">One photo from each year</option>
+                  {years.map(y => <option key={y.year} value={`y:${y.year}`}>{y.year} only · {y.count.toLocaleString()} {y.count === 1 ? 'photo' : 'photos'}</option>)}
+                  {ticked.length >= 2 && <option value="ticked">My {ticked.length} ticked photos</option>}
+                </select>
+              </div>
+              <div style={styles.pinRow}>
+                <span style={styles.label}>How many</span>
+                <button style={styles.step} aria-label="Fewer photos" disabled={shownCount <= 1} onClick={() => setCount(Math.max(1, shownCount - 1))}>−</button>
+                <b style={{ fontSize: 18, minWidth: 18, textAlign: 'center' }}>{shownCount}</b>
+                <button style={styles.step} aria-label="More photos" disabled={shownCount >= maxCount} onClick={() => setCount(Math.min(maxCount, shownCount + 1))}>+</button>
+                <span style={styles.muted}>up to {maxCount}{maxCount < Math.min(poolPhotos.length, frame === 'polaroid' ? 6 : 8) ? ' for this look' : ''}</span>
+              </div>
+              {source === 'years' && shownCount > 1 && <div style={styles.muted} title="The years are spread evenly across your years, with the newest and the oldest always in">Years: {[...new Set(chosen.map(p => p.dateTaken.slice(0, 4)))].join(' · ')}</div>}
+              {count > shownCount && <div style={styles.muted}>{frame === 'polaroid' ? 'Polaroid holds 6' : 'This look and shape fit'} {maxCount}, so the picture shows {shownCount}. A different look or shape can bring {count} back.</div>}
+            </div>
+            <div style={styles.tabs} role="tablist">
+              {['Style', 'Layout', 'Photos'].map((name, i) => (
+                <button key={name} role="tab" aria-selected={step === i + 1} style={{ ...styles.tab, ...(step === i + 1 ? styles.tabOn : {}) }} onClick={() => setStep(i + 1)}>
+                  <span style={{ ...styles.tabNum, ...(step === i + 1 ? styles.tabNumOn : {}) }}>{i + 1}</span>{name}
+                </button>
+              ))}
+            </div>
+            <div style={styles.muted}><b style={{ color: 'var(--ff-text)' }}>{FRAMES.find(f => f.key === frame)?.label}</b>
+              {frame !== 'polaroid' && shownCount > 1 ? <> · <b style={{ color: 'var(--ff-text)' }}>{LAYOUTS.find(l => l.key === layoutFor(layout, shownCount))?.label}</b></> : null}
+              {' · '}<b style={{ color: 'var(--ff-text)' }}>{shapeInfo.label}</b>{resolution === 'large' ? <> · <b style={{ color: 'var(--ff-text)' }}>Large</b></> : null}</div>
             <div ref={scrollRef} style={styles.scroll} onScroll={checkScroll}>
-              <Step n={1} label="Photos">
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <button style={styles.step} disabled={shownCount <= 1} onClick={() => setCount(Math.max(1, shownCount - 1))}>−</button>
-                  <b style={{ fontSize: 18, minWidth: 18, textAlign: 'center' }}>{shownCount}</b>
-                  <button style={styles.step} disabled={shownCount >= maxCount} onClick={() => setCount(Math.min(maxCount, shownCount + 1))}>+</button>
-                  <span style={styles.muted}>up to {maxCount}{maxCount < Math.min(picks.length, frame === 'polaroid' ? 6 : 8) ? ' for this look' : ''}. One photo makes a single card.</span>
-                </div>
-                <div style={styles.muted}>Click a photo to replace it. Drag one onto another to swap places.</div>
-                <div style={styles.strip}>
-                  {chosen.map((p, i) => (
-                    <button key={p.id} draggable style={{ ...styles.thumb, backgroundImage: `url(${p.thumbUrl})`, ...(picker?.index === i || selId === p.id ? styles.thumbOn : {}) }}
-                      title={`${p.dateTaken.slice(0, 4)}. Click to replace, drag onto another to swap places.`} aria-label={`Photo ${i + 1}, ${p.dateTaken.slice(0, 4)}. Replace`}
-                      onClick={() => { setSelId(null); setPicker(picker?.index === i ? null : { index: i, candidate: null }) }}
-                      onMouseEnter={e => { const r = e.currentTarget.getBoundingClientRect(); setHover({ p, left: r.right + 12, top: r.top }) }}
-                      onMouseLeave={() => setHover(null)}
-                      onDragStart={e => { setHover(null); e.dataTransfer.setData('text/plain', String(i)); e.dataTransfer.effectAllowed = 'move' }}
-                      onDragOver={e => e.preventDefault()}
-                      onDrop={e => { e.preventDefault(); const from = Number(e.dataTransfer.getData('text/plain')); if (Number.isInteger(from)) swapPlaces(from, i) }}>
-                      <span style={styles.thumbYear}>{p.dateTaken.slice(0, 4)}</span>
-                    </button>
-                  ))}
-                </div>
-                <div>
-                  <button style={styles.btn} disabled={!canShuffle(mode, poolPhotos, tickedPhotos, shownCount)} onClick={shuffleNow}
-                    title={canShuffle(mode, poolPhotos, tickedPhotos, shownCount) ? 'Pick a different set of photos for this day' : 'There is nothing else to pick from'}><Icon name="shuffle" /> Shuffle</button>
-                </div>
-                {onlyYear ? (
-                  <div style={styles.muted}>Photos from {onlyYear} only. (One year at a time, so there is no "one from each year".)</div>
-                ) : userPicked ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 2 }}>
-                    <label style={styles.check}><input type="radio" name="otd-source" checked={source === 'ticked'} onChange={() => setSource('ticked')} /> The {photos.length} photo{photos.length === 1 ? '' : 's'} I ticked</label>
-                    <label style={styles.check}><input type="radio" name="otd-source" checked={source === 'years'} onChange={() => setSource('years')} /> One photo from each year</label>
+              {step === 1 && (
+                <>
+                  <div style={styles.label}>Look</div>
+                  <div style={styles.lookGrid}>
+                    {FRAMES.map(f => (
+                      <button key={f.key} style={{ ...styles.look, ...(frame === f.key ? styles.lookOn : {}) }} title={f.tip} aria-pressed={frame === f.key} onClick={() => setFrame(f.key)}>
+                        <LookPreview look={f.key} theme={lookTheme(f.key, palette, mapColours())} thumbs={chosen.map(p => p.thumbUrl)} />
+                        <b style={{ fontSize: 13 }}>{f.label}</b>
+                      </button>
+                    ))}
                   </div>
-                ) : (
-                  <div style={styles.muted}>Shuffle picks one photo from each year. To choose your own, tick photos on the page first.</div>
-                )}
-                <label style={{ ...styles.check, marginTop: 2 }} title="Leaves out any photo that is private, friends only or family only">
-                  <input type="checkbox" checked={publicOnly} onChange={e => setPublicOnly(e.target.checked)} /> Public photos only
-                </label>
-              </Step>
-              <Step n={2} label="Look">
-                <div style={styles.chips}>{FRAMES.map(f => <button key={f.key} title={f.tip} style={{ ...styles.chip, ...(frame === f.key ? styles.chipOn : {}) }} onClick={() => setFrame(f.key)}>{f.label}</button>)}</div>
-                {frame === 'polaroid' && <div style={styles.muted}>Polaroids arrange themselves.</div>}
-                {frame !== 'polaroid' && shownCount > 1 && (
-                  <>
-                    <div style={{ ...styles.label, marginTop: 4 }}>Arrangement</div>
-                    <div style={styles.chips}>{LAYOUTS.map(l => {
-                      const why = arrangementOff(l.key, shownCount, aspectFor(shownCount), yearsOf(shownCount))
-                      const bx = boxFor(shownCount)
-                      return <button key={l.key} style={{ ...styles.chip, ...styles.chipDraw, ...(layoutFor(layout, shownCount) === l.key ? styles.chipOn : {}), ...(why ? { opacity: 0.45, cursor: 'default' } : {}) }} disabled={!!why}
-                        title={why || l.tip} onClick={() => setLayout(l.key)}><ArrangeIcon layout={l.key} n={shownCount} cw={bx.cw} ch={bx.ch} years={yearsOf(shownCount)} />{l.label}</button>
-                    })}</div>
-                    {(() => {
-                      const offs = LAYOUTS.map(l => ({ l, why: arrangementOff(l.key, shownCount, aspectFor(shownCount), yearsOf(shownCount)) })).filter(x => x.why)
-                      return offs.length > 0 ? <div style={styles.muted}>{offs.map(x => `${x.l.label}: ${x.why.charAt(0).toLowerCase()}${x.why.slice(1)}`).join('. ')}.</div> : null
-                    })()}
-                  </>
-                )}
-              </Step>
-              <Step n={3} label="Shape and size">
-                <div style={styles.chips}>{SHAPES.map(sh => <button key={sh.key} style={{ ...styles.chip, ...(shape === sh.key ? styles.chipOn : {}) }} title={sh.tip} onClick={() => setShape(sh.key)}>{sh.label}</button>)}</div>
-                <div style={styles.chips}>
-                  <button style={{ ...styles.chip, ...(resolution === 'standard' ? styles.chipOn : {}) }} onClick={() => setResolution('standard')}>Standard</button>
-                  <button style={{ ...styles.chip, ...(resolution === 'large' ? styles.chipOn : {}) }} onClick={() => setResolution('large')}>Large (2×)</button>
-                </div>
-                <div style={styles.muted}>Saves {outW.toLocaleString()}{outH ? ` × ${outH.toLocaleString()}` : ' pixels wide'}.{resolution === 'large' ? ' The preview stays standard size; Large fetches the sharper 2048-pixel pictures when Flickr has them.' : ''}</div>
-              </Step>
+                  <div style={styles.label}>Shape</div>
+                  <div style={styles.shapeGrid}>
+                    {SHAPES.map(sh => (
+                      <button key={sh.key} style={{ ...styles.shapeBtn, ...(shape === sh.key ? styles.lookOn : {}) }} title={sh.tip} aria-pressed={shape === sh.key} onClick={() => setShape(sh.key)}>
+                        <ShapeIcon w={sh.w} h={sh.h} />{sh.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div style={styles.chips}>
+                    <button style={{ ...styles.chip, ...(resolution === 'standard' ? styles.chipOn : {}) }} onClick={() => setResolution('standard')}>Standard</button>
+                    <button style={{ ...styles.chip, ...(resolution === 'large' ? styles.chipOn : {}) }} onClick={() => setResolution('large')}>Large (2×)</button>
+                  </div>
+                  <div style={styles.muted}>Saves {outW.toLocaleString()}{outH ? ` × ${outH.toLocaleString()}` : ' pixels wide'}.{resolution === 'large' ? ' The preview stays standard size; Large fetches the sharper 2048-pixel pictures when Flickr has them.' : ''}</div>
+                </>
+              )}
+              {step === 2 && (
+                <>
+                  <div style={styles.label}>Arrangement</div>
+                  {frame === 'polaroid' ? <div style={styles.muted}>Polaroids arrange themselves. Pick another look in Style to choose an arrangement.</div>
+                    : shownCount < 2 ? <div style={styles.muted}>One photo makes a single card.</div>
+                    : (
+                      <div style={styles.cardGrid}>
+                        {LAYOUTS.map(l => {
+                          const why = arrangementOff(l.key, shownCount, aspectFor(shownCount), yearsOf(shownCount))
+                          const bx = boxFor(shownCount)
+                          const on = layoutFor(layout, shownCount) === l.key
+                          return (
+                            <button key={l.key} disabled={!!why} aria-pressed={on} title={why || l.tip} style={{ ...styles.arrCard, ...(on ? styles.lookOn : {}), ...(why ? { opacity: 0.45, cursor: 'default' } : {}) }} onClick={() => setLayout(l.key)}>
+                              <span style={styles.arrPic}><ArrangeIcon layout={l.key} n={shownCount} cw={bx.cw} ch={bx.ch} years={chosen.map(p => p.dateTaken.slice(0, 4))} width={90} height={40} /></span>
+                              <b style={{ fontSize: 13 }}>{l.label}</b>
+                              <span style={styles.muted}>{why || l.short}</span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
+                </>
+              )}
+              {step === 3 && (
+                <>
+                  <div style={styles.label}>Photos</div>
+                  <div style={styles.muted}>Click a photo in the picture to move and zoom it. Click one below to replace it. Drag one onto another to swap places.</div>
+                  <div style={styles.strip}>
+                    {chosen.map((p, i) => (
+                      <button key={p.id} draggable style={{ ...styles.thumb, backgroundImage: `url(${p.thumbUrl})`, ...(picker?.index === i || selId === p.id ? styles.thumbOn : {}) }}
+                        title={`${p.dateTaken.slice(0, 4)}. Click to replace, drag onto another to swap places.`} aria-label={`Photo ${i + 1}, ${p.dateTaken.slice(0, 4)}. Replace`}
+                        onClick={() => { setSelId(null); setPicker(picker?.index === i ? null : { index: i, candidate: null }) }}
+                        onMouseEnter={e => { const r = e.currentTarget.getBoundingClientRect(); setHover({ p, left: r.right + 12, top: r.top }) }}
+                        onMouseLeave={() => setHover(null)}
+                        onDragStart={e => { setHover(null); e.dataTransfer.setData('text/plain', String(i)); e.dataTransfer.effectAllowed = 'move' }}
+                        onDragOver={e => e.preventDefault()}
+                        onDrop={e => { e.preventDefault(); const from = Number(e.dataTransfer.getData('text/plain')); if (Number.isInteger(from)) swapPlaces(from, i) }}>
+                        <span style={styles.thumbYear}>{p.dateTaken.slice(0, 4)}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <div>
+                    <button style={styles.btn} disabled={!canShuffle(mode, poolPhotos, shownCount)} onClick={shuffleNow}
+                      title={canShuffle(mode, poolPhotos, shownCount) ? 'Pick a different set of photos' : 'There is nothing else to pick from'}><Icon name="shuffle" /> Shuffle</button>
+                  </div>
+                  <div style={styles.muted}>{source === 'years' ? 'Shuffle keeps the spread across the years and picks other photos.' : source === 'year' ? `Shuffle picks a different few of the photos from ${year}.` : 'Shuffle picks a different few of the photos you ticked.'}</div>
+                  <label style={styles.check} title="Leaves out any photo that is private, friends only or family only">
+                    <input type="checkbox" checked={publicOnly} onChange={e => setPublicOnly(e.target.checked)} /> Public photos only
+                  </label>
+                </>
+              )}
             </div>
             {moreBelow && (
               <div style={styles.fade}>
                 <button style={styles.more} onClick={() => scrollRef.current?.scrollBy({ top: 240, behavior: 'smooth' })}><Icon name="arrowDown" /> More below</button>
               </div>
             )}
+            <div style={styles.nav}>
+              <button style={styles.btn} disabled={step === 1} onClick={() => setStep(step - 1)}>Back</button>
+              <button style={styles.btn} disabled={step === 3} onClick={() => setStep(step + 1)}>Next</button>
+            </div>
             <div style={styles.dock}>
               {nonPublic > 0 && <div style={styles.warn} title="You will be asked before saving, copying or sharing"><Icon name="lock" /> {nonPublic} of {chosen.length} photos aren't public</div>}
               <div style={{ display: 'flex', gap: 8, flexWrap: 'nowrap' }}>
@@ -750,26 +817,52 @@ function DockMenu({ label, icon, items, disabled }: { label: string; icon: strin
   )
 }
 
-// A tiny drawing of an arrangement, made from the same layout code as the picture, for the photos and shape you have now
-function ArrangeIcon({ layout, n, cw, ch, years }: { layout: Layout; n: number; cw: number; ch?: number; years: string[] }): React.JSX.Element {
+// A drawing of an arrangement, made from the same layout code as the picture, for the photos and shape you have now
+function ArrangeIcon({ layout, n, cw, ch, years, width = 26, height = 18 }: { layout: Layout; n: number; cw: number; ch?: number; years: string[]; width?: number; height?: number }): React.JSX.Element {
   const cells = cellsFor(layout, n, cw, ch, years)
   return (
-    <svg width={26} height={18} viewBox={`0 0 ${cw} ${cells.h}`} preserveAspectRatio="xMidYMid meet" aria-hidden="true" style={{ flexShrink: 0 }}>
+    <svg width={width} height={height} viewBox={`0 0 ${cw} ${cells.h}`} preserveAspectRatio="xMidYMid meet" aria-hidden="true" style={{ flexShrink: 0 }}>
       {cells.rects.map((r, i) => <rect key={i} x={r.x} y={r.y} width={r.w} height={r.h} rx={cw * 0.015} fill="currentColor" fillOpacity={0.25} stroke="currentColor" strokeWidth={1} vectorEffect="non-scaling-stroke" />)}
       {cells.heads.map((h, i) => <rect key={`h${i}`} x={h.x} y={h.y + 6} width={cw * 0.3} height={cw * 0.04} fill="var(--ff-pink)" />)}
     </svg>
   )
 }
 
-function Step({ n, label, children }: { n: number; label: string; children: React.ReactNode }): React.JSX.Element {
+// A drawing of a shape: a box with that proportion (a dashed one for Auto)
+function ShapeIcon({ w, h }: { w: number; h: number }): React.JSX.Element {
+  const a = w === 0 ? 0.8 : w / h
+  const bw = a >= 1 ? 22 : 22 * a, bh = a >= 1 ? 22 / a : 22
   return (
-    <div style={{ display: 'flex', gap: 8 }}>
-      <div style={styles.num}>{n}</div>
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <div style={styles.label}>{label}</div>
-        {children}
-      </div>
-    </div>
+    <svg width={26} height={26} viewBox="0 0 26 26" aria-hidden="true">
+      <rect x={13 - bw / 2} y={13 - bh / 2} width={bw} height={bh} rx={2} fill="currentColor" fillOpacity={0.25} stroke="currentColor" strokeDasharray={w === 0 ? '3 2' : undefined} />
+    </svg>
+  )
+}
+
+// A small preview of a look, made from the chosen photos and the look's own colors
+function LookPreview({ look, theme, thumbs }: { look: Frame; theme: ReturnType<typeof lookTheme>; thumbs: string[] }): React.JSX.Element {
+  const photo = (i: number): React.CSSProperties => ({ backgroundImage: thumbs.length ? `url(${thumbs[i % thumbs.length]})` : undefined, backgroundColor: 'var(--ff-warm)', backgroundSize: 'cover', backgroundPosition: 'center' })
+  const slots = [[10, 18], [52, 18], [10, 56], [52, 56]]
+  const tilt = [-3, 2.5, 2, -2.5]
+  return (
+    <span style={{ position: 'relative', display: 'block', width: '100%', aspectRatio: '3 / 2', background: theme.bg, borderRadius: 6, overflow: 'hidden' }} aria-hidden="true">
+      <i style={{ position: 'absolute', left: '10%', right: '10%', top: '8%', height: 2, background: theme.rule }} />
+      {slots.map(([x, y], i) => look === 'polaroid' ? (
+        <i key={i} style={{ position: 'absolute', left: `${x}%`, top: `${y - 6}%`, width: '38%', height: '46%', background: 'var(--ff-white)', boxShadow: '0 1px 3px var(--ff-shadow-mid)', transform: `rotate(${tilt[i]}deg)` }}>
+          <b style={{ position: 'absolute', left: '8%', right: '8%', top: '8%', bottom: '24%', ...photo(i) }} />
+        </i>
+      ) : (
+        <i key={i} style={{ position: 'absolute', left: `${x + (look === 'film' ? 4 : 0)}%`, top: `${y}%`, width: '36%', height: '30%', border: look === 'gallery' ? '1px solid color-mix(in srgb, var(--ff-white) 35%, transparent)' : undefined, ...photo(i) }}>
+          <b style={{ position: 'absolute', left: 0, bottom: '10%', width: '40%', height: '20%', background: theme.tab }} />
+        </i>
+      ))}
+      {look === 'film' && [0, 1, 2, 3, 4, 5, 6].map(n => (
+        <React.Fragment key={n}>
+          <i style={{ position: 'absolute', left: '3%', top: `${6 + n * 13}%`, width: '4%', height: '6%', background: theme.fg, opacity: 0.3 }} />
+          <i style={{ position: 'absolute', right: '3%', top: `${6 + n * 13}%`, width: '4%', height: '6%', background: theme.fg, opacity: 0.3 }} />
+        </React.Fragment>
+      ))}
+    </span>
   )
 }
 
@@ -777,7 +870,23 @@ const styles: Record<string, React.CSSProperties> = {
   head: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: '1px solid var(--ff-border)' },
   x: { background: 'none', border: 'none', fontSize: 16, cursor: 'pointer', color: 'var(--ff-text-secondary)' },
   body: { flex: 1, minHeight: 0, display: 'flex', gap: 16, padding: 16 },
-  controls: { width: 316, flexShrink: 0, display: 'flex', flexDirection: 'column', minHeight: 0 },
+  controls: { width: 316, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 8, minHeight: 0 },
+  pinned: { display: 'flex', flexDirection: 'column', gap: 6, background: 'var(--ff-white)', border: '1px solid var(--ff-border)', borderRadius: 8, padding: 8 },
+  pinRow: { display: 'flex', alignItems: 'center', gap: 8 },
+  tabs: { display: 'flex', gap: 4 },
+  tab: { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, border: 'none', background: 'none', color: 'var(--ff-text-secondary)', cursor: 'pointer', padding: '4px 0', borderBottom: '2px solid var(--ff-border)', fontSize: 12 },
+  tabOn: { color: 'var(--ff-navy)', fontWeight: 700, borderBottomColor: 'var(--ff-pink)' },
+  tabNum: { width: 20, height: 20, borderRadius: 50, background: 'var(--ff-border)', color: 'var(--ff-text)', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  tabNumOn: { background: 'var(--ff-navy)', color: 'var(--ff-white)' },
+  lookGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 },
+  look: { ...quietBtn, border: '1px solid var(--ff-line-strong)', background: 'var(--ff-white)', borderRadius: 8, padding: 6, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, color: 'var(--ff-text)' },
+  lookOn: { borderColor: 'var(--ff-pink)', boxShadow: 'inset 0 0 0 1px var(--ff-pink)', color: 'var(--ff-pink-action)' },
+  shapeGrid: { display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6 },
+  shapeBtn: { ...quietBtn, border: '1px solid var(--ff-line-strong)', background: 'var(--ff-white)', borderRadius: 8, padding: '6px 2px', fontSize: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer', color: 'var(--ff-text)' },
+  cardGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 },
+  arrCard: { ...quietBtn, border: '1px solid var(--ff-line-strong)', background: 'var(--ff-white)', borderRadius: 8, padding: '6px 8px 8px', display: 'flex', flexDirection: 'column', gap: 2, textAlign: 'left', cursor: 'pointer', color: 'var(--ff-text)', minWidth: 0 },
+  arrPic: { background: 'var(--ff-warm)', borderRadius: 6, height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 2 },
+  nav: { display: 'flex', justifyContent: 'space-between', gap: 8 },
   scroll: { flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16, paddingRight: 6, paddingBottom: 8 },
   dock: { flexShrink: 0, borderTop: '1px solid var(--ff-border)', paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 8 },
   fade: { flexShrink: 0, height: 36, marginTop: -36, marginRight: 6, pointerEvents: 'none', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: 2, background: 'linear-gradient(to bottom, transparent, var(--ff-cream))' },

@@ -73,6 +73,8 @@ p { margin: 0; }
 .acts .btn { flex: 1; padding: 6px 8px; }
 .stage { flex: 1; min-width: 300px; background: var(--stage); border-radius: 8px; padding: 16px; display: flex; align-items: center; justify-content: center; min-height: 640px; }
 .stage svg { max-width: 100%; max-height: 608px; width: auto; height: auto; box-shadow: 0 2px 12px rgba(0,0,0,.25); }
+.src { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+.src select { font: inherit; font-size: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 6px; padding: 2px 4px; }
 .note { background: var(--info-bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 13px; }
 </style>
 
@@ -86,8 +88,11 @@ p { margin: 0; }
     <b style="margin-left:8px">Photo set</b>
     <button class="btn on" data-set="warm">Thanksgiving</button><button class="btn" data-set="blue">Beach</button><button class="btn" data-set="green">Park</button>
     <span class="muted small">Changes the Tinted colors.</span>
-    <b style="margin-left:8px">Order</b>
-    <button class="btn on" data-order="a">Look, Photos, Arrangement, Shape</button><button class="btn" data-order="c">Look, Arrangement, Photos, Shape</button><button class="btn" data-order="b">Look, Shape, Arrangement, Photos</button>
+    <b style="margin-left:8px">On the page</b>
+    <button class="btn on" data-ticked="0">Nothing ticked</button><button class="btn" data-ticked="6">6 photos ticked</button>
+    <span class="muted small">The page's one button:</span> <span class="btn main" id="pagebtn">Make a collage</span>
+    <b style="margin-left:8px">Steps</b>
+    <button class="btn on" data-order="d">3 steps: Style, Layout, Photos</button><button class="btn" data-order="a">4: Look, Photos, Arrangement, Shape</button><button class="btn" data-order="c">4: Look, Arrangement, Photos, Shape</button><button class="btn" data-order="b">4: Look, Shape, Arrangement, Photos</button>
   </div>
 
   <div class="win">
@@ -107,7 +112,7 @@ p { margin: 0; }
     </div>
   </div>
 
-  <div class="note">Things to try: change just the Look and Save, without touching the other steps. Choose Polaroid and see Arrangement skipped. Choose a square or wide shape in step 4 and go back to step 3: some arrangements gray out. Tell me what feels like too many clicks or too few.</div>
+  <div class="note">Things to try: in step 1 change the Look and the shape together, then go to step 2 and set the count and arrangement, then step 3 to fine-tune photos. Does step 1 fit without scrolling? Choose Polaroid and see Arrangement skipped. Choose a square or wide shape in step 4 and go back to step 3: some arrangements gray out. Tell me what feels like too many clicks or too few.</div>
 </div>
 
 <script>
@@ -145,17 +150,24 @@ var SHAPES = [
   { key: 'story', name: '9:16', w: 1080, h: 1920 }, { key: 'wide', name: '16:9', w: 1920, h: 1080 }
 ];
 var ASPECT = { square: 1.55, portrait: 1.08, story: 0.66, wide: 2.89 };
-var ORDERS = { a: ['look', 'photos', 'arr', 'shape'], b: ['look', 'shape', 'arr', 'photos'], c: ['look', 'arr', 'photos', 'shape'] };
-var NAMES = { look: 'Look', photos: 'Photos', arr: 'Arrangement', shape: 'Shape' };
+var ORDERS = { d: ['style', 'arr', 'photos'], a: ['look', 'photos', 'arr', 'shape'], b: ['look', 'shape', 'arr', 'photos'], c: ['look', 'arr', 'photos', 'shape'] };
+var NAMES = { style: 'Style', look: 'Look', photos: 'Photos', arr: 'Layout', shape: 'Shape' };
 function stepKey() { return ORDERS[st.order][st.step - 1]; }
-var st = { order: 'a', step: 1, n: 4, set: 'warm', look: 'polaroid', arr: 'grid', shape: 'auto', size: 'standard', pub: false };
+var YEAR_COUNTS = { '2025': 7, '2023': 3, '2021': 6, '2018': 2, '2015': 5, '2014': 2, '2013': 1 };
+var TICKED_YEARS = ['2025', '2025', '2023', '2021', '2018', '2015'];
+var st = { source: 'years', year: '2025', ticked: 0, order: 'd', step: 1, n: 4, set: 'warm', look: 'polaroid', arr: 'grid', shape: 'auto', size: 'standard', pub: false };
+function curYears() { return st.source === 'year' ? Array(8).fill(st.year) : st.source === 'ticked' ? TICKED_YEARS : YEARS; }
+function setSource(src) {   // the count follows the source: the ticked number, the year's photos, or four
+  st.source = src;
+  st.n = src === 'ticked' ? Math.min(st.ticked, cap()) : src === 'year' ? Math.min(YEAR_COUNTS[st.year], cap()) : 4;
+}
 function cap() { return st.look === 'polaroid' ? 6 : 8; }
 function shown() { return st.look === 'polaroid' ? Math.min(st.n, 6) : st.n; }   // what fits; st.n is what you asked for
 
 function off(key) {
   var n = shown(), a = st.shape === 'auto' ? undefined : ASPECT[st.shape];
   if ((key === 'feature' || key === 'banner') && n < 3) return 'Needs 3 or more photos';
-  if (key === 'ladder' && Object.keys(YEARS.slice(0, n).reduce(function (o, y) { o[y] = 1; return o; }, {})).length < 2) return 'Needs more than one year';
+  if (key === 'ladder' && Object.keys(curYears().slice(0, n).reduce(function (o, y) { o[y] = 1; return o; }, {})).length < 2) return 'Needs more than one year';
   if (a !== undefined) {
     if (key === 'column' && a >= 1.5) return 'Same as Row here';
     if (key === 'row' && a < 0.85) return 'Same as Column here';
@@ -169,7 +181,7 @@ function skipArr() { return st.look === 'polaroid' || shown() < 2; }
 function geom(layout, n) {
   var g = 3, r = [], heads = [], i;
   if (layout === 'ladder') {
-    var yrs = YEARS.slice(0, n), order = Object.keys(yrs.reduce(function (o, y) { o[y] = 1; return o; }, {})).sort().reverse(), y0 = 0, w = (100 - 3 * g) / 4, h = w * 0.75, pos = {};
+    var yrs = curYears().slice(0, n), order = Object.keys(yrs.reduce(function (o, y) { o[y] = 1; return o; }, {})).sort().reverse(), y0 = 0, w = (100 - 3 * g) / 4, h = w * 0.75, pos = {};
     order.forEach(function (yr) { heads.push([0, y0, 30]); y0 += 7; var idx = yrs.map(function (v, k) { return v === yr ? k : -1; }).filter(function (k) { return k >= 0; });
       idx.forEach(function (k, j) { pos[k] = [(j % 4) * (w + g), y0 + Math.floor(j / 4) * (h + g), w, h]; }); y0 += Math.ceil(idx.length / 4) * h + (Math.ceil(idx.length / 4) - 1) * g + 6; });
     for (i = 0; i < n; i++) r.push(pos[i]);
@@ -210,6 +222,7 @@ function shapeIcon(sh) {
 }
 
 // The picture on the right: a rough drawing with the chosen look, arrangement and shape
+function subtitle() { return st.source === 'year' ? YEAR_COUNTS[st.year] + ' photos · ' + (2026 - Number(st.year)) + ' years ago' : st.source === 'ticked' ? st.ticked + ' selected photos' : '26 photos from 7 years'; }
 function picture() {
   var S = SETS[st.set], n = shown(), sh = SHAPES.filter(function (x) { return x.key === st.shape; })[0], L = st.look;
   var W = sh.key === 'auto' ? 1080 : sh.w, padX = L === 'film' ? 92 : 56, cw = W - 2 * padX, top = 56 + 282, FOOT = 76, BOT = 40;
@@ -224,7 +237,7 @@ function picture() {
     for (i = 0; i < n; i++) {
       var c = i % cols, r = Math.floor(i / cols), inRow = r === rows - 1 ? n - cols * (rows - 1) : cols, rowW = inRow * pw + (inRow - 1) * 30;
       var x = padX + (cw - rowW * k) / 2 + (c * (pw + 30)) * k, y = top + 20 + r * (ph + 30) * k;
-      body += '<g transform="translate(' + x + ' ' + y + ') rotate(' + rot[i % 6] + ' ' + (pw * k / 2) + ' ' + (ph * k / 2) + ')"><rect width="' + pw * k + '" height="' + ph * k + '" fill="#fff" style="filter:drop-shadow(0 4px 8px rgba(0,0,0,.3))"/><rect x="' + pw * k * 0.045 + '" y="' + pw * k * 0.045 + '" width="' + pw * k * 0.91 + '" height="' + pw * k * 0.91 + '" fill="' + S.photos[i] + '"/><text x="' + pw * k * 0.06 + '" y="' + (ph * k - ph * k * 0.07) + '" font-size="' + pw * k * 0.13 + '" fill="#3a3a3a" font-family="cursive">' + YEARS[i] + '</text></g>';
+      body += '<g transform="translate(' + x + ' ' + y + ') rotate(' + rot[i % 6] + ' ' + (pw * k / 2) + ' ' + (ph * k / 2) + ')"><rect width="' + pw * k + '" height="' + ph * k + '" fill="#fff" style="filter:drop-shadow(0 4px 8px rgba(0,0,0,.3))"/><rect x="' + pw * k * 0.045 + '" y="' + pw * k * 0.045 + '" width="' + pw * k * 0.91 + '" height="' + pw * k * 0.91 + '" fill="' + S.photos[i] + '"/><text x="' + pw * k * 0.06 + '" y="' + (ph * k - ph * k * 0.07) + '" font-size="' + pw * k * 0.13 + '" fill="#3a3a3a" font-family="cursive">' + curYears()[i] + '</text></g>';
     }
     H = avail ? sh.h : top + boxH + FOOT + BOT;
   } else {
@@ -235,14 +248,14 @@ function picture() {
     G.r.forEach(function (q, j) {
       var x = ox + q[0] * k2, y = top + q[1] * k2 + (avail ? (avail - gh) / 2 : 0), w = q[2] * k2, h = q[3] * k2;
       body += '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="' + S.photos[j] + '"' + (L === 'gallery' ? ' stroke="rgba(255,255,255,.3)" stroke-width="2"' : '') + '/>';
-      if (!G.heads.length) body += '<rect x="' + x + '" y="' + (y + h - 64) + '" width="86" height="46" rx="0" fill="' + ac + '"/><text x="' + (x + 14) + '" y="' + (y + h - 32) + '" font-size="30" font-weight="800" fill="' + (L === 'gallery' || L === 'film' ? '#111' : '#fff') + '" font-family="Lato,sans-serif">' + YEARS[j] + '</text>';
+      if (!G.heads.length) body += '<rect x="' + x + '" y="' + (y + h - 64) + '" width="86" height="46" rx="0" fill="' + ac + '"/><text x="' + (x + 14) + '" y="' + (y + h - 32) + '" font-size="30" font-weight="800" fill="' + (L === 'gallery' || L === 'film' ? '#111' : '#fff') + '" font-family="Lato,sans-serif">' + curYears()[j] + '</text>';
     });
     G.heads.forEach(function (q) { body += '<text x="' + (ox + q[0] * k2) + '" y="' + (top + q[1] * k2 + 26) + '" font-size="30" font-weight="800" fill="' + fg + '" font-family="Lato,sans-serif">2025</text>'; });
     H = avail ? sh.h : top + boxH + FOOT + BOT;
   }
   var head = '<rect x="' + padX + '" y="56" width="116" height="124" rx="14" fill="#fff"/><rect x="' + padX + '" y="56" width="116" height="38" rx="14" fill="#FF0084"/><rect x="' + padX + '" y="80" width="116" height="14" fill="#FF0084"/>' +
     '<text x="' + (padX + 58) + '" y="83" font-size="22" font-weight="700" fill="#fff" text-anchor="middle" font-family="Lato,sans-serif" letter-spacing="3">NOV</text><text x="' + (padX + 58) + '" y="162" font-size="68" font-weight="800" fill="#1B2946" text-anchor="middle" font-family="Lato,sans-serif">27</text>' +
-    '<text x="' + (padX + 152) + '" y="122" font-size="68" font-weight="800" fill="' + fg + '" font-family="Lato,sans-serif" letter-spacing="-1.5">On This Day</text><text x="' + (padX + 152) + '" y="174" font-size="31" font-weight="700" fill="' + fg + '" font-family="Lato,sans-serif">26 photos from 7 years</text>' +
+    '<text x="' + (padX + 152) + '" y="122" font-size="68" font-weight="800" fill="' + fg + '" font-family="Lato,sans-serif" letter-spacing="-1.5">On This Day</text><text x="' + (padX + 152) + '" y="174" font-size="31" font-weight="700" fill="' + fg + '" font-family="Lato,sans-serif">' + subtitle() + '</text>' +
     '<rect x="' + padX + '" y="' + (56 + 124 + 62) + '" width="' + cw + '" height="4" fill="' + ac + '"/>';
   var fy = top + boxH + 62;
   var foot = '<text x="' + padX + '" y="' + fy + '" font-size="20" fill="' + fg + '" opacity=".75" font-family="Lato,sans-serif">flickr.com/photos/wallyg</text><text x="' + (W - padX) + '" y="' + fy + '" font-size="20" fill="' + fg + '" opacity=".7" text-anchor="end" font-family="Lato,sans-serif">Made with <tspan font-size="26" font-weight="700" fill="' + (L === 'gallery' || L === 'film' ? '#fff' : '#0063DC') + '">Flickr</tspan><tspan font-size="26" font-weight="700" fill="#FF0084">Fetch</tspan></text>';
@@ -251,51 +264,57 @@ function picture() {
   return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Preview"><rect width="' + W + '" height="' + H + '" fill="' + bgc + '"/>' + film + head + body + foot + '</svg>';
 }
 
-function stepHtml() {
+function part(key) {
   var s = '', i;
-  if (stepKey() === 'photos') {
-    s += '<div class="label">Photos</div><div class="row"><button class="stepbtn" id="minus"' + (st.n <= 1 ? ' disabled' : '') + '>−</button><b style="font-size:18px;min-width:18px;text-align:center">' + st.n + '</b><button class="stepbtn" id="plus"' + (st.n >= cap() ? ' disabled' : '') + '>+</button><span class="muted small">up to ' + cap() + (st.look === 'polaroid' ? ' for Polaroid' : '') + '. One photo makes a single card.</span></div>';
-    if (shown() < st.n) s += '<div class="note small">Polaroid holds 6, so the picture shows 6. Go back to Look and pick another, and all ' + st.n + ' come back.</div>';
-    s += '<div class="muted small">Click a photo to replace it. Drag one onto another to swap places.</div><div class="thumbs">';
-    for (i = 0; i < shown(); i++) s += '<div class="th" style="background:' + SETS[st.set].photos[i] + '"><span>' + YEARS[i] + '</span></div>';
+  if (key === 'photos') {
+    s += '<div class="label">Photos from</div>';
+    s += '<label class="src"><input type="radio" name="src" data-source="years"' + (st.source === 'years' ? ' checked' : '') + '> One photo from each year</label>';
+    s += '<label class="src"><input type="radio" name="src" data-source="year"' + (st.source === 'year' ? ' checked' : '') + '> One year only <select id="yearsel"' + (st.source === 'year' ? '' : ' disabled') + '>' + Object.keys(YEAR_COUNTS).map(function (y) { return '<option value="' + y + '"' + (y === st.year ? ' selected' : '') + '>' + y + ' · ' + YEAR_COUNTS[y] + (YEAR_COUNTS[y] === 1 ? ' photo' : ' photos') + '</option>'; }).join('') + '</select></label>';
+    if (st.ticked >= 2) s += '<label class="src"><input type="radio" name="src" data-source="ticked"' + (st.source === 'ticked' ? ' checked' : '') + '> My ' + st.ticked + ' ticked photos</label>';
+    s += '<div class="label" style="margin-top:4px">Photos</div><div class="muted small">Click a photo in the picture to move and zoom it. Click one below to replace it. Drag one onto another to swap places.</div><div class="thumbs">';
+    for (i = 0; i < shown(); i++) s += '<div class="th" style="background:' + SETS[st.set].photos[i] + '"><span>' + curYears()[i] + '</span></div>';
     s += '</div><div><button class="btn">⇄ Shuffle</button></div><div class="muted small">Shuffle picks one photo from each year. To choose your own, tick photos on the page first.</div>';
     s += '<label class="row small" style="font-size:13px"><input type="checkbox" id="pub"' + (st.pub ? ' checked' : '') + '> Public photos only</label>';
-  } else if (stepKey() === 'look') {
+  } else if (key === 'look') {
     s += '<div class="label">Look</div><div class="looks">';
     LOOKS.forEach(function (x) { s += '<button class="look' + (st.look === x.key ? ' on' : '') + '" data-look="' + x.key + '">' + lookPreview(x.key) + '<b>' + x.name + '</b><small>' + x.desc + '</small></button>'; });
     s += '</div>';
-  } else if (stepKey() === 'arr') {
-    s += '<div class="label">Arrangement</div>';
-    if (skipArr()) s += '<div class="muted">' + (st.look === 'polaroid' ? 'Polaroids arrange themselves, so there is nothing to choose. Pick another Look to choose an arrangement.' : 'One photo makes a single card.') + '</div>';
+  } else if (key === 'arr') {
+    s += '<div class="label">How many photos</div><div class="row"><button class="stepbtn" id="minus"' + (st.n <= 1 ? ' disabled' : '') + '>−</button><b style="font-size:18px;min-width:18px;text-align:center">' + st.n + '</b><button class="stepbtn" id="plus"' + (st.n >= cap() ? ' disabled' : '') + '>+</button><span class="muted small">up to ' + cap() + (st.look === 'polaroid' ? ' for Polaroid' : '') + '. One makes a single card.</span></div>';
+    if (shown() < st.n) s += '<div class="note small">Polaroid holds 6, so the picture shows 6. Go back to Style and pick another Look, and all ' + st.n + ' come back.</div>';
+    s += '<div class="label" style="margin-top:4px">Arrangement</div>';
+    if (skipArr()) s += '<div class="muted">' + (st.look === 'polaroid' ? 'Polaroids arrange themselves. Pick another Look in Style to choose an arrangement.' : 'One photo makes a single card.') + '</div>';
     else { s += '<div class="cards">'; ARR.forEach(function (x) { var why = off(x.key); s += '<button class="card' + (eff() === x.key ? ' on' : '') + (why ? ' off' : '') + '" data-arr="' + x.key + '"' + (why ? ' disabled' : '') + '><div class="pic">' + icon(x.key, 90, 40) + '</div><b>' + x.name + '</b><span class="d">' + (why || x.desc) + '</span></button>'; }); s += '</div>'; }
   } else {
     s += '<div class="label">Shape</div><div class="shapes">';
     SHAPES.forEach(function (x) { s += '<button class="shape' + (st.shape === x.key ? ' on' : '') + '" data-shape="' + x.key + '">' + shapeIcon(x) + x.name + '</button>'; });
-    s += '</div><div class="muted small">' + ({ auto: 'The collage keeps its own height.', square: 'Square', portrait: 'Portrait', story: 'Story: a phone screen', wide: 'Wide: a TV or computer screen' })[st.shape] + '</div>';
-    s += '<div class="label" style="margin-top:8px">Size</div><div class="chips"><button class="chip' + (st.size === 'standard' ? ' on' : '') + '" data-size="standard">Standard</button><button class="chip' + (st.size === 'large' ? ' on' : '') + '" data-size="large">Large (2×)</button></div>';
+    s += '</div><div class="chips" style="margin-top:6px"><button class="chip' + (st.size === 'standard' ? ' on' : '') + '" data-size="standard">Standard</button><button class="chip' + (st.size === 'large' ? ' on' : '') + '" data-size="large">Large (2×)</button></div>';
     var sh = SHAPES.filter(function (x) { return x.key === st.shape; })[0], m = st.size === 'large' ? 2 : 1;
     s += '<div class="muted small">Saves ' + (sh.w ? (sh.w * m).toLocaleString() + ' × ' + (sh.h * m).toLocaleString() : (1080 * m).toLocaleString() + ' pixels wide') + '.</div>';
   }
   return s;
 }
+function stepHtml() { var k = stepKey(); return k === 'style' ? part('look') + '<div style="height:4px"></div>' + part('shape') : part(k); }
 function render() {
   var strip = '';
-  ORDERS[st.order].forEach(function (key, i) { var k = i + 1, name = NAMES[key], skip = key === 'arr' && skipArr(); strip += '<button class="tab' + (st.step === k ? ' here' : '') + (skip ? ' skip' : '') + '" data-step="' + k + '"><i>' + k + '</i>' + name + '</button>'; });
+  ORDERS[st.order].forEach(function (key, i) { var k = i + 1, name = NAMES[key], skip = false; strip += '<button class="tab' + (st.step === k ? ' here' : '') + (skip ? ' skip' : '') + '" data-step="' + k + '"><i>' + k + '</i>' + name + '</button>'; });
   document.getElementById('strip').innerHTML = strip;
   var lookName = LOOKS.filter(function (x) { return x.key === st.look; })[0].name, arrName = skipArr() ? '' : ARR.filter(function (x) { return x.key === eff(); })[0].name;
-  document.getElementById('summary').innerHTML = '<b>' + shown() + ' photo' + (shown() === 1 ? '' : 's') + '</b> · <b>' + lookName + '</b>' + (arrName ? ' · <b>' + arrName + '</b>' : '') + ' · <b>' + SHAPES.filter(function (x) { return x.key === st.shape; })[0].name + '</b>' + (st.size === 'large' ? ' · <b>Large</b>' : '');
+  document.getElementById('summary').innerHTML = '<b>' + shown() + ' photo' + (shown() === 1 ? '' : 's') + (st.source === 'year' ? ' from ' + st.year : st.source === 'ticked' ? ' ticked' : '') + '</b> · <b>' + lookName + '</b>' + (arrName ? ' · <b>' + arrName + '</b>' : '') + ' · <b>' + SHAPES.filter(function (x) { return x.key === st.shape; })[0].name + '</b>' + (st.size === 'large' ? ' · <b>Large</b>' : '');
   document.getElementById('step').innerHTML = stepHtml();
   document.getElementById('stage').innerHTML = picture();
-  var next = st.step === 4;
+  var next = st.step === ORDERS[st.order].length;
   document.getElementById('back').disabled = st.step === 1;
   document.getElementById('next').disabled = next;
+  document.getElementById('pagebtn').textContent = st.ticked >= 2 ? 'Collage from ' + st.ticked + ' selected' : 'Make a collage';
   document.getElementById('warn').hidden = false;
   document.getElementById('warn').textContent = '🔒 ' + Math.min(3, shown()) + ' of ' + shown() + " photos aren't public";
 }
-function goto(k) { if (ORDERS[st.order][k - 1] === 'arr' && skipArr()) k += k > st.step ? 1 : -1; st.step = Math.max(1, Math.min(4, k)); }
+function goto(k) { st.step = Math.max(1, Math.min(ORDERS[st.order].length, k)); }
 document.addEventListener('click', function (e) {
   var t = e.target.closest('button'); if (!t) return;
-  if (t.dataset.order) { st.order = t.dataset.order; st.step = 1; document.querySelectorAll('[data-order]').forEach(function (b) { b.classList.toggle('on', b === t); }); }
+  if (t.dataset.ticked !== undefined) { st.ticked = Number(t.dataset.ticked); setSource(st.ticked ? 'ticked' : 'years'); st.step = 1; document.querySelectorAll('[data-ticked]').forEach(function (b) { b.classList.toggle('on', b === t); }); }
+  else if (t.dataset.order) { st.order = t.dataset.order; st.step = 1; document.querySelectorAll('[data-order]').forEach(function (b) { b.classList.toggle('on', b === t); }); }
   else if (t.dataset.set) { st.set = t.dataset.set; document.querySelectorAll('[data-set]').forEach(function (b) { b.classList.toggle('on', b === t); }); }
   else if (t.dataset.step) st.step = Number(t.dataset.step);
   else if (t.id === 'next') goto(st.step + 1);
@@ -309,6 +328,10 @@ document.addEventListener('click', function (e) {
   else return;
   render();
 });
-document.addEventListener('change', function (e) { if (e.target.id === 'pub') { st.pub = e.target.checked; render(); } });
+document.addEventListener('change', function (e) {
+  if (e.target.id === 'pub') { st.pub = e.target.checked; render(); }
+  else if (e.target.dataset && e.target.dataset.source) { setSource(e.target.dataset.source); render(); }
+  else if (e.target.id === 'yearsel') { st.year = e.target.value; setSource('year'); render(); }
+});
 render();
 </script>

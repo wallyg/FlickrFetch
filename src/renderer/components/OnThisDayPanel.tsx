@@ -15,7 +15,8 @@ import BackToTop from '../ui/BackToTop'
 import { asButton } from '../ui/a11y'
 import { itemsLabel } from '../../shared/counts'
 import { useTileSize, TILE_MIN, TILE_MAX } from '../hooks/useTileSize'
-import { OpenIcon, DownloadIcon } from '../ui/icons'
+import { DownloadIcon } from '../ui/icons'
+import { dayPageUrl } from '../../shared/dayLinks'
 
 const iconBlue: React.CSSProperties = { color: 'var(--ff-blue)', display: 'inline-flex' }
 
@@ -48,7 +49,10 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
   const [expanded, setExpanded] = useState<Record<string, DayPhoto[]>>({})
   const [allYears, setAllYears] = useState(false)   // Across the years: the five biggest years, or every year
   const [selected, setSelected] = useState<Map<string, DayPhoto>>(new Map())
-  const [share, setShare] = useState<{ photos: DayPhoto[]; userPicked: boolean; year?: string; pool?: DayPhoto[] } | null>(null)
+  const [share, setShare] = useState<{ source: 'years' | 'year' | 'ticked'; year?: string } | null>(null)   // the collage maker, opened for one of three sources
+  const [nsid, setNsid] = useState('')   // whose Flickr pages "On Flickr" opens
+  const [insightsOpen, setInsightsOpen] = useState<boolean>(() => { try { return localStorage.getItem('ff-otd-insights') === 'open' } catch { return false } })   // the insights fold into one line; remembered
+  const toggleInsights = (): void => setInsightsOpen(o => { try { localStorage.setItem('ff-otd-insights', o ? 'closed' : 'open') } catch { /* not remembered, still works */ } return !o })
   const reqRef = useRef(0)
   const viewRef = useRef(0)   // changes whenever the day or a filter does, so a slow "Show all" for the day you left is ignored
   const dateRef = useRef<HTMLInputElement>(null)
@@ -68,6 +72,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
   }, [month, day, scope, tag, extra])
 
   useEffect(() => { void load() }, [load, refreshKey])
+  useEffect(() => { void window.flickrAPI.getAuthState().then(a => setNsid(a.user?.nsid ?? '')).catch(() => setNsid('')) }, [])
   useEffect(() => { viewRef.current++; setExpanded({}); setSelected(new Map()) }, [month, day, scope, tag, extra])
   useEffect(() => { setAllYears(false) }, [month, day])   // a new day starts on its top five years
 
@@ -110,23 +115,14 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
   }
   const openYear = (year: string): void => onOpenRange(`${year}-${pad2(month)}-${pad2(day)}`, `${year}-${pad2(month)}-${pad2(day)}`, rangeOpts(extra, tag?.label))
 
-  // Photos for a collage: the ones you ticked, otherwise one per year (newest years first). Videos are left out.
+  // The collage maker has one door, with three sources inside it (one photo from each year, one year only, the photos you ticked). Videos are left out.
   const isStill = (p: DayPhoto): boolean => p.media !== 'video'
   const pickedStills = [...selected.values()].filter(isStill)
-  const startShare = (): void => {
-    if (!data) return
-    if (pickedStills.length >= 2) setShare({ photos: pickedStills, userPicked: true })
-    else setShare({ photos: data.years.map(y => y.photos.find(isStill)).filter((p): p is DayPhoto => !!p).slice(0, 8), userPicked: false })
-  }
-
-  // A collage of one year (#164): that year's photos, all of them, so the maker can replace and shuffle among every one
-  const startYearShare = async (year: string): Promise<void> => {
-    const view = viewRef.current
+  const startShare = (source: 'years' | 'year' | 'ticked', year?: string): void => { if (data) setShare({ source, year }) }
+  // One year's photos, all of them, so the maker can pick, replace and shuffle among every one (#164)
+  const loadYearStills = async (year: string): Promise<DayPhoto[]> => {
     const all = await window.flickrAPI.getDayPhotos({ month, day, year, scope, offset: 0, limit: 1000, tag: tag?.key, ...extra })
-    if (view !== viewRef.current) return
-    const stills = all.filter(isStill)
-    if (stills.length === 0) return
-    setShare({ photos: [], userPicked: false, year, pool: stills })
+    return all.filter(isStill)
   }
 
   // One list that only changes when the photos do, so the collage maker is not restarted by every redraw of the page
@@ -146,6 +142,14 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
   const maxHour = Math.max(1, ...ins.hourCounts)
   const peakHour = ins.hourCounts.indexOf(maxHour)
   const hasHours = ins.hourCounts.some(n => n > 0)
+  // The one-line version of the insights, shown while they are folded
+  const insightsLine = [
+    `${data.years.length} ${data.years.length === 1 ? 'year' : 'years'}`,
+    data.years.length > 1 && topYear ? `most ${topYear.year} (${topYear.count.toLocaleString()})` : null,
+    ins.topTags.length > 0 ? ins.topTags.slice(0, 3).map(t => t.name).join(', ') : null,
+    hasHours ? `busiest around ${hourLabel(peakHour)}` : null,
+    `${ins.withLocation.toLocaleString()} of ${data.total.toLocaleString()} on the map`
+  ].filter(Boolean).join(' · ')
   const openPicker = (): void => {
     const el = dateRef.current
     if (!el) return
@@ -185,12 +189,16 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
         </div>
         </>}
         actions={<>
-          <button style={styles.cta} disabled={data.total - data.videos === 0} onClick={startShare} title={data.videos > 0 ? 'Videos are left out of collages' : undefined}>
+          <button style={styles.cta} disabled={data.total - data.videos === 0} onClick={() => startShare('years')} title={data.videos > 0 ? 'Videos are left out of collages' : undefined}>
             <span style={styles.stack} aria-hidden="true"><s style={{ ...styles.stackCard, left: 0, top: 3, transform: 'rotate(-12deg)' }} /><s style={{ ...styles.stackCard, left: 6, top: 0, transform: 'rotate(3deg)' }} /><s style={{ ...styles.stackCard, left: 12, top: 3, transform: 'rotate(15deg)' }} /></span>
-            Make a shareable collage
+            Make a collage
           </button>
-          <MoreMenu items={[{ key: 'all', label: `Download all ${data.total.toLocaleString()}`, disabled: data.total === 0, onClick: () => void download() }]}>
-            <BatchEditButton style={styles.menuBtn} getIds={async () => (await window.flickrAPI.getDatePhotoIds({ kind: 'day', month, day, scope, tag: tag?.key, ...extra })).map(p => p.id)} />
+          <button style={{ ...pillBtn, padding: '4px 12px', fontSize: 13 }} disabled={data.total === 0} onClick={() => void download()}><span style={iconBlue}><DownloadIcon /></span>Download all {data.total.toLocaleString()}</button>
+          <MoreMenu label="Open" items={[
+            { key: 'app', label: 'In FlickrFetch', hint: 'pick a year', disabled: true, onClick: () => undefined, title: 'FlickrFetch can show one year of this day at a time. Use Open on a year below.' },
+            { key: 'flickr', label: 'On Flickr', hint: 'pick a year', disabled: true, onClick: () => undefined, title: 'Flickr cannot show this day across every year. Use Open on a year below.' }
+          ]}>
+            <BatchEditButton style={styles.menuBtn} label="In Flickr's organizer" getIds={async () => (await window.flickrAPI.getDatePhotoIds({ kind: 'day', month, day, scope, tag: tag?.key, ...extra })).map(p => p.id)} />
           </MoreMenu>
         </>}
         filters={<>
@@ -220,9 +228,14 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
       {selected.size > 0 && (
         <div style={{ ...styles.row, justifyContent: 'flex-end' }}>
           <span style={styles.muted}>{selected.size} selected</span>
-          <button style={quietBtn} onClick={startShare} disabled={pickedStills.length < 2} title={pickedStills.length < selected.size ? 'Videos are left out of collages' : undefined}>Collage from selected</button>
-          <BatchEditButton inline style={quietBtn} getIds={async () => [...selected.values()].map(p => p.id)} />
-          <button style={quietBtn} onClick={downloadSelected}>Download selected</button>
+          <button style={pillBtn} onClick={() => startShare('ticked')} disabled={pickedStills.length < 2} title={pickedStills.length < selected.size ? 'Videos are left out of collages' : 'Make a collage from the photos you ticked'}><span style={iconBlue}><Icon name="collage" /></span>Collage</button>
+          <button style={pillBtn} onClick={downloadSelected}><span style={iconBlue}><DownloadIcon /></span>Download</button>
+          <MoreMenu label="Open" items={[
+            { key: 'app', label: 'In FlickrFetch', hint: 'not for ticked photos', disabled: true, onClick: () => undefined, title: 'FlickrFetch opens a date, not a hand-picked set of photos' },
+            { key: 'flickr', label: 'On Flickr', hint: 'not for ticked photos', disabled: true, onClick: () => undefined, title: 'Flickr has no page for a hand-picked set of photos' }
+          ]}>
+            <BatchEditButton style={styles.menuBtn} label="In Flickr's organizer" getIds={async () => [...selected.values()].map(p => p.id)} />
+          </MoreMenu>
           <button style={linkBtn} onClick={() => setSelected(new Map())}>Clear</button>
         </div>
       )}
@@ -233,7 +246,13 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
         </div>
       ) : (
         <>
-          <div style={styles.insights}>
+          <div style={styles.insightsBar}>
+            {insightsOpen ? <span style={{ ...styles.muted, flex: 1 }}>Insights for {dateLabel}</span> : <span style={styles.insightsLine}>{insightsLine}</span>}
+            <button style={{ ...linkBtn, display: 'inline-flex', alignItems: 'center', gap: 4 }} aria-expanded={insightsOpen} onClick={toggleInsights}>
+              {insightsOpen ? 'Hide insights' : 'Show insights'}<span style={{ display: 'inline-flex', transform: insightsOpen ? 'rotate(180deg)' : undefined }}><Icon name="chevronDown" /></span>
+            </button>
+          </div>
+          {insightsOpen && <div style={styles.insights}>
             <Insight icon={<Icon name="calendar" />} title="Across the years">
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {yearRows.map(g => (
@@ -273,7 +292,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
               <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--ff-navy)', lineHeight: 1 }}>{ins.withLocation.toLocaleString()} <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--ff-text-secondary)' }}>of {data.total.toLocaleString()}</span></div>
               <div style={{ marginTop: 4 }}>have a map location.</div>
             </Insight>
-          </div>
+          </div>}
 
           <div style={styles.sectionRule}><span>Photos by year</span><i style={{ flex: 1, height: 1, background: 'var(--ff-line-strong)' }} /></div>
 
@@ -285,10 +304,15 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
                 <div style={styles.yearHead}>
                   <b style={{ fontSize: 16 }}>{g.year}</b>
                   <span style={styles.muted}>{ago === 0 ? 'this year' : `${ago} year${ago === 1 ? '' : 's'} ago`} · {itemsLabel(g.count, g.videos)}</span>
-                  <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: 8 }}>
-                    <button style={pillBtn} onClick={() => openYear(g.year)} title={openTitle(extra, 'that date')}><span style={iconBlue}><OpenIcon /></span>Open in Photostream</button>
-                    {g.count - g.videos >= 2 && <button style={pillBtn} onClick={() => void startYearShare(g.year)} title={`Make a collage from the photos taken on ${dateLabel}, ${g.year}`}><span style={iconBlue}><Icon name="collage" /></span>Collage from these {(g.count - g.videos).toLocaleString()}</button>}
-                    <button style={pillBtn} onClick={() => void download(g.year)}><span style={iconBlue}><DownloadIcon /></span>Download these {g.count.toLocaleString()}</button>
+                  <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: 8, alignItems: 'center' }}>
+                    {g.count - g.videos >= 2 && <button style={pillBtn} onClick={() => startShare('year', g.year)} title={`Make a collage from the photos taken on ${dateLabel}, ${g.year}`}><span style={iconBlue}><Icon name="collage" /></span>Collage</button>}
+                    <button style={pillBtn} onClick={() => void download(g.year)} title={`Download the ${g.count.toLocaleString()} photos taken on ${dateLabel}, ${g.year}`}><span style={iconBlue}><DownloadIcon /></span>Download</button>
+                    <MoreMenu label="Open" items={[
+                      { key: 'app', label: 'In FlickrFetch', onClick: () => openYear(g.year), title: openTitle(extra, 'that date') },
+                      { key: 'flickr', label: 'On Flickr', hint: tag ? 'not with a tag' : undefined, disabled: !nsid || !!tag, onClick: () => window.flickrAPI.openExternal(dayPageUrl(nsid, g.year, month, day)), title: tag ? "Flickr's date pages cannot show one tag" : !nsid ? 'Sign in to Flickr to open this' : `Photos taken on ${dateLabel}, ${g.year}, on your Flickr page` }
+                    ]}>
+                      <BatchEditButton style={styles.menuBtn} label="In Flickr's organizer" getIds={async () => (await window.flickrAPI.getDatePhotoIds({ kind: 'day', month, day, year: g.year, scope, tag: tag?.key, ...extra })).map(p => p.id)} />
+                    </MoreMenu>
                   </span>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, minmax(${tileSize}px, 1fr))`, gap: 8 }}>
@@ -307,11 +331,13 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
 
       {share && (
         <ShareDialog
-          photos={share.photos}
-          candidates={share.pool ?? candidates}
-          onlyYear={share.year}
+          years={data.years.map(y => ({ year: y.year, count: y.count - y.videos })).filter(y => y.count > 0)}
+          candidates={candidates}
+          ticked={pickedStills}
+          initialSource={share.source}
+          initialYear={share.year}
+          loadYear={loadYearStills}
           tag={tag?.key}
-          userPicked={share.userPicked}
           defaultPublicOnly={privacy === 'public'}
           month={month}
           day={day}
@@ -351,6 +377,8 @@ const styles: Record<string, React.CSSProperties> = {
   stack: { position: 'relative', width: 26, height: 16, flexShrink: 0, display: 'block', marginLeft: 2 },   // room for the tilted left card, so it never touches the button's edge
   stackCard: { position: 'absolute', width: 13, height: 15, background: 'linear-gradient(135deg, #f0b15a, #6f93b8)', border: '1px solid var(--ff-white)', borderBottomWidth: 3, borderRadius: 4, boxShadow: '0 1px 2px var(--ff-shadow-strong)', display: 'block' },
   row: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', margin: '12px 0 8px' },
+  insightsBar: { display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', background: 'var(--ff-warm)', borderRadius: 8, padding: '6px 12px', margin: '4px 0' },
+  insightsLine: { flex: 1, minWidth: 200, fontSize: 12, color: 'var(--ff-text-secondary)' },
   insights: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 8, margin: '4px 0' },
   yearBar: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, cursor: 'pointer' },
   tagCount: { ...chipCountLook, marginLeft: 4, fontSize: 12, whiteSpace: 'nowrap' },
