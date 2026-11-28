@@ -1,7 +1,7 @@
 // Where the photos go in the collage (#144, #294) and how a photo is cropped inside its slot (#270). Plain functions, so a test can try every
 // arrangement, shape and count. All sizes are in the picture's own pixels (1080 wide at standard size).
 
-export type Layout = 'grid' | 'feature' | 'banner' | 'row' | 'column' | 'mosaic' | 'filmstrip' | 'ladder'
+export type Layout = 'grid' | 'feature' | 'banner' | 'row' | 'column' | 'mosaic' | 'ladder'
 export type Rect = { x: number; y: number; w: number; h: number }
 export type Head = { text: string; x: number; y: number }   // a year heading in the Year ladder (y is the top of the heading)
 export interface Cells { rects: Rect[]; h: number; heads: Head[] }
@@ -83,15 +83,16 @@ export function gridOf(n: number, cw: number, H: number, stretch = false): Rect[
 }
 
 // Mosaic: tiles of different sizes on a grid four across. [column, row, columns wide, rows tall]; every template fills its grid exactly.
+// The big tile moves around (never always on the left, which would be Feature) and tall and wide tiles mix.
 type Tile = [number, number, number, number]
 const MOSAIC: Record<number, { rows: number; tiles: Tile[] }> = {
-  2: { rows: 2, tiles: [[0, 0, 2, 2], [2, 0, 2, 2]] },
-  3: { rows: 2, tiles: [[0, 0, 2, 2], [2, 0, 2, 1], [2, 1, 2, 1]] },
-  4: { rows: 2, tiles: [[0, 0, 2, 2], [2, 0, 2, 1], [2, 1, 1, 1], [3, 1, 1, 1]] },
-  5: { rows: 2, tiles: [[0, 0, 2, 2], [2, 0, 1, 1], [3, 0, 1, 1], [2, 1, 1, 1], [3, 1, 1, 1]] },
-  6: { rows: 3, tiles: [[0, 0, 2, 2], [2, 0, 2, 1], [2, 1, 1, 1], [3, 1, 1, 1], [0, 2, 2, 1], [2, 2, 2, 1]] },
-  7: { rows: 3, tiles: [[0, 0, 2, 2], [2, 0, 2, 1], [2, 1, 1, 1], [3, 1, 1, 1], [0, 2, 1, 1], [1, 2, 1, 1], [2, 2, 2, 1]] },
-  8: { rows: 3, tiles: [[0, 0, 2, 2], [2, 0, 1, 1], [3, 0, 1, 1], [2, 1, 1, 1], [3, 1, 1, 1], [0, 2, 1, 1], [1, 2, 2, 1], [3, 2, 1, 1]] }
+  2: { rows: 2, tiles: [[0, 0, 1, 2], [1, 0, 3, 2]] },
+  3: { rows: 2, tiles: [[0, 0, 1, 2], [1, 0, 2, 2], [3, 0, 1, 2]] },
+  4: { rows: 2, tiles: [[0, 0, 2, 1], [0, 1, 2, 1], [2, 0, 1, 2], [3, 0, 1, 2]] },
+  5: { rows: 2, tiles: [[0, 0, 1, 2], [1, 0, 2, 1], [1, 1, 1, 1], [2, 1, 1, 1], [3, 0, 1, 2]] },
+  6: { rows: 3, tiles: [[0, 0, 1, 3], [1, 0, 2, 2], [3, 0, 1, 1], [3, 1, 1, 1], [1, 2, 2, 1], [3, 2, 1, 1]] },
+  7: { rows: 3, tiles: [[0, 0, 1, 3], [1, 0, 2, 2], [3, 0, 1, 1], [3, 1, 1, 1], [1, 2, 1, 1], [2, 2, 1, 1], [3, 2, 1, 1]] },
+  8: { rows: 3, tiles: [[0, 0, 1, 2], [1, 0, 1, 1], [2, 0, 1, 1], [3, 0, 1, 2], [1, 1, 1, 2], [2, 1, 1, 2], [0, 2, 1, 1], [3, 2, 1, 1]] }
 }
 export const MOSAIC_TEMPLATES = MOSAIC
 function mosaicCells(n: number, cw: number, ch?: number): { rects: Rect[]; h: number } {
@@ -100,17 +101,6 @@ function mosaicCells(n: number, cw: number, ch?: number): { rects: Rect[]; h: nu
   const cellH = ch === undefined ? cellW * 0.8 : (ch - (t.rows - 1) * g) / t.rows
   const H = ch === undefined ? t.rows * cellH + (t.rows - 1) * g : ch
   return { h: H, rects: t.tiles.slice(0, n).map(([c, r, cs, rs]) => ({ x: c * (cellW + g), y: r * (cellH + g), w: cs * cellW + (cs - 1) * g, h: rs * cellH + (rs - 1) * g })) }
-}
-
-// Filmstrip: one big photo with a strip of the others down its side (along the bottom in a tall shape)
-function filmstripCells(n: number, cw: number, ch?: number): { rects: Rect[]; h: number } {
-  const g = GAP
-  if (ch !== undefined && cw / ch < 0.85) {
-    const k = n - 1, topH = ch * 0.62, w = (cw - g * (k - 1)) / k
-    return { h: ch, rects: [{ x: 0, y: 0, w: cw, h: topH }, ...Array.from({ length: k }, (_, i) => ({ x: i * (w + g), y: topH + g, w, h: ch - topH - g }))] }
-  }
-  const H = ch ?? cw * 0.85, bigW = cw * 0.72, k = n - 1, sw = cw - bigW - g, h = (H - g * (k - 1)) / k
-  return { h: H, rects: [{ x: 0, y: 0, w: bigW, h: H }, ...Array.from({ length: k }, (_, i) => ({ x: bigW + g, y: i * (h + g), w: sw, h }))] }
 }
 
 // Year ladder: the photos grouped by year, a year heading over each band, newest year first. Rects line up with `years` (one per photo).
@@ -151,7 +141,6 @@ export function cellsFor(layout: Layout, n: number, cw: number, ch?: number, yea
     const aspect = cw / ch
     if (n === 1) return done([{ x: 0, y: 0, w: cw, h: ch }], ch)
     if (layout === 'mosaic') return { ...mosaicCells(n, cw, ch), heads: [] }
-    if (layout === 'filmstrip') return { ...filmstripCells(n, cw, ch), heads: [] }
     const rects = layout === 'grid' ? gridOf(n, cw, ch, true)
       : layout === 'feature' ? (aspect < 0.85 ? bigTop(n, cw, ch, 0.58) : bigLeft(n, cw, ch))
       : layout === 'banner' ? (aspect >= 1.5 ? bigLeft(n, cw, ch) : bigTop(n, cw, ch, 0.52))
@@ -161,7 +150,6 @@ export function cellsFor(layout: Layout, n: number, cw: number, ch?: number, yea
   }
   if (n === 1) return done([{ x: 0, y: 0, w: cw, h: cw * 0.75 }], cw * 0.75)
   if (layout === 'mosaic') return { ...mosaicCells(n, cw), heads: [] }
-  if (layout === 'filmstrip') return { ...filmstripCells(n, cw), heads: [] }
   if (layout === 'grid') {
     const cols = n <= 4 ? 2 : 3, rows = Math.ceil(n / cols)
     const w = (cw - g * (cols - 1)) / cols, h = w * 0.75
@@ -230,4 +218,17 @@ export function zoomCrop(crop: Crop | undefined, zoom: number, iw: number, ih: n
 export function hitTest(rects: Rect[], px: number, py: number): number {
   for (let i = rects.length - 1; i >= 0; i--) { const r = rects[i]; if (px >= r.x && px <= r.x + r.w && py >= r.y && py <= r.y + r.h) return i }
   return -1
+}
+
+// Which arrangements the window greys out, and why: too few photos, or a shape in which one arrangement draws the same as another (checked by a test).
+// `aspect` is the room the photos have, width over height; undefined for Auto, where each arrangement keeps its own height.
+export function arrangementOff(layout: Layout, n: number, aspect: number | undefined, years: string[]): string {
+  if ((layout === 'feature' || layout === 'banner') && n < 3) return 'Needs 3 or more photos'
+  if (layout === 'ladder' && new Set(years.slice(0, n)).size < 2) return 'Needs photos from more than one year'
+  if (aspect !== undefined) {
+    if (layout === 'column' && aspect >= 1.5) return 'Same as Row in a wide picture'
+    if (layout === 'row' && aspect < 0.85) return 'Same as Column in a tall picture'
+    if (layout === 'banner' && aspect >= 1.5) return 'Same as Feature in a wide picture'
+  }
+  return ''
 }

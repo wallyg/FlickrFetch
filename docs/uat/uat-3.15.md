@@ -11,9 +11,10 @@ How to run it: `npm run dev` from the project folder. Restart it once (stop it, 
 
 ## New arrangements (#144)
 
-- [ ] B1 **Mosaic.** Tiles of different sizes that fill the picture with no gaps, for 2 to 8 photos.
-- [ ] B2 **Filmstrip.** One big photo with a strip of the others beside it (below it in Story).
-- [ ] B3 **Year ladder.** Photos grouped under a heading for each year, newest first, with no year tabs on the photos. With photos from one year only, the chip is greyed and says why.
+- [ ] B1 **Mosaic.** Tiles of different sizes that fill the picture with no gaps, for 2 to 8 photos. The big tile moves around (it is not always on the left), so it no longer looks like Feature.
+- [ ] B2 **By year.** Photos grouped under a heading for each year, newest first, with no year tabs on the photos. With photos from one year only, the chip is greyed and says why.
+- [ ] B3 **The list.** Grid, Mosaic, Feature, Banner, Row, Column, By year, in three rows, each chip with a small drawing of the arrangement for your photos and shape. (Filmstrip is gone.) Point at a chip for one line about it. With one photo the list is hidden.
+- [ ] B4 **Greyed chips.** Feature and Banner are greyed below 3 photos. In Square and Wide, Column (same as Row) and Banner (same as Feature) are greyed; in Story, Row (same as Column). Each says why, under the chips and on hover. In Auto, none of those are greyed.
 
 ## Swap, replace, crop (#143, #270)
 
@@ -44,7 +45,9 @@ How to run it: `npm run dev` from the project folder. Restart it once (stop it, 
 - [ ] F3 **Hint.** Under Shuffle: "Shuffle picks one photo from each year. To choose your own, tick photos on the page first." (shown when you have not ticked photos).
 - [ ] F4 **No links on the picture.** No short Flickr links under the photos in any look (Polaroid, Matched, Paper, Gallery, Film), and no Extras section.
 - [ ] F5 **Footer.** The bottom of every picture reads "flickr.com/photos/<your name>" on the left and "Made with FlickrFetch" (Flickr in blue, Fetch in pink; Flickr is white on Gallery and Film) on the right. The old "Created with" block at the top right is gone. Check the address opens your Flickr page. Try a tall shape (Story 9:16) and Large (2×).
-- [ ] F6 **Scroll hint.** A soft fade shows at the bottom of the left panel while there is more to scroll to, and goes away at the bottom.
+- [ ] F6 **Scroll hint.** A soft fade and a "More below" button show at the bottom of the left panel while there is more to scroll to; the button scrolls down and both go away at the bottom. The not-public warning is one short line.
+- [ ] F7 **Looks and shapes.** Matched is now called Tinted (point at it, and at each look, for a one-line note). The shape chips read Auto, 1:1, 4:5, 9:16, 16:9 on one row, and the notes under Look and Shape are shorter.
+- [ ] F8 **Footer space.** There is more room between the photos and the footer line in every look.
 
 ## Not in 3.15
 

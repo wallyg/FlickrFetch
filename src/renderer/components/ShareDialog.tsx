@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import CloseButton from '../ui/CloseButton'
 import { polaroidLayout, captionPlan, type TextKind } from '../ui/polaroid'
 import { canShuffle, shufflePicks, withExtras, SHUFFLE_MAX, type ShuffleMode } from '../ui/shuffle'
-import { cellsFor, cellsFit, maxPhotos, cropSource, panCrop, zoomCrop, hitTest, MAX_ZOOM, MIN_SIDE, type Layout, type Rect, type Crop } from '../ui/collage'
+import { arrangementOff, cellsFor, cellsFit, maxPhotos, cropSource, panCrop, zoomCrop, hitTest, MAX_ZOOM, MIN_SIDE, type Layout, type Rect, type Crop } from '../ui/collage'
 import { dayLinkText, type DayLinkYear } from '../../shared/dayLinks'
 import Icon from '../ui/Icon'
 import Dialog from '../ui/Dialog'
@@ -11,7 +11,7 @@ import type { DayPhoto } from '../../shared/types'
 import logoImg from '../assets/logo-tray.png'
 import { itemsLabel } from '../../shared/counts'
 import { MONTHS } from './DateViewParts'
-import { quietBtn, selectedOn, primaryBtn, chip as kitChip } from '../ui/kit'
+import { quietBtn, pillBtn, selectedOn, primaryBtn, chip as kitChip } from '../ui/kit'
 import { mapColours } from '../ui/mapColours'
 
 // Collage and card maker for On This Day: pick how many photos, a layout and a frame, then save or copy the
@@ -20,24 +20,29 @@ import { mapColours } from '../ui/mapColours'
 type Frame = 'polaroid' | 'matched' | 'paper' | 'gallery' | 'film'
 type RGB = [number, number, number]
 
-const LAYOUTS: { key: Layout; label: string }[] = [
-  { key: 'grid', label: 'Grid' }, { key: 'feature', label: 'Feature' }, { key: 'banner', label: 'Banner' }, { key: 'row', label: 'Row' }, { key: 'column', label: 'Column' },
-  { key: 'mosaic', label: 'Mosaic' }, { key: 'filmstrip', label: 'Filmstrip' }, { key: 'ladder', label: 'Year ladder' }
+// In pairs that go together: Grid and Mosaic, Feature and Banner, Row and Column; the one built on the years last
+const LAYOUTS: { key: Layout; label: string; tip: string }[] = [
+  { key: 'grid', label: 'Grid', tip: 'Equal photos in neat rows' }, { key: 'mosaic', label: 'Mosaic', tip: 'Tiles of different sizes, no gaps' },
+  { key: 'feature', label: 'Feature', tip: 'One big photo, the rest smaller beside it' }, { key: 'banner', label: 'Banner', tip: 'One wide photo on top, the rest in a row below' },
+  { key: 'row', label: 'Row', tip: 'All the photos side by side' }, { key: 'column', label: 'Column', tip: 'All the photos stacked, one under the next' },
+  { key: 'ladder', label: 'By year', tip: 'Grouped under a heading for each year, newest first' }
 ]
-const FRAMES: { key: Frame; label: string }[] = [
-  { key: 'polaroid', label: 'Polaroid' }, { key: 'matched', label: 'Matched' }, { key: 'paper', label: 'Paper' }, { key: 'gallery', label: 'Gallery' }, { key: 'film', label: 'Film' }
+const FRAMES: { key: Frame; label: string; tip: string }[] = [
+  { key: 'polaroid', label: 'Polaroid', tip: 'White instant-photo cards, slightly tilted, with colours from your photos' },
+  { key: 'matched', label: 'Tinted', tip: 'The background and year tabs take their colour from your photos' },
+  { key: 'paper', label: 'Paper', tip: 'A warm cream page' }, { key: 'gallery', label: 'Gallery', tip: 'Dark, with thin outlines and gold' }, { key: 'film', label: 'Film', tip: 'Black, with film sprocket holes down the sides' }
 ]
 
 const W = 1080
 const PAD = 56, HEADER_H = 282, BOTTOM = 40   // the picture's top margin, the header's height and the bottom margin
-const FOOTER_H = 54                           // the footer line: your Flickr address, and "Made with FlickrFetch"
+const FOOTER_H = 76                          // the footer line: your Flickr address, and "Made with FlickrFetch"
 
 // Saved shapes (at standard size). 'auto' keeps the collage's own height; the others give the photos exactly the room
 // between the header and the footer, and the layout adapts to it.
 type Shape = 'auto' | 'square' | 'portrait' | 'story' | 'wide'
-const SHAPES: { key: Shape; label: string; w: number; h: number }[] = [
-  { key: 'auto', label: 'Auto', w: 0, h: 0 }, { key: 'square', label: 'Square 1:1', w: 1080, h: 1080 }, { key: 'portrait', label: 'Portrait 4:5', w: 1080, h: 1350 },
-  { key: 'story', label: 'Story 9:16', w: 1080, h: 1920 }, { key: 'wide', label: 'Wide 16:9', w: 1920, h: 1080 }
+const SHAPES: { key: Shape; label: string; tip: string; w: number; h: number }[] = [
+  { key: 'auto', label: 'Auto', tip: 'The collage keeps its own height', w: 0, h: 0 }, { key: 'square', label: '1:1', tip: 'Square', w: 1080, h: 1080 }, { key: 'portrait', label: '4:5', tip: 'Portrait', w: 1080, h: 1350 },
+  { key: 'story', label: '9:16', tip: 'Story: a phone screen', w: 1080, h: 1920 }, { key: 'wide', label: '16:9', tip: 'Wide: a TV or computer screen', w: 1920, h: 1080 }
 ]
 type Resolution = 'standard' | 'large'   // 1080 pixels wide, or twice that
 
@@ -192,11 +197,14 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
     return { padX, cw: pictureW - 2 * padX, ch: fixedShape ? Math.max(120, shapeInfo.h - PAD - HEADER_H - footerH - BOTTOM) : undefined, footerH }
   }
   const yearsOf = (n: number): string[] => picks.slice(0, n).map(p => p.dateTaken.slice(0, 4))
+  const aspectFor = (n: number): number | undefined => { const b = boxFor(n); return b.ch ? b.cw / b.ch : undefined }
+  const layoutFor = (l: Layout, n: number): Layout => (arrangementOff(l, n, aspectFor(n), yearsOf(n)) ? 'grid' : l)   // a greyed arrangement draws as Grid
   const fitsCount = (n: number): boolean => {
     const b = boxFor(n)
     if (frame === 'polaroid') return polaroidLayout(n, b.cw, b.ch).w >= b.cw * MIN_SIDE
-    if (layout === 'column' && !fixedShape && n > 6) return false   // a tall stack of eight is more than a picture
-    return cellsFit(cellsFor(layout, n, b.cw, b.ch, yearsOf(n)), b.cw)
+    const l = layoutFor(layout, n)
+    if (l === 'column' && !fixedShape && n > 6) return false   // a tall stack of eight is more than a picture
+    return cellsFit(cellsFor(l, n, b.cw, b.ch, yearsOf(n)), b.cw)
   }
   const maxCount = maxPhotos(picks.length, frame === 'polaroid', fitsCount)
   const [count, setCount] = useState(4)
@@ -301,7 +309,8 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
     // Work out the sizes: a fixed shape gives the photos exactly the room between the header and the footer
     const bodyAvail = fixed ? Math.max(120, sh.h - pad - headerH - footerH - bottom) : undefined
     const pol = polaroidLayout(n, cw, bodyAvail)
-    const body = frame === 'polaroid' ? { rects: [] as Rect[], h: pol.total, heads: [] } : cellsFor(layout, n, cw, bodyAvail, ready.map(p => p.dateTaken.slice(0, 4)))
+    const lay = layoutFor(layout, n)
+    const body = frame === 'polaroid' ? { rects: [] as Rect[], h: pol.total, heads: [] } : cellsFor(lay, n, cw, bodyAvail, ready.map(p => p.dateTaken.slice(0, 4)))
     const contentH = fixed ? (bodyAvail as number) : body.h
     const H = fixed ? sh.h : Math.ceil(pad + headerH + contentH + footerH + bottom)
     canvas.width = Math.round(OW * m); canvas.height = Math.round(H * m)
@@ -390,7 +399,7 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
         drawCover(ctx, src.get(p.id) as HTMLImageElement, { x: rx, y: ry, w: r.w, h: r.h }, crops[p.id])
         hits.push({ id: p.id, x: rx, y: ry, w: r.w, h: r.h })
         if (frame === 'gallery') { ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 2; ctx.strokeRect(rx, ry, r.w, r.h) }
-        if (layout === 'ladder' && body.heads.length > 0) return   // the Year ladder has a heading over each year instead of a tab on each photo
+        if (lay === 'ladder' && body.heads.length > 0) return   // the Year ladder has a heading over each year instead of a tab on each photo
         // A year tab on the corner of every photo, so each year sits with its picture
         const yr = p.dateTaken.slice(0, 4)
         ctx.font = `800 30px ${SANS}`
@@ -410,7 +419,7 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
 
     // Footer: your Flickr address on the left, a quiet "Made with FlickrFetch" (the blue and pink name) on the right
     {
-      const fy = top + contentH + 40, left = padX, right = OW - padX
+      const fy = top + contentH + 62, left = padX, right = OW - padX   // 22 more than before, so the footer sits clear of the photos
       ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left'
       ctx.font = `400 20px Lato, ${SANS}`
       const madeW = ctx.measureText('Made with ').width
@@ -613,32 +622,40 @@ export default function ShareDialog({ photos, candidates, userPicked, defaultPub
                 </label>
               </Step>
               <Step n={2} label="Look">
-                <div style={styles.chips}>{FRAMES.map(f => <button key={f.key} style={{ ...styles.chip, ...(frame === f.key ? styles.chipOn : {}) }} onClick={() => setFrame(f.key)}>{f.label}</button>)}</div>
-                {frame !== 'polaroid' && (
+                <div style={styles.chips}>{FRAMES.map(f => <button key={f.key} title={f.tip} style={{ ...styles.chip, ...(frame === f.key ? styles.chipOn : {}) }} onClick={() => setFrame(f.key)}>{f.label}</button>)}</div>
+                {frame === 'polaroid' && <div style={styles.muted}>Polaroids arrange themselves.</div>}
+                {frame !== 'polaroid' && shownCount > 1 && (
                   <>
                     <div style={{ ...styles.label, marginTop: 4 }}>Arrangement</div>
                     <div style={styles.chips}>{LAYOUTS.map(l => {
-                      const off = l.key === 'ladder' && chosenYears.size < 2   // a ladder needs more than one year
-                      return <button key={l.key} style={{ ...styles.chip, ...(layout === l.key ? styles.chipOn : {}), ...(off ? { opacity: 0.45, cursor: 'default' } : {}) }} disabled={off}
-                        title={off ? 'The Year ladder needs photos from more than one year' : undefined} onClick={() => setLayout(l.key)}>{l.label}</button>
+                      const why = arrangementOff(l.key, shownCount, aspectFor(shownCount), yearsOf(shownCount))
+                      const bx = boxFor(shownCount)
+                      return <button key={l.key} style={{ ...styles.chip, ...styles.chipDraw, ...(layoutFor(layout, shownCount) === l.key ? styles.chipOn : {}), ...(why ? { opacity: 0.45, cursor: 'default' } : {}) }} disabled={!!why}
+                        title={why || l.tip} onClick={() => setLayout(l.key)}><ArrangeIcon layout={l.key} n={shownCount} cw={bx.cw} ch={bx.ch} years={yearsOf(shownCount)} />{l.label}</button>
                     })}</div>
-                    {layout === 'ladder' && chosenYears.size < 2 && <div style={styles.muted}>The Year ladder needs photos from more than one year, so Mosaic is shown.</div>}
+                    {(() => {
+                      const offs = LAYOUTS.map(l => ({ l, why: arrangementOff(l.key, shownCount, aspectFor(shownCount), yearsOf(shownCount)) })).filter(x => x.why)
+                      return offs.length > 0 ? <div style={styles.muted}>{offs.map(x => `${x.l.label}: ${x.why.charAt(0).toLowerCase()}${x.why.slice(1)}`).join('. ')}.</div> : null
+                    })()}
                   </>
                 )}
-                <div style={styles.muted}>Colors come from your photos.{frame === 'polaroid' ? ' Polaroids arrange themselves.' : ''}</div>
               </Step>
               <Step n={3} label="Shape and size">
-                <div style={styles.chips}>{SHAPES.map(sh => <button key={sh.key} style={{ ...styles.chip, ...(shape === sh.key ? styles.chipOn : {}) }} onClick={() => setShape(sh.key)}>{sh.label}</button>)}</div>
+                <div style={styles.chips}>{SHAPES.map(sh => <button key={sh.key} style={{ ...styles.chip, ...(shape === sh.key ? styles.chipOn : {}) }} title={sh.tip} onClick={() => setShape(sh.key)}>{sh.label}</button>)}</div>
                 <div style={styles.chips}>
                   <button style={{ ...styles.chip, ...(resolution === 'standard' ? styles.chipOn : {}) }} onClick={() => setResolution('standard')}>Standard</button>
                   <button style={{ ...styles.chip, ...(resolution === 'large' ? styles.chipOn : {}) }} onClick={() => setResolution('large')}>Large (2×)</button>
                 </div>
-                <div style={styles.muted}>Saves {outW.toLocaleString()}{outH ? ` × ${outH.toLocaleString()}` : ' pixels wide'}. The preview is always standard size.{resolution === 'large' ? ' Large fetches the sharper 2048-pixel pictures when Flickr has them.' : ''}</div>
+                <div style={styles.muted}>Saves {outW.toLocaleString()}{outH ? ` × ${outH.toLocaleString()}` : ' pixels wide'}.{resolution === 'large' ? ' The preview stays standard size; Large fetches the sharper 2048-pixel pictures when Flickr has them.' : ''}</div>
               </Step>
             </div>
-            {moreBelow && <div style={styles.fade} aria-hidden="true" />}
+            {moreBelow && (
+              <div style={styles.fade}>
+                <button style={styles.more} onClick={() => scrollRef.current?.scrollBy({ top: 240, behavior: 'smooth' })}><Icon name="arrowDown" /> More below</button>
+              </div>
+            )}
             <div style={styles.dock}>
-              {nonPublic > 0 && <div style={styles.warn}>🔒 {nonPublic} of the {chosen.length} photos are not public. You will be asked before saving, copying or sharing.</div>}
+              {nonPublic > 0 && <div style={styles.warn} title="You will be asked before saving, copying or sharing"><Icon name="lock" /> {nonPublic} of {chosen.length} photos aren't public</div>}
               <div style={{ display: 'flex', gap: 8, flexWrap: 'nowrap' }}>
                 <button style={{ ...styles.primary, ...styles.dockBtn }} disabled={loading || ready.length === 0} title="Save the picture as a file" onClick={() => void save()}><Icon name="download" /> Save</button>
                 <DockMenu label="Copy" icon="copy" disabled={ready.length === 0} items={[
@@ -733,6 +750,17 @@ function DockMenu({ label, icon, items, disabled }: { label: string; icon: strin
   )
 }
 
+// A tiny drawing of an arrangement, made from the same layout code as the picture, for the photos and shape you have now
+function ArrangeIcon({ layout, n, cw, ch, years }: { layout: Layout; n: number; cw: number; ch?: number; years: string[] }): React.JSX.Element {
+  const cells = cellsFor(layout, n, cw, ch, years)
+  return (
+    <svg width={26} height={18} viewBox={`0 0 ${cw} ${cells.h}`} preserveAspectRatio="xMidYMid meet" aria-hidden="true" style={{ flexShrink: 0 }}>
+      {cells.rects.map((r, i) => <rect key={i} x={r.x} y={r.y} width={r.w} height={r.h} rx={cw * 0.015} fill="currentColor" fillOpacity={0.25} stroke="currentColor" strokeWidth={1} vectorEffect="non-scaling-stroke" />)}
+      {cells.heads.map((h, i) => <rect key={`h${i}`} x={h.x} y={h.y + 6} width={cw * 0.3} height={cw * 0.04} fill="var(--ff-pink)" />)}
+    </svg>
+  )
+}
+
 function Step({ n, label, children }: { n: number; label: string; children: React.ReactNode }): React.JSX.Element {
   return (
     <div style={{ display: 'flex', gap: 8 }}>
@@ -752,7 +780,9 @@ const styles: Record<string, React.CSSProperties> = {
   controls: { width: 316, flexShrink: 0, display: 'flex', flexDirection: 'column', minHeight: 0 },
   scroll: { flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16, paddingRight: 6, paddingBottom: 8 },
   dock: { flexShrink: 0, borderTop: '1px solid var(--ff-border)', paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 8 },
-  fade: { flexShrink: 0, height: 24, marginTop: -24, marginRight: 6, pointerEvents: 'none', background: 'linear-gradient(to bottom, transparent, var(--ff-cream))' },
+  fade: { flexShrink: 0, height: 36, marginTop: -36, marginRight: 6, pointerEvents: 'none', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: 2, background: 'linear-gradient(to bottom, transparent, var(--ff-cream))' },
+  more: { ...pillBtn, pointerEvents: 'auto', boxShadow: '0 1px 4px var(--ff-shadow-soft)' },
+  chipDraw: { padding: '4px 8px', display: 'inline-flex', alignItems: 'center', gap: 6 },
   dockBtn: { flex: 1, minWidth: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, whiteSpace: 'nowrap', padding: '6px 8px' },
   dockMenu: { position: 'absolute', bottom: 'calc(100% + 4px)', left: 0, zIndex: 'var(--ff-z-menu)', minWidth: 200, background: 'var(--ff-surface)', border: '1px solid var(--ff-line-strong)', borderRadius: 8, boxShadow: '0 4px 16px var(--ff-shadow-soft)', padding: 4, display: 'flex', flexDirection: 'column', gap: 2 },
   dockItem: { display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', borderRadius: 6, padding: '6px 8px', fontSize: 13, color: 'var(--ff-text)', cursor: 'pointer' },

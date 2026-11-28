@@ -1,0 +1,271 @@
+<title>Collage Looks Mock-up</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap">
+<style>
+/* Layout: a count control and a photo-set switch at the top, then Arrangements and Looks, each shown three ways inside a box as wide as the real left panel (316 px). Palette is the app's own. */
+:root {
+  --blue: #0063DC; --pink: #FF0084; --pink-action: #D00069; --navy: #1B2946; --cream: #FCFAF6; --surface: #FFFFFF;
+  --text: #111827; --muted: #667085; --border: #E5E7EB; --line: #D4D4D8; --warm: #F7F5F1; --info-bg: #EEF5FF; --page: #EEF0F4;
+  --ink: #3b4559; --box: #CBD5E1; --boxline: #94A3B8; --on-bg: #FFFFFF;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --surface: #1F2937; --cream: #111827; --text: #F3F4F6; --muted: #9CA3AF; --border: #374151; --line: #4B5563; --warm: #243041; --info-bg: #14263F; --page: #0B1220; --navy: #E5E7EB;
+  --ink: #CBD5E1; --box: #4B5563; --boxline: #9CA3AF; --on-bg: #111827; color-scheme: dark } }
+:root[data-theme="dark"] { --surface: #1F2937; --cream: #111827; --text: #F3F4F6; --muted: #9CA3AF; --border: #374151; --line: #4B5563; --warm: #243041; --info-bg: #14263F; --page: #0B1220; --navy: #E5E7EB;
+  --ink: #CBD5E1; --box: #4B5563; --boxline: #9CA3AF; --on-bg: #111827; color-scheme: dark }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--text); font-family: 'Lato', -apple-system, BlinkMacSystemFont, sans-serif; font-size: 14px; line-height: 1.5;
+  padding-block: 24px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+h1 { font-size: 22px; margin: 0; color: var(--navy); }
+h2 { font-size: 16px; margin: 0; color: var(--navy); }
+p { margin: 0; }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; }
+.bar .grp { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.step { font: inherit; width: 28px; height: 28px; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 6px; font-size: 16px; cursor: pointer; }
+.step:disabled { opacity: .4; cursor: default; }
+.btn { font: inherit; font-size: 13px; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 6px; padding: 4px 12px; cursor: pointer; }
+.btn.on { border-color: var(--pink); color: var(--pink-action); font-weight: 700; background: var(--surface); box-shadow: inset 0 0 0 1px var(--pink); }
+section.block { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.tag { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(316px, 1fr)); gap: 16px; align-items: start; }
+.opt { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.opt > b { font-size: 13px; color: var(--navy); }
+.panel { width: 316px; max-width: 100%; background: var(--cream); border: 1px solid var(--border); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.label { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font: inherit; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 999px; padding: 4px 12px; cursor: pointer; }
+.chip.on { border-color: var(--pink); color: var(--pink-action); font-weight: 700; box-shadow: inset 0 0 0 1px var(--pink); }
+.chip.off { opacity: .45; cursor: default; }
+.chip svg { display: block; }
+.cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.card { font: inherit; text-align: left; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 10px; padding: 8px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; }
+.card.on { border-color: var(--pink); box-shadow: inset 0 0 0 1px var(--pink); }
+.card.off { opacity: .45; cursor: default; }
+.card .pic { background: var(--warm); border-radius: 6px; height: 76px; display: flex; align-items: center; justify-content: center; }
+.card b { font-size: 13px; }
+.card.on b { color: var(--pink-action); }
+.card span { font-size: 12px; color: var(--muted); line-height: 1.35; }
+.looks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.look { font: inherit; text-align: center; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 10px; padding: 6px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; align-items: center; }
+.look.on { border-color: var(--pink); box-shadow: inset 0 0 0 1px var(--pink); }
+.look.on b { color: var(--pink-action); }
+.look b { font-size: 13px; font-weight: 700; }
+.look small { font-size: 11px; color: var(--muted); line-height: 1.25; }
+.dot { width: 14px; height: 14px; border-radius: 50%; border: 1px solid var(--boxline); display: inline-block; }
+.cmp { display: grid; grid-template-columns: auto repeat(7, 1fr); gap: 6px 8px; align-items: center; overflow-x: auto; }
+.cmp .cell { background: var(--warm); border-radius: 6px; height: 50px; display: flex; align-items: center; justify-content: center; min-width: 54px; }
+.note { background: var(--info-bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 13px; }
+</style>
+
+<div class="wrap">
+  <div>
+    <h1>Collage window: looks and arrangements</h1>
+    <p class="muted">Mock-up for the 3.15 fix pass. Each box below is as wide as the real left panel (316 px), so the sizes are true. Change the photo count and the photo set to see what happens.</p>
+  </div>
+
+  <div class="bar">
+    <div class="grp"><b>Photos</b>
+      <button class="step" id="minus" aria-label="Fewer photos">−</button><b id="count" style="min-width:18px;text-align:center;font-size:18px">4</b><button class="step" id="plus" aria-label="More photos">+</button>
+    </div>
+    <div class="grp"><b>Photo set</b>
+      <button class="btn on" data-set="warm">Thanksgiving</button><button class="btn" data-set="blue">Beach</button><button class="btn" data-set="green">Park</button>
+    </div>
+    <span class="muted small">The photo set only changes the colours of the Tinted look and the previews.</span>
+  </div>
+
+  <section class="block">
+    <h2>Arrangements</h2>
+    <p class="muted">Seven arrangements: Filmstrip is gone, Year ladder sits last under "By year", and Mosaic has new patterns so it stops looking like Feature. Feature and Banner are greyed below 3 photos.</p>
+    <div class="opts">
+      <div class="opt"><b>A. Today: words only</b><div class="panel"><div class="label">Arrangement</div><div class="chips" id="arrA"></div></div></div>
+      <div class="opt"><b>B. A small drawing on each chip</b><div class="panel"><div class="label">Arrangement</div><div class="chips" id="arrB"></div><div class="muted small" id="arrBnote"></div></div></div>
+      <div class="opt"><b>C. Cards with a bigger drawing and one line</b><div class="panel"><div class="label">Arrangement</div><div class="cards" id="arrC"></div></div></div>
+    </div>
+    <div class="tag">Mosaic: today and proposed, for 2 to 8 photos</div>
+    <div class="cmp" id="cmp"></div>
+    <p class="muted small">Today every Mosaic starts with one big square on the left, which is Feature. The proposed patterns move the big tile around and mix tall and wide tiles. Drawings show the arrangement on the Auto shape.</p>
+  </section>
+
+  <section class="block">
+    <h2>Looks</h2>
+    <p class="muted">Matched is renamed Tinted: the background and the year tabs take their colour from your photos, so switch the photo set above to see them change. Paper, Gallery and Film are fixed colours.</p>
+    <div class="opts">
+      <div class="opt"><b>A. Today: words only</b><div class="panel"><div class="label">Look</div><div class="chips" id="lookA"></div></div></div>
+      <div class="opt"><b>B. A colour dot on each chip</b><div class="panel"><div class="label">Look</div><div class="chips" id="lookB"></div></div></div>
+      <div class="opt"><b>C. Small previews of each look</b><div class="panel"><div class="label">Look</div><div class="looks" id="lookC"></div></div></div>
+    </div>
+  </section>
+
+  <div class="note">Which of these would you pick for each? Mix and match is fine, for example C for Arrangements and B for Looks. Anything that confuses you here would confuse people using the app, so say so.</div>
+</div>
+
+<script>
+var SETS = {
+  warm:  { tint: '#F1E6DA', tab: '#9A5A32', ink: '#4A2F1E', photos: ['#C58B5A', '#A8603C', '#D9B48A', '#7A4A30', '#B9814F', '#E0BE96', '#8F5A3A', '#CFA073'] },
+  blue:  { tint: '#DCE8F2', tab: '#2F6C96', ink: '#1E3A50', photos: ['#6FA6C9', '#3E7DA6', '#A8CBE0', '#2E5F82', '#82B4D3', '#B9D6E6', '#4C88AE', '#93BFD8'] },
+  green: { tint: '#E1EBDC', tab: '#4F7A3C', ink: '#2A4020', photos: ['#7FA86A', '#5C8A47', '#B2CFA0', '#46703A', '#8DB77A', '#C0D8B0', '#628F4E', '#9CC088'] }
+};
+var YEARS = ['2025', '2025', '2023', '2021', '2021', '2018', '2018', '2015'];
+var st = { n: 4, set: 'warm', arr: 'feature', look: 'polaroid' };
+
+// Mosaic patterns: [column, row, columns wide, rows tall] on a grid four across
+var MOS_OLD = {
+  2: { rows: 2, t: [[0,0,2,2],[2,0,2,2]] }, 3: { rows: 2, t: [[0,0,2,2],[2,0,2,1],[2,1,2,1]] },
+  4: { rows: 2, t: [[0,0,2,2],[2,0,2,1],[2,1,1,1],[3,1,1,1]] }, 5: { rows: 2, t: [[0,0,2,2],[2,0,1,1],[3,0,1,1],[2,1,1,1],[3,1,1,1]] },
+  6: { rows: 3, t: [[0,0,2,2],[2,0,2,1],[2,1,1,1],[3,1,1,1],[0,2,2,1],[2,2,2,1]] },
+  7: { rows: 3, t: [[0,0,2,2],[2,0,2,1],[2,1,1,1],[3,1,1,1],[0,2,1,1],[1,2,1,1],[2,2,2,1]] },
+  8: { rows: 3, t: [[0,0,2,2],[2,0,1,1],[3,0,1,1],[2,1,1,1],[3,1,1,1],[0,2,1,1],[1,2,2,1],[3,2,1,1]] }
+};
+var MOS_NEW = {
+  2: { rows: 2, t: [[0,0,1,2],[1,0,3,2]] },
+  3: { rows: 2, t: [[0,0,1,2],[1,0,2,2],[3,0,1,2]] },
+  4: { rows: 2, t: [[0,0,2,1],[0,1,2,1],[2,0,1,2],[3,0,1,2]] },
+  5: { rows: 2, t: [[0,0,1,2],[1,0,2,1],[1,1,1,1],[2,1,1,1],[3,0,1,2]] },
+  6: { rows: 3, t: [[0,0,1,3],[1,0,2,2],[3,0,1,1],[3,1,1,1],[1,2,2,1],[3,2,1,1]] },
+  7: { rows: 3, t: [[0,0,1,3],[1,0,2,2],[3,0,1,1],[3,1,1,1],[1,2,1,1],[2,2,1,1],[3,2,1,1]] },
+  8: { rows: 3, t: [[0,0,1,2],[1,0,1,1],[2,0,1,1],[3,0,1,2],[1,1,1,2],[2,1,1,2],[0,2,1,1],[3,2,1,1]] }
+};
+
+var ARR = [
+  { key: 'grid', name: 'Grid', desc: 'Equal photos in neat rows.' },
+  { key: 'feature', name: 'Feature', desc: 'One big photo, the rest smaller beside it.', min: 3 },
+  { key: 'banner', name: 'Banner', desc: 'One wide photo on top, the rest in a row below.', min: 3 },
+  { key: 'mosaic', name: 'Mosaic', desc: 'Tiles of different sizes, no gaps.' },
+  { key: 'row', name: 'Row', desc: 'All the photos side by side.' },
+  { key: 'column', name: 'Column', desc: 'All the photos stacked, one under the next.' },
+  { key: 'ladder', name: 'By year', desc: 'Grouped under a heading for each year, newest first.' }
+];
+var LOOKS = [
+  { key: 'polaroid', name: 'Polaroid', desc: 'Instant-photo cards' },
+  { key: 'tinted', name: 'Tinted', desc: 'Colours from your photos' },
+  { key: 'paper', name: 'Paper', desc: 'Warm cream page' },
+  { key: 'gallery', name: 'Gallery', desc: 'Dark with gold' },
+  { key: 'film', name: 'Film', desc: 'Black film strip' }
+];
+
+function isOff(key, n) {
+  var a = ARR.filter(function (x) { return x.key === key; })[0];
+  if (a.min && n < a.min) return 'Needs ' + a.min + ' or more photos';
+  if (key === 'ladder') { var u = {}; YEARS.slice(0, n).forEach(function (y) { u[y] = 1; }); if (Object.keys(u).length < 2) return 'Needs photos from more than one year'; }
+  return '';
+}
+
+// Each drawing is made in a box 100 units wide; returns the rectangles and the little year headings
+function geometry(layout, n, mos) {
+  var g = 3, r = [], heads = [], W = 100, H = 75, i;
+  if (layout === 'ladder') {
+    var yrs = YEARS.slice(0, n), order = Object.keys(yrs.reduce(function (o, y) { o[y] = 1; return o; }, {})).sort().reverse(), y0 = 0, w = (100 - 3 * g) / 4, h = w * 0.75, pos = {};
+    order.forEach(function (yr) {
+      heads.push([0, y0, 30]); y0 += 7;
+      var idx = yrs.map(function (v, k) { return v === yr ? k : -1; }).filter(function (k) { return k >= 0; });
+      idx.forEach(function (k, j) { pos[k] = [(j % 4) * (w + g), y0 + Math.floor(j / 4) * (h + g), w, h]; });
+      y0 += Math.ceil(idx.length / 4) * h + (Math.ceil(idx.length / 4) - 1) * g + 6;
+    });
+    for (i = 0; i < n; i++) r.push(pos[i]);
+    return { W: 100, H: y0 - 6, r: r, heads: heads };
+  }
+  if (layout === 'grid') {
+    var cols = n <= 4 ? 2 : 3, rows = Math.ceil(n / cols), cw = (100 - g * (cols - 1)) / cols, ch = cw * 0.75;
+    for (i = 0; i < n; i++) r.push([(i % cols) * (cw + g), Math.floor(i / cols) * (ch + g), cw, ch]);
+    return { W: 100, H: rows * ch + (rows - 1) * g, r: r, heads: [] };
+  }
+  if (layout === 'feature') {
+    r.push([0, 0, 58, 78]); var k = n - 1, c = k <= 3 ? 1 : 2, rw = Math.ceil(k / c), cw2 = (100 - 58 - g - g * (c - 1)) / c, ch2 = (78 - g * (rw - 1)) / rw;
+    for (i = 0; i < k; i++) r.push([61 + (i % c) * (cw2 + g), Math.floor(i / c) * (ch2 + g), cw2, ch2]);
+    return { W: 100, H: 78, r: r, heads: [] };
+  }
+  if (layout === 'banner') {
+    r.push([0, 0, 100, 50]); var kb = n - 1, cb = kb <= 4 ? kb : Math.ceil(kb / 2), rb = Math.ceil(kb / cb), wb = (100 - g * (cb - 1)) / cb, hb = Math.min(wb * 0.85, 30);
+    for (i = 0; i < kb; i++) r.push([(i % cb) * (wb + g), 53 + Math.floor(i / cb) * (hb + g), wb, hb]);
+    return { W: 100, H: 53 + rb * hb + (rb - 1) * g, r: r, heads: [] };
+  }
+  if (layout === 'mosaic') {
+    var t = mos[Math.min(8, Math.max(2, n))], cell = (100 - 3 * g) / 4, cellH = cell * 0.8;
+    t.t.slice(0, n).forEach(function (q) { r.push([q[0] * (cell + g), q[1] * (cellH + g), q[2] * cell + (q[2] - 1) * g, q[3] * cellH + (q[3] - 1) * g]); });
+    return { W: 100, H: t.rows * cellH + (t.rows - 1) * g, r: r, heads: [] };
+  }
+  if (layout === 'row') {
+    var wr = (100 - g * (n - 1)) / n, hr = Math.min(wr * 1.1, 45);
+    for (i = 0; i < n; i++) r.push([i * (wr + g), 0, wr, hr]);
+    return { W: 100, H: hr, r: r, heads: [] };
+  }
+  // column
+  var wc = 46, hc = wc * 0.75;
+  for (i = 0; i < n; i++) r.push([0, i * (hc + g), wc, hc]);
+  return { W: wc, H: n * hc + (n - 1) * g, r: r, heads: [] };
+}
+function draw(layout, n, w, h, mos) {
+  var G = geometry(layout, n, mos || MOS_NEW), s = '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + G.W + ' ' + G.H + '" aria-hidden="true">';
+  G.r.forEach(function (q) { s += '<rect x="' + q[0] + '" y="' + q[1] + '" width="' + q[2] + '" height="' + q[3] + '" rx="2" fill="var(--box)" stroke="var(--boxline)" stroke-width="0.8" vector-effect="non-scaling-stroke"/>'; });
+  G.heads.forEach(function (q) { s += '<rect x="' + q[0] + '" y="' + q[1] + '" width="' + q[2] + '" height="3" rx="1.5" fill="var(--pink)"/>'; });
+  return s + '</svg>';
+}
+
+// Look previews, drawn with plain boxes in the colours each look really uses
+function preview(look) {
+  var S = SETS[st.set], p = S.photos, bg, tab = '', frame = '', body = '', i, size = 92;
+  var pos = [[10, 14], [50, 14], [10, 52], [50, 52]];
+  if (look === 'polaroid') {
+    bg = S.tint;
+    var tilt = [-3, 2.5, 2, -2.5];
+    for (i = 0; i < 4; i++) body += '<div style="position:absolute;left:' + pos[i][0] + 'px;top:' + (pos[i][1] - 6) + 'px;width:32px;height:38px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transform:rotate(' + tilt[i] + 'deg)"><div style="position:absolute;left:3px;top:3px;right:3px;height:26px;background:' + p[i] + '"></div></div>';
+  } else {
+    var cfg = { tinted: [S.tint, S.tab, 'none', '#fff'], paper: ['#faf6ee', '#8a7a5c', 'none', '#fff'], gallery: ['#17181b', '#e0b84a', '1px solid rgba(255,255,255,.3)', '#111'], film: ['#111111', '#f2a65a', 'none', '#111'] }[look];
+    bg = cfg[0];
+    for (i = 0; i < 4; i++) body += '<div style="position:absolute;left:' + (pos[i][0] + (look === 'film' ? 4 : 0)) + 'px;top:' + (pos[i][1] - 4) + 'px;width:32px;height:30px;background:' + p[i] + ';border:' + cfg[2] + '"><div style="position:absolute;left:0;bottom:3px;width:13px;height:6px;background:' + cfg[1] + ';border-radius:0 3px 3px 0"></div></div>';
+    body += '<div style="position:absolute;left:10px;top:7px;width:72px;height:2px;background:' + cfg[1] + '"></div>';
+    if (look === 'film') for (i = 0; i < 7; i++) body += '<div style="position:absolute;left:2px;top:' + (4 + i * 12) + 'px;width:4px;height:5px;background:#3a3a3a"></div><div style="position:absolute;right:2px;top:' + (4 + i * 12) + 'px;width:4px;height:5px;background:#3a3a3a"></div>';
+  }
+  if (look === 'polaroid') body += '<div style="position:absolute;left:10px;top:5px;width:72px;height:2px;background:' + S.tab + '"></div>';
+  return '<div style="position:relative;width:' + size + 'px;height:' + size + 'px;background:' + bg + ';border-radius:6px;overflow:hidden">' + body + '</div>';
+}
+function dotColour(look) {
+  var S = SETS[st.set];
+  return { polaroid: S.tint, tinted: S.tab, paper: '#faf6ee', gallery: '#17181b', film: '#f2a65a' }[look];
+}
+
+function render() {
+  var n = st.n, a = ARR, i;
+  document.getElementById('count').textContent = n;
+  document.getElementById('minus').disabled = n <= 2; document.getElementById('plus').disabled = n >= 8;
+  if (isOff(st.arr, n)) st.arr = 'grid';
+  var A = '', B = '', C = '';
+  a.forEach(function (x) {
+    var off = isOff(x.key, n), on = st.arr === x.key, cls = (on ? ' on' : '') + (off ? ' off' : ''), tip = off || x.desc;
+    A += '<button class="chip' + cls + '" title="' + tip + '" data-arr="' + x.key + '">' + x.name + '</button>';
+    B += '<button class="chip' + cls + '" title="' + tip + '" data-arr="' + x.key + '">' + draw(x.key, n, 34, 24) + x.name + '</button>';
+    C += '<button class="card' + cls + '" data-arr="' + x.key + '"><div class="pic">' + draw(x.key, n, 124, 68) + '</div><b>' + x.name + '</b><span>' + (off || x.desc) + '</span></button>';
+  });
+  document.getElementById('arrA').innerHTML = A; document.getElementById('arrB').innerHTML = B; document.getElementById('arrC').innerHTML = C;
+  var offs = a.filter(function (x) { return isOff(x.key, n); });
+  document.getElementById('arrBnote').textContent = offs.length ? offs.map(function (x) { return x.name + ': ' + isOff(x.key, n).toLowerCase(); }).join('. ') + '.' : 'Point at a chip for one line about it.';
+  // mosaic comparison
+  var cm = '<span class="muted small">Today</span>', cn = '<span class="muted small">Proposed</span>';
+  for (i = 2; i <= 8; i++) { cm += '<div class="cell">' + draw('mosaic', i, 52, 38, MOS_OLD) + '</div>'; }
+  for (i = 2; i <= 8; i++) { cn += '<div class="cell">' + draw('mosaic', i, 52, 38, MOS_NEW) + '</div>'; }
+  document.getElementById('cmp').innerHTML = cm + cn;
+  // looks
+  var LA = '', LB = '', LC = '';
+  LOOKS.forEach(function (x) {
+    var on = st.look === x.key ? ' on' : '';
+    LA += '<button class="chip' + on + '" data-look="' + x.key + '">' + x.name + '</button>';
+    LB += '<button class="chip' + on + '" data-look="' + x.key + '"><span class="dot" style="background:' + dotColour(x.key) + '"></span>' + x.name + '</button>';
+    LC += '<button class="look' + on + '" data-look="' + x.key + '">' + preview(x.key) + '<b>' + x.name + '</b><small>' + x.desc + '</small></button>';
+  });
+  document.getElementById('lookA').innerHTML = LA; document.getElementById('lookB').innerHTML = LB; document.getElementById('lookC').innerHTML = LC;
+}
+document.addEventListener('click', function (e) {
+  var t = e.target.closest('button'); if (!t) return;
+  if (t.id === 'minus') st.n = Math.max(2, st.n - 1);
+  else if (t.id === 'plus') st.n = Math.min(8, st.n + 1);
+  else if (t.dataset.set) { st.set = t.dataset.set; document.querySelectorAll('[data-set]').forEach(function (b) { b.classList.toggle('on', b === t); }); }
+  else if (t.dataset.arr) { if (isOff(t.dataset.arr, st.n)) return; st.arr = t.dataset.arr; }
+  else if (t.dataset.look) st.look = t.dataset.look;
+  else return;
+  render();
+});
+render();
+</script>

@@ -1,17 +1,17 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { cellsFor, cellsFit, maxPhotos, cropSource, panCrop, zoomCrop, hitTest, MOSAIC_TEMPLATES, MAX_PHOTOS, MAX_ZOOM, MIN_SIDE, HEAD_H, type Layout, type Rect } from '../src/renderer/ui/collage'
+import { arrangementOff, cellsFor, cellsFit, maxPhotos, cropSource, panCrop, zoomCrop, hitTest, MOSAIC_TEMPLATES, MAX_PHOTOS, MAX_ZOOM, MIN_SIDE, HEAD_H, type Layout, type Rect } from '../src/renderer/ui/collage'
 import { withExtras, shufflePicks, canShuffle } from '../src/renderer/ui/shuffle'
 import { dayLinkText, dayPageUrl, yearLinkUrl } from '../src/shared/dayLinks'
 import type { DayPhoto } from '../src/shared/types'
 
 // The collage maker's arrangements (#144), photo count (#294), swap and crop (#143, #270), per-year collage (#164) and links to each year (#267).
 
-const LAYOUTS: Layout[] = ['grid', 'feature', 'banner', 'row', 'column', 'mosaic', 'filmstrip', 'ladder']
+const LAYOUTS: Layout[] = ['grid', 'feature', 'banner', 'row', 'column', 'mosaic', 'ladder']
 const BOXES: { name: string; cw: number; ch?: number }[] = [
-  { name: 'auto', cw: 968 }, { name: 'square', cw: 968, ch: 1080 - 56 - 282 - 14 - 40 }, { name: 'portrait', cw: 968, ch: 1350 - 56 - 282 - 14 - 40 },
-  { name: 'story', cw: 968, ch: 1920 - 56 - 282 - 14 - 40 }, { name: 'wide', cw: 1808, ch: 1080 - 56 - 282 - 14 - 40 }
+  { name: 'auto', cw: 968 }, { name: 'square', cw: 968, ch: 1080 - 56 - 282 - 76 - 40 }, { name: 'portrait', cw: 968, ch: 1350 - 56 - 282 - 76 - 40 },
+  { name: 'story', cw: 968, ch: 1920 - 56 - 282 - 76 - 40 }, { name: 'wide', cw: 1808, ch: 1080 - 56 - 282 - 76 - 40 }
 ]
 const YEARS = ['2025', '2025', '2023', '2021', '2021', '2018', '2017', '2015']
 const overlap = (a: Rect, b: Rect): boolean => a.x < b.x + b.w - 0.5 && b.x < a.x + a.w - 0.5 && a.y < b.y + b.h - 0.5 && b.y < a.y + a.h - 0.5
@@ -178,4 +178,23 @@ test('the collage window wires the new pieces in', () => {
   assert.match(panel, /Collage from these/); assert.match(panel, /onlyYear=\{share\.year\}/)
   const share = readFileSync('src/main/share.ts', 'utf8')
   assert.match(share, /texts: \[words\]/)
+})
+
+test('an arrangement is greyed out for too few photos, and a "same as" reason is true: it draws exactly like the one it names', () => {
+  const key = (layout: Layout, n: number, box: { cw: number; ch?: number }): string => JSON.stringify(cellsFor(layout, n, box.cw, box.ch, YEARS.slice(0, n)).rects.map(r => [r.x, r.y, r.w, r.h].map(Math.round)))
+  assert.equal(arrangementOff('feature', 2, undefined, YEARS), 'Needs 3 or more photos')
+  assert.equal(arrangementOff('banner', 2, undefined, YEARS), 'Needs 3 or more photos')
+  assert.equal(arrangementOff('feature', 3, undefined, YEARS), '')
+  assert.equal(arrangementOff('ladder', 3, undefined, ['2021', '2021', '2021']), 'Needs photos from more than one year')
+  assert.equal(arrangementOff('ladder', 3, undefined, YEARS), '')
+  for (const box of BOXES) {
+    const aspect = box.ch === undefined ? undefined : box.cw / box.ch
+    for (let n = 3; n <= MAX_PHOTOS; n++) {
+      if (arrangementOff('column', n, aspect, YEARS)) assert.equal(key('column', n, box), key('row', n, box), `column is not the same as row: ${box.name} n=${n}`)
+      if (arrangementOff('row', n, aspect, YEARS)) assert.equal(key('row', n, box), key('column', n, box), `row is not the same as column: ${box.name} n=${n}`)
+      if (arrangementOff('banner', n, aspect, YEARS) && n >= 3) assert.equal(key('banner', n, box), key('feature', n, box), `banner is not the same as feature: ${box.name} n=${n}`)
+    }
+  }
+  // Auto keeps every arrangement
+  for (const l of LAYOUTS) assert.equal(arrangementOff(l, 5, undefined, YEARS), '')
 })
