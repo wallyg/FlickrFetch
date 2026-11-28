@@ -130,7 +130,7 @@ const styles: Record<string, React.CSSProperties> = {
   title: { ...headingCard },
   cue: { marginLeft: 6, display: 'inline-flex', alignItems: 'center', verticalAlign: 'middle', background: 'none', border: 'none', padding: 4, borderRadius: 6, cursor: 'pointer' },
   seeBtn: { ...doThisBtn, whiteSpace: 'nowrap' },
-  hideBtn: { ...quietBtn, color: 'var(--ff-text)', borderColor: 'var(--ff-line-strong)', whiteSpace: 'nowrap' },
+  hideBtn: { ...quietBtn, color: 'var(--ff-text)', border: '1px solid var(--ff-line-strong)', whiteSpace: 'nowrap' },
   bell: { background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, padding: 2, lineHeight: 1, opacity: 0.7 },
   confirmed: { fontSize: 12, color: 'var(--ff-success)', whiteSpace: 'nowrap' },
   peek: { width: 470, maxWidth: 'min(470px, calc(100vw - 16px))', borderRadius: 12, padding: '12px 12px', cursor: 'default' },

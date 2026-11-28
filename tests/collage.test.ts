@@ -150,7 +150,9 @@ test('one year only: shuffle gives a different few of that year, each photo once
 test('the day links: one line per year with its count, each a link to that day on Flickr; a single photo links to the photo itself', () => {
   const years = [{ year: '2025', count: 7, videos: 0 }, { year: '2018', count: 1, videos: 0, photoId: '53456789012' }, { year: '2014', count: 3, videos: 1 }]
   const text = dayLinkText('12345@N01', years, 11, 27)
-  assert.match(text, /^On this day, November 27, in my photos:\n\n2025 · 7 photos\nhttps:\/\/www\.flickr\.com\/search\/\?user_id=12345%40N01&min_taken_date=1764201600&max_taken_date=1764287999&view_all=1\n/)
+  assert.match(text, /^On this day, November 27, in my photos:\n\n2014 · 2 photos and 1 video\n/)   // oldest year first, like the picture
+  assert.ok(text.indexOf('2014 ·') < text.indexOf('2018 ·') && text.indexOf('2018 ·') < text.indexOf('2025 ·'))
+  assert.match(text, /2025 · 7 photos\nhttps:\/\/www\.flickr\.com\/search\/\?user_id=12345%40N01&min_taken_date=1764201600&max_taken_date=1764287999&view_all=1\n/)
   assert.match(text, /2018 · 1 photo\nhttps:\/\/www\.flickr\.com\/photos\/12345@N01\/53456789012\/\n/)
   assert.match(text, /2014 · 2 photos and 1 video\n/)
   assert.match(text, /Public photos open for anyone/)

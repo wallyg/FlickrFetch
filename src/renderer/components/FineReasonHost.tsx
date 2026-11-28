@@ -54,7 +54,7 @@ export default function FineReasonHost(): React.JSX.Element | null {
 const styles: Record<string, React.CSSProperties> = {
   bar: { position: 'fixed', left: '50%', bottom: 22, transform: 'translateX(-50%)', zIndex: 'var(--ff-z-toast)', maxWidth: 'min(860px, calc(100vw - 48px))', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8, padding: '8px 12px', background: 'var(--ff-navy)', color: 'var(--ff-white)', borderRadius: 12, fontSize: 13, boxShadow: '0 10px 30px var(--ff-shadow-strong)' },
   lead: { fontWeight: 700, marginRight: 4 },
-  chip: { ...quietBtn, background: 'color-mix(in srgb, var(--ff-white) 12%, transparent)', borderColor: 'color-mix(in srgb, var(--ff-white) 35%, transparent)', color: 'var(--ff-white)', fontSize: 12, padding: '4px 8px' },
+  chip: { ...quietBtn, background: 'color-mix(in srgb, var(--ff-white) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--ff-white) 35%, transparent)', color: 'var(--ff-white)', fontSize: 12, padding: '4px 8px' },
   skip: { background: 'none', border: 'none', color: 'var(--ff-glass-soft)', fontSize: 12, textDecoration: 'underline', cursor: 'pointer', marginLeft: 4 },
   input: { width: 300, border: '1px solid color-mix(in srgb, var(--ff-white) 40%, transparent)', borderRadius: 6, padding: '4px 8px', fontSize: 13, background: 'var(--ff-surface)', color: 'var(--ff-text)' }
 }

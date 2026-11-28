@@ -11,7 +11,7 @@ import PhotoStrip from './PhotoStrip'
 
 export const actionStyles: Record<string, React.CSSProperties> = {
   link: { ...linkBtn, fontSize: 13 },    // looks at something on Flickr
-  fix: { ...quietBtn, borderColor: 'var(--ff-blue)', color: 'var(--ff-blue)', fontWeight: 700 },                                                  // the one real action: open the editor
+  fix: { ...quietBtn, border: '1px solid var(--ff-blue)', color: 'var(--ff-blue)', fontWeight: 700 },                                                  // the one real action: open the editor
   quiet: { ...putAsideBtn }   // puts the row aside
 }
 

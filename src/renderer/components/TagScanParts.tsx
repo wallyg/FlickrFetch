@@ -59,7 +59,7 @@ export function LibraryDataChip({ status, info, onUpdate, onRebuild, compact }: 
   return (
     <span ref={box} style={{ position: 'relative', display: 'inline-flex' }}>
       <button
-        style={{ ...quietBtn, display: 'inline-flex', alignItems: 'center', gap: 8, padding: '4px 12px', ...(old ? { borderColor: 'var(--ff-warning)', background: 'var(--ff-warning-bg)' } : {}) }}
+        style={{ ...quietBtn, display: 'inline-flex', alignItems: 'center', gap: 8, padding: '4px 12px', ...(old ? { border: '1px solid var(--ff-warning)', background: 'var(--ff-warning-bg)' } : {}) }}
         onClick={() => setOpen(o => !o)} aria-expanded={open} aria-label="Library data: update or rebuild"
       >
         <span title={dotNote} style={{ width: 8, height: 8, borderRadius: '50%', background: old ? 'var(--ff-warning)' : 'var(--ff-success)' }} />

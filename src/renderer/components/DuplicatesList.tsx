@@ -159,7 +159,7 @@ const styles: Record<string, React.CSSProperties> = {
   btn: { ...quietBtn },
   tiles: { display: 'grid', gap: 8, gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))' },
   tile: { border: '1px solid var(--ff-border)', borderRadius: 8, padding: 8, minWidth: 0, background: 'var(--ff-surface)' },
-  tileOn: { borderColor: 'var(--ff-blue)', background: 'color-mix(in srgb, var(--ff-blue) 6%, transparent)' },
+  tileOn: { border: '1px solid var(--ff-blue)', background: 'color-mix(in srgb, var(--ff-blue) 6%, transparent)' },
   top: { display: 'flex', gap: 8, alignItems: 'flex-start' },
   tick: { marginTop: 2, flexShrink: 0, cursor: 'pointer' },
   thumb: { flex: 1, minWidth: 0, height: 90, borderRadius: 6, objectFit: 'cover', background: 'var(--ff-border)' },

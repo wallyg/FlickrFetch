@@ -35,7 +35,7 @@ export const pillBtn: CSSProperties = {
 export const smallBtn: CSSProperties = { ...quietBtn, padding: '2px 8px', fontSize: 12 }
 
 // The action on a row or card: outlined blue (Health Check rows, Backup, Album fit, the On This Day card)
-export const doThisBtn: CSSProperties = { ...quietBtn, borderColor: 'var(--ff-blue)', color: 'var(--ff-blue)', fontWeight: 700 }
+export const doThisBtn: CSSProperties = { ...quietBtn, border: '1px solid var(--ff-blue)', color: 'var(--ff-blue)', fontWeight: 700 }
 
 export const doThisSmallBtn: CSSProperties = { ...doThisBtn, padding: '2px 8px', fontSize: 12 }
 
@@ -43,7 +43,7 @@ export const doThisSmallBtn: CSSProperties = { ...doThisBtn, padding: '2px 8px',
 export const putAsideBtn: CSSProperties = { background: 'none', border: 'none', padding: 0, fontSize: 12, color: 'var(--ff-text-secondary)', textDecoration: 'underline', cursor: 'pointer' }
 
 // Delete or Clear: the Secondary shape with red words and edge
-export const dangerBtn: CSSProperties = { ...quietBtn, color: 'var(--ff-error-ink)', borderColor: 'var(--ff-error-ink)' }
+export const dangerBtn: CSSProperties = { ...quietBtn, color: 'var(--ff-error-ink)', border: '1px solid var(--ff-error-ink)' }
 
 export const linkBtn: CSSProperties = {
   background: 'none', border: 'none', color: 'var(--ff-blue)', fontSize: 12, cursor: 'pointer', padding: 0
@@ -77,7 +77,7 @@ export const chip: CSSProperties = {
 export const chipCount: CSSProperties = { fontWeight: 400, color: 'var(--ff-text-secondary)' }
 export const chipRemovable: CSSProperties = {
   ...chip, display: 'inline-flex', alignItems: 'center', gap: 6, padding: '2px 4px 2px 8px',
-  background: 'var(--ff-tint)', borderColor: 'var(--ff-pink)', color: 'var(--ff-pink-action)', cursor: 'default'
+  background: 'var(--ff-tint)', border: '1px solid var(--ff-pink)', color: 'var(--ff-pink-action)', cursor: 'default'
 }
 export const chipLabel: CSSProperties = {
   border: '1px solid var(--ff-border)', borderRadius: 12, padding: '0 8px', fontSize: 12,

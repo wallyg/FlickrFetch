@@ -76,7 +76,7 @@ function StatusCircle({ status }: { status: BatchLogEntry['status'] }): React.JS
 
 function CountPill({ label, color }: { label: React.ReactNode; color: string }): React.JSX.Element {
   return (
-    <span style={{ ...styles.pill, color, borderColor: color, background: `color-mix(in srgb, ${color} 10%, transparent)` }}>
+    <span style={{ ...styles.pill, color, border: `1px solid ${color}`, background: `color-mix(in srgb, ${color} 10%, transparent)` }}>
       {label}
     </span>
   )

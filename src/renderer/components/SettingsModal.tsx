@@ -882,14 +882,14 @@ const s: Record<string, React.CSSProperties> = {
   radioHidden: { display: 'none' as const },
   radioCircle: { width: '16px', height: '16px', borderRadius: '50%', border: '1.5px solid var(--ff-line-strong)', flexShrink: 0, backgroundColor: 'var(--ff-surface)', transition: 'border-color 0.1s, box-shadow 0.1s', marginTop: '0px' },
   radioCircleSm: { width: '14px', height: '14px', borderRadius: '50%', border: '1.5px solid var(--ff-line-strong)', flexShrink: 0, backgroundColor: 'var(--ff-surface)', transition: 'border-color 0.1s, box-shadow 0.1s' },
-  radioCircleActive: { borderColor: 'var(--ff-pink)', boxShadow: 'inset 0 0 0 4px var(--ff-pink)' },
+  radioCircleActive: { border: '1.5px solid var(--ff-pink)', boxShadow: 'inset 0 0 0 4px var(--ff-pink)' },
   coreLabel: { fontSize: '13px', fontWeight: '400', color: 'var(--ff-text)' },
   coreExample: { fontSize: '11px', color: 'var(--ff-text-secondary)', fontFamily: 'monospace', marginTop: '0px' },
 
   // Separator
   sepRow: { display: 'flex', gap: '6px', flexWrap: 'wrap' as const },
   sepPill: { padding: '4px 16px', borderRadius: '50px', border: '1.5px solid var(--ff-line-strong)', background: 'var(--ff-cream)', fontSize: '13px', fontFamily: 'monospace', color: 'var(--ff-text-secondary)', cursor: 'pointer' },
-  sepPillActive: { borderColor: 'var(--ff-pink)', background: 'color-mix(in srgb, var(--ff-pink) 6%, transparent)', color: 'var(--ff-pink)', fontWeight: '700' },
+  sepPillActive: { border: '1.5px solid var(--ff-pink)', background: 'color-mix(in srgb, var(--ff-pink) 6%, transparent)', color: 'var(--ff-pink)', fontWeight: '700' },
 
   // Optional parts
   optRow: { display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--ff-border)', background: 'var(--ff-cream)' },

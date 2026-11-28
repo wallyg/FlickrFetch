@@ -46,7 +46,7 @@ export default function MapCacheControls({ limitMb, onLimit, reloadKey }: { limi
         {!confirm
           ? <button style={styles.btn} disabled={busy || !info || info.files === 0} onClick={() => setConfirm(true)}>Clear</button>
           : <>
-              <button style={{ ...styles.btn, color: 'var(--ff-error)', borderColor: 'var(--ff-error)' }} disabled={busy} onClick={() => void clear()}>{busy ? 'Clearing…' : 'Delete them'}</button>
+              <button style={{ ...styles.btn, color: 'var(--ff-error)', border: '1px solid var(--ff-error)' }} disabled={busy} onClick={() => void clear()}>{busy ? 'Clearing…' : 'Delete them'}</button>
               <button style={styles.btn} disabled={busy} onClick={() => setConfirm(false)}>Cancel</button>
             </>}
       </div>
@@ -60,7 +60,7 @@ const styles: Record<string, React.CSSProperties> = {
   row: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   label: { fontSize: 13, color: 'var(--ff-text)', minWidth: 110 },
   input: { ...fieldBox, width: 80 },
-  bad: { borderColor: 'var(--ff-error)' },
+  bad: { border: '1px solid var(--ff-error)' },
   unit: { fontSize: 13, color: 'var(--ff-text-secondary)' },
   help: { fontSize: 12, color: 'var(--ff-text-secondary)' },
   value: { fontSize: 13, color: 'var(--ff-text)', fontWeight: 700 },

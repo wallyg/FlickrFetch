@@ -346,7 +346,7 @@ export default function DiscoverGroups({ findActive = true }: { findActive?: boo
               {!selectMode && filtersActive && (
                 <HoverNote mark={false} text={"Filters are on, so only the photos shown below are downloaded.\n\nClear the filters to download the whole group."}>
                 <button
-                  style={{ ...s.selectBtn, borderColor: 'var(--ff-pink)', color: 'var(--ff-pink-action)' }}
+                  style={{ ...s.selectBtn, border: '1px solid var(--ff-pink)', color: 'var(--ff-pink-action)' }}
                   disabled={downloading || filteredPoolPhotos.length === 0}
                   onClick={handleDownloadShown}
                 >

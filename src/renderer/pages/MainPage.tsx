@@ -649,7 +649,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             actions={<>
               {photostreamFiltersActive ? (
               <button
-                style={{ ...styles.selectButton, borderColor: 'var(--ff-pink)', color: 'var(--ff-pink-action)' }}
+                style={{ ...styles.selectButton, border: '1px solid var(--ff-pink)', color: 'var(--ff-pink-action)' }}
                 disabled={photostreamFilteredPhotos.length === 0}
                 title={"Filters are on, so only the photos shown below are downloaded.\n\nClear the filters to download the whole photostream."}
                 onClick={() => startShownDownload(photostreamFilteredPhotos, 'Photostream', 'Photostream', true)}
@@ -702,7 +702,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             <>
               {albumExtraFilters ? (
                 <button
-                  style={{ ...styles.selectButton, borderColor: 'var(--ff-pink)', color: 'var(--ff-pink-action)' }}
+                  style={{ ...styles.selectButton, border: '1px solid var(--ff-pink)', color: 'var(--ff-pink-action)' }}
                   disabled={albumFilteredPhotos.length === 0}
                   title={"Filters are on, so only the photos shown below are downloaded.\n\nClear the filters to download the whole album."}
                   onClick={() => startShownDownload(albumFilteredPhotos, `"${selectedAlbum.title}"`, selectedAlbum.title)}

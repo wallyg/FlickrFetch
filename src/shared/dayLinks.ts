@@ -27,12 +27,12 @@ export function yearLinkUrl(nsid: string, y: DayLinkYear, month: number, day: nu
 }
 
 /**
- * The text that goes with the picture. `years` is newest first. With `onlyYear` (a collage of one year) it is a single line under a dated headline.
+ * The text that goes with the picture, oldest year first like the picture. With `onlyYear` (a collage of one year) it is a single line under a dated headline.
  * `everyone` is false when some of the photos are not public: the closing sentence then says who can open them.
  */
 export function dayLinkText(nsid: string, years: DayLinkYear[], month: number, day: number, opts: { onlyYear?: string; everyone?: boolean } = {}): string {
   const date = `${MONTH_NAMES[month - 1]} ${day}`
-  const list = opts.onlyYear ? years.filter(y => y.year === opts.onlyYear) : years
+  const list = (opts.onlyYear ? years.filter(y => y.year === opts.onlyYear) : years).slice().sort((a, b) => (a.year < b.year ? -1 : a.year > b.year ? 1 : 0))
   if (!nsid || list.length === 0) return ''
   const lines = list.map(y => `${opts.onlyYear ? itemsLabel(y.count, y.videos) : `${y.year} · ${itemsLabel(y.count, y.videos)}`}\n${yearLinkUrl(nsid, y, month, day)}`)
   const head = opts.onlyYear ? `On this day, ${date}, ${opts.onlyYear}, in my photos:` : `On this day, ${date}, in my photos:`

@@ -395,7 +395,7 @@ const styles: Record<string, React.CSSProperties> = {
   rowSelected: { background: 'var(--ff-tint)' },
   check: { margin: 0, pointerEvents: 'none' },
   tagName: { fontSize: '14px', fontWeight: 700, color: 'var(--ff-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '55%' },
-  variantChip: { ...chipLabel, background: 'var(--ff-warning-bg)', color: 'var(--ff-warning-text)', borderColor: 'transparent' },
+  variantChip: { ...chipLabel, background: 'var(--ff-warning-bg)', color: 'var(--ff-warning-text)', border: '1px solid transparent' },
   count: { fontSize: '13px', color: 'var(--ff-text-secondary)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' },
   tray: { display: 'flex', alignItems: 'center', gap: '16px', padding: '8px 24px', background: 'var(--ff-surface)', borderTop: '1px solid var(--ff-border)' },
   trayChips: { display: 'flex', flexWrap: 'wrap', gap: '6px', flex: 1, maxHeight: '64px', overflowY: 'auto' },

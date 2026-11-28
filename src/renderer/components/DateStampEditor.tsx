@@ -38,7 +38,7 @@ export default function DateStampEditor({ value, onChange, position }: { value: 
     <div style={styles.box}>
       <div style={styles.line}>
         <label style={styles.label} htmlFor="date-pattern">Pattern <InfoTip text={HELP} /></label>
-        <input id="date-pattern" ref={input} style={{ ...fieldBox, ...styles.input, ...(check.ok ? {} : { borderColor: 'var(--ff-error-ink)' }) }} value={text} spellCheck={false}
+        <input id="date-pattern" ref={input} style={{ ...fieldBox, ...styles.input, ...(check.ok ? {} : { border: '1px solid var(--ff-error-ink)' }) }} value={text} spellCheck={false}
           onChange={e => set(e.target.value)} aria-invalid={!check.ok} aria-describedby="date-pattern-note" />
         <span style={styles.example} aria-live="polite" title={`Shown for ${DATE_EXAMPLE_TAKEN.replace(' ', ' at ')}`}>{check.ok ? formatDateStamp(text, DATE_EXAMPLE_TAKEN) : ''}</span>
       </div>
