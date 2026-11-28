@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import Icon from '../ui/Icon'
+import { quietBtn } from '../ui/kit'
 
 type SmartMode = 'all' | 'updated' | 'never-downloaded'
 
@@ -7,9 +8,10 @@ interface SmartDownloadButtonProps {
   label: string         // primary button label, e.g. "Download album" or "Download all"
   onDownload: (mode: SmartMode) => void
   disabled?: boolean
+  quiet?: boolean       // the quiet look, for a screen where another button is the main one
 }
 
-export default function SmartDownloadButton({ label, onDownload, disabled }: SmartDownloadButtonProps) {
+export default function SmartDownloadButton({ label, onDownload, disabled, quiet }: SmartDownloadButtonProps) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -30,14 +32,14 @@ export default function SmartDownloadButton({ label, onDownload, disabled }: Sma
   return (
     <div ref={ref} style={styles.wrapper}>
       <button
-        style={{ ...styles.mainBtn, ...(disabled ? styles.disabled : {}) }}
+        style={{ ...(quiet ? styles.mainQuiet : styles.mainBtn), ...(disabled ? styles.disabled : {}) }}
         disabled={disabled}
         onClick={() => choose('all')}
       >
         {label}
       </button>
       <button
-        style={{ ...styles.arrowBtn, ...(disabled ? styles.disabled : {}) }}
+        style={{ ...(quiet ? styles.arrowQuiet : styles.arrowBtn), ...(disabled ? styles.disabled : {}) }}
         disabled={disabled}
         onClick={() => setOpen(v => !v)}
         aria-label="More download options"
@@ -87,6 +89,8 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: 'pointer',
     lineHeight: 1,
   },
+  mainQuiet: { ...quietBtn, borderRadius: '6px 0 0 6px', padding: '6px 12px', lineHeight: 1 },
+  arrowQuiet: { ...quietBtn, borderRadius: '0 6px 6px 0', borderLeft: 'none', padding: '6px 8px', fontSize: 11, lineHeight: 1 },
   disabled: {
     opacity: 0.5, cursor: 'not-allowed',
   },

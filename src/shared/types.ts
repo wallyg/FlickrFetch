@@ -483,7 +483,7 @@ export interface AlbumItem {
   count?: number         // May be missing rows: how many photos are suggested for this album
 }
 export interface AlbumListPage { rows: AlbumItem[]; total: number; reasons?: Record<'all' | MisfitReason, number> }   // reasons: May not fit only, how many rows each reason has (before the reason filter)
-export interface AlbumFitPhoto { photoId: string; title: string; thumbUrl: string; flickrUrl: string }
+export interface AlbumFitPhoto { photoId: string; title: string; thumbUrl: string; flickrUrl: string; privacy?: number; dateTaken?: string }   // privacy (0 public, 1 friends, 2 family, 3 both, 4 private) and dateTaken are given when the list knows them, so the viewer can show them
 // One album in Settings > Album Checks (How each album is judged)
 export interface AlbumKindRow { albumId: string; title: string; photos: number; kind: AlbumKind; pick: AlbumKind; overridden: boolean; why: string }
 export interface AlbumSetRequest { id: string; condition: AlbumCondition; status: 'open' | 'fine' }

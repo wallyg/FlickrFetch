@@ -647,6 +647,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
           <ScreenTop
             context={<span style={{ ...headingDialog }}>Photostream</span>}
             actions={<>
+              <button style={{ ...primaryBtn, display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={() => setPhotostreamSelectMode(true)}><Icon name="check" /> Select photos</button>
               {photostreamFiltersActive ? (
               <button
                 style={{ ...styles.selectButton, border: '1px solid var(--ff-pink)', color: 'var(--ff-pink-action)' }}
@@ -659,6 +660,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
             ) : (
               <SmartDownloadButton
                 label="Download all"
+                quiet
                 onDownload={(mode) => {
                   const smartMode = mode === 'all' ? undefined : mode
                   const photoCount = loadedPhotostreamPhotos.filter(p => p.media !== 'video').length
@@ -677,7 +679,6 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
               />
             )}
               <MoreMenu items={[
-                { key: 'select', label: 'Select photos', onClick: () => setPhotostreamSelectMode(true) },
                 { key: 'refresh', label: 'Refresh photostream', onClick: () => { exitPhotostreamSelect(); setLoadedPhotostreamPhotos([]); setPhotostreamRefreshKey(k => k + 1) } }
               ]} />
             </>}
@@ -743,7 +744,7 @@ export default function MainPage({ user, onSignOut }: MainPageProps): React.JSX.
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                   <rect x="2" y="3" width="7" height="7" rx="1"/><rect x="13" y="3" width="7" height="7" rx="1"/><rect x="2" y="14" width="7" height="7" rx="1"/><path d="M14 17l2 2 4-4"/>
                 </svg>
-                Select Photos
+                Select photos
               </button>
               <div style={{ position: 'relative' }}>
                 <button style={styles.overflowBtn} onClick={() => setShowAlbumOverflow(o => !o)} title="More actions">⋯</button>

@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Icon from '../ui/Icon'
 import BatchEditButton from './BatchEditButton'
-import type { DayPhoto, DayView, PrivacyScope } from '../../shared/types'
+import type { AlbumFitPhoto, DayPhoto, DayView, PrivacyScope } from '../../shared/types'
 import { MONTHS, pad2, hourLabel, PhotoTile } from './DateViewParts'
 import ShareDialog from './ShareDialog'
+import PhotoPeek from './PhotoPeek'
 import LoadFailed from './LoadFailed'
 import DateFilterBar, { dateExtra, extraNote, openTitle, rangeOpts, type MediaChoice, type RangeOpts } from './DateFilterBar'
 import type { PrivacyFilter } from './PhotoGridShared'
@@ -51,6 +52,8 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
   const [selected, setSelected] = useState<Map<string, DayPhoto>>(new Map())
   const [share, setShare] = useState<{ source: 'years' | 'year' | 'ticked'; year?: string } | null>(null)   // the collage maker, opened for one of three sources
   const [nsid, setNsid] = useState('')   // whose Flickr pages "On Flickr" opens
+  const [selectMode, setSelectMode] = useState(false)   // Select photos: a click ticks a photo; otherwise a click opens it
+  const [peek, setPeek] = useState<string | null>(null)   // the photo open in the viewer, by id
   const [insightsOpen, setInsightsOpen] = useState<boolean>(() => { try { return localStorage.getItem('ff-otd-insights') === 'open' } catch { return false } })   // the insights fold into one line; remembered
   const toggleInsights = (): void => setInsightsOpen(o => { try { localStorage.setItem('ff-otd-insights', o ? 'closed' : 'open') } catch { /* not remembered, still works */ } return !o })
   const reqRef = useRef(0)
@@ -73,7 +76,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
 
   useEffect(() => { void load() }, [load, refreshKey])
   useEffect(() => { void window.flickrAPI.getAuthState().then(a => setNsid(a.user?.nsid ?? '')).catch(() => setNsid('')) }, [])
-  useEffect(() => { viewRef.current++; setExpanded({}); setSelected(new Map()) }, [month, day, scope, tag, extra])
+  useEffect(() => { viewRef.current++; setExpanded({}); setSelected(new Map()); setSelectMode(false); setPeek(null) }, [month, day, scope, tag, extra])
   useEffect(() => { setAllYears(false) }, [month, day])   // a new day starts on its top five years
 
   // See in On This Day (from a Timeline day) lands here on that date
@@ -124,6 +127,9 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
     const all = await window.flickrAPI.getDayPhotos({ month, day, year, scope, offset: 0, limit: 1000, tag: tag?.key, ...extra })
     return all.filter(isStill)
   }
+
+  // The photos the viewer steps through, in the order they are on the page (newest year first)
+  const peekList = useMemo<AlbumFitPhoto[]>(() => (data ? data.years.flatMap(y => expanded[y.year] ?? y.photos).map(p => ({ photoId: p.id, title: p.title, thumbUrl: p.thumbUrl, flickrUrl: '', privacy: p.privacy, dateTaken: p.dateTaken })) : []), [data, expanded])
 
   // One list that only changes when the photos do, so the collage maker is not restarted by every redraw of the page
   const candidates = useMemo(() => (data ? data.years.flatMap(y => expanded[y.year] ?? y.photos).filter(p => p.media !== 'video') : []), [data, expanded])
@@ -194,6 +200,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
             Make a collage
           </button>
           <button style={{ ...pillBtn, padding: '4px 12px', fontSize: 13 }} disabled={data.total === 0} onClick={() => void download()}><span style={iconBlue}><DownloadIcon /></span>Download all {data.total.toLocaleString()}</button>
+          {!selectMode && <button style={{ ...pillBtn, padding: '4px 12px', fontSize: 13 }} disabled={data.total === 0} onClick={() => setSelectMode(true)} title="Tick photos to make a collage or download them"><span style={iconBlue}><Icon name="check" /></span>Select photos</button>}
           <MoreMenu label="Open" items={[
             { key: 'app', label: 'In FlickrFetch', hint: 'pick a year', disabled: true, onClick: () => undefined, title: 'FlickrFetch can show one year of this day at a time. Use Open on a year below.' },
             { key: 'flickr', label: 'On Flickr', hint: 'pick a year', disabled: true, onClick: () => undefined, title: 'Flickr cannot show this day across every year. Use Open on a year below.' }
@@ -225,18 +232,19 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
         </div>
       )}
 
-      {selected.size > 0 && (
+      {selectMode && (
         <div style={{ ...styles.row, justifyContent: 'flex-end' }}>
-          <span style={styles.muted}>{selected.size} selected</span>
+          <span style={styles.muted}>{selected.size > 0 ? `${selected.size} selected` : 'Click photos to select them'}</span>
           <button style={pillBtn} onClick={() => startShare('ticked')} disabled={pickedStills.length < 2} title={pickedStills.length < selected.size ? 'Videos are left out of collages' : 'Make a collage from the photos you ticked'}><span style={iconBlue}><Icon name="collage" /></span>Collage</button>
-          <button style={pillBtn} onClick={downloadSelected}><span style={iconBlue}><DownloadIcon /></span>Download</button>
+          <button style={pillBtn} disabled={selected.size === 0} onClick={downloadSelected}><span style={iconBlue}><DownloadIcon /></span>Download</button>
           <MoreMenu label="Open" items={[
             { key: 'app', label: 'In FlickrFetch', hint: 'not for ticked photos', disabled: true, onClick: () => undefined, title: 'FlickrFetch opens a date, not a hand-picked set of photos' },
             { key: 'flickr', label: 'On Flickr', hint: 'not for ticked photos', disabled: true, onClick: () => undefined, title: 'Flickr has no page for a hand-picked set of photos' }
           ]}>
             <BatchEditButton style={styles.menuBtn} label="In Flickr's organizer" getIds={async () => [...selected.values()].map(p => p.id)} />
           </MoreMenu>
-          <button style={linkBtn} onClick={() => setSelected(new Map())}>Clear</button>
+          {selected.size > 0 && <button style={linkBtn} onClick={() => setSelected(new Map())}>Clear</button>}
+          <button style={pillBtn} onClick={() => { setSelectMode(false); setSelected(new Map()) }}>Done</button>
         </div>
       )}
 
@@ -316,7 +324,7 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
                   </span>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, minmax(${tileSize}px, 1fr))`, gap: 8 }}>
-                  {shown.map(p => <PhotoTile key={p.id} photo={p} selected={selected.has(p.id)} onClick={() => toggle(p)} />)}
+                  {shown.map(p => <PhotoTile key={p.id} photo={p} selected={selected.has(p.id)} selectMode={selectMode} onClick={() => (selectMode ? toggle(p) : setPeek(p.id))} />)}
                   {!expanded[g.year] && g.count > PREVIEW && (
                     <button style={styles.more} onClick={() => void showAll(g.year)}>Show all {g.count.toLocaleString()}</button>
                   )}
@@ -328,6 +336,8 @@ export default function OnThisDayPanel({ refreshKey, jumpTo, onOpenRange, onDown
       )}
 
       <BackToTop />
+
+      {peek && peekList.length > 0 && <PhotoPeek photos={peekList} start={Math.max(0, peekList.findIndex(p => p.photoId === peek))} sourceName={`On This Day, ${dateLabel}`} onClose={() => setPeek(null)} />}
 
       {share && (
         <ShareDialog

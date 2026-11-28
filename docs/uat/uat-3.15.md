@@ -6,11 +6,18 @@ This is the second round: the first round's feedback and the design changes sinc
 
 ## The page (#306)
 
-- [ ] G1 **One door.** At the top of On This Day: "Make a collage", "Download all 26" and "Open ▾". The button always makes the default collage, whatever is ticked. There are no "Collage from these N" or "Collage from selected" buttons any more.
+- [ ] G1 **One door.** At the top of On This Day: "Make a collage", "Download all 26", "Select photos" and "Open ▾". The button always makes the default collage, whatever is ticked. There are no "Collage from these N" or "Collage from selected" buttons any more.
 - [ ] G2 **Year rows.** Each year row has Collage (hidden for a year with fewer than two photos), Download and Open ▾. Collage opens the maker already set to that year.
 - [ ] G3 **Open ▾.** On a year: In FlickrFetch (opens that date in the Photostream), On Flickr (that day on your Flickr page; grayed with a reason while a tag is showing), In Flickr's organizer (that year's photos). On the day: In FlickrFetch and On Flickr are grayed with "pick a year"; In Flickr's organizer works.
-- [ ] G4 **Ticked photos.** Tick photos by clicking them: a bar shows "N selected", Collage (needs two or more), Download, Open ▾, Clear. In Open ▾ only In Flickr's organizer works; the other two say "not for ticked photos". Collage opens the maker set to "My N ticked photos".
+- [ ] G4 **Ticked photos.** Press Select photos, then click photos to tick them (every photo shows an empty circle): a bar shows "N selected" (or "Click photos to select them"), Collage (needs two or more), Download, Open ▾, Clear, Done. Done leaves select mode and clears the ticks. In Open ▾ only In Flickr's organizer works; the other two say "not for ticked photos". Collage opens the maker set to "My N ticked photos".
 - [ ] G5 **Insights fold.** The four insight boxes are folded into one line ("7 years · most 2025 (7) · JAsper, Liberty, Thanksgiving · busiest around 10 am · 23 of 26 on the map"). Show insights opens them; Hide insights folds them again. The page remembers which you left it on next time.
+
+## Clicking a photo, and Select photos
+
+- [ ] K1 **A click opens the photo.** On This Day: click any photo and it opens in the app's own viewer (Photo 1 of 26, its date, privacy, location, tags, Open on Flickr, Download), with the arrow to go on. The back button returns to On This Day where you were. Right-click still gives the small menu.
+- [ ] K2 **Select photos.** The button at the top turns ticking on; clicking now ticks instead of opening. Done turns it off again. Changing the day or a filter also turns it off.
+- [ ] K3 **Timeline.** Open a month or day in the Timeline: the same: click opens the photo, Select photos (the pink main button there) turns ticking on, with "N selected", Download selected, Open in Flickr's organizer, Clear and Done.
+- [ ] K4 **Photostream.** The top row is Select photos (pink, main), Download all ▾ (quiet, same menu) and More ▾ (Refresh photostream). Select photos starts the same select mode as before. In an album the button now reads "Select photos" (sentence case).
 
 ## The window: where the photos come from (#306, #307)
 

@@ -6,7 +6,11 @@ import type { AlbumFitPhoto, FlickrPhoto } from '../../shared/types'
 // as the Photostream, over the whole window, with previous and next through the list and "Open on Flickr" inside it. A bare thumbnail never jumps
 // out to the browser (#259). It loads its own details from the photo id.
 
-const asFlickrPhoto = (p: AlbumFitPhoto): FlickrPhoto => ({ id: p.photoId, title: p.title, thumbnailUrl: p.thumbUrl, dateTaken: '' })
+const asFlickrPhoto = (p: AlbumFitPhoto): FlickrPhoto => {
+  const base: FlickrPhoto = { id: p.photoId, title: p.title, thumbnailUrl: p.thumbUrl, dateTaken: p.dateTaken ?? '' }
+  if (p.privacy === undefined) return base
+  return { ...base, ispublic: p.privacy === 0 ? 1 : 0, isfriend: p.privacy === 1 || p.privacy === 3 ? 1 : 0, isfamily: p.privacy === 2 || p.privacy === 3 ? 1 : 0 }
+}
 
 export default function PhotoPeek({ photos, start, sourceName, hasMore = false, loadMore, onClose }: {
   photos: AlbumFitPhoto[]

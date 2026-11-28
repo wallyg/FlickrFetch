@@ -18,6 +18,7 @@ const changelog: Release[] = [
       'Move and zoom — click a photo in the picture, drag it to move it inside its slot, and zoom in; Reset puts it back',
       'Share with links — Share ▾ sends the picture with or without one line for each year of the day, each a link to that day on your Flickr page (a year with a single photo links to the photo itself); Copy ▾ has Copy image and Copy links',
       'A footer on every picture — your Flickr address and "Made with FlickrFetch", instead of printed links under each photo',
+      'Click a photo to open it, Select photos to tick them — on On This Day and the Timeline a click now opens the photo in the app (as in the Photostream) and a Select photos button turns ticking on; on the Photostream Select photos is now the main button, back out of the More menu, with Download all beside it',
       'Collage, Download and Open on every level of On This Day — the day, each year and your ticked photos each get the same three buttons, and Open offers In FlickrFetch, On Flickr and In Flickr\'s organizer; the insights fold into one line you can open'
     ]
   },

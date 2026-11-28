@@ -1,7 +1,9 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import Icon from '../ui/Icon'
+import PhotoPeek from './PhotoPeek'
 import BatchEditButton from './BatchEditButton'
 import { openTitle, rangeOpts, type RangeOpts } from './DateFilterBar'
-import type { CameraRollDay, DayPhoto, PrivacyScope, DateExtra } from '../../shared/types'
+import type { AlbumFitPhoto, CameraRollDay, DayPhoto, PrivacyScope, DateExtra } from '../../shared/types'
 import { PhotoTile } from './DateViewParts'
 import LoadFailed from './LoadFailed'
 import { itemsLabel } from '../../shared/counts'
@@ -45,6 +47,8 @@ export default function CameraRoll({ from, to, title, scope, extra, extraText, o
   const [loading, setLoading] = useState(true)
   const [failed, setFailed] = useState(false)
   const [selected, setSelected] = useState<Map<string, DayPhoto>>(new Map())
+  const [selectMode, setSelectMode] = useState(false)   // Select photos: a click ticks a photo; otherwise a click opens it
+  const [peek, setPeek] = useState<string | null>(null)   // the photo open in the viewer, by id
   const reqRef = useRef(0)
 
   const load = useCallback(async (offset: number): Promise<void> => {
@@ -63,7 +67,9 @@ export default function CameraRoll({ from, to, title, scope, extra, extraText, o
     }
   }, [from, to, scope, order, xk]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => { setSelected(new Map()); void load(0) }, [load])
+  useEffect(() => { setSelected(new Map()); setSelectMode(false); setPeek(null); void load(0) }, [load])
+  // The photos the viewer steps through: every photo on the page, in the order shown
+  const peekList = useMemo<AlbumFitPhoto[]>(() => days.flatMap(d => d.photos).map(p => ({ photoId: p.id, title: p.title, thumbUrl: p.thumbUrl, flickrUrl: '', privacy: p.privacy, dateTaken: p.dateTaken })), [days])
 
   const scopeNote = (scope === 'public' ? ' (public only)' : scope === 'notpublic' ? ' (not public only)' : '') + (extraText ?? '')
   const toggle = (p: DayPhoto): void => setSelected(prev => { const n = new Map(prev); if (n.has(p.id)) n.delete(p.id); else n.set(p.id, p); return n })
@@ -84,7 +90,8 @@ export default function CameraRoll({ from, to, title, scope, extra, extraText, o
           <span style={styles.muted}>{itemsLabel(totalPhotos, totalVideos)} on {totalDays.toLocaleString()} day{totalDays === 1 ? '' : 's'}{scopeNote}</span>
         </>}
         actions={<>
-          <button style={styles.primary} disabled={totalPhotos === 0} onClick={() => void downloadAll()}>Download all {totalPhotos.toLocaleString()}</button>
+          {!selectMode && <button style={{ ...styles.primary, display: 'inline-flex', alignItems: 'center', gap: 6 }} disabled={totalPhotos === 0} onClick={() => setSelectMode(true)}><Icon name="check" /> Select photos</button>}
+          <button style={styles.btn} disabled={totalPhotos === 0} onClick={() => void downloadAll()}>Download all {totalPhotos.toLocaleString()}</button>
           <MoreMenu items={[
             ...(onSeeOnThisDay ? [{ key: 'otd', label: 'See in On This Day', title: 'This date in every year', onClick: onSeeOnThisDay }] : []),
             { key: 'stream', label: 'Open in Photostream', title: extra?.albumIds?.length ? openTitle(extra, 'that period') : undefined, onClick: () => onOpenRange(from, to, rangeOpts(extra)) }
@@ -104,12 +111,13 @@ export default function CameraRoll({ from, to, title, scope, extra, extraText, o
       />
       <div style={{ height: 8 }} />
 
-      {selected.size > 0 && (
+      {selectMode && (
         <div style={{ ...styles.bar, background: 'var(--ff-tint)', border: '1px solid #ffc2de', borderRadius: 8, padding: '6px 8px' }}>
-          <span style={styles.muted}>{selected.size} selected</span>
-          <button style={styles.btn} onClick={() => onDownload([...selected.values()].map(p => ({ id: p.id, title: p.title })), `Camera roll, ${title} (selected)`, 'Only the photos you selected')}>Download selected</button>
+          <span style={styles.muted}>{selected.size > 0 ? `${selected.size} selected` : 'Click photos to select them'}</span>
+          <button style={styles.btn} disabled={selected.size === 0} onClick={() => onDownload([...selected.values()].map(p => ({ id: p.id, title: p.title })), `Camera roll, ${title} (selected)`, 'Only the photos you selected')}>Download selected</button>
           <BatchEditButton inline style={styles.btn} getIds={async () => [...selected.values()].map(p => p.id)} />
-          <button style={styles.link} onClick={() => setSelected(new Map())}>Clear</button>
+          {selected.size > 0 && <button style={styles.link} onClick={() => setSelected(new Map())}>Clear</button>}
+          <button style={styles.btn} onClick={() => { setSelectMode(false); setSelected(new Map()) }}>Done</button>
         </div>
       )}
 
@@ -128,7 +136,7 @@ export default function CameraRoll({ from, to, title, scope, extra, extraText, o
                 </span>
               )}
             </div>
-            <div style={styles.tiles}>{d.photos.map(p => <PhotoTile key={p.id} photo={p} selected={selected.has(p.id)} onClick={() => toggle(p)} />)}</div>
+            <div style={styles.tiles}>{d.photos.map(p => <PhotoTile key={p.id} photo={p} selected={selected.has(p.id)} selectMode={selectMode} onClick={() => (selectMode ? toggle(p) : setPeek(p.id))} />)}</div>
             {d.count > d.photos.length && <div style={styles.muted}>Showing the first {d.photos.length} of {d.count.toLocaleString()}. Open in Photostream or Download this day for all of them.</div>}
           </div>
         ))}
@@ -137,6 +145,7 @@ export default function CameraRoll({ from, to, title, scope, extra, extraText, o
       {days.length < totalDays && (
         <button style={styles.more} onClick={() => void load(days.length)}>Show more days ({(totalDays - days.length).toLocaleString()} left)</button>
       )}
+      {peek && peekList.length > 0 && <PhotoPeek photos={peekList} start={Math.max(0, peekList.findIndex(p => p.photoId === peek))} sourceName={`Timeline, ${title}`} onClose={() => setPeek(null)} />}
     </div>
   )
 }

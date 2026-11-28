@@ -668,7 +668,7 @@ export default function DiscoverPeople({ isActive, findActive = true }: { isActi
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.57" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                     <rect x="2" y="3" width="7" height="7" rx="1"/><rect x="13" y="3" width="7" height="7" rx="1"/><rect x="2" y="14" width="7" height="7" rx="1"/><path d="M14 17l2 2 4-4"/>
                   </svg>
-                  Select Photos
+                  Select photos
                 </button>
               )}
               {albumSelectMode && (
@@ -901,7 +901,7 @@ export default function DiscoverPeople({ isActive, findActive = true }: { isActi
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.57" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                       <rect x="2" y="3" width="7" height="7" rx="1"/><rect x="13" y="3" width="7" height="7" rx="1"/><rect x="2" y="14" width="7" height="7" rx="1"/><path d="M14 17l2 2 4-4"/>
                     </svg>
-                    Select Photos
+                    Select photos
                   </button>
                 )}
                 {userSelectMode && (

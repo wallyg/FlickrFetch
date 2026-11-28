@@ -208,3 +208,19 @@ test('a chosen tile is shown by a whole border, never by borderColor: React leav
   const code = readFileSync('src/renderer/components/ShareDialog.tsx', 'utf8').replace(/\/\/[^\n]*/g, '')
   assert.ok(!/\bborder(?:Bottom|Top|Left|Right)?Color\s*:/.test(code), 'use border: ... for the chosen look instead of borderColor')
 })
+
+test('a click opens the photo and Select photos turns ticking on: On This Day, the Timeline day view and the Photostream work the same way', () => {
+  const panel = readFileSync('src/renderer/components/OnThisDayPanel.tsx', 'utf8')
+  const roll = readFileSync('src/renderer/components/CameraRoll.tsx', 'utf8')
+  for (const [name, code] of [['On This Day', panel], ['Timeline', roll]] as const) {
+    assert.match(code, /selectMode \? toggle\(p\) : setPeek\(p\.id\)/, `${name}: a click opens the photo unless Select photos is on`)
+    assert.match(code, /Select photos/, `${name}: has the Select photos button`)
+    assert.match(code, /setSelectMode\(false\)/, `${name}: Done leaves select mode`)
+    assert.match(code, /<PhotoPeek /, `${name}: opens the photo in the app's viewer`)
+  }
+  const main = readFileSync('src/renderer/pages/MainPage.tsx', 'utf8')
+  const header = main.slice(main.indexOf("context={<span style={{ ...headingDialog }}>Photostream</span>}"))
+  assert.ok(header.indexOf('Select photos') > 0 && header.indexOf('Select photos') < header.indexOf('<SmartDownloadButton'), 'Select photos comes first on the Photostream')
+  assert.match(header.slice(0, header.indexOf('<MoreMenu')), /\.\.\.primaryBtn[^]*Select photos/, 'Select photos is the main (pink) button')
+  assert.match(header, /label="Download all"\s+quiet/, 'Download all is the quiet one')
+})

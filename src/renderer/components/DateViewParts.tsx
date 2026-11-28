@@ -43,14 +43,15 @@ export function ScopeToggle({ scope, counts, enabled, onChange }: {
   )
 }
 
-export function PhotoTile({ photo, selected, onClick }: { photo: DayPhoto; selected: boolean; onClick: () => void }): React.JSX.Element {
+// A click opens the photo; in select mode (the Select photos button) a click ticks it instead, and every tile shows an empty tick circle to say so.
+export function PhotoTile({ photo, selected, onClick, selectMode = false }: { photo: DayPhoto; selected: boolean; onClick: () => void; selectMode?: boolean }): React.JSX.Element {
   return (
     <div
       {...asButton(onClick)}
-      aria-pressed={selected}
+      aria-pressed={selectMode ? selected : undefined}
       aria-label={photo.title || '(no title)'}
       onContextMenu={e => { e.preventDefault(); window.flickrAPI.showPhotoMenu(photo.id) }}
-      title={`${photo.title || '(no title)'}\nClick to select. Right-click for more.`}
+      title={`${photo.title || '(no title)'}\n${selectMode ? 'Click to select.' : 'Click to open.'} Right-click for more.`}
       style={{ position: 'relative', borderRadius: 8, overflow: 'hidden', background: 'var(--ff-border)', cursor: 'pointer',
         outline: selected ? '3px solid var(--ff-pink)' : 'none', outlineOffset: -3 }}
     >
@@ -60,8 +61,10 @@ export function PhotoTile({ photo, selected, onClick }: { photo: DayPhoto; selec
       {photo.media === 'video' && (
         <span style={{ position: 'absolute', right: 5, bottom: 26, zIndex: 2, fontSize: 11, background: 'var(--ff-scrim-strong)', color: 'var(--ff-white)', borderRadius: 8, padding: '0px 6px' }} title="Video"><Icon name="play" /> Video</span>
       )}
-      {selected && (
+      {selected ? (
         <span style={{ position: 'absolute', right: 5, top: 5, zIndex: 2, fontSize: 11, background: 'var(--ff-pink)', color: 'var(--ff-white)', borderRadius: 8, padding: '0 6px' }}><Icon name="check" /></span>
+      ) : selectMode && (
+        <span style={{ position: 'absolute', right: 5, top: 5, zIndex: 2, width: 18, height: 18, boxSizing: 'border-box', background: 'var(--ff-glass)', border: '2px solid var(--ff-white)', borderRadius: 50 }} aria-hidden="true" />
       )}
       <img src={photo.thumbUrl} alt="" loading="lazy" style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', display: 'block' }} />
       <span style={{ display: 'block', fontSize: 11, padding: '2px 4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', background: 'var(--ff-surface)', color: 'var(--ff-text)' }}>
