@@ -201,3 +201,8 @@ test('an arrangement is greyed out for too few photos, and a "same as" reason is
   // Auto keeps every arrangement
   for (const l of LAYOUTS) assert.equal(arrangementOff(l, 5, undefined, YEARS), '')
 })
+
+test('a chosen tile is shown by a whole border, never by borderColor: React leaves the old colour on a tile that is switched back off, so old choices stay dark', () => {
+  const code = readFileSync('src/renderer/components/ShareDialog.tsx', 'utf8').replace(/\/\/[^\n]*/g, '')
+  assert.ok(!/\bborder(?:Bottom|Top|Left|Right)?Color\s*:/.test(code), 'use border: ... for the chosen look instead of borderColor')
+})

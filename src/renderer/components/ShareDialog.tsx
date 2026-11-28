@@ -725,10 +725,6 @@ export default function ShareDialog({ years, candidates, ticked, initialSource, 
                 <button style={styles.more} onClick={() => scrollRef.current?.scrollBy({ top: 240, behavior: 'smooth' })}><Icon name="arrowDown" /> More below</button>
               </div>
             )}
-            <div style={styles.nav}>
-              <button style={styles.btn} disabled={step === 1} onClick={() => setStep(step - 1)}>Back</button>
-              <button style={styles.btn} disabled={step === 3} onClick={() => setStep(step + 1)}>Next</button>
-            </div>
             <div style={styles.dock}>
               {nonPublic > 0 && <div style={styles.warn} title="You will be asked before saving, copying or sharing"><Icon name="lock" /> {nonPublic} of {chosen.length} photos aren't public</div>}
               <div style={{ display: 'flex', gap: 8, flexWrap: 'nowrap' }}>
@@ -883,18 +879,17 @@ const styles: Record<string, React.CSSProperties> = {
   pinRow: { display: 'flex', alignItems: 'center', gap: 8 },
   tabs: { display: 'flex', gap: 4 },
   tab: { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, border: 'none', background: 'none', color: 'var(--ff-text-secondary)', cursor: 'pointer', padding: '4px 0', borderBottom: '2px solid var(--ff-border)', fontSize: 12 },
-  tabOn: { color: 'var(--ff-navy)', fontWeight: 700, borderBottomColor: 'var(--ff-pink)' },
+  tabOn: { color: 'var(--ff-navy)', fontWeight: 700, borderBottom: '2px solid var(--ff-pink)' },   // a whole border, never borderColor: React leaves the old colour behind when a longhand is switched back off
   tabNum: { width: 20, height: 20, borderRadius: 50, background: 'var(--ff-border)', color: 'var(--ff-text)', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' },
   tabNumOn: { background: 'var(--ff-navy)', color: 'var(--ff-white)' },
   lookGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 },
   look: { ...quietBtn, border: '1px solid var(--ff-line-strong)', background: 'var(--ff-white)', borderRadius: 8, padding: 6, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, color: 'var(--ff-text)' },
-  lookOn: { borderColor: 'var(--ff-pink)', boxShadow: 'inset 0 0 0 1px var(--ff-pink)', color: 'var(--ff-pink-action)' },
+  lookOn: { border: '1px solid var(--ff-pink)', boxShadow: 'inset 0 0 0 1px var(--ff-pink)', color: 'var(--ff-pink-action)' },
   shapeGrid: { display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6 },
   shapeBtn: { ...quietBtn, border: '1px solid var(--ff-line-strong)', background: 'var(--ff-white)', borderRadius: 8, padding: '6px 2px', fontSize: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer', color: 'var(--ff-text)' },
   cardGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 },
   arrCard: { ...quietBtn, border: '1px solid var(--ff-line-strong)', background: 'var(--ff-white)', borderRadius: 8, padding: '6px 8px 8px', display: 'flex', flexDirection: 'column', gap: 2, textAlign: 'left', cursor: 'pointer', color: 'var(--ff-text)', minWidth: 0 },
   arrPic: { background: 'var(--ff-warm)', borderRadius: 6, height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 2 },
-  nav: { display: 'flex', justifyContent: 'space-between', gap: 8 },
   scroll: { flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16, paddingRight: 6, paddingBottom: 8 },
   dock: { flexShrink: 0, borderTop: '1px solid var(--ff-border)', paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 8 },
   fade: { flexShrink: 0, height: 36, marginTop: -36, marginRight: 6, pointerEvents: 'none', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: 2, background: 'linear-gradient(to bottom, transparent, var(--ff-cream))' },
@@ -907,7 +902,7 @@ const styles: Record<string, React.CSSProperties> = {
   preview: { flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ece8e1', borderRadius: 8, padding: 12, overflow: 'hidden', position: 'relative' },
   strip: { display: 'flex', gap: 4, flexWrap: 'wrap' },
   thumb: { position: 'relative', width: 60, height: 60, padding: 0, border: '2px solid transparent', borderRadius: 4, cursor: 'pointer', backgroundSize: 'cover', backgroundPosition: 'center', backgroundColor: 'var(--ff-warm)' },
-  thumbOn: { borderColor: 'var(--ff-pink)' },
+  thumbOn: { border: '2px solid var(--ff-pink)' },
   zoomCard: { position: 'fixed', zIndex: 'var(--ff-z-hover)', width: 'max-content', maxWidth: 280, pointerEvents: 'none', background: 'var(--ff-white)', border: '1px solid var(--ff-border)', borderRadius: 8, boxShadow: '0 6px 20px var(--ff-shadow-mid)', padding: 6, display: 'flex', flexDirection: 'column', gap: 4 },
   zoomImg: { display: 'block', maxWidth: 268, maxHeight: 268, objectFit: 'contain', borderRadius: 4 },
   thumbYear: { position: 'absolute', left: 2, bottom: 0, fontSize: 11, fontWeight: 700, color: 'var(--ff-white)', textShadow: '0 0 3px var(--ff-shadow-mid)' },

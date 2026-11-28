@@ -24,7 +24,7 @@ This is the second round: the first round's feedback and the design changes sinc
 
 ## The window: three steps (#307)
 
-- [ ] I1 **Steps.** Style, Layout, Photos, as numbers you can click in any order, with Back and Next. A one-line summary under them says the look, arrangement and shape you have.
+- [ ] I1 **Steps.** Style, Layout, Photos, as numbers you can click in any order (there are no Back and Next buttons; the numbers do the job). A one-line summary under them says the look, arrangement and shape you have.
 - [ ] I2 **Style.** Look: five small previews made from your own photos (Polaroid, Tinted, Paper, Gallery, Film). Shape: five small drawings (Auto, 1:1, 4:5, 9:16, 16:9) and Standard or Large. It should fit without scrolling in a normal window; if it does not, "More below" shows.
 - [ ] I3 **Layout.** Arrangement cards with a drawing and a few words: Grid, Mosaic, Feature, Banner, Row, Column, By year. Polaroid says it arranges itself. One photo says it makes a single card.
 - [ ] I4 **Grayed cards.** Feature and Banner below 3 photos; By year with one year; in Square and Wide, Column (same as Row) and Banner (same as Feature); in Story, Row (same as Column). Each says why in a few words.
