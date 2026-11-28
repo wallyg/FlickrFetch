@@ -756,7 +756,7 @@ export default function ShareDialog({ years, candidates, ticked, initialSource, 
                 <div style={styles.popGrid}>
                   {others.slice(0, 60).map(p => (
                     <button key={p.id} style={{ ...styles.popThumb, backgroundImage: `url(${p.thumbUrl})`, ...(picker.candidate?.id === p.id ? styles.thumbOn : {}) }} aria-label={`Use the photo from ${p.dateTaken.slice(0, 4)}`}
-                      onClick={() => setPicker({ ...picker, candidate: p })}><span style={styles.thumbYear}>{p.dateTaken.slice(0, 4)}</span></button>
+                      onClick={() => setPicker({ ...picker, candidate: p })} onMouseEnter={e => { const r = e.currentTarget.getBoundingClientRect(); setHover({ p, left: r.right + 12, top: r.top }) }} onMouseLeave={() => setHover(null)}><span style={styles.thumbYear}>{p.dateTaken.slice(0, 4)}</span></button>
                   ))}
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
@@ -781,8 +781,8 @@ export default function ShareDialog({ years, candidates, ticked, initialSource, 
           </div>
         </div>
         {hover && createPortal(
-          <div style={{ ...styles.zoomCard, left: hover.left, top: Math.max(8, Math.min(hover.top, window.innerHeight - 320)) }} aria-hidden="true">
-            <img src={cache.current.get(hover.p.id)?.src ?? hover.p.thumbUrl} alt="" style={styles.zoomImg} />
+          <div style={{ ...styles.zoomCard, left: Math.max(8, Math.min(hover.left, window.innerWidth - 300)), top: Math.max(8, Math.min(hover.top, window.innerHeight - 320)) }} aria-hidden="true">
+            <img src={cache.current.get(hover.p.id)?.src ?? hover.p.thumbUrl.replace(/_[a-z]\.jpg$/, '_n.jpg')} alt="" style={styles.zoomImg} />
             <div style={styles.muted}>{hover.p.dateTaken.slice(0, 4)}{hover.p.title ? ` · ${hover.p.title}` : ''}</div>
           </div>,
           document.body
@@ -906,7 +906,7 @@ const styles: Record<string, React.CSSProperties> = {
   zoomCard: { position: 'fixed', zIndex: 'var(--ff-z-hover)', width: 'max-content', maxWidth: 280, pointerEvents: 'none', background: 'var(--ff-white)', border: '1px solid var(--ff-border)', borderRadius: 8, boxShadow: '0 6px 20px var(--ff-shadow-mid)', padding: 6, display: 'flex', flexDirection: 'column', gap: 4 },
   zoomImg: { display: 'block', maxWidth: 268, maxHeight: 268, objectFit: 'contain', borderRadius: 4 },
   thumbYear: { position: 'absolute', left: 2, bottom: 0, fontSize: 11, fontWeight: 700, color: 'var(--ff-white)', textShadow: '0 0 3px var(--ff-shadow-mid)' },
-  pop: { position: 'absolute', left: 12, top: 12, zIndex: 'var(--ff-z-sticky)', width: 'min(340px, calc(100% - 24px))', maxHeight: 'calc(100% - 24px)', overflowY: 'auto', background: 'var(--ff-white)', border: '1px solid var(--ff-border)', borderRadius: 12, boxShadow: '0 6px 20px var(--ff-shadow-mid)', padding: 12, display: 'flex', flexDirection: 'column', gap: 8 },
+  pop: { position: 'absolute', left: 12, top: 12, zIndex: 'var(--ff-z-sticky)', width: 'min(560px, calc(100% - 24px))', maxHeight: 'calc(100% - 24px)', overflowY: 'auto', background: 'var(--ff-white)', border: '1px solid var(--ff-border)', borderRadius: 12, boxShadow: '0 6px 20px var(--ff-shadow-mid)', padding: 12, display: 'flex', flexDirection: 'column', gap: 8 },
   popGrid: { display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 4 },
   popThumb: { position: 'relative', aspectRatio: '1', padding: 0, border: '2px solid transparent', borderRadius: 4, cursor: 'pointer', backgroundSize: 'cover', backgroundPosition: 'center', backgroundColor: 'var(--ff-warm)' },
   tool: { position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)', zIndex: 'var(--ff-z-sticky)', width: 'min(94%, 520px)', background: 'var(--ff-white)', border: '1px solid var(--ff-border)', borderRadius: 12, boxShadow: '0 6px 20px var(--ff-shadow-mid)', padding: '8px 12px', display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center', fontSize: 13 },
