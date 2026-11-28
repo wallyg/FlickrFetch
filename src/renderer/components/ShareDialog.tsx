@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import CloseButton from '../ui/CloseButton'
 import { polaroidLayout, captionPlan, type TextKind } from '../ui/polaroid'
-import { canShuffle, defaultCount, planPicks, shufflePicks, SHUFFLE_MAX, type ShuffleMode } from '../ui/shuffle'
+import { canShuffle, defaultCount, oldestFirst, planPicks, shufflePicks, SHUFFLE_MAX, type ShuffleMode } from '../ui/shuffle'
 import { arrangementOff, cellsFor, cellsFit, maxPhotos, cropSource, panCrop, zoomCrop, hitTest, MAX_ZOOM, MIN_SIDE, type Layout, type Rect, type Crop } from '../ui/collage'
 import { dayLinkText, type DayLinkYear } from '../../shared/dayLinks'
 import Icon from '../ui/Icon'
@@ -25,7 +25,7 @@ const LAYOUTS: { key: Layout; label: string; tip: string; short: string }[] = [
   { key: 'grid', label: 'Grid', tip: 'Equal photos in neat rows', short: 'Equal, in rows' }, { key: 'mosaic', label: 'Mosaic', tip: 'Tiles of different sizes, no gaps', short: 'Mixed sizes' },
   { key: 'feature', label: 'Feature', tip: 'One big photo, the rest smaller beside it', short: 'One big, rest beside' }, { key: 'banner', label: 'Banner', tip: 'One wide photo on top, the rest in a row below', short: 'One wide on top' },
   { key: 'row', label: 'Row', tip: 'All the photos side by side', short: 'Side by side' }, { key: 'column', label: 'Column', tip: 'All the photos stacked, one under the next', short: 'Stacked' },
-  { key: 'ladder', label: 'By year', tip: 'Grouped under a heading for each year, newest first', short: 'A heading per year' }
+  { key: 'ladder', label: 'By year', tip: 'Grouped under a heading for each year, oldest first', short: 'A heading per year' }
 ]
 const FRAMES: { key: Frame; label: string; tip: string }[] = [
   { key: 'polaroid', label: 'Polaroid', tip: 'White instant-photo cards on a background tinted from your photos' },
@@ -218,7 +218,8 @@ export default function ShareDialog({ years, candidates, ticked, initialSource, 
   }
   const yearsOf = (n: number): string[] => plans[Math.min(Math.max(n, 0), SHUFFLE_MAX)].map(p => p.dateTaken.slice(0, 4))
   const aspectFor = (n: number): number | undefined => { const b = boxFor(n); return b.ch ? b.cw / b.ch : undefined }
-  const layoutFor = (l: Layout, n: number): Layout => (arrangementOff(l, n, aspectFor(n), yearsOf(n)) ? 'grid' : l)   // a greyed arrangement draws as Grid
+  const layoutWith = (l: Layout, n: number, ys: string[]): Layout => (arrangementOff(l, n, aspectFor(n), ys) ? 'grid' : l)   // a greyed arrangement draws as Grid
+  const layoutFor = (l: Layout, n: number): Layout => layoutWith(l, n, yearsOf(n))   // for the photos planned for n (how many fit)
   const fitsCount = (n: number): boolean => {
     const b = boxFor(n)
     if (frame === 'polaroid') return polaroidLayout(n, b.cw, b.ch).w >= b.cw * MIN_SIDE
@@ -237,8 +238,14 @@ export default function ShareDialog({ years, candidates, ticked, initialSource, 
   const [override, setOverride] = useState<{ key: string; list: DayPhoto[] } | null>(null)
   const picks = override && override.key === baseKey ? override.list : basePicks
   const chosen = useMemo(() => picks.slice(0, shownCount), [picks, shownCount])
+  const shownYears = chosen.map(p => p.dateTaken.slice(0, 4))   // the years of the photos on screen, which a Shuffle, Replace or Swap can change
   const dateLabel = onlyYear ? `${MONTHS[month - 1]} ${day}, ${onlyYear}` : `${MONTHS[month - 1]} ${day}`
   const nonPublic = chosen.filter(p => p.privacy > 0).length
+  // Why fewer photos show than you asked for: the look's own limit, the room in this look and shape, or simply not having that many photos
+  const lookCap = frame === 'polaroid' ? 6 : 8
+  const countNote = maxCount < Math.min(poolPhotos.length, lookCap) ? `This look and shape fit ${maxCount}, so the picture shows ${shownCount}. A different look or shape can bring ${count} back.`
+    : poolPhotos.length < count ? `There ${poolPhotos.length === 1 ? 'is only 1 photo' : `are only ${poolPhotos.length} photos`} to choose from here.`
+    : `${frame === 'polaroid' ? 'Polaroid holds 6' : 'A collage holds 8'}, so the picture shows ${shownCount}. A different look can bring ${count} back.`
 
   // What the header says about the whole day (all of its photos, or only the public ones when that is ticked)
   const [facts, setFacts] = useState<{ total: number; videos: number; years: number; tags: string[]; yearList: DayLinkYear[] } | null>(null)   // tags: the day's most common, up to 8
@@ -329,7 +336,7 @@ export default function ShareDialog({ years, candidates, ticked, initialSource, 
     // Work out the sizes: a fixed shape gives the photos exactly the room between the header and the footer
     const bodyAvail = fixed ? Math.max(120, sh.h - pad - headerH - footerH - bottom) : undefined
     const pol = polaroidLayout(n, cw, bodyAvail)
-    const lay = layoutFor(layout, n)
+    const lay = layoutWith(layout, n, ready.map(p => p.dateTaken.slice(0, 4)))
     const body = frame === 'polaroid' ? { rects: [] as Rect[], h: pol.total, heads: [] } : cellsFor(lay, n, cw, bodyAvail, ready.map(p => p.dateTaken.slice(0, 4)))
     const contentH = fixed ? (bodyAvail as number) : body.h
     const H = fixed ? sh.h : Math.ceil(pad + headerH + contentH + footerH + bottom)
@@ -468,6 +475,7 @@ export default function ShareDialog({ years, candidates, ticked, initialSource, 
 
   // Replace one photo with another from the day, or swap two places (#143). A photo that moves keeps its crop; a replaced one is simply a different photo.
   const edit = (list: DayPhoto[]): void => setOverride({ key: baseKey, list })
+  const inOrder = (l: DayPhoto[]): boolean => l.every((p, i) => i === 0 || l[i - 1].dateTaken <= p.dateTaken)
   const swapPlaces = (a: number, b: number): void => {
     if (a === b || a >= picks.length || b >= picks.length) return
     const list = picks.slice(); [list[a], list[b]] = [list[b], list[a]]
@@ -484,7 +492,7 @@ export default function ShareDialog({ years, candidates, ticked, initialSource, 
     const at = list.findIndex(p => p.id === cand.id)   // already further down the list (not shown yet): trade places so no photo appears twice
     if (at >= 0) list[at] = list[index]
     list[index] = cand
-    edit(list)
+    edit(inOrder(picks) ? oldestFirst(list) : list)   // a list still oldest first stays that way; one you reordered by hand keeps your order
     setPicker(null); setNote(''); setSelId(null)
   }
   const replacePool = useMemo(() => {   // to replace a photo, any photo of the day (or of the year, in a one-year collage)
@@ -529,7 +537,7 @@ export default function ShareDialog({ years, candidates, ticked, initialSource, 
     if (nonPublic === 0) return true
     return window.flickrAPI.confirm(
       `${nonPublic} of these ${chosen.length} photo${chosen.length === 1 ? ' is' : 's are'} not public.`,
-      'Anyone you send this picture to can see them.\n\nThe short Flickr links only open for people Flickr lets see the photo.',
+      'The picture shows them, so anyone you send it to can see them.\n\nLinks sent with the picture open only for people Flickr lets see those photos.',
       'Make it anyway'
     )
   }
@@ -621,7 +629,7 @@ export default function ShareDialog({ years, candidates, ticked, initialSource, 
                 <span style={styles.muted}>up to {maxCount}{maxCount < Math.min(poolPhotos.length, frame === 'polaroid' ? 6 : 8) ? ' for this look' : ''}</span>
               </div>
               {source === 'years' && shownCount > 1 && <div style={styles.muted} title="The years are spread evenly across your years, with the newest and the oldest always in">Years: {[...new Set(chosen.map(p => p.dateTaken.slice(0, 4)))].join(' · ')}</div>}
-              {count > shownCount && <div style={styles.muted}>{frame === 'polaroid' ? 'Polaroid holds 6' : 'This look and shape fit'} {maxCount}, so the picture shows {shownCount}. A different look or shape can bring {count} back.</div>}
+              {count > shownCount && <div style={styles.muted}>{countNote}</div>}
             </div>
             <div style={styles.tabs} role="tablist">
               {['Style', 'Layout', 'Photos'].map((name, i) => (
@@ -631,7 +639,7 @@ export default function ShareDialog({ years, candidates, ticked, initialSource, 
               ))}
             </div>
             <div style={styles.muted}><b style={{ color: 'var(--ff-text)' }}>{FRAMES.find(f => f.key === frame)?.label}</b>
-              {frame !== 'polaroid' && shownCount > 1 ? <> · <b style={{ color: 'var(--ff-text)' }}>{LAYOUTS.find(l => l.key === layoutFor(layout, shownCount))?.label}</b></> : null}
+              {frame !== 'polaroid' && shownCount > 1 ? <> · <b style={{ color: 'var(--ff-text)' }}>{LAYOUTS.find(l => l.key === layoutWith(layout, shownCount, shownYears))?.label}</b></> : null}
               {' · '}<b style={{ color: 'var(--ff-text)' }}>{shapeInfo.label}</b>{resolution === 'large' ? <> · <b style={{ color: 'var(--ff-text)' }}>Large</b></> : null}</div>
             <div ref={scrollRef} style={styles.scroll} onScroll={checkScroll}>
               {step === 1 && (
@@ -668,12 +676,12 @@ export default function ShareDialog({ years, candidates, ticked, initialSource, 
                     : (
                       <div style={styles.cardGrid}>
                         {LAYOUTS.map(l => {
-                          const why = arrangementOff(l.key, shownCount, aspectFor(shownCount), yearsOf(shownCount))
+                          const why = arrangementOff(l.key, shownCount, aspectFor(shownCount), shownYears)
                           const bx = boxFor(shownCount)
-                          const on = layoutFor(layout, shownCount) === l.key
+                          const on = layoutWith(layout, shownCount, shownYears) === l.key
                           return (
                             <button key={l.key} disabled={!!why} aria-pressed={on} title={why || l.tip} style={{ ...styles.arrCard, ...(on ? styles.lookOn : {}), ...(why ? { opacity: 0.45, cursor: 'default' } : {}) }} onClick={() => setLayout(l.key)}>
-                              <span style={styles.arrPic}><ArrangeIcon layout={l.key} n={shownCount} cw={bx.cw} ch={bx.ch} years={chosen.map(p => p.dateTaken.slice(0, 4))} width={90} height={40} /></span>
+                              <span style={styles.arrPic}><ArrangeIcon layout={l.key} n={shownCount} cw={bx.cw} ch={bx.ch} years={shownYears} width={90} height={40} /></span>
                               <b style={{ fontSize: 13 }}>{l.label}</b>
                               <span style={styles.muted}>{why || l.short}</span>
                             </button>

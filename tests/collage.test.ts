@@ -40,16 +40,17 @@ test('the Mosaic templates fill their grid exactly: four columns, no gaps in the
   }
 })
 
-test('Year ladder: photos sit under their year heading, newest year first, and rects line up with the photos they belong to', () => {
+test('Year ladder: photos sit under their year heading, oldest year first, and rects line up with the photos they belong to', () => {
   const years = ['2021', '2025', '2021', '2018']
   const cells = cellsFor('ladder', 4, 968, undefined, years)
-  assert.deepEqual(cells.heads.map(h => h.text), ['2025', '2021', '2018'])
-  assert.ok(cells.heads[1].y > cells.heads[0].y)
-  // photo 1 is the 2025 one: it sits right under the first heading, above both 2021 photos
-  assert.equal(cells.rects[1].y, cells.heads[0].y + HEAD_H)
-  assert.ok(cells.rects[0].y > cells.rects[1].y && cells.rects[2].y === cells.rects[0].y)
-  assert.ok(cells.rects[3].y > cells.rects[0].y)
+  assert.deepEqual(cells.heads.map(h => h.text), ['2018', '2021', '2025'])
+  assert.ok(cells.heads[1].y > cells.heads[0].y && cells.heads[2].y > cells.heads[1].y)
+  // photo 3 is the 2018 one: it sits right under the first heading, above both 2021 photos and the 2025 one
+  assert.equal(cells.rects[3].y, cells.heads[0].y + HEAD_H)
+  assert.ok(cells.rects[0].y > cells.rects[3].y && cells.rects[2].y === cells.rects[0].y)
   assert.equal(cells.rects[0].y, cells.heads[1].y + HEAD_H)
+  assert.ok(cells.rects[1].y > cells.rects[0].y)   // 2025 comes last
+  assert.equal(cells.rects[1].y, cells.heads[2].y + HEAD_H)
 })
 
 test('Year ladder with one year has nothing to climb: it falls back to a Mosaic with no headings', () => {

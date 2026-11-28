@@ -103,10 +103,10 @@ function mosaicCells(n: number, cw: number, ch?: number): { rects: Rect[]; h: nu
   return { h: H, rects: t.tiles.slice(0, n).map(([c, r, cs, rs]) => ({ x: c * (cellW + g), y: r * (cellH + g), w: cs * cellW + (cs - 1) * g, h: rs * cellH + (rs - 1) * g })) }
 }
 
-// Year ladder: the photos grouped by year, a year heading over each band, newest year first. Rects line up with `years` (one per photo).
+// Year ladder: the photos grouped by year, a year heading over each band, oldest year first. Rects line up with `years` (one per photo).
 function ladderCells(years: string[], cw: number, ch?: number): Cells {
   const g = GAP, perRow = 4
-  const order = [...new Set(years)].sort((a, b) => (a < b ? 1 : -1))
+  const order = [...new Set(years)].sort()   // oldest year first, like every other arrangement
   const rows: { year: string; idx: number[]; first: boolean }[] = []
   for (const y of order) {
     const idx = years.map((v, i) => (v === y ? i : -1)).filter(i => i >= 0)
